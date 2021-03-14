@@ -1,0 +1,70 @@
+
+name: '$(date:yyyyMMdd)$(rev:-rr)'
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+
+
+stages:
+- stage: build_ci
+  displayName: "Building for CI"
+  dependsOn: []
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'windows-2019'
+
+    variables:
+      buildConfiguration: 'Release'
+      isPre: true
+      Major: 1
+      Minor: 0
+      Patch: $[counter(format('{0}.{1}', variables['Major'], variables['Minor']), 0)]
+      PackageVersionType: "" #"-preview-$(Build.BuildNumber)"
+      PackageVersion: $(Major).$(Minor).$(Patch)$(PackageVersionType)
+
+ 
+    steps:
+    - task: NuGetToolInstaller@1
+      inputs:
+        versionSpec: 5.x
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'restore'
+
+#    - task: DotNetCoreCLI@2
+#      inputs:
+#        command: 'build'
+#        arguments: '--configuration $(buildConfiguration)'
+#      displayName: 'dotnet build $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'pack'
+        packagesToPack: 'src/*.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+        versioningScheme: byEnvVar
+        versionEnvVar: PackageVersion
+      displayName: 'dotnet pack $(buildConfiguration)'
+
+    # Package a project
+#    - task: NuGetCommand@2
+#      inputs:
+#        command: 'pack'
+#        packagesToPack: '**/*.csproj'
+#        packDestination: '$(Build.ArtifactStagingDirectory)'
+#        versioningScheme: byEnvVar
+#        versionEnvVar: PackageVersion
+
+    - publish: $(Build.ArtifactStagingDirectory)
+
+    - task: NuGetCommand@2
+      inputs:
+        command: 'push'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+        nuGetFeedType: 'external'
+        publishFeedCredentials: 'nuget'
