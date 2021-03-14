@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,28 +9,27 @@ using System.Linq;
 namespace DotNetDevOps.Extensions.EAVFramwork
 {
 
+    public class DynamicContextOptions{
+        public JToken[] Manifests { get; set; }
+        public string PublisherPrefix { get; set; }
+
+    }
     public class DynamicContext : DbContext, IDynamicContext
     {
+        private readonly IOptions<DynamicContextOptions> modelOptions;
 
-        private readonly string connectionString;
-        private readonly string publisherPrefix;
-        private readonly JToken data;
-
-        public DynamicContext(DbContextOptions options, string connectionString, string publisherPrefix, JToken data)
+        public DynamicContext(DbContextOptions options,IOptions<DynamicContextOptions> modelOptions)
             : base(options)
 
 
         {
-            this.connectionString = connectionString;
-            this.publisherPrefix = publisherPrefix;
-            this.data = data;
-
+            this.modelOptions = modelOptions;
         }
 
         public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
         {
             var manager = new MigrationManager();
-            var migration = manager.BuildMigration($"{publisherPrefix}_Initial", data);
+            var migration = manager.BuildMigration($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First());
 
             return new Dictionary<string, Migration>
             {
