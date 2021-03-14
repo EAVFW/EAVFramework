@@ -1,4 +1,4 @@
 
-# DotNetDevOps Extensions for Azure Functions - InjectBinding
+# DotNetDevOps Extensions for EAV Modelling
 
-This library adds the inject binding [Inject] into azure functions to do method based injection instead of constructor binding.
+This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
