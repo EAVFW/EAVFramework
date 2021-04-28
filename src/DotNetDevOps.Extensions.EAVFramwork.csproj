@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
     <PackageId>DotNetDevOps.Extensions.EAVFramwork</PackageId>
     <Authors>Poul Kjeldager</Authors>
     <Company>DotNetDevOps</Company>
@@ -9,6 +9,7 @@
     <Description>
       This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
     </Description>
+    <PackageProjectUrl>https://dev.azure.com/dotnet-devops/DotNETDevOps/_git/DotNetDevOps.Extensions.EAVFramwork</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
