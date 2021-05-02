@@ -63,7 +63,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
     public class MigrationManager
     {
-        public Migration BuildMigration(string migrationName, JToken manifest)
+        public Migration BuildMigration(string migrationName, JToken manifest, DynamicContextOptions options)
         {
 
             AppDomain myDomain = AppDomain.CurrentDomain;
@@ -99,7 +99,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
             entityTypeCtorBuilderIL.Emit(OpCodes.Call, basector);
             entityTypeCtorBuilderIL.Emit(OpCodes.Ret);
 
-            var tables = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => BuildEntityDefinition(myModule, manifest, entity)).ToArray();
+            var tables = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => BuildEntityDefinition(myModule, manifest, entity,options)).ToArray();
 
             var type = migrationType.CreateType();
             return Activator.CreateInstance(type, manifest, tables) as Migration;
@@ -108,7 +108,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
         }
 
-        public IDynamicTable BuildEntityDefinition(ModuleBuilder builder, JToken manifest, JProperty entityDefinition)
+        public IDynamicTable BuildEntityDefinition(ModuleBuilder builder, JToken manifest, JProperty entityDefinition, DynamicContextOptions options)
         {
             var EntitySchameName = entityDefinition.Name.Replace(" ", "");
             var EntityCollectionSchemaName = (entityDefinition.Value.SelectToken("$.pluralName")?.ToString() ?? EntitySchameName).Replace(" ", "");
@@ -219,7 +219,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
                                 typeof(string),typeof(string),typeof(string),
                                 typeof(ReferentialAction),typeof(ReferentialAction) }, null);
 
-                    var principalSchema = manifest.SelectToken($"$.entities['{fk.Key}'].schema")?.ToString() ?? "dbo";
+                    var principalSchema = manifest.SelectToken($"$.entities['{fk.Key}'].schema")?.ToString() ?? options.PublisherPrefix ?? "dbo";
                     var principalTable = manifest.SelectToken($"$.entities['{fk.Key}'].pluralName").ToString().Replace(" ", "");
                     var principalColumn = manifest.SelectToken($"$.entities['{fk.Key}'].attributes").OfType<JProperty>()
                         .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false);
@@ -244,7 +244,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
             ConstraintsMethodIL.Emit(OpCodes.Ret);
 
-            var schema = entityDefinition.Value.SelectToken("$.schama")?.ToString() ?? "dbo";
+            var schema = entityDefinition.Value.SelectToken("$.schama")?.ToString() ?? options.PublisherPrefix ?? "dbo";
 
             var UpMethod = entityTypeBuilder.DefineMethod(nameof(IDynamicTable.Up), MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { typeof(MigrationBuilder) });
 
@@ -450,7 +450,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
             foreach (var attributeDefinition in entity.SelectToken("$.attributes").OfType<JProperty>())
             {
-                var attributeSchemaName = attributeDefinition.Name.Replace(" ", "");
+                var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ","");
 
 
                 var (attProp, attField) = CreateProperty(entityType, attributeSchemaName, typeof(OperationBuilder<AddColumnOperation>));
@@ -483,6 +483,60 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
 
                 var method = GetColumnForType(v);
+
+                // The following parameters can be set from the typeobject
+                // Column<T>([CanBeNullAttribute] string type = null, bool? unicode = null, int? maxLength = null, bool rowVersion = false, [CanBeNullAttribute] string name = null, bool nullable = false, [CanBeNullAttribute] object defaultValue = null, [CanBeNullAttribute] string defaultValueSql = null, [CanBeNullAttribute] string computedColumnSql = null, bool? fixedLength = null, [CanBeNullAttribute] string comment = null, [CanBeNullAttribute] string collation = null, int? precision = null, int? scale = null, bool? stored = null)
+                //   type:
+                //     The database type of the column.
+                //
+                //   unicode:
+                //     Indicates whether or not the column will store Unicode data.
+                //
+                //   maxLength:
+                //     The maximum length for data in the column.
+                //
+                //   rowVersion:
+                //     Indicates whether or not the column will act as a rowversion/timestamp concurrency
+                //     token.
+                //
+                //   name:
+                //     The column name.
+                //
+                //   nullable:
+                //     Indicates whether or not the column can store null values.
+                //
+                //   defaultValue:
+                //     The default value for the column.
+                //
+                //   defaultValueSql:
+                //     The SQL expression to use for the column's default constraint.
+                //
+                //   computedColumnSql:
+                //     The SQL expression to use to compute the column value.
+                //
+                //   fixedLength:
+                //     Indicates whether or not the column is constrained to fixed-length data.
+                //
+                //   comment:
+                //     A comment to be applied to the column.
+                //
+                //   collation:
+                //     A collation to be applied to the column.
+                //
+                //   precision:
+                //     The maximum number of digits for data in the column.
+                //
+                //   scale:
+                //     The maximum number of decimal places for data in the column.
+                //
+                //   stored:
+                //     Whether the value of the computed column is stored in the database or not.
+                //
+                // Type parameters:
+                //   T:
+                //     The CLR type of the column.
+                //
+
 
                 foreach (var arg1 in method.GetParameters())
                 {
@@ -525,7 +579,21 @@ namespace DotNetDevOps.Extensions.EAVFramwork
                     }
                     else
                     {
-                        entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                        switch (argName)
+                        {
+                            case "dbtype" when type.ToString()?.ToLower() == "multilinetext":
+                                entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)");
+                                break;
+                            case "dbtype" when type.ToString()?.ToLower() == "text":
+                            case "dbtype" when type.ToString()?.ToLower() == "text":
+                                entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(100)"); 
+                                break;
+                            default:
+                                entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                                break;
+                        }
+
+                      
                     }
                     //
                     //new ColumnsBuilder(null).Column<Guid>(
@@ -557,10 +625,13 @@ namespace DotNetDevOps.Extensions.EAVFramwork
             switch (v.ToLower())
             {
                 case "string":
+                case "text":
+                case "multilinetext":
                     return baseMethodType.MakeGenericMethod(typeof(string));
                 case "guid":
                     return baseMethodType.MakeGenericMethod(typeof(Guid));
                 case "int":
+                case "integer":
                     return baseMethodType.MakeGenericMethod(typeof(int));
                 case "datetime":
                     return baseMethodType.MakeGenericMethod(typeof(DateTime));

@@ -12,6 +12,8 @@ namespace DotNetDevOps.Extensions.EAVFramwork
     public class DynamicContextOptions{
         public JToken[] Manifests { get; set; }
         public string PublisherPrefix { get; set; }
+        public bool EnableDynamicMigrations { get; set; }
+        
 
     }
     public class DynamicContext : DbContext, IDynamicContext
@@ -29,14 +31,22 @@ namespace DotNetDevOps.Extensions.EAVFramwork
         public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
         {
             var manager = new MigrationManager();
-            var migration = manager.BuildMigration($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First());
+            var migration = manager.BuildMigration($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(),this.modelOptions.Value);
 
             return new Dictionary<string, Migration>
             {
                 [migration.GetId()] = migration
             };
         }
-         
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (this.modelOptions.Value.EnableDynamicMigrations)
+            {
+                ConfigureMigrationAsesmbly(optionsBuilder);
+            }
+            base.OnConfiguring(optionsBuilder);
+        }
         protected virtual void ConfigureMigrationAsesmbly(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
