@@ -1,62 +1,43 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.Serialization;
+using System.Threading;
 
 namespace DotNetDevOps.Extensions.EAVFramwork
 {
 
-    public class DynamicContextOptions{
-        public JToken[] Manifests { get; set; }
-        public string PublisherPrefix { get; set; }
-        public bool EnableDynamicMigrations { get; set; }
-        
+    //https://stackoverflow.com/questions/27776761/ef-code-first-generic-entity-entitytypeconfiguration
+    //https://stackoverflow.com/questions/26957519/ef-core-mapping-entitytypeconfiguration
+    //https://github.com/dotnet/efcore/issues/21066
+    //https://entityframeworkcore.com/knowledge-base/48060316/ef-core-2-0-dynamic-dbset
 
-    }
-    public class DynamicContext : DbContext, IDynamicContext
+    //https://fahrigoktuna.medium.com/dynamic-unknown-types-for-database-operations-with-ef-core-1575302d1106
+
+
+
+   
+   
+    public class DynamicEntity
     {
-        private readonly IOptions<DynamicContextOptions> modelOptions;
-
-        public DynamicContext(DbContextOptions options,IOptions<DynamicContextOptions> modelOptions)
-            : base(options)
-
-
-        {
-            this.modelOptions = modelOptions;
-        }
-
-        public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
-        {
-            var manager = new MigrationManager();
-            var migration = manager.BuildMigration($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(),this.modelOptions.Value);
-
-            return new Dictionary<string, Migration>
-            {
-                [migration.GetId()] = migration
-            };
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (this.modelOptions.Value.EnableDynamicMigrations)
-            {
-                ConfigureMigrationAsesmbly(optionsBuilder);
-            }
-            base.OnConfiguring(optionsBuilder);
-        }
-        protected virtual void ConfigureMigrationAsesmbly(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
-        }
-
-
+    
     }
+   
 
     public class DynamicMigration : Migration
     {
+       
         private readonly JToken model;
         private readonly IDynamicTable[] tables;
 

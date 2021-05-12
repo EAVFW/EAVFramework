@@ -1,0 +1,10 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System.Collections.Generic;
+
+namespace DotNetDevOps.Extensions.EAVFramwork
+{
+    public interface IDynamicContext
+    {
+        IReadOnlyDictionary<string, Migration> GetMigrations();
+    }
+}
