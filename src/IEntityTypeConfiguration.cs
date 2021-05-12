@@ -6,4 +6,6 @@ namespace DotNetDevOps.Extensions.EAVFramwork
     {
         void Configure(EntityTypeBuilder builder);
     }
+
+
 }

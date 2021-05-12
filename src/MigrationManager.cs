@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
+using Microsoft.OData.ModelBuilder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -15,10 +16,19 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.Serialization;
 using PropertyBuilder = System.Reflection.Emit.PropertyBuilder;
 
 namespace DotNetDevOps.Extensions.EAVFramwork
 {
+
+    public class SamplePocoImplemented
+    {
+
+         
+        [DataMember(Name="name")]
+        public string Name { get; set; }
+    }
     public interface IMigrationManager
     {
         Dictionary<string, (Type dto, Type config)> EntityDTOs { get; }
@@ -27,7 +37,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
     } 
     public class MigrationManager: IMigrationManager
     {
-        public Dictionary<string, (Type dto, Type config)> EntityDTOs { get; } = new Dictionary<string, (Type dto, Type config)>();
+        public Dictionary<string, (Type dto, Type config)> EntityDTOs { get; } = new Dictionary<string, (Type dto, Type config)>(StringComparer.OrdinalIgnoreCase);
         public Assembly Assembly { get; set; }
         private ConcurrentDictionary<string, Migration> _migrations = new ConcurrentDictionary<string, Migration>();
         public Dictionary<string, Migration> BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options)
@@ -550,7 +560,9 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
                     OnDTOTypeGeneration(attributeDefinition.Value, attProp);
 
+                    CreateDataMemberAttribute(attributeDefinition.Value, attProp);
 
+                     
                     //ConfigureMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                     //ConfigureMethodIL.Emit(OpCodes.Ldstr, attProp.Name); //Constant
 
@@ -582,6 +594,20 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
 
 
+
+        }
+
+
+       
+        static ConstructorInfo DataMemberAttributeCtor = typeof(DataMemberAttribute).GetConstructor(new Type[] { });
+        static PropertyInfo DataMemberAttributeNameProperty = typeof(DataMemberAttribute).GetProperty("Name");
+
+        public virtual void CreateDataMemberAttribute(JToken value, PropertyBuilder attProp)
+        {
+
+            CustomAttributeBuilder DataMemberAttributeBuilder = new CustomAttributeBuilder(DataMemberAttributeCtor, new object[] {  },new[] { DataMemberAttributeNameProperty },new[] { value.SelectToken("$.logicalName").ToString() });
+           
+            attProp.SetCustomAttribute(DataMemberAttributeBuilder);
 
         }
 

@@ -1,7 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Query.Validator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Options;
+using Microsoft.OData.ModelBuilder;
+using Microsoft.OData.UriParser;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -113,7 +117,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
             base.OnModelCreating(modelBuilder);
         }
 
-        public IQueryable<DynamicEntity> Set(string entityName)
+        public IQueryable<DynamicEntity> Set(string entityName,string odataFilter=null)
         {
 
             // return this.Query
@@ -126,14 +130,56 @@ namespace DotNetDevOps.Extensions.EAVFramwork
          
             var metadataQuerySet = (IQueryable<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
 
-            
+
+            if (odataFilter != null)
+            {
+                var builder = new ODataConventionModelBuilder();
+                var v = new ODataModelBuilder();
+                builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
+                //   builder.EntitySet<Movie>("Movies");
+                //   builder.EntitySet<Review>("Reviews");
+
+                foreach (var entity in manager.EntityDTOs)
+                {
+                    var config = builder.AddEntityType(entity.Value.dto);
+                  
+                    
+
+                }
+                var model = builder.GetEdmModel();
+
+                var context = new ODataQueryContext(model, type, new Microsoft.OData.UriParser.ODataPath());
+                context.DefaultQuerySettings.EnableFilter = true;
+//                var Validator = new FilterQueryValidator(context.DefaultQuerySettings);
+
+                var _queryOptionParser = new ODataQueryOptionParser(
+               context.Model,
+               context.ElementType,
+               context.NavigationSource,
+               new Dictionary<string, string> { { "$filter", odataFilter } },
+               context.RequestContainer);
+
+               //var _filterClause = _queryOptionParser.ParseFilter();
+
+               // SingleValueNode filterExpression = _filterClause.Expression.Accept(
+               //       new ParameterAliasNodeTranslator(_queryOptionParser.ParameterAliasNodes)) as SingleValueNode;
+               // filterExpression = filterExpression ?? new ConstantNode(null);
+               // _filterClause = new FilterClause(filterExpression, _filterClause.RangeVariable);
+
+                var odatafilter = new FilterQueryOption(odataFilter,context, _queryOptionParser);
+
+                
+                odatafilter.Validate(new Microsoft.AspNetCore.OData.Query.Validator.ODataValidationSettings(){ AllowedFunctions = AllowedFunctions.AllFunctions });
+
+                metadataQuerySet = (IQueryable<DynamicEntity>)odatafilter.ApplyTo(metadataQuerySet, new ODataQuerySettings {   });
+            }
 
             return metadataQuerySet;
             // var setMethod=typeof(DbContext).GetMethod("Set", new Type[] { });
             //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
             //  return Set<Type2>();
         }
-
+        
         public EntityEntry Add(string entityName, JToken data)
         {
             var type = manager.EntityDTOs[entityName].dto;
