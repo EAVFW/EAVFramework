@@ -17,7 +17,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
     <PackFolder>analyzers\cs</PackFolder>
-    <PackOnBuild>true</PackOnBuild>
+    
   </PropertyGroup>
 
   <ItemGroup>
