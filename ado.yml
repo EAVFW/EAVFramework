@@ -53,6 +53,15 @@ stages:
 
     - task: DotNetCoreCLI@2
       inputs:
+        command: 'build'
+        packagesToPack: 'generators/**/*.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+        versioningScheme: byEnvVar
+        versionEnvVar: PackageVersion
+      displayName: 'dotnet build $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      inputs:
         command: 'pack'
         packagesToPack: 'generators/**/*.csproj'
         arguments: '--configuration $(buildConfiguration)'
