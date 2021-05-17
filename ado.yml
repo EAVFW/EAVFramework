@@ -51,6 +51,15 @@ stages:
         versionEnvVar: PackageVersion
       displayName: 'dotnet pack $(buildConfiguration)'
 
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'pack'
+        packagesToPack: 'generators/*.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+        versioningScheme: byEnvVar
+        versionEnvVar: PackageVersion
+      displayName: 'dotnet pack $(buildConfiguration)'
+
     # Package a project
 #    - task: NuGetCommand@2
 #      inputs:

@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>DotNetDevOps.Extensions.EAVFramwork.SourceGenerator</PackageId>
+    <Authors>Poul Kjeldager</Authors>
+    <Company>DotNetDevOps</Company>
+    <PackageTags>EAV;EntityFramework;DotNetDevOps</PackageTags>
+    <Description>
+      This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
+    </Description>
+    <PackageProjectUrl>https://dev.azure.com/dotnet-devops/DotNETDevOps/_git/DotNetDevOps.Extensions.EAVFramwork</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\Shared\CodeGenerator.cs" Link="CodeGenerator.cs" />
+    <Compile Include="..\..\src\Shared\IDynamicTable.cs" Link="IDynamicTable.cs" />
+    <Compile Include="..\..\src\Shared\IEntityTypeConfiguration.cs" Link="IEntityTypeConfiguration.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.9.0" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
+     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="System.Text.Json" Version="5.0.2" GeneratePathProperty="true" PrivateAssets="all" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+  </PropertyGroup>
+
+  <Target Name="GetDependencyTargetPaths">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+      
+    </ItemGroup>
+  </Target>
+  
+</Project>

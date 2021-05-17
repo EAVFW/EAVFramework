@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
+using System;
+using System.Reflection;
 
 namespace DotNetDevOps.Extensions.EAVFramwork
 {
@@ -9,6 +11,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
         public string Namespace { get; set; } = $"DynamicModule";
         
-
+        public Assembly DTOAssembly { get; set; }
+        public Type[] DTOBaseClasses { get; set; }
     }
 }

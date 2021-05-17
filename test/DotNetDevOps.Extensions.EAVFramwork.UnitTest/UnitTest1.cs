@@ -78,23 +78,23 @@ namespace DotNetDevOps.Extensions.EAVFramwork.UnitTest
             await migrator.MigrateAsync(); //Move to latest migration
 
 
-            ctx.Add("entity", JToken.FromObject(new { id=Guid.NewGuid(), name = "a" }));
-            ctx.Add("entity", JToken.FromObject(new { id = Guid.NewGuid(), name = "ab" }));
-            ctx.Add("entity", JToken.FromObject(new { id = Guid.NewGuid(), name = "a" }));
-            ctx.Add("entity", JToken.FromObject(new { id = Guid.NewGuid(), name = "ab" }));
+            ctx.Add("CustomEntities", JToken.FromObject(new { id=Guid.NewGuid(), name = "a" }));
+            ctx.Add("CustomEntities", JToken.FromObject(new { id = Guid.NewGuid(), name = "ab" }));
+            ctx.Add("CustomEntities", JToken.FromObject(new { id = Guid.NewGuid(), name = "a" }));
+            ctx.Add("CustomEntities", JToken.FromObject(new { id = Guid.NewGuid(), name = "ab" }));
             await ctx.SaveChangesAsync();
 
 
-            var set = ctx.Set("entity", "name eq 'a'");
+            var set = ctx.Set("CustomEntities", "name eq 'a'");
 
             var result = await set.ToListAsync();
 
 
-            var set1 = ctx.Set("entity", "name eq 'ab'");
+            var set1 = ctx.Set("CustomEntities", "name eq 'ab'");
 
             var result1 = await set1.ToListAsync();
 
-            var set2 = ctx.Set("entity", "startswith(name,'a')");
+            var set2 = ctx.Set("CustomEntities", "startswith(name,'a')");
 
             var result2 = await set2.ToListAsync();
 

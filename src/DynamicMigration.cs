@@ -29,6 +29,7 @@ namespace DotNetDevOps.Extensions.EAVFramwork
 
    
    
+    [Serializable]
     public class DynamicEntity
     {
     
