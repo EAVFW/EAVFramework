@@ -16,7 +16,7 @@
      <PackBuildOutput>true</PackBuildOutput>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
-    <PackFolder>analyzers\cs</PackFolder>
+    
     
   </PropertyGroup>
 
@@ -26,13 +26,13 @@
     <Compile Include="..\..\src\Shared\IEntityTypeConfiguration.cs" Link="IEntityTypeConfiguration.cs" />
   </ItemGroup>
 
-  <!--<ItemGroup>
+  <ItemGroup>
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
     <None Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
     <None Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
     <None Include="$(PKGMicrosoft_CodeAnalysis_CSharp)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
-  </ItemGroup>-->
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.9.0" GeneratePathProperty="true" PrivateAssets="all" />
