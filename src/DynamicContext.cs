@@ -24,7 +24,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork
+namespace DotNetDevOps.Extensions.EAVFramework
 {
 
     public interface IQueryExtender

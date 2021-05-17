@@ -1,5 +1,5 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Extensions;
-using DotNetDevOps.Extensions.EAVFramwork.Hosting;
+﻿using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using DotNetDevOps.Extensions.EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Endpoints.Results
+namespace DotNetDevOps.Extensions.EAVFramework.Endpoints.Results
 {
     public class DataEndpointResult : IEndpointResult
     {

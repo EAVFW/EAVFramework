@@ -11,7 +11,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Shared
+namespace DotNetDevOps.Extensions.EAVFramework.Shared
 {
 
     public class EntityAttribute : Attribute

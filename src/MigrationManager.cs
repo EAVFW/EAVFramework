@@ -1,4 +1,4 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Shared;
+﻿using DotNetDevOps.Extensions.EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -21,7 +21,7 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using PropertyBuilder = System.Reflection.Emit.PropertyBuilder;
 
-namespace DotNetDevOps.Extensions.EAVFramwork
+namespace DotNetDevOps.Extensions.EAVFramework
 {
 
     public class SamplePocoImplemented

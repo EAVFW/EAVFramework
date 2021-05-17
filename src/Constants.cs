@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork
+namespace DotNetDevOps.Extensions.EAVFramework
 {
     internal static class Constants
     {

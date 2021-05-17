@@ -1,5 +1,5 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork;
-using DotNetDevOps.Extensions.EAVFramwork.Shared;
+﻿using DotNetDevOps.Extensions.EAVFramework;
+using DotNetDevOps.Extensions.EAVFramework.Shared;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -26,7 +26,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork
+namespace DotNetDevOps.Extensions.EAVFramework
 {
     public class DynamicEntity
     {
@@ -151,7 +151,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         }
     }
 }
-namespace DotNetDevOps.Extensions.EAVFramwork.Generators
+namespace DotNetDevOps.Extensions.EAVFramework.Generators
 {
 
     public static class ClassDeclarationSyntaxExtensions

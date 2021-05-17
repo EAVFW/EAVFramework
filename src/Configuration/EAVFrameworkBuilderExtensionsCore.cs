@@ -1,10 +1,10 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork;
-using DotNetDevOps.Extensions.EAVFramwork.Configuration;
-using DotNetDevOps.Extensions.EAVFramwork.Endpoints;
-using DotNetDevOps.Extensions.EAVFramwork.Extensions;
-using DotNetDevOps.Extensions.EAVFramwork.Hosting;
-using DotNetDevOps.Extensions.EAVFramwork.Services;
-using DotNetDevOps.Extensions.EAVFramwork.Services.Default;
+﻿using DotNetDevOps.Extensions.EAVFramework;
+using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using DotNetDevOps.Extensions.EAVFramework.Endpoints;
+using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using DotNetDevOps.Extensions.EAVFramework.Hosting;
+using DotNetDevOps.Extensions.EAVFramework.Services;
+using DotNetDevOps.Extensions.EAVFramework.Services.Default;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
-using static DotNetDevOps.Extensions.EAVFramwork.Constants;
+using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -166,7 +166,7 @@ namespace Microsoft.Extensions.DependencyInjection
             where T : class, IEndpointHandler
         {
             builder.Services.AddTransient<T>();
-            builder.Services.AddSingleton(new DotNetDevOps.Extensions.EAVFramwork.Hosting.Endpoint(name, pattern,methods, typeof(T)));
+            builder.Services.AddSingleton(new DotNetDevOps.Extensions.EAVFramework.Hosting.Endpoint(name, pattern,methods, typeof(T)));
 
             return builder;
         }

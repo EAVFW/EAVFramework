@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Hosting
+namespace DotNetDevOps.Extensions.EAVFramework.Hosting
 {
     /// <summary>
     /// Endpoint result

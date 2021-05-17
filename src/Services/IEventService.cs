@@ -1,11 +1,11 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Events;
+﻿using DotNetDevOps.Extensions.EAVFramework.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Services
+namespace DotNetDevOps.Extensions.EAVFramework.Services
 {
    
     /// <summary>

@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramwork.Configuration
+﻿namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 {
     /// <summary>
     /// Configures which endpoints are enabled or disabled.

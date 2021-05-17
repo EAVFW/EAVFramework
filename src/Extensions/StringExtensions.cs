@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Extensions
+namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 {
     internal static class StringExtensions
     {

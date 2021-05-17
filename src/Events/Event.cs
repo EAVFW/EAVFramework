@@ -1,9 +1,9 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Extensions;
-using DotNetDevOps.Extensions.EAVFramwork.Logging;
+﻿using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using DotNetDevOps.Extensions.EAVFramework.Logging;
 using System;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Events
+namespace DotNetDevOps.Extensions.EAVFramework.Events
 {
 
     /// <summary>

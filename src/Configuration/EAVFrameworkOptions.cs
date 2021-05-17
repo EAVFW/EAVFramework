@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Endpoints;
-using DotNetDevOps.Extensions.EAVFramwork.Extensions;
-using DotNetDevOps.Extensions.EAVFramwork.Hosting;
+﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints;
+using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using DotNetDevOps.Extensions.EAVFramework.Hosting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,9 +12,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using static DotNetDevOps.Extensions.EAVFramwork.Constants;
+using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Configuration
+namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 {
 
 

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Hosting
+namespace DotNetDevOps.Extensions.EAVFramework.Hosting
 {
 
     /// <summary>

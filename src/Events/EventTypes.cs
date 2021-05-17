@@ -1,7 +1,7 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Configuration;
-using DotNetDevOps.Extensions.EAVFramwork.Extensions;
-using DotNetDevOps.Extensions.EAVFramwork.Logging;
-using DotNetDevOps.Extensions.EAVFramwork.Services;
+﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using DotNetDevOps.Extensions.EAVFramework.Logging;
+using DotNetDevOps.Extensions.EAVFramework.Services;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Events
+namespace DotNetDevOps.Extensions.EAVFramework.Events
 {
 
     /// <summary>

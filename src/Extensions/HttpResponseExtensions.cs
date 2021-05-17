@@ -1,9 +1,9 @@
-﻿using DotNetDevOps.Extensions.EAVFramwork.Configuration;
-using DotNetDevOps.Extensions.EAVFramwork.Infrastructure;
+﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using DotNetDevOps.Extensions.EAVFramework.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Extensions
+namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 {
     public static class HttpResponseExtensions
     {

@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramwork.Infrastructure
+namespace DotNetDevOps.Extensions.EAVFramework.Infrastructure
 {
     internal static class ObjectSerializer
     {
