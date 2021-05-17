@@ -6,6 +6,7 @@
     <Authors>Poul Kjeldager</Authors>
     <Company>DotNetDevOps</Company>
     <PackageTags>EAV;EntityFramework;DotNetDevOps</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>
       This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
     </Description>
@@ -22,6 +23,9 @@
 
   <ItemGroup>
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
+    <None Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
+    <None Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
   </ItemGroup>
 
   <ItemGroup>
