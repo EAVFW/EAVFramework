@@ -6,7 +6,7 @@
     <Authors>Poul Kjeldager</Authors>
     <Company>DotNetDevOps</Company>
     <PackageTags>EAV;EntityFramework;DotNetDevOps</PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    
     <Description>
       This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
     </Description>
