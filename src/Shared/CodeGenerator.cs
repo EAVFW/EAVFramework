@@ -66,8 +66,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo MigrationBuilderDropTable { get; internal set; }
         public Assembly DTOAssembly { get;  set; }
         public Type[] DTOBaseClasses { get; internal set; }
+
+        public Action<JToken,PropertyBuilder> OnDTOTypeGeneration { get; set; }
     }
-    public class CodeGenerator
+
+    public interface ICodeGenerator
+    {
+
+    }
+    public class CodeGenerator : ICodeGenerator
     {
 
         private readonly CodeGeneratorOptions options;
@@ -151,7 +158,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             var fKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
-               .Select(attribute => new { Method = members[attribute.Name].GetMethod, EntityName = attribute.Value.SelectToken("$.type.referenceType").ToString(), ForeignKey = attribute.Value.SelectToken("$.type.foreignKey") })
+               .Select(attribute => new { AttributeSchemaName= attribute.Value.SelectToken("$.schemaName").ToString(), PropertyGetMethod = members[attribute.Name].GetMethod, EntityName = attribute.Value.SelectToken("$.type.referenceType").ToString(), ForeignKey = attribute.Value.SelectToken("$.type.foreignKey") })
                .ToArray();
 
             if (primaryKeys.Any() || fKeys.Any())
@@ -177,14 +184,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             if (fKeys.Any())
             {
-                foreach (var fk in fKeys.GroupBy(c => c.EntityName))
+                foreach (var fk in fKeys) //.GroupBy(c => c.EntityName))
                 {
 
-
+                    var entityName = fk.EntityName;
                     ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
-                    ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{fk.Key}'].pluralName")}".Replace(" ", ""));
+                    ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
 
-                    WriteLambdaExpression(builder, ConstraintsMethodIL, columnsCLRType, fk.Select(c => c.Method).ToArray());
+                    WriteLambdaExpression(builder, ConstraintsMethodIL, columnsCLRType, new[] { fk.PropertyGetMethod });// fk.Select(c => c.PropertyGetMethod).ToArray());
 
                     var createTableMethod = options.CreateTableBuilderType.MakeGenericType(columnsCLRType)
                         .GetMethod(options.CreateTableBuilderForeignKeyName, BindingFlags.Public | BindingFlags.Instance, null,
@@ -195,9 +202,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 typeof(string),typeof(string),typeof(string),
                                 options.ReferentialActionType,options.ReferentialActionType }, null);
 
-                    var principalSchema = manifest.SelectToken($"$.entities['{fk.Key}'].schema")?.ToString() ?? options.Schema ?? "dbo";
-                    var principalTable = manifest.SelectToken($"$.entities['{fk.Key}'].pluralName").ToString().Replace(" ", "");
-                    var principalColumn = manifest.SelectToken($"$.entities['{fk.Key}'].attributes").OfType<JProperty>()
+                    var principalSchema = manifest.SelectToken($"$.entities['{entityName}'].schema")?.ToString() ?? options.Schema ?? "dbo";
+                    var principalTable = manifest.SelectToken($"$.entities['{entityName}'].pluralName").ToString().Replace(" ", "");
+                    var principalColumn = manifest.SelectToken($"$.entities['{entityName}'].attributes").OfType<JProperty>()
                         .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false).Name.Replace(" ", "");
 
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalTable);
@@ -493,11 +500,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return null;
         }
 
-        public virtual void OnDTOTypeGeneration(JToken attributeDefinition, PropertyBuilder attProp)
-        {
-
-        }
-
+       
         public void CreateDTOConfiguration(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JObject entityDefinition, JToken manifest)
         {
             var entityLogicalName = entityDefinition.SelectToken("$.logicalName").ToString();
@@ -615,7 +618,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
  
 
                 //PrimaryKeys cant be null, remove nullable
-                if (isprimaryKey ||  (manifestType == "lookup"))
+                if (isprimaryKey )
                 {
                     clrType = Nullable.GetUnderlyingType(clrType) ?? clrType;  
                 } 
@@ -670,7 +673,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-                    OnDTOTypeGeneration(attributeDefinition.Value, attProp);
+                    options.OnDTOTypeGeneration?.Invoke(attributeDefinition.Value, attProp);
 
                     CreateDataMemberAttribute(attributeDefinition.Value, attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
 

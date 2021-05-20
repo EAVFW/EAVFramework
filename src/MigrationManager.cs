@@ -38,6 +38,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public Dictionary<string, Migration> BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
 
     } 
+  
+
     public class MigrationManager: IMigrationManager
     {
         public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
@@ -97,7 +99,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
                      // EntityBaseClass = options.DTOBaseClass ?? typeof(DynamicEntity),
                      // BaseClassProperties = (options.DTOBaseClass ?? typeof(DynamicEntity)).GetProperties().Select(p=>p.Name).ToList(),
-                     DTOBaseClasses = options.DTOBaseClasses,
+                     DTOBaseClasses = options.DTOBaseClasses ?? Array.Empty<Type>(),
 
 
                      EntityConfigurationInterface = typeof(IEntityTypeConfiguration),
@@ -114,7 +116,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
                      ReferentialActionNoAction = (int)ReferentialAction.NoAction,
 
                      DynamicMigrationType = typeof(DynamicMigration),
-                     MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) })
+                     MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }),
+                     OnDTOTypeGeneration=this.OnDTOTypeGeneration
+                     
 
                  });
 
@@ -130,8 +134,12 @@ namespace DotNetDevOps.Extensions.EAVFramework
             };
         }
 
-      
 
+
+        public virtual void OnDTOTypeGeneration(JToken attributeDefinition, PropertyBuilder attProp)
+        {
+
+        }
 
     }
 }

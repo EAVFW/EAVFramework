@@ -36,7 +36,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
         private readonly IMigrationManager manager;
-        private readonly ILogger<DynamicContext> logger;
+        private readonly ILogger logger;
 
         //private readonly MigrationManager manager = new MigrationManager();
 
@@ -144,6 +144,18 @@ namespace DotNetDevOps.Extensions.EAVFramework
             base.OnModelCreating(modelBuilder);
         }
 
+        public IQueryable<DynamicEntity> Set(string entityCollectionSchemaName)
+        {
+            var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
+
+            var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
+            // var methodb = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(typeof(DonorDTO));
+            var a = methoda.Invoke(this, new object[0]) as IQueryable;
+            // var b = methodb.Invoke(this, new object[0]) as IQueryable;
+
+            var metadataQuerySet = (IQueryable< DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+            return metadataQuerySet;
+        }
         public async Task<PageResult<object>> Set(string entityCollectionSchemaName,HttpRequest request)
         {
             var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
