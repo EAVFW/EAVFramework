@@ -15,7 +15,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -26,165 +25,10 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework
-{
-    public class DynamicEntity
-    {
-
-    }
-}
-namespace Microsoft.EntityFrameworkCore.Migrations.Operations
-{
-    public class AddColumnOperation
-    {
-
-    }
-}
-
-namespace Microsoft.EntityFrameworkCore.Migrations.Operations.Builders
-{
-    public class ColumnsBuilder
-    {
-        public virtual OperationBuilder<AddColumnOperation> Column<T>([CanBeNullAttribute] string type = null, bool? unicode = null, int? maxLength = null, bool rowVersion = false, [CanBeNullAttribute] string name = null, bool nullable = false, [CanBeNullAttribute] object defaultValue = null, [CanBeNullAttribute] string defaultValueSql = null, [CanBeNullAttribute] string computedColumnSql = null, bool? fixedLength = null, [CanBeNullAttribute] string comment = null, [CanBeNullAttribute] string collation = null, int? precision = null, int? scale = null, bool? stored = null) => throw new NotImplementedException();
-    }
-
-    public class OperationBuilder<T>
-    {
-
-    }
-}
-namespace Microsoft.EntityFrameworkCore.Metadata.Builders
-{
-    public class EntityTypeBuilder
-    {
-        public void Property(string name) => throw new NotImplementedException();
-
-        public virtual KeyBuilder HasKey([NotNullAttribute] params string[] propertyNames) => throw new NotImplementedException();
 
 
-    }
-    public static class RelationalEntityTypeBuilderExtensions
-    {
-        public static EntityTypeBuilder ToTable([NotNullAttribute] this EntityTypeBuilder entityTypeBuilder, [CanBeNullAttribute] string name, [CanBeNullAttribute] string schema) => throw new NotImplementedException();
-
-    }
-}
-namespace System.ComponentModel.DataAnnotations.Schema
-{
-    public class ForeignKeyAttribute : Attribute
-    {
-        public ForeignKeyAttribute(string name)
-        {
-
-        }
-    }
-
-}
-namespace Microsoft.EntityFrameworkCore.Migrations
-{
-    public class NotNullAttribute : Attribute
-    {
-
-    }
-    public class CanBeNullAttribute : Attribute
-    {
-
-    }
-    public class DropTableOperation
-    {
-
-    }
-    public class MigrationBuilder
-    {
-
-        public virtual OperationBuilder<DropTableOperation> DropTable([NotNullAttribute] string name, [CanBeNullAttribute] string schema = null) => throw new NotImplementedException();
-        public virtual CreateTableBuilder<TColumns> CreateTable<TColumns>([NotNullAttribute] string name, [NotNullAttribute] Func<ColumnsBuilder, TColumns> columns, [CanBeNullAttribute] string schema = null, [CanBeNullAttribute] Action<CreateTableBuilder<TColumns>> constraints = null, [CanBeNullAttribute] string comment = null) => throw new NotImplementedException();
-    }
-
-    public enum ReferentialAction
-    {
-
-        NoAction = 0,
-
-        Restrict = 1,
-
-        Cascade = 2,
-
-        SetNull = 3,
-
-        SetDefault = 4
-    }
-
-    public class CreateTableBuilder<TColumns>
-    {
-        //   public const string PrimaryKey = "PrimaryKey";
-        // public const string ForeignKey = "ForeignKey";
-
-
-        public virtual OperationBuilder<AddPrimaryKeyOperation> PrimaryKey([NotNullAttribute] string name, [NotNullAttribute] Expression<Func<TColumns, object>> columns) => throw new NotImplementedException();
-
-        public virtual OperationBuilder<AddForeignKeyOperation> ForeignKey([NotNullAttribute] string name, [NotNullAttribute] Expression<Func<TColumns, object>> column, [NotNullAttribute] string principalTable, [NotNullAttribute] string principalColumn, [CanBeNullAttribute] string principalSchema = null, ReferentialAction onUpdate = ReferentialAction.NoAction, ReferentialAction onDelete = ReferentialAction.NoAction) => throw new NotImplementedException();
-        public virtual OperationBuilder<AddForeignKeyOperation> ForeignKey([NotNullAttribute] string name, [NotNullAttribute] Expression<Func<TColumns, object>> columns, [NotNullAttribute] string principalTable, [NotNullAttribute] string[] principalColumns, [CanBeNullAttribute] string principalSchema = null, ReferentialAction onUpdate = ReferentialAction.NoAction, ReferentialAction onDelete = ReferentialAction.NoAction) => throw new NotImplementedException();
-
-    }
-
-    public class AddPrimaryKeyOperation { }
-
-    public class AddForeignKeyOperation { }
-
-    public class KeyBuilder { }
-
-
-
-
-    public class DynamicMigration
-    {
-        public DynamicMigration(JToken model, IDynamicTable[] tables)
-        {
-        }
-    }
-    public class MigrationAttribute : Attribute
-    {
-        public MigrationAttribute(string name)
-        {
-
-        }
-    }
-}
 namespace DotNetDevOps.Extensions.EAVFramework.Generators
 {
-
-    public static class ClassDeclarationSyntaxExtensions
-    {
-        public const string NESTED_CLASS_DELIMITER = "+";
-        public const string NAMESPACE_CLASS_DELIMITER = ".";
-
-        public static string GetFullName(this ClassDeclarationSyntax source)
-        {
-            Contract.Requires(null != source);
-
-            var items = new List<string>();
-            var parent = source.Parent;
-            while (parent.IsKind(SyntaxKind.ClassDeclaration))
-            {
-                var parentClass = parent as ClassDeclarationSyntax;
-                Contract.Assert(null != parentClass);
-                items.Add(parentClass.Identifier.Text);
-
-                parent = parent.Parent;
-            }
-
-            var nameSpace = parent as NamespaceDeclarationSyntax;
-            Contract.Assert(null != nameSpace);
-            var sb = new StringBuilder().Append(nameSpace.Name).Append(NAMESPACE_CLASS_DELIMITER);
-            items.Reverse();
-            items.ForEach(i => { sb.Append(i).Append(NESTED_CLASS_DELIMITER); });
-            sb.Append(source.Identifier.Text);
-
-            var result = sb.ToString();
-            return result;
-        }
-    }
 
     /// <summary>
     /// https://dominikjeske.github.io/source-generators/
@@ -357,7 +201,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                     var tables = json.SelectToken("$.entities").OfType<JProperty>().Select(entity => Activator.CreateInstance(generator.BuildEntityDefinition(myModule, json, entity)) as IDynamicTable).ToArray();
 
-
+                    //I think its here we should generate some openapi spec, looping over the entities in our model.
+                    //However i would like the augment the DTO types in the code generator with some attributes that controls it,
+                    //so we also can generate it at runtime dynamic for custom entites. 
+                    //Same approach as the codegenerator, make a class that is "shared" by the projects and runs on top of the generated DTO classes (EACH DTO class is a endpoint after all).
+                    //Remember, dont make it perfect the first time, just get it work and we can add features.
 
 
                     foreach (var type in myModule.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null))
@@ -366,6 +214,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Warning, true), null));
 
                         context.AddSource($"{type.Name}.cs", GenerateSourceCode(type));
+
+                     
+
+
                     }
 
                 }
