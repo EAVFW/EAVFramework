@@ -3,6 +3,7 @@ using DotNetDevOps.Extensions.EAVFramework.Configuration;
 using DotNetDevOps.Extensions.EAVFramework.Endpoints;
 using DotNetDevOps.Extensions.EAVFramework.Extensions;
 using DotNetDevOps.Extensions.EAVFramework.Hosting;
+using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using DotNetDevOps.Extensions.EAVFramework.Services;
 using DotNetDevOps.Extensions.EAVFramework.Services.Default;
 using Microsoft.AspNetCore.Authentication;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
+using System.Threading.Tasks;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -171,6 +173,33 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
+
+        public static IEAVFrameworkBuilder AddPlugin<T,TContext,TEntity>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, EntityPluginOperation operation, int order=0)
+            where T : class, IPlugin<TContext,TEntity>
+            where TEntity : DynamicEntity
+            where TContext : DynamicContext
+        {
+            builder.Services.AddTransient<T>();
+            builder.Services.AddSingleton<EntityPlugin>(new EntityPlugin<TContext,TEntity> { Execution=execution, Operation = operation, Order=order, Type=typeof(TEntity), Handler=typeof(T) });
+
+            return builder;
+        }
+
+        //public static IEAVFrameworkBuilder AddPlugin<T>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, int order = 0)
+        //   where T : class, IPlugin
+        //{
+        //    builder.Services.AddTransient<T>();
+
+             
+
+        //    builder.Services.AddSingleton<EntityPlugin>(new EntityPlugin { Execution = execution, Order = order, Type = typeof(TEntity), Handler = typeof(T) });
+
+        //    return builder;
+        //}
+
+
     }
+
+   
 
 }
