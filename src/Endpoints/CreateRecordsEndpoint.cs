@@ -97,7 +97,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
 
 
-            using var transaction = _context.Database.BeginTransaction();
+           
 
             var a = _context.Add(entityName, record);
 
@@ -105,6 +105,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             if (errors.Any())
                 return new DataValidationErrorResult(new { errors = errors });
+
+            using var transaction = _context.Database.BeginTransaction();
 
             await RunPreOperation(context, a);
 
