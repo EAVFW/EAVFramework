@@ -211,7 +211,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                     foreach (var type in myModule.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null))
                     {
 
-                        context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Warning, true), null));
+                        context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
 
                         context.AddSource($"{type.Name}.cs", GenerateSourceCode(type));
 
@@ -224,8 +224,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                 catch (Exception ex)
                 {
                     File.AppendAllLines("err.txt", new[] { ex.ToString() });
-                    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", ex.StackTrace.ToString(), "", DiagnosticSeverity.Warning, true), null));
-                    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("101", "test2", ex.ToString().Replace("\n", " "), "", DiagnosticSeverity.Warning, true), null));
+                //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", ex.StackTrace.ToString(), "", DiagnosticSeverity.Info, true), null));
+                //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("101", "test2", ex.ToString().Replace("\n", " "), "", DiagnosticSeverity.Info, true), null));
 
                 }
 
@@ -249,7 +249,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
             }
 
 
-            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("102", "test33", @namespace ?? "empty", "", DiagnosticSeverity.Warning, true), null));
+          //  context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("102", "test33", @namespace ?? "empty", "", DiagnosticSeverity.Warning, true), null));
             // context.AddSource("test.cs", "public class HelloWorld{}");
             // Console.WriteLine(test);
 
