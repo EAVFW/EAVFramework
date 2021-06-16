@@ -19,7 +19,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     {
         private readonly TContext _context;
 
-        public PatchRecordsEndpoint(TContext context, IEnumerable<EntityPlugin> plugins) :base(plugins.Where(c=>c.Operation== EntityPluginOperation.Update))
+        public PatchRecordsEndpoint(TContext context, IEnumerable<EntityPlugin> plugins, IPluginScheduler pluginScheduler) :base(plugins.Where(c=>c.Operation== EntityPluginOperation.Update), pluginScheduler)
         {
             _context = context;
         }

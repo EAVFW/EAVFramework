@@ -315,7 +315,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
         private void GeneratePropertySource(StringBuilder sb, string indention, HashSet<string> namespaces, PropertyInfo prop)
         {
             GenerateAttributes(sb, indention, namespaces, prop.CustomAttributes);
-
+            //{(prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)? " virtual":"")}
             sb.AppendLine($"{indention}public {SerializeType(prop.PropertyType, namespaces)} {prop.Name} {{get;set;}}");
             sb.AppendLine();
         }

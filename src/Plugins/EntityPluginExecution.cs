@@ -1,4 +1,6 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework.Plugins
+﻿using System.Threading.Tasks;
+
+namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 {
     public enum EntityPluginExecution
     {
@@ -12,5 +14,15 @@
         Update,
         Retrieve,
         RetrieveAll
+    }
+    public enum EntityPluginMode
+    {
+        Sync,
+        Async
+    }
+
+    public interface IPluginScheduler
+    {
+        Task ScheduleAsync(EntityPlugin plugin, object entity);
     }
 }

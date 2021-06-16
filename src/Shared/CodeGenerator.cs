@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -45,6 +46,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string Schema { get; set; }
         public ConstructorInfo ForeignKeyAttributeCtor { get; internal set; }
         public Dictionary<string, Type> EntityDTOs { get; internal set; } = new Dictionary<string, Type>();
+        public ConcurrentDictionary<string, TypeBuilder> EntityDTOsBuilders { get; internal set; } = new ConcurrentDictionary<string, TypeBuilder>();
         public Dictionary<string,Type> EntityDTOConfigurations { get; internal set; } = new Dictionary<string, Type>();
         public Type OperationBuilderAddColumnOptionType { get; internal set; }
         public MethodInfo ColumnsBuilderColumnMethod { get; internal set; }
@@ -579,12 +581,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
             var entityLogicalName = entityDefinition.SelectToken("$.logicalName").ToString();
-            TypeBuilder entityType = myModule.DefineType($"{options.Namespace}.{entitySchameName}", TypeAttributes.Public
+            
+           // TypeBuilder entityType =
+
+           // options.EntityDTOsBuilders[entityCollectionSchemaName] = entityType;
+
+            TypeBuilder entityType = options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{entitySchameName}", TypeAttributes.Public
                                                             | TypeAttributes.Class
                                                             | TypeAttributes.AutoClass
                                                             | TypeAttributes.AnsiClass
                                                             | TypeAttributes.Serializable
-                                                            | TypeAttributes.BeforeFieldInit, acceptableBasesClass);
+                                                            | TypeAttributes.BeforeFieldInit, acceptableBasesClass));
 
             entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { 
                 typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
@@ -603,8 +610,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
             {
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
-
-             
+                
+                
                 var clrType = GetCLRType(attributeDefinition.Value, out var manifestType);
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
 
@@ -690,6 +697,32 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 }
 
+            }
+
+            foreach(var entity in manifest.SelectToken("$.entities").OfType<JProperty>()){
+                foreach(var attribute in entity.Value.SelectToken("$.attributes").OfType<JProperty>())
+                {
+                    var type = attribute.Value.SelectToken("$.type.referenceType")?.ToString();
+                    if (type != null && manifest.SelectToken($"$.entities['{type}'].logicalName")?.ToString() == entityDefinition.SelectToken("$.logicalName").ToString())
+                    {
+                        File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+
+                       
+                        TypeBuilder related = options.EntityDTOsBuilders.GetOrAdd(entity.Name.Replace(" ", ""), _ => myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
+                                                           | TypeAttributes.Class
+                                                           | TypeAttributes.AutoClass
+                                                           | TypeAttributes.AnsiClass
+                                                           | TypeAttributes.Serializable
+                                                           | TypeAttributes.BeforeFieldInit, acceptableBasesClass));
+
+                      //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
+                        {
+                            //
+                            var (attProp, attField) = CreateProperty(entityType, entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related));
+                               // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
+                        }
+                    }
+                }
             }
 
             // ConfigureMethodIL.Emit(OpCodes.Ret);

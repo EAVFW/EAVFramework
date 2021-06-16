@@ -176,8 +176,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
         public bool RequireCspFrameSrcForSignout { get; set; } = true;
     }
 
+    
+
     public class EAVFrameworkOptions
     {
+
+        
+
         /// <summary>
         /// Gets or sets the events options.
         /// </summary>

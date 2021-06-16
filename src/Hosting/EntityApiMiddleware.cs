@@ -28,7 +28,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
     }
 
 
-    
+ 
     public static class EndpointsMapping
     {
  
@@ -43,13 +43,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
 
             foreach (var endpoint in endpoints)
             {
-                config.MapMethods($"{options.RoutePrefix}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
+                var endpointConfig = config.MapMethods($"{options.RoutePrefix}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
                     context =>
                         context.RequestServices.GetService<IEndpointRouter>()
                         .ProcessAsync(context, context.RequestServices.GetService(endpoint.Handler) as IEndpointHandler))
                     .WithDisplayName(endpoint.Name)
                     .WithMetadata(endpoint);
+                
+                options.Endpoints.EndpointAuthorizationConfiguration?.Invoke(endpointConfig);
 
+                options.Endpoints.EndpointConfiguration?.Invoke(endpointConfig);
                 //config.MapMethods($"{options.RoutePrefix}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
                 //  pipeline)
                 //   .WithDisplayName(endpoint.Name)

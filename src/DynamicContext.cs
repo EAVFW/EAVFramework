@@ -51,6 +51,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.modelOptions = modelOptions;
             this.manager = migrationManager;
             this.logger = logger;
+
+            this.ChangeTracker.LazyLoadingEnabled = false;
         }
 
         public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
@@ -292,6 +294,29 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var record = data.ToObject(type);
             logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
             return this.Add(record);
+
+        }
+        public void Replace(string entityName, object entry, JToken data)
+        {
+            var type = manager.EntityDTOs[entityName];
+            var record = data.ToObject(type);
+
+            Entry(entry).CurrentValues.SetValues(record);
+
+           // logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
+           // return this.Add(record);
+
+        }
+        
+
+
+        public ValueTask<object> FindAsync(string entityName, params object[] keyValues)
+        {
+            var type = manager.EntityDTOs[entityName];
+            //  var record = data.ToObject(type);
+            return this.FindAsync(type, keyValues);
+          //  logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
+           // return this.Add(record);
 
         }
 

@@ -131,6 +131,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
+            builder.Services.TryAddTransient<IPluginScheduler, DefaultPluginScheduler>();
             return builder;
         }
 

@@ -4,8 +4,11 @@ using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 {
-    internal abstract class EntityPlugin
+  
+    public abstract class EntityPlugin
     {
+        public EntityPluginMode Mode { get; set; } = EntityPluginMode.Sync;
+
         public EntityPluginExecution Execution { get; set; }
         public EntityPluginOperation Operation { get;  set; }
         public int Order { get; set; }

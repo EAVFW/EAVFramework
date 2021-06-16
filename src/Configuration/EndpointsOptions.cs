@@ -1,4 +1,7 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+﻿using Microsoft.AspNetCore.Builder;
+using System;
+
+namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 {
     /// <summary>
     /// Configures which endpoints are enabled or disabled.
@@ -13,6 +16,19 @@
         /// </value>
         public bool EnableQueryRecordsEndpoint { get; set; } = true;
 
-      
+        public Action<IEndpointConventionBuilder> EndpointConfiguration { get; set; }
+
+        public Action<IEndpointConventionBuilder> EndpointAuthorizationConfiguration { get; set; } = DefaultEndpointAuthorizationConfiguration;
+
+        private static void DefaultEndpointAuthorizationConfiguration(IEndpointConventionBuilder obj)
+        {
+            obj.RequireAuthorization();
+        }
+
+        public EndpointsOptions AllowAnonymous()
+        {
+            EndpointAuthorizationConfiguration = null;
+            return this;
+        }
     }
 }

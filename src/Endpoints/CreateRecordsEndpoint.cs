@@ -17,13 +17,32 @@ using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
+    
     internal class BaseEndpoint
     {
         private readonly IEnumerable<EntityPlugin> _plugins;
-        public BaseEndpoint(IEnumerable<EntityPlugin> plugins)
+        private readonly IPluginScheduler _pluginScheduler;
+
+        public BaseEndpoint(IEnumerable<EntityPlugin> plugins, IPluginScheduler pluginScheduler)
         {
-            _plugins = plugins;
+            _plugins = plugins ?? throw new ArgumentNullException(nameof(plugins));
+            _pluginScheduler = pluginScheduler ?? throw new ArgumentNullException(nameof(pluginScheduler));
         }
+
+        protected async Task RunAsyncPostOperation(HttpContext context, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry a)
+        {
+            foreach (var plugin in _plugins.Where(plugin => plugin.Mode == EntityPluginMode.Async && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type == a.Entity.GetType()))
+            {
+                await _pluginScheduler.ScheduleAsync(plugin, a.Entity);
+               // await plugin.Execute(context.RequestServices, a);
+            }
+
+            foreach (var navigation in a.References.Where(t => t.TargetEntry != null))
+            {
+                await RunAsyncPostOperation(context, navigation.TargetEntry);
+            }
+        }
+
         protected async Task RunPostOperation(HttpContext context, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry a)
         {
             foreach (var plugin in _plugins.Where(plugin => plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type == a.Entity.GetType()))
@@ -81,7 +100,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         public CreateRecordsEndpoint(
             TContext context,
             IEnumerable<EntityPlugin> plugins,
-            ILogger<CreateRecordsEndpoint<TContext>> logger) : base(plugins.Where(c=>c.Operation == EntityPluginOperation.Create))
+            IPluginScheduler pluginScheduler,
+            ILogger<CreateRecordsEndpoint<TContext>> logger) : base(plugins.Where(c=>c.Operation == EntityPluginOperation.Create), pluginScheduler)
         {
             _context = context;           
             _logger = logger;
@@ -94,11 +114,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
 
             var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
-
-
-
-           
-
+             
             var a = _context.Add(entityName, record);
 
             List<ValidationError> errors = await RunPreValidation(context, a);
@@ -116,6 +132,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             transaction.Commit();
 
+            await RunPostOperation(context, a);
 
             return new DataEndpointResult(new { id = a.CurrentValues.GetValue<Guid>("Id") });
 
