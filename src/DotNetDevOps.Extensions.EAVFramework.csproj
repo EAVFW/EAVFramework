@@ -17,8 +17,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.0-rc2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 

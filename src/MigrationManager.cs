@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
+using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -33,6 +34,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
     }
     public interface IMigrationManager
     {
+         IEdmModel Model { get; }
         Dictionary<string, Type> EntityDTOs { get; }
         Dictionary<string, Type> EntityDTOConfigurations { get; }
         public Dictionary<string, Migration> BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
@@ -42,6 +44,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
     public class MigrationManager: IMigrationManager
     {
+        public  IEdmModel Model { get; set; }
+
         public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
         public MethodInfo EntityTypeBuilderHasKey { get; private set; }
@@ -56,13 +60,13 @@ namespace DotNetDevOps.Extensions.EAVFramework
             AppDomain myDomain = AppDomain.CurrentDomain;
             AssemblyName myAsmName = new AssemblyName(options.Namespace);
 
-            var builder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
               AssemblyBuilderAccess.RunAndCollect);
            
 
 
             ModuleBuilder myModule =
-              builder.DefineDynamicModule(options.Namespace + ".dll");
+              assemblyBuilder.DefineDynamicModule(options.Namespace + ".dll");
 
 
             var migration= _migrations.GetOrAdd(migrationName, (migrationName) =>
@@ -127,6 +131,53 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
                  return Activator.CreateInstance(migrationType, manifest, tables) as Migration;
              });
+
+            if (Model == null)
+            {
+
+                var builder = new ODataConventionModelBuilder();
+                var v = new ODataModelBuilder();
+                builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
+                //   builder.EntitySet<Movie>("Movies");
+                //   builder.EntitySet<Review>("Reviews");
+
+                foreach (var entity in EntityDTOs)
+                {
+                  //  logger.LogWarning("Creating Model for {entity}", entity.Key);
+                    var config = builder.AddEntityType(entity.Value);
+
+
+                    //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
+                    //{
+                    //    config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
+                    //    logger.LogWarning("Creating Nav for {entity}.{nav}", entity.Key,nav.Name);
+                    //}
+
+                    foreach (var nav in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null))
+                    {
+                        if (nav.GetCustomAttribute<ForeignKeyAttribute>() is ForeignKeyAttribute navigation)
+                        {
+                            var prop = config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
+                            prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+                         //   logger.LogWarning("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
+                        }
+                        else
+                        {
+                            var prop = config.AddProperty(nav);
+                            prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+                         //   logger.LogWarning("Creating Prop for {entity}.{nav}", entity.Key, nav.Name);
+                        }
+                    }
+
+                    foreach (var prop in config.Properties)
+                    {
+                     //   logger.LogWarning("Prop for {entity}.{Prop}", entity.Key, prop.Name);
+                    }
+
+                }
+                Model = builder.GetEdmModel();
+            }
+
 
             return new Dictionary<string, Migration>
             {

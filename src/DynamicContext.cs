@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
@@ -18,6 +19,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -38,6 +40,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
+       
         //private readonly MigrationManager manager = new MigrationManager();
 
 
@@ -83,7 +86,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
+            var sw = Stopwatch.StartNew();
 
             manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
 
@@ -94,6 +97,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 config.Configure(a);
             }
 
+
+            logger.LogTrace("Model Builded in {time}", sw.Elapsed);
 
             //  modelBuilder.ApplyConfiguration(new DynamicConfig());
 
@@ -177,49 +182,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             if (request != null)
             {
-                var builder = new ODataConventionModelBuilder();
-                var v = new ODataModelBuilder();
-                builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
-                //   builder.EntitySet<Movie>("Movies");
-                //   builder.EntitySet<Review>("Reviews");
+               
 
-                foreach (var entity in manager.EntityDTOs)
-                {
-                    logger.LogWarning("Creating Model for {entity}", entity.Key);
-                    var config = builder.AddEntityType(entity.Value);
-                    
-                   
-                    //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
-                    //{
-                    //    config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
-                    //    logger.LogWarning("Creating Nav for {entity}.{nav}", entity.Key,nav.Name);
-                    //}
-
-                    foreach (var nav in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null))
-                    {
-                        if (nav.GetCustomAttribute<ForeignKeyAttribute>() is ForeignKeyAttribute navigation)
-                        {
-                            var prop = config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
-                            prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-                            logger.LogWarning("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
-                        }
-                        else
-                        {
-                            var prop = config.AddProperty(nav);
-                            prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-                            logger.LogWarning("Creating Prop for {entity}.{nav}", entity.Key, nav.Name);
-                        }
-                    }
-
-                    foreach (var prop in config.Properties)
-                    {
-                        logger.LogWarning("Prop for {entity}.{Prop}", entity.Key, prop.Name);
-                    }
-
-                }
-                var model = builder.GetEdmModel();
-
-                var context = new ODataQueryContext(model, type, new Microsoft.OData.UriParser.ODataPath());
+                var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
