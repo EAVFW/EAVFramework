@@ -3,6 +3,7 @@ using DotNetDevOps.Extensions.EAVFramework.Hosting;
 using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -29,28 +30,44 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
-            using var transaction = _context.Database.BeginTransaction();
+            var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
 
-            var trackedEntity = _context.Update(entityName, await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream()))));
-
-         
-
-            List<ValidationError> errors = await RunPreValidation(context, trackedEntity);
-
-            if (errors.Any())
-                return new DataValidationErrorResult(new { errors = errors });
-
-            await RunPreOperation(context, trackedEntity);
-
-            await _context.SaveChangesAsync();
-
-            await RunPostOperation(context, trackedEntity);
-
-            transaction.Commit();
+            var strategy = _context.Database.CreateExecutionStrategy();
 
 
+            var _operation = await strategy.ExecuteAsync(async () =>
+            {
+                var operation = new OperationContext<TContext>
+                {
+                    Context = _context
+                };
 
-            return new DataEndpointResult(new { id = trackedEntity.CurrentValues.GetValue<Guid>("Id") });
+                operation.Entity = _context.Update(entityName, record);
+
+                operation.Errors = await RunPreValidation(context, operation.Entity);
+
+                return operation;
+            });
+
+            await strategy.ExecuteInTransactionAsync(_operation,
+                  operation: async (operation, ct) =>
+                  {
+                      await RunPreOperation(context, operation.Entity);
+
+                      await operation.Context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
+
+                      await RunPostOperation(context, operation.Entity);
+                  },
+
+                  verifySucceeded: (operation, ct) => Task.FromResult(operation.Entity.CurrentValues.TryGetValue<Guid>("Id", out var id) && id != Guid.Empty)
+                );
+
+            _context.ChangeTracker.AcceptAllChanges();
+
+
+            await RunAsyncPostOperation(context, _operation.Entity);
+
+            return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
 
 
         }
