@@ -99,6 +99,94 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         public List<ValidationError> Errors { get; set; } = new List<ValidationError>();
         public EntityEntry Entity { get;  set; }
     }
+
+    internal class DeleteRecordEndpoint<TContext> : BaseEndpoint, IEndpointHandler
+        where TContext : DynamicContext
+    {
+        private readonly TContext _context;
+
+        private readonly ILogger<DeleteRecordEndpoint<TContext>> _logger;
+
+        public DeleteRecordEndpoint(
+            TContext context,
+            IEnumerable<EntityPlugin> plugins,
+            IPluginScheduler pluginScheduler,
+            ILogger<DeleteRecordEndpoint<TContext>> logger) : base(plugins.Where(c => c.Operation == EntityPluginOperation.Delete), pluginScheduler)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        public async Task<IEndpointResult> ProcessAsync(HttpContext context)
+        {
+            var routeValues = context.GetRouteData().Values;
+            var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
+            var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+         
+
+
+                var _operation = await strategy.ExecuteAsync(async () =>
+            {
+                var operation = new OperationContext<TContext>
+                {
+                    Context = _context
+                };
+
+
+                var record = await _context.FindAsync(entityName, Guid.Parse( recordId));
+                operation.Entity = _context.Entry(record);
+
+                foreach (var navigation in operation.Entity.Collections)
+                {
+                    await navigation.LoadAsync();
+
+
+                }
+
+                operation.Entity.State = EntityState.Deleted;
+
+
+
+
+              //  operation.Entity = _context.Remove(entityName, JToken.FromObject(new { id = recordId }));
+
+              
+
+
+
+                operation.Errors = await RunPreValidation(context, operation.Entity);
+
+                return operation;
+            });
+
+
+            await strategy.ExecuteInTransactionAsync(_operation,
+                  operation: async (operation, ct) =>
+                  {
+                      await RunPreOperation(context, operation.Entity);
+
+                      await operation.Context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
+
+                      await RunPostOperation(context, operation.Entity);
+                  },
+
+                  verifySucceeded: (operation, ct) => Task.FromResult(operation.Entity.CurrentValues.TryGetValue<Guid>("Id", out var id) && id != Guid.Empty)
+                );
+
+            _context.ChangeTracker.AcceptAllChanges();
+
+
+            await RunAsyncPostOperation(context, _operation.Entity);
+
+
+            return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
+
+        }
+
+    }
     internal class CreateRecordsEndpoint<TContext> : BaseEndpoint, IEndpointHandler
         where TContext : DynamicContext
     {
@@ -125,6 +213,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
              
             var strategy = _context.Database.CreateExecutionStrategy();
+
 
 
             var _operation = await strategy.ExecuteAsync(async () =>

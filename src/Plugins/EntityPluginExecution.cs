@@ -12,6 +12,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
     {
         Create,
         Update,
+        Delete,
         Retrieve,
         RetrieveAll
     }

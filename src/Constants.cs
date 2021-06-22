@@ -15,6 +15,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             public const string CreateRecord = "CreateRecord";
             public const string RetrieveRecord = "RetrieveRecord";
             public const string PatchRecord = "PatchRecord";
+            public const string DeleteRecord = "DeleteRecord";
         }
 
         public static class RoutePatterns

@@ -261,6 +261,14 @@ namespace DotNetDevOps.Extensions.EAVFramework
             return this.Add(record);
 
         }
+        public EntityEntry Remove(string entityName, JToken data)
+        {
+            var type = manager.EntityDTOs[entityName];
+            var record = data.ToObject(type);
+           
+            return this.Remove(record);
+
+        }
         public void Replace(string entityName, object entry, JToken data)
         {
             var type = manager.EntityDTOs[entityName];
