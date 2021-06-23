@@ -46,25 +46,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 operation.Errors = await RunPreValidation(context, operation.Entity);
 
+                if (operation.Errors.Any())
+                    return operation;
+
+
+                await RunPipelineAsync(context, operation);
+
+
                 return operation;
             });
-
-            await strategy.ExecuteInTransactionAsync(_operation,
-                  operation: async (operation, ct) =>
-                  {
-                      await RunPreOperation(context, operation.Entity);
-
-                      await operation.Context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
-
-                      await RunPostOperation(context, operation.Entity);
-                  },
-
-                  verifySucceeded: (operation, ct) => Task.FromResult(operation.Entity.CurrentValues.TryGetValue<Guid>("Id", out var id) && id != Guid.Empty)
-                );
-
-            _context.ChangeTracker.AcceptAllChanges();
-
-
+             
             await RunAsyncPostOperation(context, _operation.Entity);
 
             return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });

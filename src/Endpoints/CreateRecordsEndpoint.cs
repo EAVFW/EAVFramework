@@ -19,7 +19,7 @@ using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
-    
+
     internal class BaseEndpoint
     {
         private readonly IEnumerable<EntityPlugin> _plugins;
@@ -36,13 +36,29 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             foreach (var plugin in _plugins.Where(plugin => plugin.Mode == EntityPluginMode.Async && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type == a.Entity.GetType()))
             {
                 await _pluginScheduler.ScheduleAsync(plugin, a.Entity);
-               // await plugin.Execute(context.RequestServices, a);
+                // await plugin.Execute(context.RequestServices, a);
             }
 
             foreach (var navigation in a.References.Where(t => t.TargetEntry != null))
             {
                 await RunAsyncPostOperation(context, navigation.TargetEntry);
             }
+        }
+
+        protected async Task RunPipelineAsync<TContext>(HttpContext context, OperationContext<TContext> operation) where TContext : DynamicContext
+        {
+            var trans = await operation.Context.Database.BeginTransactionAsync();
+
+            await RunPreOperation(context, operation.Entity);
+
+            await operation.Context.SaveChangesAsync();
+
+            await RunPostOperation(context, operation.Entity);
+
+            await operation.Context.SaveChangesAsync();
+
+            await trans.CommitAsync();
+           
         }
 
         protected async Task RunPostOperation(HttpContext context, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry a)
@@ -77,7 +93,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var errors = new List<ValidationError>();
 
-            foreach(var navigation in a.References.Where(t=>t.TargetEntry !=null))
+            foreach (var navigation in a.References.Where(t => t.TargetEntry != null))
             {
                 errors.AddRange(await RunPreValidation(context, navigation.TargetEntry));
             }
@@ -97,7 +113,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     {
         public TContext Context { get; set; }
         public List<ValidationError> Errors { get; set; } = new List<ValidationError>();
-        public EntityEntry Entity { get;  set; }
+        public EntityEntry Entity { get; set; }
     }
 
     internal class DeleteRecordEndpoint<TContext> : BaseEndpoint, IEndpointHandler
@@ -125,59 +141,39 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
-         
 
-
-                var _operation = await strategy.ExecuteAsync(async () =>
+            var _operation = await strategy.ExecuteAsync(async () =>
             {
                 var operation = new OperationContext<TContext>
                 {
                     Context = _context
                 };
 
-
-                var record = await _context.FindAsync(entityName, Guid.Parse( recordId));
+                var record = await _context.FindAsync(entityName, Guid.Parse(recordId));
                 operation.Entity = _context.Entry(record);
 
                 foreach (var navigation in operation.Entity.Collections)
                 {
                     await navigation.LoadAsync();
-
-
                 }
 
                 operation.Entity.State = EntityState.Deleted;
 
 
 
-
-              //  operation.Entity = _context.Remove(entityName, JToken.FromObject(new { id = recordId }));
-
-              
-
-
-
                 operation.Errors = await RunPreValidation(context, operation.Entity);
 
+                if (operation.Errors.Any())
+                    return operation;
+
+                await RunPipelineAsync(context, operation);
+
                 return operation;
+
             });
 
 
-            await strategy.ExecuteInTransactionAsync(_operation,
-                  operation: async (operation, ct) =>
-                  {
-                      await RunPreOperation(context, operation.Entity);
-
-                      await operation.Context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
-
-                      await RunPostOperation(context, operation.Entity);
-                  },
-
-                  verifySucceeded: (operation, ct) => Task.FromResult(operation.Entity.CurrentValues.TryGetValue<Guid>("Id", out var id) && id != Guid.Empty)
-                );
-
-            _context.ChangeTracker.AcceptAllChanges();
-
+         
 
             await RunAsyncPostOperation(context, _operation.Entity);
 
@@ -186,21 +182,22 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         }
 
+      
     }
     internal class CreateRecordsEndpoint<TContext> : BaseEndpoint, IEndpointHandler
         where TContext : DynamicContext
     {
         private readonly TContext _context;
-      
+
         private readonly ILogger<CreateRecordsEndpoint<TContext>> _logger;
 
         public CreateRecordsEndpoint(
             TContext context,
             IEnumerable<EntityPlugin> plugins,
             IPluginScheduler pluginScheduler,
-            ILogger<CreateRecordsEndpoint<TContext>> logger) : base(plugins.Where(c=>c.Operation == EntityPluginOperation.Create), pluginScheduler)
+            ILogger<CreateRecordsEndpoint<TContext>> logger) : base(plugins.Where(c => c.Operation == EntityPluginOperation.Create), pluginScheduler)
         {
-            _context = context;           
+            _context = context;
             _logger = logger;
         }
 
@@ -211,7 +208,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
 
             var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
-             
+
             var strategy = _context.Database.CreateExecutionStrategy();
 
 
@@ -223,36 +220,45 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                     Context = _context
                 };
 
-                operation.Entity= _context.Add(entityName, record);
+                operation.Entity = _context.Add(entityName, record);
 
                 operation.Errors = await RunPreValidation(context, operation.Entity);
-                
+               
+                if (operation.Errors.Any())
+                    return operation;
+
+
+                await RunPipelineAsync(context, operation);
+
+
+
+
                 return operation;
             });
-           
+
 
 
             if (_operation.Errors.Any())
                 return new DataValidationErrorResult(new { errors = _operation.Errors });
-             
 
-            // using var transaction = _context.Database.BeginTransaction();
+            //    // using var transaction = _context.Database.BeginTransaction();
 
-            await strategy.ExecuteInTransactionAsync(_operation,
-                  operation: async (operation,ct) =>
-                  {
-                      await RunPreOperation(context, operation.Entity);
+            //    await strategy.ExecuteInTransactionAsync(_operation,
+            //      operation: async (operation, ct) =>
+            //      {
+            //          //restore
+            //          await RunPreOperation(context, operation.Entity);
 
-                      await operation.Context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
+            //          await operation.Context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
+            //          //get changes
+            //          await RunPostOperation(context, operation.Entity);
+            //      },
 
-                      await RunPostOperation(context, operation.Entity);
-                  },
+            //      verifySucceeded: (operation, ct) => Task.FromResult(operation.Entity.CurrentValues.TryGetValue<Guid>("Id", out var id) && id != Guid.Empty)
+            //    );
 
-                  verifySucceeded: (operation,ct) => Task.FromResult(operation.Entity.CurrentValues.TryGetValue<Guid>("Id", out var id) && id != Guid.Empty)
-                );
+            //_context.ChangeTracker.AcceptAllChanges();
 
-            _context.ChangeTracker.AcceptAllChanges();
-             
 
             await RunAsyncPostOperation(context, _operation.Entity);
 
@@ -264,6 +270,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         }
 
-     
+
     }
 }

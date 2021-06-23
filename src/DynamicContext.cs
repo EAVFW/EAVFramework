@@ -68,6 +68,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
             if (this.modelOptions.Value.EnableDynamicMigrations)
             {
                 ConfigureMigrationAsesmbly(optionsBuilder);
+
+
             } 
             base.OnConfiguring(optionsBuilder);
         }
@@ -95,6 +97,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 var a = modelBuilder.Entity(en.Value);
                 var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                 config.Configure(a);
+
+              
             }
 
 
