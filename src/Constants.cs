@@ -36,6 +36,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public const string DefaultCookieAuthenticationScheme = "eavfw";
         public const string ExternalCookieAuthenticationScheme = "eavfw.external";
         public const string DefaultCheckSessionCookieName = "eavfw.session";
+        public const string DefaultLoginRedirectCookie = "eavauth.login";
 
         public static readonly TimeSpan DefaultCookieTimeSpan = TimeSpan.FromHours(10);
 
@@ -59,6 +60,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             public static class DefaultRoutePaths
             {
                 public const string Login = "/account/login";
+                public const string LoginCallback = "/account/login/callback";
                 public const string Logout = "/account/logout";
                 public const string Consent = "/consent";
                 public const string Error = "/home/error";
@@ -66,5 +68,4 @@ namespace DotNetDevOps.Extensions.EAVFramework
             }
         }
     }
-    
 }

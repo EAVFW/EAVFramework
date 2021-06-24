@@ -7,7 +7,7 @@
     <Company>DotNetDevOps</Company>
     <PackageTags>EAV;EntityFramework;DotNetDevOps</PackageTags>
     <Description>
-      This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
+      This library adds support for dynamic data modelling and an EAV framework on top of EF Core
     </Description>
     <PackageProjectUrl>https://dev.azure.com/dotnet-devops/DotNETDevOps/_git/DotNetDevOps.Extensions.EAVFramework</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -20,6 +20,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Authentication\Passwordless" />
   </ItemGroup>
 
 </Project>
