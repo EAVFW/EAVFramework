@@ -89,7 +89,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public Dictionary<string, StringBuilder> methodBodies = new Dictionary<string, StringBuilder>();
 
 
-        public Type BuildEntityDefinition(ModuleBuilder builder, JToken manifest, JProperty entityDefinition)
+        public TypeBuilder BuildEntityDefinition(ModuleBuilder builder, JToken manifest, JProperty entityDefinition)
         {
             var EntitySchameName = entityDefinition.Name.Replace(" ", "");
             var EntityCollectionSchemaName = (entityDefinition.Value.SelectToken("$.pluralName")?.ToString() ?? EntitySchameName).Replace(" ", "");
@@ -250,11 +250,28 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             DownMethodIL.Emit(OpCodes.Pop);
             DownMethodIL.Emit(OpCodes.Ret);
 
-            var type = entityTypeBuilder.CreateTypeInfo();
+          //  var type = entityTypeBuilder.CreateTypeInfo();
 
-            return type;
+            return entityTypeBuilder;
         }
+        public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
+        {
+            var builders = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => this.BuildEntityDefinition(builder, manifest, entity)).ToArray();
 
+           
+            var tables = builders.Select(entity => Activator.CreateInstance(entity.CreateTypeInfo()) as IDynamicTable).ToArray();
+           
+            foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
+            { 
+                var EntitySchameName = entityDefinition.Name.Replace(" ", "");
+                var EntityCollectionSchemaName = (entityDefinition.Value.SelectToken("$.pluralName")?.ToString() ?? EntitySchameName).Replace(" ", "");
+                var entityLogicalName = entityDefinition.Value.SelectToken("$.logicalName").ToString();
+                options.EntityDTOs[EntityCollectionSchemaName] = options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityLogicalName)?.GetTypeInfo() ?? options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
+                 
+            }
+
+            return tables;
+        }
         internal Type CreateDynamicMigration(JToken manifest)
         {
             TypeBuilder migrationType =
@@ -566,7 +583,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         }
 
-            public void CreateDTO(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JObject entityDefinition, JToken manifest)
+           
+        public void CreateDTO(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JObject entityDefinition, JToken manifest)
         {
             // var members = new Dictionary<string, PropertyBuilder>();
 
@@ -574,26 +592,21 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var allProps = entityDefinition.SelectToken("$.attributes").OfType<JProperty>().Select(attributeDefinition => attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "")).ToArray();
 
             var acceptableBasesClass = options.DTOBaseClasses.Concat(new[] { typeof(DynamicEntity) }).Where(c => c.GetProperties().Select(p => p.Name).All(p => allProps.Contains(p)))
-                .OrderByDescending(c=>c.GetProperties().Length)
+                .OrderByDescending(c => c.GetProperties().Length)
                 .First();
 
-          
+
 
 
             var entityLogicalName = entityDefinition.SelectToken("$.logicalName").ToString();
-            
-           // TypeBuilder entityType =
 
-           // options.EntityDTOsBuilders[entityCollectionSchemaName] = entityType;
+            // TypeBuilder entityType =
 
-            TypeBuilder entityType = options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{entitySchameName}", TypeAttributes.Public
-                                                            | TypeAttributes.Class
-                                                            | TypeAttributes.AutoClass
-                                                            | TypeAttributes.AnsiClass
-                                                            | TypeAttributes.Serializable
-                                                            | TypeAttributes.BeforeFieldInit, acceptableBasesClass));
+            // options.EntityDTOsBuilders[entityCollectionSchemaName] = entityType;
 
-            entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { 
+            TypeBuilder entityType = GetOrCreateEntityBuilder(myModule, entitySchameName, acceptableBasesClass);
+
+            entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] {
                 typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
                   typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
                     typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName))
@@ -603,74 +616,74 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                   entityDefinition.SelectToken("$.collectionSchemaName").ToString()
             }));
             entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityDTOAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityDTOAttribute).GetProperty(nameof(EntityDTOAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() }));
-             
-          
-          //  var propertyChangedMethod = options.EntityBaseClass.GetMethod("OnPropertyChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+
+
+            //  var propertyChangedMethod = options.EntityBaseClass.GetMethod("OnPropertyChanged", BindingFlags.Instance | BindingFlags.NonPublic);
 
             foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
             {
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
-                
-                
+
+
                 var clrType = GetCLRType(attributeDefinition.Value, out var manifestType);
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
 
-               
-                if(acceptableBasesClass.GetProperties().Any(p=>p.Name== attributeSchemaName))
+
+                if (acceptableBasesClass.GetProperties().Any(p => p.Name == attributeSchemaName))
                 {
                     continue;
                 }
 
 
- 
+
 
                 //PrimaryKeys cant be null, remove nullable
-                if (isprimaryKey )
+                if (isprimaryKey)
                 {
-                    clrType = Nullable.GetUnderlyingType(clrType) ?? clrType;  
-                } 
+                    clrType = Nullable.GetUnderlyingType(clrType) ?? clrType;
+                }
 
                 if (clrType != null)
                 {
-                   
+
                     var (attProp, attField) = CreateProperty(entityType, attributeSchemaName, clrType);
 
 
                     if (manifestType == "lookup")
                     {
                         var FKLogicalName = attributeDefinition.Value.SelectToken("$.logicalName").ToString();
-                       
+
                         if (FKLogicalName.EndsWith("id", StringComparison.OrdinalIgnoreCase))
                             FKLogicalName = FKLogicalName.Substring(0, FKLogicalName.Length - 2);
 
                         var FKSchemaName = attributeDefinition.Value.SelectToken("$.schemaName").ToString();
-                        if (FKSchemaName.EndsWith("id",StringComparison.OrdinalIgnoreCase))
+                        if (FKSchemaName.EndsWith("id", StringComparison.OrdinalIgnoreCase))
                             FKSchemaName = FKSchemaName.Substring(0, FKSchemaName.Length - 2);
 
 
                         var foreigh = manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType").ToString()}']");
                         //  name= foreigh.SelectToken("$.pluralName")?.ToString()
-
-                        var foreighEntityCollectionSchemaName = (foreigh.SelectToken("$.pluralName")?.ToString() ?? (foreigh.Parent as JProperty).Name).Replace(" ", "");
+                        var foreighSchemaName = foreigh.SelectToken("$.schemaName")?.ToString();
+                      //  var foreighEntityCollectionSchemaName = (foreigh.SelectToken("$.pluralName")?.ToString() ?? (foreigh.Parent as JProperty).Name).Replace(" ", "");
 
                         try
                         {
-                            var (attFKProp, attFKField) = CreateProperty(entityType,( FKSchemaName ??
-                                (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighEntityCollectionSchemaName == entityCollectionSchemaName ? entityType : options.EntityDTOs[foreighEntityCollectionSchemaName]);
+                            var (attFKProp, attFKField) = CreateProperty(entityType, (FKSchemaName ??
+                                (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ? entityType : GetOrCreateEntityBuilder(myModule, foreighSchemaName, acceptableBasesClass) );
 
-                      
-                        CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.ForeignKeyAttributeCtor, new object[] { attProp.Name });
 
-                        attFKProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
+                            CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.ForeignKeyAttributeCtor, new object[] { attProp.Name });
 
-                        CreateJsonSerializationAttribute(attributeDefinition.Value, attFKProp, FKLogicalName);
-                        CreateDataMemberAttribute(attributeDefinition.Value, attFKProp, FKLogicalName);
-                     
+                            attFKProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
+
+                            CreateJsonSerializationAttribute(attributeDefinition.Value, attFKProp, FKLogicalName);
+                            CreateDataMemberAttribute(attributeDefinition.Value, attFKProp, FKLogicalName);
+
                         }
                         catch (Exception ex)
                         {
-                            File.AppendAllLines("err.txt",new[] { $"Faiiled for {entitySchameName}.{attributeSchemaName} with {foreighEntityCollectionSchemaName}" });
-                           
+                            File.AppendAllLines("err.txt", new[] { $"Faiiled for {entitySchameName}.{attributeSchemaName} with {foreighSchemaName}" });
+
                             throw;
                         }
 
@@ -699,36 +712,32 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             }
 
-            foreach(var entity in manifest.SelectToken("$.entities").OfType<JProperty>()){
-                foreach(var attribute in entity.Value.SelectToken("$.attributes").OfType<JProperty>())
+            foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
+            {
+                foreach (var attribute in entity.Value.SelectToken("$.attributes").OfType<JProperty>())
                 {
                     var type = attribute.Value.SelectToken("$.type.referenceType")?.ToString();
                     if (type != null && manifest.SelectToken($"$.entities['{type}'].logicalName")?.ToString() == entityDefinition.SelectToken("$.logicalName").ToString())
                     {
                         File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
-                       
-                        TypeBuilder related = options.EntityDTOsBuilders.GetOrAdd(entity.Name.Replace(" ", ""), _ => myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
-                                                           | TypeAttributes.Class
-                                                           | TypeAttributes.AutoClass
-                                                           | TypeAttributes.AnsiClass
-                                                           | TypeAttributes.Serializable
-                                                           | TypeAttributes.BeforeFieldInit, acceptableBasesClass));
 
-                      //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
+                        TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), acceptableBasesClass);
+
+                        //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
                         {
                             //
                             var (attProp, attField) = CreateProperty(entityType, entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related));
-                               // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
+                            // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
                         }
                     }
                 }
             }
 
             // ConfigureMethodIL.Emit(OpCodes.Ret);
-           
 
-            options.EntityDTOs[entityCollectionSchemaName] = options.DTOAssembly?.GetTypes().FirstOrDefault(t=>t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityLogicalName)?.GetTypeInfo() ??  entityType.CreateTypeInfo();
+
+           // options.EntityDTOs[entityCollectionSchemaName] = options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityLogicalName)?.GetTypeInfo() ?? entityType.CreateTypeInfo();
 
 
 
@@ -741,7 +750,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         }
 
-      
+        private TypeBuilder GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, Type acceptableBasesClass)
+        {
+            File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
+
+            return options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
+                                                                        | TypeAttributes.Class
+                                                                        | TypeAttributes.AutoClass
+                                                                        | TypeAttributes.AnsiClass
+                                                                        | TypeAttributes.Serializable
+                                                                        | TypeAttributes.BeforeFieldInit, acceptableBasesClass));
+        }
+
         private void CreateJsonSerializationAttribute(JToken value, PropertyBuilder attProp, string name)
         {
             CustomAttributeBuilder JsonPropertyAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyAttributeCtor, new object[] { name });

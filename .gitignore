@@ -340,3 +340,5 @@ ASALocalRun/
 healthchecksdb
 /src/err.txt
 /src/test1.txt
+/generators/DotNetDevOps.Extensions.EAVFramework.SourceGenerator/err.txt
+/generators/DotNetDevOps.Extensions.EAVFramework.SourceGenerator/test1.txt

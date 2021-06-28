@@ -127,7 +127,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                  });
 
                  var migrationType = generator.CreateDynamicMigration(manifest);
-                 var tables = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => Activator.CreateInstance(generator.BuildEntityDefinition(myModule, manifest, entity)) as IDynamicTable).ToArray();
+                 var tables = generator.GetTables(manifest, myModule);
+                // var tables = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => generator.BuildEntityDefinition(myModule, manifest, entity)).ToArray().Select(entity => Activator.CreateInstance(entity.CreateTypeInfo()) as IDynamicTable).ToArray();
 
                  return Activator.CreateInstance(migrationType, manifest, tables) as Migration;
              });

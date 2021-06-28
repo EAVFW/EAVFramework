@@ -199,16 +199,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                     var migrationType = generator.CreateDynamicMigration(json);
 
-                    var tables = json.SelectToken("$.entities").OfType<JProperty>().Select(entity => Activator.CreateInstance(generator.BuildEntityDefinition(myModule, json, entity)) as IDynamicTable).ToArray();
-
+                    var tables = generator.GetTables(json, myModule);
                     //I think its here we should generate some openapi spec, looping over the entities in our model.
                     //However i would like the augment the DTO types in the code generator with some attributes that controls it,
                     //so we also can generate it at runtime dynamic for custom entites. 
                     //Same approach as the codegenerator, make a class that is "shared" by the projects and runs on top of the generated DTO classes (EACH DTO class is a endpoint after all).
                     //Remember, dont make it perfect the first time, just get it work and we can add features.
 
+                     //)
 
-                    foreach (var type in myModule.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null))
+                    foreach (var type in myModule.GetTypes().Where(t => { try { return t.GetCustomAttribute<EntityDTOAttribute>() != null; } catch (Exception) { } return false; }))
                     {
 
                         context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
@@ -291,8 +291,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
     | System.Reflection.BindingFlags.Instance
     | System.Reflection.BindingFlags.DeclaredOnly))
                     {
-
-                        GeneratePropertySource(sb, "\t\t", namespaces, prop);
+                         
+                            GeneratePropertySource(sb, "\t\t", namespaces, prop);
+                        
                     }
 
 
@@ -314,9 +315,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
         private void GeneratePropertySource(StringBuilder sb, string indention, HashSet<string> namespaces, PropertyInfo prop)
         {
-            GenerateAttributes(sb, indention, namespaces, prop.CustomAttributes);
-            //{(prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)? " virtual":"")}
-            sb.AppendLine($"{indention}public {SerializeType(prop.PropertyType, namespaces)} {prop.Name} {{get;set;}}");
+            try
+            {
+                GenerateAttributes(sb, indention, namespaces, prop.CustomAttributes);
+                //{(prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)? " virtual":"")}
+                sb.AppendLine($"{indention}public {SerializeType(prop.PropertyType, namespaces)} {prop.Name} {{get;set;}}");
+            }catch(Exception ex)
+            {
+                sb.AppendLine($"{indention}///public ... {prop.Name} {{get;set;}}");
+                sb.AppendLine($"{indention}/// {string.Join($"\n{indention}\\\\\\", ex.Message.Split('\n'))}");
+            }
             sb.AppendLine();
         }
 
