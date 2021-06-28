@@ -93,13 +93,13 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
 
-            foreach (var en in manager.EntityDTOs)
+            foreach (var en in manager.EntityDTOs.Where(v=>!(v.Value.BaseType?.IsAbstract??false)))
             {
                 var a = modelBuilder.Entity(en.Value);
                 var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                 config.Configure(a);
-                Console.WriteLine(a.Metadata.ToDebugString(Microsoft.EntityFrameworkCore.Infrastructure.MetadataDebugStringOptions.LongDefault));
-                Console.WriteLine(string.Join(",",a.Metadata.GetForeignKeys().Select(c=>c.GetConstraintName())));
+               // Console.WriteLine(a.Metadata.ToDebugString(Microsoft.EntityFrameworkCore.Infrastructure.MetadataDebugStringOptions.LongDefault));
+               // Console.WriteLine(string.Join(",",a.Metadata.GetForeignKeys().Select(c=>c.GetConstraintName())));
                 Console.WriteLine(en.Value.Name);
               
             }
