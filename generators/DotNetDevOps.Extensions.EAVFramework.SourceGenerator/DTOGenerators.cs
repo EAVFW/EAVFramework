@@ -144,7 +144,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                     }
 
-
+                     
 
                     var generator = new CodeGenerator(new CodeGeneratorOptions
                     {
@@ -169,7 +169,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         EntityTypeBuilderHasKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), new[] { typeof(string[]) }),
 
                         ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
-
+                        InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
 
 
                         OperationBuilderAddColumnOptionType = typeof(OperationBuilder<AddColumnOperation>),

@@ -93,6 +93,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                      EntityTypeBuilderHasKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }),
 
                      ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
+                     InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
 
                      EntityDTOs = EntityDTOs,
                      EntityDTOConfigurations=EntityDTOConfigurations,

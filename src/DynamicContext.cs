@@ -88,6 +88,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            Console.WriteLine("TEST");
             var sw = Stopwatch.StartNew();
 
             manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
@@ -97,7 +98,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 var a = modelBuilder.Entity(en.Value);
                 var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                 config.Configure(a);
-
+                Console.WriteLine(a.Metadata.ToDebugString(Microsoft.EntityFrameworkCore.Infrastructure.MetadataDebugStringOptions.LongDefault));
+                Console.WriteLine(string.Join(",",a.Metadata.GetForeignKeys().Select(c=>c.GetConstraintName())));
+                Console.WriteLine(en.Value.Name);
               
             }
 

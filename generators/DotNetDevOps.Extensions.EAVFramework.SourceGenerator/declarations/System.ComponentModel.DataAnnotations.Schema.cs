@@ -16,4 +16,12 @@ namespace System.ComponentModel.DataAnnotations.Schema
         }
     }
 
+    public class InversePropertyAttribute : Attribute
+    {
+        public InversePropertyAttribute(string name)
+        {
+
+        }
+    }
+
 }

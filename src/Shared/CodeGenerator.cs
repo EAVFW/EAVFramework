@@ -45,6 +45,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo EntityTypeBuilderHasKey { get;  set; }
         public string Schema { get; set; }
         public ConstructorInfo ForeignKeyAttributeCtor { get; internal set; }
+        public ConstructorInfo InverseAttributeCtor { get; internal set; }
+
+
         public Dictionary<string, Type> EntityDTOs { get; internal set; } = new Dictionary<string, Type>();
         public ConcurrentDictionary<string, TypeBuilder> EntityDTOsBuilders { get; internal set; } = new ConcurrentDictionary<string, TypeBuilder>();
         public Dictionary<string,Type> EntityDTOConfigurations { get; internal set; } = new Dictionary<string, Type>();
@@ -188,10 +191,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             {
                 foreach (var fk in fKeys) //.GroupBy(c => c.EntityName))
                 {
-
+                    
+                    //CreateTableBuilder
                     var entityName = fk.EntityName;
                     ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
+                   
+                    Console.WriteLine($"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
+
 
                     WriteLambdaExpression(builder, ConstraintsMethodIL, columnsCLRType, new[] { fk.PropertyGetMethod });// fk.Select(c => c.PropertyGetMethod).ToArray());
 
@@ -672,7 +679,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ? entityType : GetOrCreateEntityBuilder(myModule, foreighSchemaName, acceptableBasesClass) );
 
 
-                            CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.ForeignKeyAttributeCtor, new object[] { attProp.Name });
+                            CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.ForeignKeyAttributeCtor, new object[] { attField.Name });
 
                             attFKProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
 
@@ -714,11 +721,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
             {
-                foreach (var attribute in entity.Value.SelectToken("$.attributes").OfType<JProperty>())
+                var attributes = entity.Value.SelectToken("$.attributes").OfType<JProperty>()
+                    .Where(attribute =>
                 {
                     var type = attribute.Value.SelectToken("$.type.referenceType")?.ToString();
-                    if (type != null && manifest.SelectToken($"$.entities['{type}'].logicalName")?.ToString() == entityDefinition.SelectToken("$.logicalName").ToString())
-                    {
+                    return type != null && manifest.SelectToken($"$.entities['{type}'].logicalName")?.ToString() == entityDefinition.SelectToken("$.logicalName").ToString();
+
+                }).ToArray();
+                foreach (var attribute in attributes)
+                {
+                    { 
                         File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
 
@@ -727,8 +739,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
                         {
                             //
-                            var (attProp, attField) = CreateProperty(entityType, entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related));
+                            var (attProp, attField) = CreateProperty(entityType,(attributes.Length > 1? attribute.Name.Replace(" ", ""):"") + entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related));
                             // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
+
+                            CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.InverseAttributeCtor, new object[] { attribute.Name.Replace(" ", "")  });
+
+                            attProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
+
+
                         }
                     }
                 }
