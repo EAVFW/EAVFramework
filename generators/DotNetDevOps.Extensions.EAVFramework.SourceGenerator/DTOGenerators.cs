@@ -80,9 +80,21 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         IEnumerable<SyntaxNode> allNodes = compilation.SyntaxTrees.SelectMany(s => s.GetRoot().DescendantNodes());
                         var baseClass = allNodes
                              .Where(d => d.IsKind(SyntaxKind.ClassDeclaration))
-                             .OfType<ClassDeclarationSyntax>()
+                             .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>()
                              .ToArray();
+                        var baseclases = allNodes
+                             .Where(d => d.IsKind(SyntaxKind.ClassDeclaration))
+                           //  .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>()
+                             .ToArray();
+                        if (baseClass.Length != baseclases.Length)
+                            throw new InvalidOperationException("The wrong dll is loaded for analysers: ask PKS");
 
+                        File.AppendAllLines("test1.txt", new[] { 
+                            ( baseclases.First().GetType() == typeof( Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax)).ToString(),
+                         typeof( Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax).Assembly.Location,
+                         baseclases.First().GetType().Assembly.Location
+
+                        });
 
                         var a = string.Join(",", baseClass
                          .SelectMany(c => c.AttributeLists.DefaultIfEmpty()??Enumerable.Empty<AttributeListSyntax>())
@@ -96,8 +108,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                       .Any(bb => bb.Name?.NormalizeWhitespace()?.ToFullString() == "BaseEntity"));
 
 
+                        File.AppendAllLines("test1.txt", new[] { string.Join(",", baseclases.GroupBy(n=>n.GetType().Assembly.Location).Select(n => n.Key + n.Count())) });
 
-                       // File.WriteAllText("test1.txt",   a );
+                        File.AppendAllLines("test1.txt", new[] { baseclases.Length.ToString(), string.Join(",", baseClass.Select(n=>n.GetFullName())) });
+
+                        File.AppendAllLines("test1.txt", new[] { a });
+                      
                        // File.AppendAllLines("test1.txt", withAtt.Select(baseType=> baseType.GetFullName()));
 
                         //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", a, "", DiagnosticSeverity.Warning, true), null));
@@ -113,7 +129,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                             var baseType = withAtt.Single(c => c.GetFullName() == basefullname);
                             var model = compilation.GetSemanticModel(baseType.SyntaxTree);
                             var myClassSymbol = model.GetDeclaredSymbol(baseType);
-
+                            if (myClassSymbol.TypeArguments.Any())
+                            {
+                                File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c=>c.Name)) });
+                                File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c => c.Name)) });
+                            }
                             var baseTypeName =  $"{myClassSymbol.BaseType.ContainingNamespace.ToString()}.{myClassSymbol.BaseType.Name}";
 
 
@@ -126,8 +146,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                                                               | TypeAttributes.Serializable
                                                               | TypeAttributes.BeforeFieldInit, baseTypesDict.GetOrAdd(baseTypeName, (fullname) => CreateTypeForBaseClass(fullname)));
 
+
                             foreach (var property in baseType.Members.OfType<PropertyDeclarationSyntax>())
                             {
+                                if((property.AttributeLists.DefaultIfEmpty() ?? Enumerable.Empty<AttributeListSyntax>())
+                                        .SelectMany(aa => aa?.Attributes.DefaultIfEmpty() ?? Enumerable.Empty<AttributeSyntax>())
+                                  .Any(bb => bb.Name?.NormalizeWhitespace()?.ToFullString() == "ForeignKey"))
+                                {
+                                    continue;
+                                }
 
                                 File.AppendAllLines("test1.txt", new[] { property.Identifier.ToString() });
                                 CodeGenerator.CreateProperty(entityType, property.Identifier.ToString(), typeof(string));
@@ -137,7 +164,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         }
 
                         foreach (var baseType in withAtt)
-                        {      
+                        {
+                            File.AppendAllLines("test1.txt", new[] { $"Base type: {baseType.GetFullName()}" });
                             baseTypes.Add( baseTypesDict.GetOrAdd(baseType.GetFullName(), (fullname)=> CreateTypeForBaseClass(fullname)));
                         }
 
@@ -276,7 +304,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                 }
 
                 GenerateAttributes(sb, "\t", namespaces, type.CustomAttributes);
-                sb.AppendLine($"\tpublic class {type.Name}{inherience}\r\n\t{{");
+                sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract ":" ")}class {type.Name}{inherience}\r\n\t{{");
                 {
                     foreach (var ctor in type.GetConstructors())
                     {
