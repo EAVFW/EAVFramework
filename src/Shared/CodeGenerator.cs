@@ -797,7 +797,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-
+             
 
 
                 var typeObj = attributeDefinition.Value.SelectToken("$.type");
@@ -913,7 +913,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         {
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, sqlColumnArgs.ToObject<int>());
                             if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                            {
+                            {                                
                                 entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
                                 // It's nullable
                             }
@@ -947,8 +947,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)");
                                 break;
 
-                            case "type" when type == "text":
-                            case "type" when type == "string":
+                            case "type" when type == "text" && typeObj.Type != JTokenType.Object:
+                            case "type" when type == "string" && typeObj.Type != JTokenType.Object:
                                 entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false) ? 255 : 100)})");
                                 break;
                             default:
