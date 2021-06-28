@@ -14,6 +14,7 @@ using DotNetDevOps.Extensions.EAVFramework.Services;
 using DotNetDevOps.Extensions.EAVFramework.Events;
 using System.Collections.Generic;
 using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Builder;
 
@@ -58,7 +59,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
                 //   .WithDisplayName(endpoint.Name)
                 //   .WithMetadata(endpoint);
             }
+
+            var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
             
+            config.AddEasyAuth(authProps ?? new AuthenticationProperties());
         }
     }
 

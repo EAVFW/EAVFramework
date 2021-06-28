@@ -1,23 +1,13 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
+﻿using DotNetDevOps.Extensions.EAVFramework.Extensions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 {
-
-
     internal class ConfigureInternalCookieOptions : IConfigureNamedOptions<CookieAuthenticationOptions>
     {
         private readonly EAVFrameworkOptions _options;
@@ -363,6 +353,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
         /// The services.
         /// </value>
         public IServiceCollection Services { get; }
+    }
+
+    public class AuthenticatedEAVFrameworkBuilder : EAVFrameworkBuilder
+    {
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IdentityServerBuilder"/> class.
+                /// </summary>
+                /// <param name="services">The services.</param>
+                /// <exception cref="System.ArgumentNullException">services</exception>
+                public AuthenticatedEAVFrameworkBuilder(IServiceCollection services) :base(services) {}
     }
 
 }

@@ -6,15 +6,14 @@ using DotNetDevOps.Extensions.EAVFramework.Hosting;
 using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using DotNetDevOps.Extensions.EAVFramework.Services;
 using DotNetDevOps.Extensions.EAVFramework.Services.Default;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
-using System.Threading.Tasks;
+using DotNetDevOps.Extensions.EAVFramework.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -94,7 +93,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             builder.Services.AddAuthentication(Constants.DefaultCookieAuthenticationScheme)
                 .AddCookie(Constants.DefaultCookieAuthenticationScheme)
-                .AddCookie(Constants.ExternalCookieAuthenticationScheme);
+                .AddCookie(Constants.ExternalCookieAuthenticationScheme)
+                .AddCookie(Constants.DefaultLoginRedirectCookie);
 
             builder.Services.AddSingleton<IConfigureOptions<CookieAuthenticationOptions>, ConfigureInternalCookieOptions>();
             builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, PostConfigureInternalCookieOptions>();
@@ -172,6 +172,31 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
+        public static AuthenticatedEAVFrameworkBuilder AddAuthentication(
+            this IEAVFrameworkBuilder builder,
+            AuthenticationProperties properties = null)
+        {
+            var props = properties ?? new AuthenticationProperties();
+            builder.Services.AddTransient<AuthenticationProperties>(_ => props);
+            builder.AddCookieAuthentication();
+            return builder as AuthenticatedEAVFrameworkBuilder;
+        }
+
+        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T>(
+            this AuthenticatedEAVFrameworkBuilder builder,
+            Action<IEasyAuthOptions<T>> configureOptions,
+            string authenticationName = null) where T: class, IEasyAuthProvider
+        {
+            builder.Services.Configure(configureOptions);
+            builder.Services.AddTransient<IEasyAuthProvider, T>();
+            var name = authenticationName ?? nameof(T);
+            builder.Services.AddAuthentication(name)
+                .AddCookie(name, o=>
+                {
+                    o.LoginPath = "/account/login";
+                });
+            return builder;
+        }
 
         public static IEAVFrameworkBuilder AddPlugin<T,TContext,TEntity>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, EntityPluginOperation operation, int order=0)
             where T : class, IPlugin<TContext,TEntity>
