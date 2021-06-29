@@ -8,8 +8,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.AspNetCore.Http;
@@ -23,7 +21,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         private readonly CloudStorageAccount _storage;
         private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
-
+        
+        public PasswordlessEasyAuthProvider() {}
+        
         public PasswordlessEasyAuthProvider(
             CloudStorageAccount storage,
             SmtpClient smtpClient,
@@ -103,9 +103,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 
         public async Task<(ClaimsIdentity, string)> OnCallback(string handleId, HttpContext httpcontext)
         {
-            var storage = CloudStorageAccount.Parse(httpcontext.RequestServices.GetRequiredService<IConfiguration>()
-                .GetValue<string>("Storage"));
-            var table = storage.CreateCloudTableClient().GetTableReference("signin");
+            var table = _storage.CreateCloudTableClient().GetTableReference("signin");
 
             var ticketInfo = table.CreateQuery<DynamicTableEntity>()
                 .Where(c => c.PartitionKey == handleId.URLSafeHash()).Take(1).ToList().FirstOrDefault();

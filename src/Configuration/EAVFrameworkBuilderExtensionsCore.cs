@@ -183,13 +183,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T,TOptions>(
             this AuthenticatedEAVFrameworkBuilder builder,
-            Action<TOptions> configureOptions,
-            string authenticationName = null) where T: class, IEasyAuthProvider
+            Action<TOptions> configureOptions) where T: class, IEasyAuthProvider
             where TOptions:class
         {
+            var t = typeof(T);
+            var at = Activator.CreateInstance<T>();
             builder.Services.Configure(configureOptions);
             builder.Services.AddTransient<IEasyAuthProvider, T>();
-            var name = authenticationName ?? nameof(T);
+            var name = at.AuthenticationName;
             builder.Services.AddAuthentication(name)
                 .AddCookie(name, o=>
                 {
