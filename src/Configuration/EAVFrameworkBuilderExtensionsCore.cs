@@ -186,7 +186,6 @@ namespace Microsoft.Extensions.DependencyInjection
             Action<TOptions> configureOptions) where T: class, IEasyAuthProvider
             where TOptions:class
         {
-            var t = typeof(T);
             var at = Activator.CreateInstance<T>();
             builder.Services.Configure(configureOptions);
             builder.Services.AddTransient<IEasyAuthProvider, T>();
