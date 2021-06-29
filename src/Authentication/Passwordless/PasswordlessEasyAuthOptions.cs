@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 {
-    public class PasswordlessEasyAuthOptions : IEasyAuthOptions<PasswordlessEasyAuthProvider>
+    public class PasswordlessEasyAuthOptions //: IEasyAuthOptions<PasswordlessEasyAuthProvider>
     {
         /// <summary>
         /// The subject line of the sign-in email

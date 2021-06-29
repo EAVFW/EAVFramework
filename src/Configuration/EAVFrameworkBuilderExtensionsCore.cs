@@ -182,10 +182,11 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder as AuthenticatedEAVFrameworkBuilder;
         }
 
-        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T>(
+        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T,TOptions>(
             this AuthenticatedEAVFrameworkBuilder builder,
-            Action<IEasyAuthOptions<T>> configureOptions,
+            Action<TOptions> configureOptions,
             string authenticationName = null) where T: class, IEasyAuthProvider
+            where TOptions:class
         {
             builder.Services.Configure(configureOptions);
             builder.Services.AddTransient<IEasyAuthProvider, T>();
