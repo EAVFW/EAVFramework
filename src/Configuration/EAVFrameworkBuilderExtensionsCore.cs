@@ -46,7 +46,6 @@ namespace Microsoft.Extensions.DependencyInjection
             var builder = services.AddEAVFrameworkBuilder();
 
             builder
-                .AddCookieAuthentication()
                 .AddRequiredPlatformServices()
                 .AddDefaultEndpoints< TContext>()
                   .AddPluggableServices();
@@ -179,7 +178,7 @@ namespace Microsoft.Extensions.DependencyInjection
             var props = properties ?? new AuthenticationProperties();
             builder.Services.AddTransient<AuthenticationProperties>(_ => props);
             builder.AddCookieAuthentication();
-            return builder as AuthenticatedEAVFrameworkBuilder;
+            return new AuthenticatedEAVFrameworkBuilder(builder);
         }
 
         public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T,TOptions>(
