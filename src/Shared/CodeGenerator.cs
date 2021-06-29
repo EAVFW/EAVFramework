@@ -79,6 +79,37 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
     {
 
     }
+    public static class TSortExt
+    {
+        public static IEnumerable<T> TSort<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> dependencies, bool throwOnCycle = false)
+        {
+            var sorted = new List<T>();
+            var visited = new HashSet<T>();
+
+            foreach (var item in source)
+                Visit(item, visited, sorted, dependencies, throwOnCycle);
+
+            return sorted;
+        }
+
+        private static void Visit<T>(T item, HashSet<T> visited, List<T> sorted, Func<T, IEnumerable<T>> dependencies, bool throwOnCycle)
+        {
+            if (!visited.Contains(item))
+            {
+                visited.Add(item);
+
+                foreach (var dep in dependencies(item))
+                    Visit(dep, visited, sorted, dependencies, throwOnCycle);
+
+                sorted.Add(item);
+            }
+            else
+            {
+                if (throwOnCycle && !sorted.Contains(item))
+                    throw new Exception("Cyclic dependency found");
+            }
+        }
+    }
     public class CodeGenerator : ICodeGenerator
     {
 
@@ -267,8 +298,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 .Where(entity=>entity.Value.SelectToken("$.abstract") !=null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity).CreateTypeInfo()).ToArray();
 
-            var builders = manifest.SelectToken("$.entities").OfType<JProperty>()
-                 .Where(entity => entity.Value.SelectToken("$.abstract") == null)
+            //var ordered = manifest.SelectToken("$.entities").OfType<JProperty>().ToDictionary(k => k.Name,
+            //    v => v.Value.SelectToken("$.attributes").OfType<JProperty>()
+            //    .Where(a=>a.Value.SelectToken("$.type.type")?.ToString()?.ToLower() == "lookup").Select(a=>a.Value.SelectToken("$.type.referenceType")?.ToString()).ToArray());
+
+            var entities = manifest.SelectToken("$.entities").OfType<JProperty>().ToArray();
+
+
+            var builders = entities.TSort(v=>
+                v.Value.SelectToken("$.attributes").OfType<JProperty>()
+                .Where(a => a.Value.SelectToken("$.type.type")?.ToString()?.ToLower() == "lookup")
+                .Select(a => entities.First(k=>k.Name==  a.Value.SelectToken("$.type.referenceType")?.ToString())))                  
+                .Where(entity => entity.Value.SelectToken("$.abstract") == null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity)).ToArray();
 
            
