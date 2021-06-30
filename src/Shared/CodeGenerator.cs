@@ -187,8 +187,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var ConstraintsMethod = entityTypeBuilder.DefineMethod("Constraints", MethodAttributes.Public, null, new[] { options.CreateTableBuilderType.MakeGenericType(columnsCLRType) });
             var ConstraintsMethodIL = ConstraintsMethod.GetILGenerator();
 
-            var primaryKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
-                .Where(attribute => attribute.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
+                var primaryKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
+                .Where(attribute =>attribute.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
                 .Select(attribute => members[attribute.Name].GetMethod)
                 .ToArray();
 
@@ -205,7 +205,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             if (primaryKeys.Any())
             {
-
 
                 ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
                 ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"PK_{EntityCollectionSchemaName}"); //PK Name
@@ -601,11 +600,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             ConfigureMethod2IL.Emit(OpCodes.Call, options.EntityTypeBuilderToTable);
             ConfigureMethod2IL.Emit(OpCodes.Pop);
 
+
+            var isTablePerTypeChild = !string.IsNullOrEmpty(entityDefinition.SelectToken($"$.TPT")?.ToString());
+
+
             foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
             {
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
-                if (isprimaryKey)
+              
+                if (isprimaryKey && !isTablePerTypeChild)
                 {
 
                     ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument

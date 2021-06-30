@@ -24,7 +24,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
             context.Request.QueryString= context.Request.QueryString.Add("$filter", $"id eq {recordId}");
 
-            var query = await _context.Set(entityName, context.Request);
+            var query = await _context.ExecuteHttpRequest(entityName, context.Request);
 
             return new DataEndpointResult(new { value = query.Items.First() });
 

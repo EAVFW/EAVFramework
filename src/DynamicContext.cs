@@ -93,7 +93,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
 
-            foreach (var en in manager.EntityDTOs.Where(v=>!(v.Value.BaseType?.IsAbstract??false)))
+            foreach (var en in manager.EntityDTOs)
             {
                 var a = modelBuilder.Entity(en.Value);
                 var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
@@ -170,20 +170,24 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var metadataQuerySet = (IQueryable< DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
             return metadataQuerySet;
         }
-        public async Task<PageResult<object>> Set(string entityCollectionSchemaName,HttpRequest request)
+        public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName,HttpRequest request)
         {
             var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
+
+         
 
             var migrations = GetMigrations();
             // return this.Query
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
              
-            var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
+            
+          //  var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
            // var methodb = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(typeof(DonorDTO));
-            var a= methoda.Invoke(this, new object[0]) as IQueryable;
+          //  var a= methoda.Invoke(this, new object[0]) as IQueryable;
             // var b = methodb.Invoke(this, new object[0]) as IQueryable;
          
             var metadataQuerySet = (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+     
 
             metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type);
 
@@ -231,7 +235,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
 
-
+            logger.LogTrace(metadataQuerySet.ToQueryString());
 
 
              var resultList = new List<object>();

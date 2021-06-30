@@ -27,7 +27,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         public async Task<IEndpointResult> ProcessAsync(HttpContext context)
         {
             var routeValues = context.GetRouteData().Values;
-            var result = await _context.Set(routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string, context.Request);
+            var result = await _context.ExecuteHttpRequest(routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string, context.Request);
 
             return new DataEndpointResult(new { items = result.Items.ToArray() });
 
