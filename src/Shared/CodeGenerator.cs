@@ -27,7 +27,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
     }
     public class BaseEntityAttribute : Attribute
     {
-       
+
     }
 
     public class CodeGeneratorOptions
@@ -37,12 +37,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string migrationName { get; set; }
 
         public MethodInfo MigrationBuilderCreateTable { get; set; }
-        public Type ColumnsBuilderType { get;  set; }
-        public Type CreateTableBuilderType { get;  set; }
-        public Type EntityTypeBuilderType { get;  set; }
-        public MethodInfo EntityTypeBuilderPropertyMethod { get;  set; }
-        public MethodInfo EntityTypeBuilderToTable { get;  set; }
-        public MethodInfo EntityTypeBuilderHasKey { get;  set; }
+        public Type ColumnsBuilderType { get; set; }
+        public Type CreateTableBuilderType { get; set; }
+        public Type EntityTypeBuilderType { get; set; }
+        public MethodInfo EntityTypeBuilderPropertyMethod { get; set; }
+        public MethodInfo EntityTypeBuilderToTable { get; set; }
+        public MethodInfo EntityTypeBuilderHasKey { get; set; }
         public string Schema { get; set; }
         public ConstructorInfo ForeignKeyAttributeCtor { get; internal set; }
         public ConstructorInfo InverseAttributeCtor { get; internal set; }
@@ -50,11 +50,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         public Dictionary<string, Type> EntityDTOs { get; internal set; } = new Dictionary<string, Type>();
         public ConcurrentDictionary<string, TypeBuilder> EntityDTOsBuilders { get; internal set; } = new ConcurrentDictionary<string, TypeBuilder>();
-        public Dictionary<string,Type> EntityDTOConfigurations { get; internal set; } = new Dictionary<string, Type>();
+        public Dictionary<string, Type> EntityDTOConfigurations { get; internal set; } = new Dictionary<string, Type>();
         public Type OperationBuilderAddColumnOptionType { get; internal set; }
         public MethodInfo ColumnsBuilderColumnMethod { get; internal set; }
         public MethodInfo LambdaBase { get; internal set; }
-       
+
         public Type EntityConfigurationInterface { get; internal set; }
         public string EntityConfigurationConfigureName { get; internal set; }
         public ConstructorInfo JsonPropertyNameAttributeCtor { get; internal set; }
@@ -66,13 +66,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public int ReferentialActionNoAction { get; internal set; }
         public Type DynamicMigrationType { get; internal set; }
         public Type DynamicTableArrayType { get; internal set; }
-        
+
         public ConstructorInfo MigrationAttributeCtor { get; internal set; }
         public MethodInfo MigrationBuilderDropTable { get; internal set; }
-        public Assembly DTOAssembly { get;  set; }
+        public Assembly DTOAssembly { get; set; }
         public Type[] DTOBaseClasses { get; internal set; }
 
-        public Action<JToken,PropertyBuilder> OnDTOTypeGeneration { get; set; }
+        public Action<JToken, PropertyBuilder> OnDTOTypeGeneration { get; set; }
+        public bool GeneratePoco { get; set; } = false;
     }
 
     public interface ICodeGenerator
@@ -115,7 +116,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         private readonly CodeGeneratorOptions options;
 
-        public  CodeGenerator(CodeGeneratorOptions options)
+        public CodeGenerator(CodeGeneratorOptions options)
         {
             this.options = options;
         }
@@ -175,7 +176,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-            var columsMethod = entityTypeBuilder.DefineMethod("Columns", MethodAttributes.Public, columnsCLRType, new[] {options.ColumnsBuilderType});
+            var columsMethod = entityTypeBuilder.DefineMethod("Columns", MethodAttributes.Public, columnsCLRType, new[] { options.ColumnsBuilderType });
 
             var columsMethodIL = columsMethod.GetILGenerator();
             columsMethodIL.Emit(OpCodes.Ldarg_1);
@@ -183,7 +184,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             columsMethodIL.Emit(OpCodes.Ret);
 
 
-            var ConstraintsMethod = entityTypeBuilder.DefineMethod("Constraints", MethodAttributes.Public, null, new[] {options.CreateTableBuilderType.MakeGenericType(columnsCLRType) });
+            var ConstraintsMethod = entityTypeBuilder.DefineMethod("Constraints", MethodAttributes.Public, null, new[] { options.CreateTableBuilderType.MakeGenericType(columnsCLRType) });
             var ConstraintsMethodIL = ConstraintsMethod.GetILGenerator();
 
             var primaryKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
@@ -194,7 +195,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             var fKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
-               .Select(attribute => new { AttributeSchemaName= attribute.Value.SelectToken("$.schemaName").ToString(), PropertyGetMethod = members[attribute.Name].GetMethod, EntityName = attribute.Value.SelectToken("$.type.referenceType").ToString(), ForeignKey = attribute.Value.SelectToken("$.type.foreignKey") })
+               .Select(attribute => new { AttributeSchemaName = attribute.Value.SelectToken("$.schemaName").ToString(), PropertyGetMethod = members[attribute.Name].GetMethod, EntityName = attribute.Value.SelectToken("$.type.referenceType").ToString(), ForeignKey = attribute.Value.SelectToken("$.type.foreignKey") })
                .ToArray();
 
             if (primaryKeys.Any() || fKeys.Any())
@@ -222,12 +223,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             {
                 foreach (var fk in fKeys) //.GroupBy(c => c.EntityName))
                 {
-                    
+
                     //CreateTableBuilder
                     var entityName = fk.EntityName;
                     ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
-                   
+
                     Console.WriteLine($"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
 
 
@@ -251,7 +252,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalColumn);
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalSchema);
 
-                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4,options.ReferentialActionNoAction);
+                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction);
                     ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction);
 
 
@@ -278,7 +279,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             UpMethodIL.Emit(OpCodes.Ret);
 
 
-          
+
             var DownMethod = entityTypeBuilder.DefineMethod("Down", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderDropTable.DeclaringType });
             var DownMethodIL = DownMethod.GetILGenerator();
             DownMethodIL.Emit(OpCodes.Ldarg_1); //first argument
@@ -288,14 +289,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             DownMethodIL.Emit(OpCodes.Pop);
             DownMethodIL.Emit(OpCodes.Ret);
 
-          //  var type = entityTypeBuilder.CreateTypeInfo();
+            //  var type = entityTypeBuilder.CreateTypeInfo();
 
             return entityTypeBuilder;
         }
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
             var abstracts = manifest.SelectToken("$.entities").OfType<JProperty>()
-                .Where(entity=>entity.Value.SelectToken("$.abstract") !=null)
+                .Where(entity => entity.Value.SelectToken("$.abstract") != null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity).CreateTypeInfo()).ToArray();
 
             //var ordered = manifest.SelectToken("$.entities").OfType<JProperty>().ToDictionary(k => k.Name,
@@ -305,23 +306,23 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var entities = manifest.SelectToken("$.entities").OfType<JProperty>().ToArray();
 
 
-            var builders = entities.TSort(v=>
+            var builders = entities.TSort(v =>
                 v.Value.SelectToken("$.attributes").OfType<JProperty>()
                 .Where(a => a.Value.SelectToken("$.type.type")?.ToString()?.ToLower() == "lookup")
-                .Select(a => entities.First(k=>k.Name==  a.Value.SelectToken("$.type.referenceType")?.ToString())))                  
+                .Select(a => entities.First(k => k.Name == a.Value.SelectToken("$.type.referenceType")?.ToString())))
                 .Where(entity => entity.Value.SelectToken("$.abstract") == null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity)).ToArray();
 
-           
-            var tables = abstracts.Concat(builders.Select(entity=>entity.CreateTypeInfo())).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray();
-           
+
+            var tables = abstracts.Concat(builders.Select(entity => entity.CreateTypeInfo())).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray();
+
             foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
-            { 
+            {
                 var EntitySchameName = entityDefinition.Name.Replace(" ", "");
                 var EntityCollectionSchemaName = (entityDefinition.Value.SelectToken("$.pluralName")?.ToString() ?? EntitySchameName).Replace(" ", "");
                 var entityLogicalName = entityDefinition.Value.SelectToken("$.logicalName").ToString();
                 options.EntityDTOs[EntityCollectionSchemaName] = options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityLogicalName)?.GetTypeInfo() ?? options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
-                 
+
             }
 
             return tables;
@@ -329,10 +330,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         internal Type CreateDynamicMigration(JToken manifest)
         {
             TypeBuilder migrationType =
-                                         options.myModule.DefineType($"{options.Namespace}.Migration{options.migrationName}", TypeAttributes.Public,options.DynamicMigrationType);
+                                         options.myModule.DefineType($"{options.Namespace}.Migration{options.migrationName}", TypeAttributes.Public, options.DynamicMigrationType);
 
 
-             
+
             var attributeBuilder = new CustomAttributeBuilder(options.MigrationAttributeCtor, new object[] { options.migrationName });
             migrationType.SetCustomAttribute(attributeBuilder);
 
@@ -349,7 +350,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             entityTypeCtorBuilderIL.Emit(OpCodes.Call, basector);
             entityTypeCtorBuilderIL.Emit(OpCodes.Ret);
 
-           
+
             //Assembly = builder;
 
             var type = migrationType.CreateTypeInfo();
@@ -369,7 +370,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var ExpressionMemberInit = typeof(Expression).GetMethod(nameof(Expression.MemberInit), BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(NewExpression), typeof(MemberBinding[]) }, null);
             var ExpressionNew = typeof(Expression).GetMethod(nameof(Expression.New), BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(ConstructorInfo), typeof(IEnumerable<Expression>), typeof(MemberInfo[]) }, null);
             var ParameterExpression = typeof(Expression).GetMethod(nameof(Expression.Parameter), BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Type), typeof(string) }, null);
- 
+
             var Lambda = options.LambdaBase.MakeGenericMethod(typeof(Func<,>).MakeGenericType(clrType, typeof(object)));
 
             //        IL_00fc: call class [System.Linq.Expressions]System.Linq.Expressions.Expression`1<!!0> [System.Linq.Expressions]System.Linq.Expressions.Expression::Lambda<class [System.Private.CoreLib]System.Func`2<class ColumnsTest, object>>(class [System.Linq.Expressions]System.Linq.Expressions.Expression, class [System.Linq.Expressions]System.Linq.Expressions.ParameterExpression[])
@@ -573,7 +574,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return null;
         }
 
-       
+
         public void CreateDTOConfiguration(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JObject entityDefinition, JToken manifest)
         {
             var entityLogicalName = entityDefinition.SelectToken("$.logicalName").ToString();
@@ -637,14 +638,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         }
 
-           
+
         public void CreateDTO(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JObject entityDefinition, JToken manifest)
         {
             // var members = new Dictionary<string, PropertyBuilder>();
 
 
 
-          
+
 
 
             var entityLogicalName = entityDefinition.SelectToken("$.logicalName").ToString();
@@ -653,20 +654,22 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             // options.EntityDTOsBuilders[entityCollectionSchemaName] = entityType;
 
-            (TypeBuilder entityType, Type baseType) = GetOrCreateEntityBuilder(myModule, entitySchameName,manifest,entityDefinition);
+            (TypeBuilder entityType, Type baseType) = GetOrCreateEntityBuilder(myModule, entitySchameName, manifest, entityDefinition);
 
-            entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] {
-                typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
-                  typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
-                    typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName))
-            }, new[] {
-                entityDefinition.SelectToken("$.logicalName").ToString() ,
-                 entityDefinition.SelectToken("$.schemaName").ToString(),
-                  entityDefinition.SelectToken("$.collectionSchemaName").ToString()
-            }));
-            entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityDTOAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityDTOAttribute).GetProperty(nameof(EntityDTOAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() }));
+//            if (!options.GeneratePoco)
+            {
+                    entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] {
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName))
+                    }, new[] {
+                    entityDefinition.SelectToken("$.logicalName").ToString() ,
+                     entityDefinition.SelectToken("$.schemaName").ToString(),
+                      entityDefinition.SelectToken("$.collectionSchemaName").ToString()
+                    }));
+                    entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityDTOAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityDTOAttribute).GetProperty(nameof(EntityDTOAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() }));
 
-
+            }
             //  var propertyChangedMethod = options.EntityBaseClass.GetMethod("OnPropertyChanged", BindingFlags.Instance | BindingFlags.NonPublic);
 
             foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
@@ -817,16 +820,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return allPropsFromType.All(p => allProps.Contains(p));
         }
 
-        private  IEnumerable<string> GetProperties(Type c)
+        private IEnumerable<string> GetProperties(Type c)
         {
             var fk = c.GetProperties().Where(p => p.GetCustomAttribute(options.ForeignKeyAttributeCtor.DeclaringType) == null)
                 .Select(p => p.Name)
                 .ToList();
             return fk;
-            return c.GetProperties().Select(p => p.Name).Where(p => !fk.Any(fkp => string.Equals(fkp + "id", p,StringComparison.OrdinalIgnoreCase)));
+            return c.GetProperties().Select(p => p.Name).Where(p => !fk.Any(fkp => string.Equals(fkp + "id", p, StringComparison.OrdinalIgnoreCase)));
         }
 
-        private (TypeBuilder,Type) GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, JToken manifest, JObject entityDefinition)
+        private (TypeBuilder, Type) GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, JToken manifest, JObject entityDefinition)
         {
             var allProps = entityDefinition.SelectToken("$.attributes").OfType<JProperty>().Select(attributeDefinition => attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "")).ToArray();
 
@@ -842,10 +845,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 acceptableBasesClass = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()].CreateTypeInfo();
             }
 
+
+            if (options.GeneratePoco)
+            {
+                if (acceptableBasesClass == typeof(DynamicEntity))
+                    acceptableBasesClass = typeof(object);
+            }
+
+
             File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
 
             return (options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
-                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>()??false  ? TypeAttributes.Abstract: TypeAttributes.Class)
+                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Abstract : TypeAttributes.Class)
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
                                                                         | TypeAttributes.Serializable
@@ -854,16 +865,19 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         private void CreateJsonSerializationAttribute(JToken value, PropertyBuilder attProp, string name)
         {
-            CustomAttributeBuilder JsonPropertyAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyAttributeCtor, new object[] { name });
-            CustomAttributeBuilder JsonPropertyNameAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyNameAttributeCtor, new object[] { name });
+            if (!options.GeneratePoco)
+            {
+                CustomAttributeBuilder JsonPropertyAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyAttributeCtor, new object[] { name });
+                CustomAttributeBuilder JsonPropertyNameAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyNameAttributeCtor, new object[] { name });
 
-            attProp.SetCustomAttribute(JsonPropertyAttributeBuilder);
-            attProp.SetCustomAttribute(JsonPropertyNameAttributeBuilder);
+                attProp.SetCustomAttribute(JsonPropertyAttributeBuilder);
+                attProp.SetCustomAttribute(JsonPropertyNameAttributeBuilder);
+            }
         }
 
         static ConstructorInfo DataMemberAttributeCtor = typeof(DataMemberAttribute).GetConstructor(new Type[] { });
         static PropertyInfo DataMemberAttributeNameProperty = typeof(DataMemberAttribute).GetProperty("Name");
-        
+
 
         public virtual void CreateDataMemberAttribute(JToken value, PropertyBuilder attProp, string name)
         {
@@ -883,15 +897,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() });
             entityType.SetCustomAttribute(EntityAttributeBuilder);
-            
+
 
 
             var dfc = entityType.DefineDefaultConstructor(MethodAttributes.Public);
 
             ConstructorBuilder entityCtorBuilder =
                   entityType.DefineConstructor(MethodAttributes.Public,
-                                     CallingConventions.Standard, new[] {options.ColumnsBuilderType });
-          
+                                     CallingConventions.Standard, new[] { options.ColumnsBuilderType });
+
 
 
             ILGenerator entityCtorBuilderIL = entityCtorBuilder.GetILGenerator();
@@ -907,7 +921,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-             
+
 
 
                 var typeObj = attributeDefinition.Value.SelectToken("$.type");
@@ -1023,7 +1037,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         {
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, sqlColumnArgs.ToObject<int>());
                             if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                            {                                
+                            {
                                 entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
                                 // It's nullable
                             }

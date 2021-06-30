@@ -40,16 +40,22 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
         public void Execute(GeneratorExecutionContext context)
         {
             context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
+            context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.GeneratePoco", out var GeneratePoco);
 
             var compilation = context.Compilation;
 
-
+           
+         
             //  context.Compilation.GetSemanticModel(classSyntax.SyntaxTree)
             var manifest = context.AdditionalFiles.FirstOrDefault(f => Path.GetFileName(f.Path) == "manifest.g.json");
             if (manifest != null)
             {
+                
                 try
                 {
+                    File.WriteAllText("test1.txt", "Empty\n");
+                    File.AppendAllLines("test1.txt", new[] { $"includeEAVFrameworkBaseClass {GeneratePoco}" });
+
                     string text = manifest.GetText(context.CancellationToken).ToString();
 
                     //var ms = new MemoryStream();
@@ -220,7 +226,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         ReferentialActionNoAction = (int)ReferentialAction.NoAction,
 
                         DynamicMigrationType = typeof(DynamicMigration),
-                        MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) })
+                        MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }),
+
+                        GeneratePoco = GeneratePoco == "true"
+
+
 
                     });
 
@@ -241,7 +251,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                         context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
 
-                        context.AddSource($"{type.Name}.cs", GenerateSourceCode(type));
+                        context.AddSource($"{type.Name}.cs", GenerateSourceCode(type, GeneratePoco == "true"));
 
                      
 
@@ -284,7 +294,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
         }
 
-        private string GenerateSourceCode(Type type)
+        private string GenerateSourceCode(Type type, bool generatePoco)
         {
             var namespaces = new HashSet<string>();
             var sb = new StringBuilder();
@@ -303,6 +313,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                     inherience = " : " + inherience;
                 }
 
+                if(!generatePoco)
                 GenerateAttributes(sb, "\t", namespaces, type.CustomAttributes);
                 sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract ":" ")}class {type.Name}{inherience}\r\n\t{{");
                 {
