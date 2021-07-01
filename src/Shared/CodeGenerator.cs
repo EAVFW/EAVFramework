@@ -783,19 +783,27 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
 
-                        TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), manifest, entity.Value as JObject).Item1;
-
-                        //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
+                        try
                         {
-                            //
-                            var (attProp, attField) = CreateProperty(entityType, (attributes.Length > 1 ? attribute.Name.Replace(" ", "") : "") + entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related));
-                            // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
+                            TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), manifest, entity.Value as JObject).Item1;
 
-                            CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.InverseAttributeCtor, new object[] { attribute.Name.Replace(" ", "") });
+                            //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
+                            {
+                                //
+                                var (attProp, attField) = CreateProperty(entityType, (attributes.Length > 1 ? attribute.Name.Replace(" ", "") : "") + entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related));
+                                // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
 
-                            attProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
+                                CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.InverseAttributeCtor, new object[] { attribute.Name.Replace(" ", "") });
+
+                                attProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
 
 
+                            }
+                        }catch(Exception ex)
+                        {
+                            File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
+
+                            throw;
                         }
                     }
                 }

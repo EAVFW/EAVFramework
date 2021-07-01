@@ -31,7 +31,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
     public interface IQueryExtender
     {
-        IQueryable ApplyTo(IQueryable metadataQuerySet, DynamicContext context, Type type);
+        IQueryable ApplyTo(IQueryable metadataQuerySet, DynamicContext context, Type type, HttpRequest request);
     }
 
     public class DynamicContext : DbContext, IDynamicContext
@@ -189,7 +189,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var metadataQuerySet = (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
      
 
-            metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type);
+            metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request);
 
             if (request != null)
             {

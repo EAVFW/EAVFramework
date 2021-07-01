@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Security.Claims;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 {
@@ -8,7 +9,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
       
         public T Input { get; set; }
         public TContext DB { get; set; }
-
+        public ClaimsPrincipal ClaimsPrincipal { get; set; }
 
         public PluginContext<TContext, T> AddValidationError<TField>(Expression<Func<T,TField>> propExpression,string error)
         {
