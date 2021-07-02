@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Formatter.Value;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Query.Container;
 using Microsoft.AspNetCore.OData.Query.Validator;
 using Microsoft.AspNetCore.OData.Query.Wrapper;
 using Microsoft.AspNetCore.OData.Results;
@@ -17,6 +18,7 @@ using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -40,7 +42,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
-       
+
         //private readonly MigrationManager manager = new MigrationManager();
 
 
@@ -59,8 +61,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
         }
 
         public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
-        {   
-            return manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(),this.modelOptions.Value);
+        {
+            return manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -70,7 +72,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 ConfigureMigrationAsesmbly(optionsBuilder);
 
 
-            } 
+            }
             base.OnConfiguring(optionsBuilder);
         }
         protected virtual void ConfigureMigrationAsesmbly(DbContextOptionsBuilder optionsBuilder)
@@ -79,13 +81,13 @@ namespace DotNetDevOps.Extensions.EAVFramework
             {
                 manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
-               
+
             optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
         }
 
-      //  public List<MetadataEntity> _metaDataEntityList = new List<MetadataEntity>();
+        //  public List<MetadataEntity> _metaDataEntityList = new List<MetadataEntity>();
 
-        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             Console.WriteLine("TEST");
@@ -98,10 +100,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 var a = modelBuilder.Entity(en.Value);
                 var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                 config.Configure(a);
-               // Console.WriteLine(a.Metadata.ToDebugString(Microsoft.EntityFrameworkCore.Infrastructure.MetadataDebugStringOptions.LongDefault));
-               // Console.WriteLine(string.Join(",",a.Metadata.GetForeignKeys().Select(c=>c.GetConstraintName())));
+                // Console.WriteLine(a.Metadata.ToDebugString(Microsoft.EntityFrameworkCore.Infrastructure.MetadataDebugStringOptions.LongDefault));
+                // Console.WriteLine(string.Join(",",a.Metadata.GetForeignKeys().Select(c=>c.GetConstraintName())));
                 Console.WriteLine(en.Value.Name);
-              
+
             }
 
 
@@ -167,49 +169,50 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var a = methoda.Invoke(this, new object[0]) as IQueryable;
             // var b = methodb.Invoke(this, new object[0]) as IQueryable;
 
-            var metadataQuerySet = (IQueryable< DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+            var metadataQuerySet = (IQueryable<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
             return metadataQuerySet;
         }
-        public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName,HttpRequest request)
+        public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName, HttpRequest request)
         {
             var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
 
-         
+
 
             var migrations = GetMigrations();
             // return this.Query
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
-             
-            
-          //  var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
-           // var methodb = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(typeof(DonorDTO));
-          //  var a= methoda.Invoke(this, new object[0]) as IQueryable;
-            // var b = methodb.Invoke(this, new object[0]) as IQueryable;
-         
-            var metadataQuerySet = (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
-     
 
-            metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request);
+
+            //  var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
+            // var methodb = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(typeof(DonorDTO));
+            //  var a= methoda.Invoke(this, new object[0]) as IQueryable;
+            // var b = methodb.Invoke(this, new object[0]) as IQueryable;
+
+            var metadataQuerySet = (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+
+
+            // metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request);
 
             if (request != null)
             {
-               
+
 
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
+                 
 
                 //                var Validator = new FilterQueryValidator(context.DefaultQuerySettings);
                 metadataQuerySet = new ODataQueryOptions(context, request).ApplyTo(metadataQuerySet);
 
-              
-               // var _queryOptionParser = new ODataQueryOptionParser(
-               //context.Model,
-               //context.ElementType,
-               //context.NavigationSource,
-               //new Dictionary<string, string> { { "$filter", odataFilter }, {"$expand", "Tournament" } },
-               //context.RequestContainer);
+
+                // var _queryOptionParser = new ODataQueryOptionParser(
+                //context.Model,
+                //context.ElementType,
+                //context.NavigationSource,
+                //new Dictionary<string, string> { { "$filter", odataFilter }, {"$expand", "Tournament" } },
+                //context.RequestContainer);
 
                 // _queryOptionParser.ParseSelectAndExpand();
                 // //var _filterClause = _queryOptionParser.ParseFilter();
@@ -234,32 +237,96 @@ namespace DotNetDevOps.Extensions.EAVFramework
             // IQueryable <Microsoft.AspNetCore.OData.Query.Wrapper..SelectAllAndExpand<DynamicEntity>> a = ;
 
             var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
-
+            Console.WriteLine(metadataQuerySet.ToQueryString());
             logger.LogTrace(metadataQuerySet.ToQueryString());
 
 
-             var resultList = new List<object>();
+            var resultList = new List<object>();
 
-                foreach(var item in items)
+            foreach (var item in items)
+            {
+                if (item is DynamicEntity)
                 {
-                    if (item is DynamicEntity)
+                    resultList.Add(item);
+                }
+                else if (item.GetType().Name == "SelectAllAndExpand`1")
+                {
+                    var entityProperty = item.GetType().GetProperty("Instance");
+                    if (entityProperty.GetType().Name == "SelectSome`1")
                     {
-                        resultList.Add(item);
+
+                        resultList.Add(ToPoco(entityProperty.GetValue(item)));
+
                     }
-                    else if (item.GetType().Name == "SelectAllAndExpand`1")
+                    else
                     {
-                        var entityProperty = item.GetType().GetProperty("Instance");
-                        resultList.Add( entityProperty.GetValue(item));
+                        resultList.Add(entityProperty.GetValue(item));
                     }
                 }
-            return new PageResult<object>(resultList, null, null);
-            
+                else if (item.GetType().Name == "SelectSome`1")
+                {
+                    //value.ToDictionary(SelectExpandWrapperConverter.MapperProvider)
+                    object poco = ToPoco(item);
+                    resultList.Add(poco);
+                }
+                else
+                {
 
-           // return metadataQuerySet;
+                    throw new InvalidCastException("Unknown Type: " + item.GetType().Name);
+                }
+            }
+            return new PageResult<object>(resultList, null, null);
+
+
+            // return metadataQuerySet;
             // var setMethod=typeof(DbContext).GetMethod("Set", new Type[] { });
             //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
             //  return Set<Type2>();
         }
+
+        private static object ToPoco(object item)
+        {
+            if (item == null)
+                return null;
+
+            if (item.GetType().Name == "SelectAllAndExpand`1")
+            {
+                var entityProperty = item.GetType().GetProperty("Instance");
+                return ToPoco(entityProperty.GetValue(item));
+            }
+            else if (item.GetType().Name == "SelectSome`1" || item.GetType().Name == "SelectAll`1")
+            {
+
+                var entityProperty = item.GetType().GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
+                var SelectExpandWrapperConverter = item.GetType().Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
+                var poco = (IDictionary<string, object>)entityProperty.Invoke(item, new object[] { SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) });
+
+                foreach (var kv in poco.ToArray())
+                {
+                    poco[kv.Key] = ToPoco(kv.Value);
+                }
+
+                return poco;
+            }
+            else if (typeof(IEnumerable).IsAssignableFrom(item.GetType()) && !(item is string))
+            {
+               
+                var list = new List<object>();
+                foreach(var i in item as IEnumerable)
+                {
+                    list.Add(ToPoco(i));
+                }
+                return list;
+            }
+            else
+            {
+                Console.WriteLine(item.GetType().Name);
+                
+            }
+
+            return item;
+        }
+
         public Type GetRecordType(string entityName)
         {
             return manager.EntityDTOs[entityName];
@@ -276,7 +343,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             var type = manager.EntityDTOs[entityName];
             var record = data.ToObject(type);
-           
+
             return this.Remove(record);
 
         }
@@ -287,11 +354,11 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             Entry(entry).CurrentValues.SetValues(record);
 
-           // logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-           // return this.Add(record);
+            // logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
+            // return this.Add(record);
 
         }
-        
+
 
 
         public ValueTask<object> FindAsync(string entityName, params object[] keyValues)
@@ -299,8 +366,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var type = manager.EntityDTOs[entityName];
             //  var record = data.ToObject(type);
             return this.FindAsync(type, keyValues);
-          //  logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-           // return this.Add(record);
+            //  logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
+            // return this.Add(record);
 
         }
 
@@ -308,7 +375,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             var type = manager.EntityDTOs[entityName];
             var record = data.ToObject(type);
-            logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}",type.Name,data.ToString(),JsonConvert.SerializeObject(record));
+            logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
             return this.Update(data.ToObject(type));
 
         }

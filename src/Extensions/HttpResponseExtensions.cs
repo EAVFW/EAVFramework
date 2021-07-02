@@ -1,6 +1,7 @@
 ﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
 using DotNetDevOps.Extensions.EAVFramework.Infrastructure;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Extensions
@@ -9,7 +10,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
     {
         public static async Task WriteJsonAsync(this HttpResponse response, object o, string contentType = null)
         {
-            var json = ObjectSerializer.ToString(o);
+            //var json = ObjectSerializer.ToString(o);
+
+            var json = JsonConvert.SerializeObject(o, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+
             await response.WriteJsonAsync(json, contentType);
             await response.Body.FlushAsync();
         }

@@ -140,6 +140,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 var builder = new ODataConventionModelBuilder();
                 var v = new ODataModelBuilder();
                 builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
+                
                 //   builder.EntitySet<Movie>("Movies");
                 //   builder.EntitySet<Review>("Reviews");
 

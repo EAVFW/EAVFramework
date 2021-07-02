@@ -732,8 +732,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                             attFKProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
 
-                            CreateJsonSerializationAttribute(attributeDefinition.Value, attFKProp, FKLogicalName);
-                            CreateDataMemberAttribute(attributeDefinition.Value, attFKProp, FKLogicalName);
+                            CreateJsonSerializationAttribute( attFKProp, FKLogicalName);
+                            CreateDataMemberAttribute( attFKProp, FKLogicalName);
 
                         }
                         catch (Exception ex)
@@ -751,9 +751,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     options.OnDTOTypeGeneration?.Invoke(attributeDefinition.Value, attProp);
 
-                    CreateDataMemberAttribute(attributeDefinition.Value, attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
+                    CreateDataMemberAttribute( attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
 
-                    CreateJsonSerializationAttribute(attributeDefinition.Value, attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
+                    CreateJsonSerializationAttribute(attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
 
 
                     //ConfigureMethodIL.Emit(OpCodes.Ldarg_1); //first argument
@@ -796,7 +796,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.InverseAttributeCtor, new object[] { attribute.Name.Replace(" ", "") });
 
                                 attProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
-
+                               
+                                CreateJsonSerializationAttribute( attProp, attProp.Name.ToLower());
+                             //   CreateDataMemberAttribute(attProp, attProp.Name.ToLower());
 
                             }
                         }catch(Exception ex)
@@ -875,7 +877,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                                                         | TypeAttributes.BeforeFieldInit, acceptableBasesClass)), acceptableBasesClass);
         }
 
-        private void CreateJsonSerializationAttribute(JToken value, PropertyBuilder attProp, string name)
+        private void CreateJsonSerializationAttribute(PropertyBuilder attProp, string name)
         {
             if (!options.GeneratePoco)
             {
@@ -891,7 +893,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         static PropertyInfo DataMemberAttributeNameProperty = typeof(DataMemberAttribute).GetProperty("Name");
 
 
-        public virtual void CreateDataMemberAttribute(JToken value, PropertyBuilder attProp, string name)
+        public virtual void CreateDataMemberAttribute(PropertyBuilder attProp, string name)
         {
 
             CustomAttributeBuilder DataMemberAttributeBuilder = new CustomAttributeBuilder(DataMemberAttributeCtor, new object[] { }, new[] { DataMemberAttributeNameProperty }, new[] { name });
