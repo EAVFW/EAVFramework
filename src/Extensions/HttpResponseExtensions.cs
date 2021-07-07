@@ -8,11 +8,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 {
     public static class HttpResponseExtensions
     {
-        public static async Task WriteJsonAsync(this HttpResponse response, object o, string contentType = null)
+        public static async Task WriteJsonAsync(this HttpResponse response, object o, string contentType = null, Formatting formatting = Formatting.None)
         {
             //var json = ObjectSerializer.ToString(o);
 
-            var json = JsonConvert.SerializeObject(o, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+            var json = JsonConvert.SerializeObject(o, new JsonSerializerSettings { Formatting = formatting, NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
 
             await response.WriteJsonAsync(json, contentType);
             await response.Body.FlushAsync();

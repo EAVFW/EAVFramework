@@ -36,6 +36,18 @@ namespace DotNetDevOps.Extensions.EAVFramework
         IQueryable ApplyTo(IQueryable metadataQuerySet, DynamicContext context, Type type, HttpRequest request);
     }
 
+    public static class TypeChanger
+    {
+        public static IQueryable<T> ChangeType<T>(IQueryable data)
+        {
+            return data.Cast<T>();// as IQueryable<T>;
+        }
+
+        public static IQueryable Cast(this IQueryable data, Type type)
+        {
+            return (IQueryable)typeof(TypeChanger).GetMethod(nameof(TypeChanger.ChangeType)).MakeGenericMethod(type).Invoke(null, new[] { data });
+        }
+    }
     public class DynamicContext : DbContext, IDynamicContext
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
@@ -163,84 +175,50 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public IQueryable<DynamicEntity> Set(string entityCollectionSchemaName)
         {
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
-
-            var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
-            // var methodb = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(typeof(DonorDTO));
-            var a = methoda.Invoke(this, new object[0]) as IQueryable;
-            // var b = methodb.Invoke(this, new object[0]) as IQueryable;
-
+  
             var metadataQuerySet = (IQueryable<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
             return metadataQuerySet;
         }
+        public IQueryable Set(Type type)
+        {
+            return (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+        }
+
         public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName, HttpRequest request)
         {
             var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
 
 
 
-            var migrations = GetMigrations();
-            // return this.Query
-            var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
+            var migrations = GetMigrations(); //ensures that types are build
+  
+            var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
+ 
+            var metadataQuerySet = Set(type);
+            metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request).Cast(type) ?? metadataQuerySet;
 
+          
 
-            //  var methoda = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type);
-            // var methodb = this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(typeof(DonorDTO));
-            //  var a= methoda.Invoke(this, new object[0]) as IQueryable;
-            // var b = methodb.Invoke(this, new object[0]) as IQueryable;
-
-            var metadataQuerySet = (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
-
-
-            // metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request);
 
             if (request != null)
-            {
-
-
+            { 
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
-                 
-
-                //                var Validator = new FilterQueryValidator(context.DefaultQuerySettings);
+                  
                 metadataQuerySet = new ODataQueryOptions(context, request).ApplyTo(metadataQuerySet);
-
-
-                // var _queryOptionParser = new ODataQueryOptionParser(
-                //context.Model,
-                //context.ElementType,
-                //context.NavigationSource,
-                //new Dictionary<string, string> { { "$filter", odataFilter }, {"$expand", "Tournament" } },
-                //context.RequestContainer);
-
-                // _queryOptionParser.ParseSelectAndExpand();
-                // //var _filterClause = _queryOptionParser.ParseFilter();
-
-                // // SingleValueNode filterExpression = _filterClause.Expression.Accept(
-                // //       new ParameterAliasNodeTranslator(_queryOptionParser.ParameterAliasNodes)) as SingleValueNode;
-                // // filterExpression = filterExpression ?? new ConstantNode(null);
-                // // _filterClause = new FilterClause(filterExpression, _filterClause.RangeVariable);
-
-                // var odatafilter = new FilterQueryOption(odataFilter,context, _queryOptionParser);
-
-                // var expandoptions = new SelectExpandQueryOption(null, "Tournament", context, _queryOptionParser);
-                // var valsettings = new Microsoft.AspNetCore.OData.Query.Validator.ODataValidationSettings() { AllowedFunctions = AllowedFunctions.AllFunctions };
-
-                // expandoptions.Validate(valsettings);
-                // odatafilter.Validate(valsettings);
-
-                // var settings = new ODataQuerySettings { };
-                // metadataQuerySet = (IQueryable<DynamicEntity>) expandoptions.ApplyTo( odatafilter.ApplyTo(metadataQuerySet, settings), settings);
+                 
             }
-            // SelectExpandBinder
-            // IQueryable <Microsoft.AspNetCore.OData.Query.Wrapper..SelectAllAndExpand<DynamicEntity>> a = ;
+           
 
             var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
             Console.WriteLine(metadataQuerySet.ToQueryString());
             logger.LogTrace(metadataQuerySet.ToQueryString());
 
 
+            //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
+            //annoying that we have to serialize them ourself.
             var resultList = new List<object>();
 
             foreach (var item in items)

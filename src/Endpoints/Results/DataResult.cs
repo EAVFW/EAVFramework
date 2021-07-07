@@ -20,7 +20,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints.Results
 
         public async Task ExecuteAsync(HttpContext context)
         {
-            await context.Response.WriteJsonAsync(data);
+            await context.Response.WriteJsonAsync(data,null, context.Request.Query.ContainsKey("pretty")? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None);
         }
     }
 }
