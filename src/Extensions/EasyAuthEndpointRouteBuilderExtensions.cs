@@ -32,8 +32,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             var authProviders = sp.GetServices<IEasyAuthProvider>().ToList();
             foreach (var auth in authProviders)
             {
+                //https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
+
                 var authUrl = $"/.auth/login/{auth.AuthenticationName}";
-                endpoints.MapPost(authUrl, async (httpcontext) =>
+                endpoints.MapGet(authUrl, async (httpcontext) =>
                 {
                     var handleId = CryptographyHelpers.CreateCryptographicallySecureGuid().ToString("N");
                     var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
@@ -59,7 +61,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                 async r =>
                 {
                     var webRootPath = r.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath;
-                    var hasRedirect = r.Request.Query.TryGetValue("redirectUri", out StringValues redirectHeader);
+                    var hasRedirect = r.Request.Query.TryGetValue("returnUrl", out StringValues redirectHeader);
                     var redirect = hasRedirect ? redirectHeader.FirstOrDefault() : webRootPath;
                     // store the redirect in a cookie
                     r.Response.Cookies.Append(Constants.DefaultLoginRedirectCookie, redirect);
@@ -68,7 +70,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                     if (hasIdp)
                     {
                         // if idp query param given, pass on directly to idp
-                        r.Response.Redirect($"/.auth/login/{idp.FirstOrDefault()}");
+                        r.Response.Redirect($"/.auth/login/{idp.FirstOrDefault()}?redirectUri={new Uri(r.Request.GetDisplayUrl()).GetLeftPart( UriPartial.Authority)+ Constants.UIConstants.DefaultRoutePaths.LoginCallback}");
                     }
                     else
                     {
