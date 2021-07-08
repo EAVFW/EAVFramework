@@ -12,9 +12,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
     {
         private readonly EAVFrameworkOptions _options;
 
-        public ConfigureInternalCookieOptions(EAVFrameworkOptions idsrv)
+        public ConfigureInternalCookieOptions(EAVFrameworkOptions options)
         {
-            _options = idsrv;
+            _options = options;
         }
 
         public void Configure(CookieAuthenticationOptions options)

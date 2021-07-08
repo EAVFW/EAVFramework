@@ -43,11 +43,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
                 var table = _storage.CreateCloudTableClient().GetTableReference("signin");
                 await table.CreateIfNotExistsAsync();
 
-                var data = await JToken.ReadFromAsync(
-                    new JsonTextReader(new StreamReader(httpcontext.Request.Body)));
-                var email = data.SelectToken("$.email")?.ToString();
+                // var data = await JToken.ReadFromAsync(
+                //     new JsonTextReader(new StreamReader(httpcontext.Request.Body)));
+                // var email = data.SelectToken("$.email")?.ToString();
+                var email = httpcontext.Request.Query["email"].FirstOrDefault();
+                var redirectUri = httpcontext.Request.Query["redirectUri"].FirstOrDefault();
 
-                var user = await _options.Value.FetchUserIdByEmailAsync(httpcontext.RequestServices, email);
+                var user = await _options.Value.FetchUserIdByEmailAsync(httpcontext,httpcontext.RequestServices, email);
 
                 if (user == null)
                 {
@@ -65,8 +67,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
                         {
                             ["ticket"] = EntityProperty.GeneratePropertyForByteArray(ticket),
                             ["redirectUri"] =
-                                EntityProperty.GeneratePropertyForString(data.SelectToken("$.redirectUri")
-                                    ?.ToString())
+                                EntityProperty.GeneratePropertyForString(redirectUri)
                         }
                 }));
 

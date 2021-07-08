@@ -31,7 +31,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddEAVFrameworkBuilder(this IServiceCollection services)
         {
-            return new EAVFrameworkBuilder(services);
+            services.Configure<EAVFrameworkOptions>(o=> { });
+            return new EAVFrameworkBuilder(services)
+                  .AddRequiredPlatformServices();
         }
 
 
@@ -45,8 +47,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var builder = services.AddEAVFrameworkBuilder();
 
-            builder
-                .AddRequiredPlatformServices()
+            builder              
                 .AddDefaultEndpoints< TContext>()
                   .AddPluggableServices();
               

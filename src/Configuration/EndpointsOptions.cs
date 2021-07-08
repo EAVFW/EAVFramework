@@ -22,7 +22,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 
         private static void DefaultEndpointAuthorizationConfiguration(IEndpointConventionBuilder obj)
         {
-            obj.RequireAuthorization();
+            obj.RequireAuthorization("EAVAuthorizationPolicy");
         }
 
         public EndpointsOptions AllowAnonymous()

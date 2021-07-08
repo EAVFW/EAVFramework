@@ -20,7 +20,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         /// Function for taking an email address and looking up the unique ID for the corresponding user.
         /// If this function returns null, the OnNotFound delegate will be executed.
         /// </summary>
-        public Func<IServiceProvider, string, Task<string>> FetchUserIdByEmailAsync { get; set; }
+        public Func<HttpContext, IServiceProvider, string, Task<string>> FetchUserIdByEmailAsync { get; set; }
 
         /// <summary>
         /// Function for taking the generated magic link and interpolating it into the desired sign-in email response
