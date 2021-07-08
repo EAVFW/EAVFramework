@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 {
@@ -33,5 +35,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         /// You can use this to, among other things, set a custom response code or perform a redirect.
         /// </summary>
         public Action<HttpContext> OnNotFound { get; set; } = context => { context.Response.StatusCode = 404; };
+
+        /// <summary>
+        /// Persist the ticket information
+        /// </summary>
+        public Func<HttpContext,string, byte[],string,Task> PersistTicketAsync { get; set; }
+
+        /// <summary>
+        /// Get the ticket information
+        /// </summary>
+        public Func<HttpContext,string, Task<(byte[], string)>> GetTicketInfoAsync { get; set; }
+        
     }
 }

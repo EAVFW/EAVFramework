@@ -194,6 +194,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddAuthentication(name)
                 .AddCookie(name, o=>
                 {
+                    
                     o.LoginPath = "/account/login";
                 });
             return builder;

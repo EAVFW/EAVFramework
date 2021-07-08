@@ -41,6 +41,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 
             if (name == Constants.ExternalCookieAuthenticationScheme)
             {
+               
                 options.Cookie.Name = Constants.ExternalCookieAuthenticationScheme;
                 options.Cookie.IsEssential = true;
                 // https://github.com/IdentityServer/IdentityServer4/issues/2595
