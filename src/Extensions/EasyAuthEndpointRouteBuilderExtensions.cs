@@ -151,7 +151,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                         $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
                     httpcontext.Response.Redirect(baseUrl);
                 }
-            });
+            }).WithMetadata(new AllowAnonymousAttribute());
 
             return endpoints.MapGet("/.auth/me", async context =>
             {
