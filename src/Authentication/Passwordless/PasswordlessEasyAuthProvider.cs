@@ -20,18 +20,19 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 {
     public class PasswordlessEasyAuthProvider : IEasyAuthProvider
     {
-      //  private readonly CloudStorageAccount _storage;
+      
         private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
-        
-        public PasswordlessEasyAuthProvider() {}
-        
+
+
+        public PasswordlessEasyAuthProvider() { }
+
         public PasswordlessEasyAuthProvider(
-          //  CloudStorageAccount storage,
+           
             SmtpClient smtpClient,
             IOptions<PasswordlessEasyAuthOptions> options)
         {
-           // _storage = storage ?? throw new ArgumentNullException((nameof(storage)));
+         
             _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -106,8 +107,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
                 mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
                 await _smtp.SendMailAsync(mailMessage);
 
-                var webRootPath = httpcontext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath;
-                await httpcontext.Response.SendFileAsync($"{webRootPath}/account/login/passwordless/index.html");
+              
+                await _options.Value.ResponseSuccessFullAsync(httpcontext);
+             
                
                 //TODO make this option provided
 
