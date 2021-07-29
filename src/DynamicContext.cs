@@ -19,6 +19,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -46,6 +47,131 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public static IQueryable Cast(this IQueryable data, Type type)
         {
             return (IQueryable)typeof(TypeChanger).GetMethod(nameof(TypeChanger.ChangeType)).MakeGenericMethod(type).Invoke(null, new[] { data });
+        }
+    }
+
+    internal interface IODataConverter
+    {
+        object Convert(object data);
+
+    }
+    internal interface IODataConverterFactory
+    {
+        IODataConverter CreateConverter(Type type);
+    }
+    internal class SelectCoverter : IODataConverter
+    {
+        private Type type;
+        private IODataConverterFactory odatatConverterFactory;
+        private MethodInfo entityProperty;
+        private object MapperProvider;
+
+        public SelectCoverter(Type type, IODataConverterFactory odatatConverterFactory)
+        {
+            this.type = type;
+            this.odatatConverterFactory = odatatConverterFactory;
+            this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
+            var SelectExpandWrapperConverter = type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
+            this.MapperProvider = SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+        }
+
+        public object Convert(object data)
+        {
+            var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
+
+            foreach (var kv in poco.Where(v=>v.Value !=null).ToArray())
+            {
+
+                var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
+                poco[kv.Key] = converter.Convert(kv.Value);
+            }
+
+            return poco;
+        }
+    }
+    internal class EnumerableConverter : IODataConverter
+    {
+        private Type type;
+        private IODataConverterFactory odatatConverterFactory;
+
+        public EnumerableConverter(Type type, IODataConverterFactory odatatConverterFactory)
+        {
+            this.type = type;
+            this.odatatConverterFactory = odatatConverterFactory;
+        }
+
+        public object Convert(object data)
+        {
+            var list = new List<object>();
+            foreach (var i in data as IEnumerable)
+            {
+                var converter = odatatConverterFactory.CreateConverter(i.GetType());
+                list.Add(converter.Convert(i));
+            }
+            return list;
+        }
+    }
+    internal class OdatatConverterFactory : IODataConverterFactory
+    {
+        private static ConcurrentDictionary<Type, IODataConverter> _converters = new ConcurrentDictionary<Type, IODataConverter>();
+
+        public IODataConverter CreateConverter(Type type)
+        {
+           return _converters.GetOrAdd(type, type =>
+            {
+                if (type.Name == "SelectAllAndExpand`1")
+                {
+                    return new SelectAllAndExpandConverter(type, this);
+
+                }
+                else if (type.Name == "SelectSome`1" || type.Name == "SelectAll`1" || type.Name == "SelectSomeAndInheritance`1")
+                {
+                    return new SelectCoverter(type, this);
+
+
+                }
+                else if (typeof(IEnumerable).IsAssignableFrom(type) && (type != typeof(string)))
+                {
+                    return new EnumerableConverter(type, this);
+
+                }
+                else
+                { 
+                    return new PrimitivConverter();
+                }
+
+            });
+
+        }
+    }
+    internal class SelectAllAndExpandConverter : IODataConverter
+    {
+        private readonly Type type;
+        private OdatatConverterFactory odatatConverterFactory;
+        private PropertyInfo entityProperty;
+
+        public SelectAllAndExpandConverter(Type type, OdatatConverterFactory odatatConverterFactory)
+        {
+            this.type = type ?? throw new ArgumentNullException(nameof(type));
+            this.odatatConverterFactory = odatatConverterFactory ?? throw new ArgumentNullException(nameof(odatatConverterFactory));
+            this.entityProperty = type.GetProperty("Instance");
+        }
+
+        public object Convert(object data)
+        {
+            var value = entityProperty.GetValue(data);
+
+            var converter = odatatConverterFactory.CreateConverter(value.GetType());
+
+            return converter.Convert(value);
+        }
+    }
+
+    internal class PrimitivConverter : IODataConverter
+    {
+        public object Convert(object data)
+        {
+            return data;
         }
     }
     public class DynamicContext : DbContext, IDynamicContext
@@ -232,31 +358,41 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 {
                     resultList.Add(item);
                 }
-                else if (item.GetType().Name == "SelectAllAndExpand`1")
-                {
-                    var entityProperty = item.GetType().GetProperty("Instance");
-                    if (entityProperty.GetType().Name == "SelectSome`1")
-                    {
-
-                        resultList.Add(ToPoco(entityProperty.GetValue(item)));
-
-                    }
-                    else
-                    {
-                        resultList.Add(entityProperty.GetValue(item));
-                    }
-                }
-                else if (item.GetType().Name == "SelectSome`1")
-                {
-                    //value.ToDictionary(SelectExpandWrapperConverter.MapperProvider)
-                    object poco = ToPoco(item);
-                    resultList.Add(poco);
-                }
                 else
                 {
-
-                    throw new InvalidCastException("Unknown Type: " + item.GetType().Name);
+                    var converter = _factory.CreateConverter(item.GetType());
+                    resultList.Add(converter.Convert(item));
                 }
+               
+
+
+                
+                //else if (item.GetType().Name == "SelectAllAndExpand`1")
+                //{
+                //    var entityProperty = item.GetType().GetProperty("Instance");
+                //    if (entityProperty.GetType().Name == "SelectSome`1")
+                //    {
+
+                //        resultList.Add(ToPoco(entityProperty.GetValue(item)));
+
+                //    }
+                //    else
+                //    {
+                //        resultList.Add(entityProperty.GetValue(item));
+                //    }
+                //}
+                //else if (item.GetType().Name == "SelectSome`1")
+                //{
+                //    var converter = _factory.CreateConverter(item.GetType());
+                //    //value.ToDictionary(SelectExpandWrapperConverter.MapperProvider)
+                //  //  object poco = ToPoco(item);
+                //    resultList.Add(converter.Convert(item));
+                //}
+                //else
+                //{
+
+                //    throw new InvalidCastException("Unknown Type: " + item.GetType().Name);
+                //}
             }
             return new PageResult<object>(resultList, null, null);
 
@@ -266,48 +402,17 @@ namespace DotNetDevOps.Extensions.EAVFramework
             //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
             //  return Set<Type2>();
         }
-
+        private static OdatatConverterFactory _factory = new OdatatConverterFactory();
         private static object ToPoco(object item)
         {
             if (item == null)
                 return null;
 
-            if (item.GetType().Name == "SelectAllAndExpand`1")
-            {
-                var entityProperty = item.GetType().GetProperty("Instance");
-                return ToPoco(entityProperty.GetValue(item));
-            }
-            else if (item.GetType().Name == "SelectSome`1" || item.GetType().Name == "SelectAll`1" || item.GetType().Name == "SelectSomeAndInheritance`1")
-            {
+            var converter = _factory.CreateConverter(item.GetType()); 
+            return converter.Convert(item);
 
-                var entityProperty = item.GetType().GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
-                var SelectExpandWrapperConverter = item.GetType().Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
-                var poco = (IDictionary<string, object>)entityProperty.Invoke(item, new object[] { SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) });
-
-                foreach (var kv in poco.ToArray())
-                {
-                    poco[kv.Key] = ToPoco(kv.Value);
-                }
-
-                return poco;
-            }
-            else if (typeof(IEnumerable).IsAssignableFrom(item.GetType()) && !(item is string))
-            {
-               
-                var list = new List<object>();
-                foreach(var i in item as IEnumerable)
-                {
-                    list.Add(ToPoco(i));
-                }
-                return list;
-            }
-            else
-            {
-                Console.WriteLine(item.GetType().Name);
-                
-            }
-
-            return item;
+           
+            
         }
 
         public Type GetRecordType(string entityName)
