@@ -13,6 +13,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders
         public void Property(string name) => throw new NotImplementedException();
 
         public virtual KeyBuilder HasKey([NotNullAttribute] params string[] propertyNames) => throw new NotImplementedException();
+        public virtual KeyBuilder HasAlternateKey([NotNullAttribute] params string[] propertyNames) => throw new NotImplementedException();
 
 
     }

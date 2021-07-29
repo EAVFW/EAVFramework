@@ -74,6 +74,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         public Action<JToken, PropertyBuilder> OnDTOTypeGeneration { get; set; }
         public bool GeneratePoco { get; set; } = false;
+        public MethodInfo EntityTypeBuilderHasAlternateKey { get;  set; }
+        public MethodInfo MigrationBuilderCreateIndex { get; internal set; }
+        public MethodInfo MigrationBuilderDropIndex { get; internal set; }
     }
 
     public interface ICodeGenerator
@@ -228,7 +231,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
 
-                    Console.WriteLine($"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
+                   // Console.WriteLine($"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
 
 
                     WriteLambdaExpression(builder, ConstraintsMethodIL, columnsCLRType, new[] { fk.PropertyGetMethod });// fk.Select(c => c.PropertyGetMethod).ToArray());
@@ -274,6 +277,46 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var UpMethodIL = UpMethod.GetILGenerator();
 
             CreateTableImpl(EntityCollectionSchemaName, schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
+
+            //Create Indexes
+            //alternativ keys //TODO create dropindex
+            var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
+            if (keys != null)
+            {
+                foreach (var key in keys.OfType<JProperty>())
+                {
+                    var props = key.Value.ToObject<string[]>();
+
+                    UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                    UpMethodIL.Emit(OpCodes.Ldstr, key.Name); //Constant keyname 
+                    UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
+
+                    //Columns
+                    UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
+                    UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                    for (var j = 0; j < props.Length; j++)
+                    {
+                        var attributeDefinition = entityDefinition.Value.SelectToken($"$.attributes['{props[j]}']");
+                        var attributeSchemaName = attributeDefinition.SelectToken("$.schemaName")?.ToString();
+                        UpMethodIL.Emit(OpCodes.Dup);
+                        UpMethodIL.Emit(OpCodes.Ldc_I4, j);
+                        UpMethodIL.Emit(OpCodes.Ldstr, attributeSchemaName);
+                        UpMethodIL.Emit(OpCodes.Stelem_Ref);
+                    }
+
+
+
+                    UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
+                    UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
+                    UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                    UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                    UpMethodIL.Emit(OpCodes.Pop);
+                }
+            }
+
+          
 
             UpMethodIL.Emit(OpCodes.Ret);
 
@@ -510,6 +553,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             UpMethodIL.Emit(OpCodes.Callvirt, createTableMethod);
             UpMethodIL.Emit(OpCodes.Pop);
+
+          
+
+
         }
 
         public virtual Type GetCLRType(JToken attributeDefinition, out string manifestType)
@@ -635,6 +682,34 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
             }
+
+            //alternativ keys
+            var keys = entityDefinition.SelectToken("$.keys") as JObject;
+            if (keys != null && !isTablePerTypeChild)
+            {
+                foreach(var key in keys.OfType<JProperty>())
+                {
+                    var props = key.Value.ToObject<string[]>();
+
+                    ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument
+                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4,props.Length); // Array length
+                    ConfigureMethod2IL.Emit(OpCodes.Newarr, typeof(string));
+                    for(var j = 0;j<props.Length;j++)
+                    {
+                        var attributeDefinition = entityDefinition.SelectToken($"$.attributes['{props[j]}']");
+                        var attributeSchemaName = attributeDefinition.SelectToken("$.schemaName")?.ToString();
+                        ConfigureMethod2IL.Emit(OpCodes.Dup);
+                        ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, j);
+                        ConfigureMethod2IL.Emit(OpCodes.Ldstr, attributeSchemaName);
+                        ConfigureMethod2IL.Emit(OpCodes.Stelem_Ref);
+                    }
+
+                   
+                    ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.EntityTypeBuilderHasAlternateKey);
+                    ConfigureMethod2IL.Emit(OpCodes.Pop);
+                }
+            }
+
 
             ConfigureMethod2IL.Emit(OpCodes.Ret);
 

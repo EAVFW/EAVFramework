@@ -23,11 +23,22 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     {
 
     }
+    public class DropIndexOperation
+    {
+
+    }
+    public class CreateIndexOperation
+    {
+
+        
+    }
     public class MigrationBuilder
     {
 
         public virtual OperationBuilder<DropTableOperation> DropTable([NotNullAttribute] string name, [CanBeNullAttribute] string schema = null) => throw new NotImplementedException();
         public virtual CreateTableBuilder<TColumns> CreateTable<TColumns>([NotNullAttribute] string name, [NotNullAttribute] Func<ColumnsBuilder, TColumns> columns, [CanBeNullAttribute] string schema = null, [CanBeNullAttribute] Action<CreateTableBuilder<TColumns>> constraints = null, [CanBeNullAttribute] string comment = null) => throw new NotImplementedException();
+        public virtual OperationBuilder<DropIndexOperation> DropIndex([NotNullAttribute] string name, [CanBeNullAttribute] string table = null, [CanBeNullAttribute] string schema = null) => throw new NotImplementedException();
+        public virtual OperationBuilder<CreateIndexOperation> CreateIndex([NotNullAttribute] string name, [NotNullAttribute] string table, [NotNullAttribute] string[] columns, [CanBeNullAttribute] string schema = null, bool unique = false, [CanBeNullAttribute] string filter = null) => throw new NotImplementedException();
     }
 
     public enum ReferentialAction
