@@ -60,7 +60,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
 
 
-        public DynamicContext(DbContextOptions options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
+        public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
             : base(options)
 
 
@@ -202,10 +202,15 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             if (request != null)
             { 
+                if(!request.Query.ContainsKey("$select"))
+                {
+                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p=>p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                }
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
+           
                   
                 metadataQuerySet = new ODataQueryOptions(context, request).ApplyTo(metadataQuerySet);
                  
@@ -272,7 +277,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 var entityProperty = item.GetType().GetProperty("Instance");
                 return ToPoco(entityProperty.GetValue(item));
             }
-            else if (item.GetType().Name == "SelectSome`1" || item.GetType().Name == "SelectAll`1")
+            else if (item.GetType().Name == "SelectSome`1" || item.GetType().Name == "SelectAll`1" || item.GetType().Name == "SelectSomeAndInheritance`1")
             {
 
                 var entityProperty = item.GetType().GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
