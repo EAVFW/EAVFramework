@@ -114,6 +114,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
         }
     }
+    public class IndexInfo
+    {
+        public bool Unique { get; set; } = true;
+        public string Name { get; set; }
+    }
     public class CodeGenerator : ICodeGenerator
     {
 
@@ -291,7 +296,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     UpMethodIL.Emit(OpCodes.Ldstr, key.Name); //Constant keyname 
                     UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
 
-                    //Columns
+                   
                     UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
                     UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
                     for (var j = 0; j < props.Length; j++)
@@ -315,6 +320,42 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     UpMethodIL.Emit(OpCodes.Pop);
                 }
             }
+
+            //Create indexes from lookup fields.
+
+            foreach(JProperty attribute in entityDefinition.Value.SelectToken("$.attributes"))
+            {
+                if(attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup" &&
+                    (attribute.Value.SelectToken("$.type.index") != null))
+                {
+                    var info = attribute.Value.SelectToken("$.type.index");
+                    var indexInfo = info.Type == JTokenType.Object ? info.ToObject<IndexInfo>():new IndexInfo { Unique = true };
+
+                    UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                    UpMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + attribute.Value.SelectToken("$.schemaName")?.ToString()); //Constant keyname 
+                    UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
+
+
+                    UpMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
+                    UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                    UpMethodIL.Emit(OpCodes.Dup);
+                    UpMethodIL.Emit(OpCodes.Ldc_I4_0);
+                    UpMethodIL.Emit(OpCodes.Ldstr, attribute.Value.SelectToken("$.schemaName")?.ToString());
+                    UpMethodIL.Emit(OpCodes.Stelem_Ref);
+
+
+                    UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
+                    UpMethodIL.Emit(indexInfo.Unique? OpCodes.Ldc_I4_1: OpCodes.Ldc_I4_0); //Constant unique=true
+                    UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                    UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                    UpMethodIL.Emit(OpCodes.Pop);
+
+                }
+            }
+
+
 
           
 

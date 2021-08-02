@@ -79,7 +79,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
 
-            foreach (var kv in poco.Where(v=>v.Value !=null).ToArray())
+            foreach (var kv in poco.Where(v => v.Value != null).ToArray())
             {
 
                 var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
@@ -117,30 +117,30 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         public IODataConverter CreateConverter(Type type)
         {
-           return _converters.GetOrAdd(type, type =>
-            {
-                if (type.Name == "SelectAllAndExpand`1")
-                {
-                    return new SelectAllAndExpandConverter(type, this);
+            return _converters.GetOrAdd(type, type =>
+             {
+                 if (type.Name == "SelectAllAndExpand`1")
+                 {
+                     return new SelectAllAndExpandConverter(type, this);
 
-                }
-                else if (type.Name == "SelectSome`1" || type.Name == "SelectAll`1" || type.Name == "SelectSomeAndInheritance`1")
-                {
-                    return new SelectCoverter(type, this);
+                 }
+                 else if (type.Name == "SelectSome`1" || type.Name == "SelectAll`1" || type.Name == "SelectSomeAndInheritance`1")
+                 {
+                     return new SelectCoverter(type, this);
 
 
-                }
-                else if (typeof(IEnumerable).IsAssignableFrom(type) && (type != typeof(string)))
-                {
-                    return new EnumerableConverter(type, this);
+                 }
+                 else if (typeof(IEnumerable).IsAssignableFrom(type) && (type != typeof(string)))
+                 {
+                     return new EnumerableConverter(type, this);
 
-                }
-                else
-                { 
-                    return new PrimitivConverter();
-                }
+                 }
+                 else
+                 {
+                     return new PrimitivConverter();
+                 }
 
-            });
+             });
 
         }
     }
@@ -180,14 +180,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
-
-        //private readonly MigrationManager manager = new MigrationManager();
-
-
-
-
-        public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
-            : base(options)
+  
+        protected DynamicContext(DbContextOptions options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger logger)
+          : base(options)
 
 
         {
@@ -196,6 +191,14 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.logger = logger;
 
             this.ChangeTracker.LazyLoadingEnabled = false;
+        }
+
+        public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
+        : this(options as DbContextOptions, modelOptions, migrationManager, logger as ILogger)
+
+
+        {
+
         }
 
         public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
@@ -301,7 +304,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public IQueryable<DynamicEntity> Set(string entityCollectionSchemaName)
         {
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
-  
+
             var metadataQuerySet = (IQueryable<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
             return metadataQuerySet;
         }
@@ -317,31 +320,31 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
 
             var migrations = GetMigrations(); //ensures that types are build
-  
+
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
- 
+
             var metadataQuerySet = Set(type);
             metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request).Cast(type) ?? metadataQuerySet;
 
-          
+
 
 
             if (request != null)
-            { 
-                if(!request.Query.ContainsKey("$select"))
+            {
+                if (!request.Query.ContainsKey("$select"))
                 {
-                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p=>p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
-           
-                  
+
+
                 metadataQuerySet = new ODataQueryOptions(context, request).ApplyTo(metadataQuerySet);
-                 
+
             }
-           
+
 
             var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
             Console.WriteLine(metadataQuerySet.ToQueryString());
@@ -363,10 +366,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     var converter = _factory.CreateConverter(item.GetType());
                     resultList.Add(converter.Convert(item));
                 }
-               
 
 
-                
+
+
                 //else if (item.GetType().Name == "SelectAllAndExpand`1")
                 //{
                 //    var entityProperty = item.GetType().GetProperty("Instance");
@@ -408,11 +411,11 @@ namespace DotNetDevOps.Extensions.EAVFramework
             if (item == null)
                 return null;
 
-            var converter = _factory.CreateConverter(item.GetType()); 
+            var converter = _factory.CreateConverter(item.GetType());
             return converter.Convert(item);
 
-           
-            
+
+
         }
 
         public Type GetRecordType(string entityName)
