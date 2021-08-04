@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Formatter.Value;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Container;
@@ -79,11 +80,24 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
 
-            foreach (var kv in poco.Where(v => v.Value != null).ToArray())
+            foreach (var kv in poco.ToArray())
             {
+                if(kv.Value == null)
+                {
+                    poco.Remove(kv.Key);
+                    continue;
+                }
 
                 var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
-                poco[kv.Key] = converter.Convert(kv.Value);
+                var value= converter.Convert(kv.Value);
+                if (value == null)
+                {
+                    poco.Remove(kv.Key);
+                }
+                else
+                {
+                    poco[kv.Key] = value;
+                }
             }
 
             return poco;
@@ -339,10 +353,12 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
+                context.DefaultQuerySettings.EnableCount = true;
+                context.DefaultQuerySettings.EnableSkipToken = true;
 
-
-                metadataQuerySet = new ODataQueryOptions(context, request).ApplyTo(metadataQuerySet);
-
+                var odata = new ODataQueryOptions(context, request);
+                metadataQuerySet = odata.ApplyTo(metadataQuerySet);
+                
             }
 
 
@@ -368,36 +384,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 }
 
 
-
-
-                //else if (item.GetType().Name == "SelectAllAndExpand`1")
-                //{
-                //    var entityProperty = item.GetType().GetProperty("Instance");
-                //    if (entityProperty.GetType().Name == "SelectSome`1")
-                //    {
-
-                //        resultList.Add(ToPoco(entityProperty.GetValue(item)));
-
-                //    }
-                //    else
-                //    {
-                //        resultList.Add(entityProperty.GetValue(item));
-                //    }
-                //}
-                //else if (item.GetType().Name == "SelectSome`1")
-                //{
-                //    var converter = _factory.CreateConverter(item.GetType());
-                //    //value.ToDictionary(SelectExpandWrapperConverter.MapperProvider)
-                //  //  object poco = ToPoco(item);
-                //    resultList.Add(converter.Convert(item));
-                //}
-                //else
-                //{
-
-                //    throw new InvalidCastException("Unknown Type: " + item.GetType().Name);
-                //}
             }
-            return new PageResult<object>(resultList, null, null);
+            var odatafeature = request.ODataFeature();
+            return new PageResult<object>(resultList, null, odatafeature.TotalCount);
 
 
             // return metadataQuerySet;

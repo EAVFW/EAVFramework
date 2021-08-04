@@ -29,7 +29,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var routeValues = context.GetRouteData().Values;
             var result = await _context.ExecuteHttpRequest(routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string, context.Request);
 
-            return new DataEndpointResult(new { items = result.Items.ToArray() });
+            return new DataEndpointResult(result.ToDictionary());
 
 
         }

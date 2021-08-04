@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -30,7 +31,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             TContext context,
             IEnumerable<EntityPlugin> plugins,
             IPluginScheduler pluginScheduler,
-            ILogger<CreateRecordsEndpoint<TContext>> logger) : base(plugins.Where(c => c.Operation == EntityPluginOperation.Create), pluginScheduler)
+            ILogger<CreateRecordsEndpoint<TContext>> logger) : base(plugins, EntityPluginOperation.Create, pluginScheduler)
         {
             _context = context;
             _logger = logger;
@@ -50,6 +51,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var _operation = await strategy.ExecuteAsync(async () =>
             {
+                using var scope = context.RequestServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+
                 var operation = new OperationContext<TContext>
                 {
                     Context = _context
@@ -57,13 +60,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 operation.Entity = _context.Add(entityName, record);
 
-                operation.Errors = await RunPreValidation(context, operation.Entity);
+                operation.Errors = await RunPreValidation(scope.ServiceProvider,context, operation.Entity);
                
                 if (operation.Errors.Any())
                     return operation;
 
 
-                await RunPipelineAsync(context, operation);
+                await RunPipelineAsync(scope.ServiceProvider,context, operation);
 
 
 

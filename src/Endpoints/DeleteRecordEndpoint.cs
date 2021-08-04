@@ -4,6 +4,7 @@ using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             TContext context,
             IEnumerable<EntityPlugin> plugins,
             IPluginScheduler pluginScheduler,
-            ILogger<DeleteRecordEndpoint<TContext>> logger) : base(plugins.Where(c => c.Operation == EntityPluginOperation.Delete), pluginScheduler)
+            ILogger<DeleteRecordEndpoint<TContext>> logger) : base(plugins, EntityPluginOperation.Delete, pluginScheduler)
         {
             _context = context;
             _logger = logger;
@@ -41,6 +42,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var _operation = await strategy.ExecuteAsync(async () =>
             {
+                using var scope = context.RequestServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+
                 var operation = new OperationContext<TContext>
                 {
                     Context = _context
@@ -49,21 +52,19 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 var record = await _context.FindAsync(entityName, Guid.Parse(recordId));
                 operation.Entity = _context.Entry(record);
 
-                foreach (var navigation in operation.Entity.Collections)
-                {
-                    await navigation.LoadAsync();
-                }
+                //foreach (var navigation in operation.Entity.Collections)
+                //{
+                //    await navigation.LoadAsync();
+                //}
 
                 operation.Entity.State = EntityState.Deleted;
-
-
-
-                operation.Errors = await RunPreValidation(context, operation.Entity);
+                 
+                operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
 
                 if (operation.Errors.Any())
                     return operation;
 
-                await RunPipelineAsync(context, operation);
+                await RunPipelineAsync(scope.ServiceProvider,context, operation);
 
                 return operation;
 
