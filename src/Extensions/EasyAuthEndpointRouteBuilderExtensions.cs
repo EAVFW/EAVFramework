@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
+using DotNetDevOps.Extensions.EAVFramework.Configuration;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 {
@@ -30,7 +31,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             AuthenticationProperties authProps)
         {
             var sp = endpoints.ServiceProvider;
+            var options = endpoints.ServiceProvider.GetService<EAVFrameworkOptions>();
             var authProviders = sp.GetServices<IEasyAuthProvider>().ToList();
+
             foreach (var auth in authProviders)
             {
                 //https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
@@ -132,6 +135,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                 //  var external = await httpcontext.AuthenticateAsync(Constants.ExternalCookieAuthenticationScheme);
                 //var external = await httpcontext.AuthenticateAsync(loginflow.Properties.Items["schema"]);
 
+                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser,claims);
 
                 await httpcontext.SignInAsync(Constants.DefaultCookieAuthenticationScheme,
                     new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme)), new AuthenticationProperties(                    ));
@@ -160,7 +164,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 //handle auth failures ect
 
-                await context.Response.WriteJsonAsync(auth.Principal.Claims.ToDictionary(k => k.Type, v => v.Value));
+                await context.Response.WriteJsonAsync(auth.Principal.Claims.GroupBy(k=>k.Type).ToDictionary(k => k.Key, v => v.Skip(1).Any()? v.Select(c=>c.Value).ToArray(): v.Select(c => c.Value).First() as object));
             });
         }
     }

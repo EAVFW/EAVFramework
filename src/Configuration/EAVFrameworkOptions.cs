@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Configuration
 {
@@ -145,6 +148,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
         /// <c>true</c> if required; otherwise, <c>false</c>.
         /// </value>
         public bool RequireAuthenticatedUserForSignOutMessage { get; set; } = false;
+
+        public Func<HttpContext, ClaimsPrincipal, List<Claim>, ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
+
+        static internal ValueTask DefaultPopulateAuthenticationClaimsAsync(HttpContext http, ClaimsPrincipal principal, List<Claim> claims) => default;
 
         /// <summary>
         /// Gets or sets the name of the cookie used for the check session endpoint.
