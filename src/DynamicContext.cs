@@ -214,11 +214,28 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
 
         }
-
-        public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
+        public MigrationsInfo GetMigrations()
         {
-            return manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            
+            var name = $"{modelOptions.Value.PublisherPrefix}_Initial";
+            var model = manager.CreateModel(name, modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            return new MigrationsInfo
+            {
+                Types = new Dictionary<string, TypeInfo>
+                {
+                    [name] = model.Item1
+                },
+                Factories = new Dictionary<TypeInfo, Func<Migration>>
+                {
+                    [model.Item1] = model.Item2
+                }
+            };
         }
+
+        //public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
+        //{
+        //    return manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+        //}
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -234,7 +251,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             if (!optionsBuilder.IsConfigured)
             {
-                manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
             optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
@@ -247,8 +264,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             Console.WriteLine("TEST");
             var sw = Stopwatch.StartNew();
-
-            manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+           // manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", );
 
             foreach (var en in manager.EntityDTOs)
             {
@@ -332,8 +349,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
 
 
-
-            var migrations = GetMigrations(); //ensures that types are build
+            //  var migrations = GetMigrations(); //ensures that types are build
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
 
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
 
@@ -460,5 +477,6 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         }
 
+       
     }
 }

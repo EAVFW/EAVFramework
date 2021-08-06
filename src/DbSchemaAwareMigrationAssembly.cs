@@ -11,12 +11,13 @@ using System.Reflection;
 
 namespace DotNetDevOps.Extensions.EAVFramework
 {
+   
     public class DbSchemaAwareMigrationAssembly : MigrationsAssembly
     {
         private readonly DbContext _context;
-        private readonly IReadOnlyDictionary<TypeInfo, Migration> _migrations = new Dictionary<TypeInfo, Migration>();
-        private readonly IReadOnlyDictionary<string, TypeInfo> _migrationsTypes = new Dictionary<string, TypeInfo>();
-
+        // private readonly IReadOnlyDictionary<TypeInfo, Func<Migration>> _migrations = new Dictionary<TypeInfo, Func<Migration>>();
+        // private readonly IReadOnlyDictionary<string, TypeInfo> _migrationsTypes = new Dictionary<string, TypeInfo>();
+        private readonly MigrationsInfo migrations;
         public DbSchemaAwareMigrationAssembly(ICurrentDbContext currentContext,
               IDbContextOptions options, IMigrationsIdGenerator idGenerator,
               IDiagnosticsLogger<DbLoggerCategory.Migrations> logger)
@@ -27,16 +28,17 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var dynamicContext = _context as IDynamicContext ?? throw new ArgumentNullException(nameof(_context), "Current Context is not IDynamicContext");
 
 
-            var migrations = dynamicContext.GetMigrations();
-            _migrations = migrations.ToDictionary(v => v.Value.GetType().GetTypeInfo(), v => v.Value);
-            _migrationsTypes = migrations.ToDictionary(k => k.Key, v => v.Value.GetType().GetTypeInfo());
+            // var migrations = dynamicContext.GetMigrations();
+            // _migrations = migrations.ToDictionary(v => v.Value.GetType().GetTypeInfo(), v => v.Value);
+            //            _migrationsTypes = dynamicContext.GetMigrations(); // migrations.ToDictionary(k => k.Key, v => v.Value.GetType().GetTypeInfo());
 
 
             //_migrations["Initial_Migration"] = typeof(DynamicMigration).GetTypeInfo();
+            migrations = dynamicContext.GetMigrations();
 
         }
 
-        public override IReadOnlyDictionary<string, TypeInfo> Migrations => _migrationsTypes;
+        public override IReadOnlyDictionary<string, TypeInfo> Migrations => migrations.Types;
 
         public override Migration CreateMigration(TypeInfo migrationClass,
               string activeProvider)
@@ -45,7 +47,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 throw new ArgumentNullException(nameof(activeProvider));
 
 
-            return _migrations[migrationClass];
+            return migrations.Factories[migrationClass]();
 
 
         }

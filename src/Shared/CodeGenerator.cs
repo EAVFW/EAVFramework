@@ -77,6 +77,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo EntityTypeBuilderHasAlternateKey { get;  set; }
         public MethodInfo MigrationBuilderCreateIndex { get; internal set; }
         public MethodInfo MigrationBuilderDropIndex { get; internal set; }
+        public MethodInfo IsRowVersionMethod { get; internal set; }
+        public MethodInfo IsRequiredMethod { get; internal set; }
+        
     }
 
     public interface ICodeGenerator
@@ -657,6 +660,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     return typeof(int?);
                 case "customer":
                     return typeof(Guid?);
+                case "binary":
+                    return typeof(byte[]);
             }
             return null;
         }
@@ -717,6 +722,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 ConfigureMethod2IL.Emit(OpCodes.Ldstr, attributeSchemaName); //Constant
 
                 ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.EntityTypeBuilderPropertyMethod);
+
+                if (attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)
+                {
+                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4_1);
+                    ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRequiredMethod);
+                }
+                if (attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)
+                {
+                    ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRowVersionMethod);
+                }
+
 
                 ConfigureMethod2IL.Emit(OpCodes.Pop);
 
@@ -1195,9 +1211,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                         switch (argName)
                         {
+                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)):
+                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)):
+                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? false)):
+                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
+                                //  var a = ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
+                                entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0);
+                                break;
                             case "nullable":
-                                var a = ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
-                                entityCtorBuilderIL.Emit(a);
+                                entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
                                 break;
                             case "type" when type == "multilinetext":
                                 entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)");
@@ -1207,7 +1229,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                             case "type" when type == "string" && !hasMaxLength:
                                 entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false) ? 255 : 100)})");
                                 break;
+                            case "rowVersion" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
+                                entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
+                                break;
                             default:
+                                
                                 entityCtorBuilderIL.Emit(OpCodes.Ldnull);
                                 break;
                         }

@@ -232,9 +232,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         DynamicMigrationType = typeof(DynamicMigration),
                         MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }),
 
-                        GeneratePoco = GeneratePoco == "true"
+                        GeneratePoco = GeneratePoco == "true",
 
-
+                        IsRequiredMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)),
+                        IsRowVersionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)),
 
                     });
 

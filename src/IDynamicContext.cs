@@ -1,10 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace DotNetDevOps.Extensions.EAVFramework
 {
     public interface IDynamicContext
     {
-        IReadOnlyDictionary<string, Migration> GetMigrations();
+        MigrationsInfo GetMigrations();
+    }
+    public class MigrationsInfo
+    {
+        public IReadOnlyDictionary<TypeInfo, Func<Migration>> Factories { get; set; }
+        public IReadOnlyDictionary<string, TypeInfo> Types { get; set; }
     }
 }

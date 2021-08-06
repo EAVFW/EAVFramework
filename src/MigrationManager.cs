@@ -38,7 +38,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
          IEdmModel Model { get; }
         Dictionary<string, Type> EntityDTOs { get; }
         Dictionary<string, Type> EntityDTOConfigurations { get; }
-        public Dictionary<string, Migration> BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
+        //public MigrationsInfo BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
+        
+        void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options);
+        (TypeInfo, Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options);
 
     } 
   
@@ -57,106 +60,26 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         //   public Assembly Assembly { get; set; }
         private ConcurrentDictionary<string, Migration> _migrations = new ConcurrentDictionary<string, Migration>();
+        private ConcurrentDictionary<string, ModuleBuilder> _modules = new ConcurrentDictionary<string, ModuleBuilder>();
         private readonly ILogger<MigrationManager> logger;
 
-        public Dictionary<string, Migration> BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options)
-        {
-
-
-            AppDomain myDomain = AppDomain.CurrentDomain;
-            AssemblyName myAsmName = new AssemblyName(options.Namespace);
-
-            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
-              AssemblyBuilderAccess.RunAndCollect);
-           
-
-
-            ModuleBuilder myModule =
-              assemblyBuilder.DefineDynamicModule(options.Namespace + ".dll");
-
-
-            var migration= _migrations.GetOrAdd(migrationName, (migrationName) =>
-             {
-                 var generator = new CodeGenerator(new CodeGeneratorOptions
-                 {
-                     DTOAssembly = options.DTOAssembly,
-                     
-                     myModule = myModule,
-                     Namespace = options.Namespace,
-                     Schema = options.PublisherPrefix,
-                     migrationName = migrationName,
-                      
-                     MigrationBuilderDropTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)),
-                     MigrationBuilderCreateTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)),
-                     MigrationBuilderCreateIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex),new Type[] {typeof(string),typeof(string),typeof(string[]),typeof(string),typeof(bool),typeof(string) }),
-                     MigrationBuilderDropIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)),
-
-                     ColumnsBuilderType = typeof(ColumnsBuilder),
-                     CreateTableBuilderType = typeof(CreateTableBuilder<>),
-                     CreateTableBuilderPrimaryKeyName = nameof(CreateTableBuilder<object>.PrimaryKey),
-                     CreateTableBuilderForeignKeyName = nameof(CreateTableBuilder<object>.ForeignKey),
-
-                     EntityTypeBuilderType = typeof(EntityTypeBuilder),
-                     EntityTypeBuilderPropertyMethod = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }),
-                     EntityTypeBuilderToTable = typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }),
-                     EntityTypeBuilderHasKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }),
-                     EntityTypeBuilderHasAlternateKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasAlternateKey), 0, new[] { typeof(string[]) }),
-
-                     ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
-                     InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
-
-                     EntityDTOs = EntityDTOs,
-                     EntityDTOConfigurations=EntityDTOConfigurations,
-
-                     OperationBuilderAddColumnOptionType = typeof(OperationBuilder<AddColumnOperation>),
-                     ColumnsBuilderColumnMethod = typeof(ColumnsBuilder).GetMethod(nameof(ColumnsBuilder.Column), BindingFlags.Public | BindingFlags.Instance),
-                     LambdaBase = typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null),
-
-                     // EntityBaseClass = options.DTOBaseClass ?? typeof(DynamicEntity),
-                     // BaseClassProperties = (options.DTOBaseClass ?? typeof(DynamicEntity)).GetProperties().Select(p=>p.Name).ToList(),
-                     DTOBaseClasses = options.DTOBaseClasses ?? Array.Empty<Type>(),
-
-
-                     EntityConfigurationInterface = typeof(IEntityTypeConfiguration),
-                     EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),
-
-
-                     JsonPropertyNameAttributeCtor = typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute).GetConstructor(new Type[] { typeof(string) }),
-                     JsonPropertyAttributeCtor = typeof(JsonPropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
-
-                     DynamicTableType = typeof(IDynamicTable),
-                     DynamicTableArrayType = typeof(IDynamicTable[]),
-
-                     ReferentialActionType = typeof(ReferentialAction),
-                     ReferentialActionNoAction = (int)ReferentialAction.NoAction,
-
-                     DynamicMigrationType = typeof(DynamicMigration),
-                     MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }),
-                     OnDTOTypeGeneration=this.OnDTOTypeGeneration
-                     
-
-                 });
-
-                 var migrationType = generator.CreateDynamicMigration(manifest);
-                 var tables = generator.GetTables(manifest, myModule);
-                // var tables = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => generator.BuildEntityDefinition(myModule, manifest, entity)).ToArray().Select(entity => Activator.CreateInstance(entity.CreateTypeInfo()) as IDynamicTable).ToArray();
-
-                 return Activator.CreateInstance(migrationType, manifest, tables) as Migration;
-             });
-
+        public void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
+        { 
             if (Model == null)
             {
+
+                CreateModel(name, manifest, options);
 
                 var builder = new ODataConventionModelBuilder();
                 var v = new ODataModelBuilder();
                 builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
-                
+
                 //   builder.EntitySet<Movie>("Movies");
                 //   builder.EntitySet<Review>("Reviews");
 
                 foreach (var entity in EntityDTOs)
                 {
-                  //  logger.LogWarning("Creating Model for {entity}", entity.Key);
+                    //  logger.LogWarning("Creating Model for {entity}", entity.Key);
                     var config = builder.AddEntityType(entity.Value);
 
                     if (entity.Key.ToLower() == "identity")
@@ -176,8 +99,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         {
                             var prop = config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
                             prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-                          
-                           // prop.DisableAutoExpandWhenSelectIsPresent = true;
+
+                            // prop.DisableAutoExpandWhenSelectIsPresent = true;
                             logger.LogWarning("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
                         }
                         else
@@ -190,10 +113,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     //foreach(var col in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<InversePropertyAttribute>() != null &&
                     //    p.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)))
                     //{
-                        
+
                     //    config.AddCollectionProperty(col);
                     //}
-                    
+
                     foreach (var prop in config.Properties)
                     {
                         logger.LogWarning("Prop for {entity}.{Prop}", entity.Key, prop.Name);
@@ -201,15 +124,130 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
                 }
                 Model = builder.GetEdmModel();
-               
+
             }
 
-
-            return new Dictionary<string, Migration>
-            {
-                [migration.GetId()] = migration
-            };
         }
+        private  ConcurrentDictionary<string, (TypeInfo, Func<Migration>)> _cache = new ConcurrentDictionary<string, (TypeInfo, Func<Migration>)>();
+
+        public (TypeInfo,Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options)
+        {
+            return _cache.GetOrAdd(migrationName, (migrationName) =>
+             {
+                 var myModule = _modules.GetOrAdd(options.Namespace, (name) =>
+                 {
+                     AppDomain myDomain = AppDomain.CurrentDomain;
+                     AssemblyName myAsmName = new AssemblyName(options.Namespace);
+
+                     var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
+                       AssemblyBuilderAccess.RunAndCollect);
+
+
+
+                     ModuleBuilder myModule =
+                       assemblyBuilder.DefineDynamicModule(options.Namespace + ".dll");
+                     return myModule;
+                 });
+
+
+                 var generator = new CodeGenerator(new CodeGeneratorOptions
+                 {
+                     DTOAssembly = options.DTOAssembly,
+
+                     myModule = myModule,
+                     Namespace = options.Namespace,
+                     Schema = options.PublisherPrefix,
+                     migrationName = migrationName,
+
+                     MigrationBuilderDropTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)),
+                     MigrationBuilderCreateTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)),
+                     MigrationBuilderCreateIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }),
+                     MigrationBuilderDropIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)),
+
+                     ColumnsBuilderType = typeof(ColumnsBuilder),
+                     CreateTableBuilderType = typeof(CreateTableBuilder<>),
+                     CreateTableBuilderPrimaryKeyName = nameof(CreateTableBuilder<object>.PrimaryKey),
+                     CreateTableBuilderForeignKeyName = nameof(CreateTableBuilder<object>.ForeignKey),
+
+                     EntityTypeBuilderType = typeof(EntityTypeBuilder),
+                     EntityTypeBuilderPropertyMethod = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }),
+                     EntityTypeBuilderToTable = typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }),
+                     EntityTypeBuilderHasKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }),
+                     EntityTypeBuilderHasAlternateKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasAlternateKey), 0, new[] { typeof(string[]) }),
+
+                 
+
+                     ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
+                     InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
+
+                     EntityDTOs = EntityDTOs,
+                     EntityDTOConfigurations = EntityDTOConfigurations,
+
+                     OperationBuilderAddColumnOptionType = typeof(OperationBuilder<AddColumnOperation>),
+                     ColumnsBuilderColumnMethod = typeof(ColumnsBuilder).GetMethod(nameof(ColumnsBuilder.Column), BindingFlags.Public | BindingFlags.Instance),
+                     LambdaBase = typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null),
+
+                    // EntityBaseClass = options.DTOBaseClass ?? typeof(DynamicEntity),
+                    // BaseClassProperties = (options.DTOBaseClass ?? typeof(DynamicEntity)).GetProperties().Select(p=>p.Name).ToList(),
+                    DTOBaseClasses = options.DTOBaseClasses ?? Array.Empty<Type>(),
+
+
+                     EntityConfigurationInterface = typeof(IEntityTypeConfiguration),
+                     EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),
+
+
+                     JsonPropertyNameAttributeCtor = typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute).GetConstructor(new Type[] { typeof(string) }),
+                     JsonPropertyAttributeCtor = typeof(JsonPropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
+
+                     DynamicTableType = typeof(IDynamicTable),
+                     DynamicTableArrayType = typeof(IDynamicTable[]),
+
+                     ReferentialActionType = typeof(ReferentialAction),
+                     ReferentialActionNoAction = (int)ReferentialAction.NoAction,
+
+                     DynamicMigrationType = typeof(DynamicMigration),
+                     MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }),
+                     OnDTOTypeGeneration = this.OnDTOTypeGeneration,
+
+                      IsRequiredMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)),
+                     IsRowVersionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)),
+
+                 });
+
+                 var migrationType = generator.CreateDynamicMigration(manifest);
+                 var tables = generator.GetTables(manifest, myModule);
+                 return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
+             });
+        }
+        //public Dictionary<string, Migration> BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options)
+        //{
+
+
+          
+
+        //    var migration= _migrations.GetOrAdd(migrationName, (migrationName) =>
+        //     {
+
+        //         // var tables = manifest.SelectToken("$.entities").OfType<JProperty>().Select(entity => generator.BuildEntityDefinition(myModule, manifest, entity)).ToArray().Select(entity => Activator.CreateInstance(entity.CreateTypeInfo()) as IDynamicTable).ToArray();
+        //         var (migrationType, tables) = createModel(migrationName, manifest, options);
+        //         return Activator.CreateInstance(migrationType, manifest, tables) as Migration;
+        //     });
+
+           
+        ////    return new MigrationsInfo
+        ////    {
+        ////         Types = new Dictionary<string, Migration>
+        ////         {
+        ////             [migration.GetId()] = migration
+        ////         };
+        ////}
+        //    return new Dictionary<string, Migration>
+        //    {
+        //        [migration.GetId()] = migration
+        //    };
+        //}
 
 
 

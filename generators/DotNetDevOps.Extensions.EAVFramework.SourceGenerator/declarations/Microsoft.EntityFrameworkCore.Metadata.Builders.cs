@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Builders
 {
+    public class PropertyBuilder
+    {
+        public virtual PropertyBuilder IsRequired(bool required = true) => throw new NotImplementedException();
+         
+        public virtual PropertyBuilder IsRowVersion() => throw new NotImplementedException();
+    }
     public class EntityTypeBuilder
     {
         public void Property(string name) => throw new NotImplementedException();
