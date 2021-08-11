@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.OData.Query.Wrapper;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -473,7 +474,31 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var type = manager.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-            return this.Update(data.ToObject(type));
+            var entity= this.Update(data.ToObject(type));
+            foreach (var collection in entity.Collections)
+            {
+                var attr = collection.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>();
+                var deletedItems = data[$"{attr.PropertyName}@deleted"];
+                if (deletedItems != null)
+                {
+                    foreach(var id in deletedItems)
+                    {
+                        var related=Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
+                        //var keys = collection.Metadata.TargetEntityType.GetKeys();
+                        //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
+                       
+                        //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
+                       
+                        collection.Metadata.DeclaringEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+
+
+                        Attach(related);
+                        Remove(related);
+                    }
+                }
+
+            }
+            return entity;
 
         }
 

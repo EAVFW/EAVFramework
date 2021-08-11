@@ -46,6 +46,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 };
 
                 operation.Entity = _context.Update(entityName, record);
+               
 
                 operation.Errors = await RunPreValidation(scope.ServiceProvider,context, operation.Entity);
 
