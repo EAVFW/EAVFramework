@@ -18,7 +18,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 {
     public static class EasyAuthEndpointRouteBuilderExtensions
     {
-        public static IEndpointConventionBuilder AddEasyAuth(
+        public static IEndpointRouteBuilder AddEasyAuth(
             this IEndpointRouteBuilder endpoints,
             AuthenticationProperties authenticationProperties = null)
         {
@@ -26,7 +26,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             return MapAuthEndpoints(endpoints, authProps);
         }
 
-        private static IEndpointConventionBuilder MapAuthEndpoints(
+        private static IEndpointRouteBuilder MapAuthEndpoints(
             IEndpointRouteBuilder endpoints,
             AuthenticationProperties authProps)
         {
@@ -157,7 +157,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                 }
             }).WithMetadata(new AllowAnonymousAttribute());
 
-            return endpoints.MapGet("/.auth/me", async context =>
+            endpoints.MapGet("/.auth/me", async context =>
             {
                 // for now just take first authenticator
                 var auth = await context.AuthenticateAsync(Constants.DefaultCookieAuthenticationScheme);
@@ -166,6 +166,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 await context.Response.WriteJsonAsync(auth.Principal.Claims.GroupBy(k=>k.Type).ToDictionary(k => k.Key, v => v.Skip(1).Any()? v.Select(c=>c.Value).ToArray(): v.Select(c => c.Value).First() as object));
             });
+
+            endpoints.MapGet("/.auth/logout", async httpcontext =>
+            {
+                await httpcontext.SignOutAsync(Constants.DefaultCookieAuthenticationScheme);
+
+                httpcontext.Response.Redirect(httpcontext.Request.Query["post_logout_redirect_uri "]);
+            });
+
+
+
+                return endpoints;
         }
     }
 }
