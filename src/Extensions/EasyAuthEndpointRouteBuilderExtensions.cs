@@ -34,58 +34,56 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             var options = endpoints.ServiceProvider.GetService<EAVFrameworkOptions>();
             var authProviders = sp.GetServices<IEasyAuthProvider>().ToList();
 
-            foreach (var auth in authProviders)
+            foreach (var auth in authProviders.Where(x => x.AutoGenerateRoutes))
             {
                 //https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
-
                 var authUrl = $"/.auth/login/{auth.AuthenticationName}";
+
                 endpoints.MapGet(authUrl, async (httpcontext) =>
                 {
                     var handleId = CryptographyHelpers.CreateCryptographicallySecureGuid().ToString("N");
                     var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
                     var callbackUrl = $"{baseUrl}/.auth/login/{auth.AuthenticationName}/callback?token={handleId}";
-                     
 
                     var requestDelegate = auth.OnAuthenticate(handleId, callbackUrl);
                     await requestDelegate(httpcontext);
                 }).WithMetadata(new AllowAnonymousAttribute());
 
-                endpoints.MapGet($"{authUrl}/callback", async (httpcontext) =>
-                {
-                    var handleId = httpcontext.Request.Query["token"].First();
-                    var (claimsIdentity, redirectUri) = await auth.OnCallback(handleId, httpcontext);
+                endpoints.MapMethods(
+                    $"{authUrl}/callback",
+                    new[] { auth.CallbackHttpMethod.ToString().ToUpperInvariant() },
+                    async (httpcontext) =>
+                    {
+                        var handleId = httpcontext.Request.Query["token"].FirstOrDefault();
+                        var (claimsPrincipal, redirectUri) = await auth.OnCallback(handleId, httpcontext);
 
-                    await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
-                     new ClaimsPrincipal(claimsIdentity), new AuthenticationProperties(
-                      new Dictionary<string, string>
-                      {
-                          ["handleId"] = handleId,
-                          ["callbackUrl"] = redirectUri,
-                          ["schema"] = auth.AuthenticationName
-                      }));
+                        await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
+                            claimsPrincipal, new AuthenticationProperties(
+                                new Dictionary<string, string>
+                                {
+                                    ["handleId"] = handleId,
+                                    ["callbackUrl"] = redirectUri,
+                                    ["schema"] = auth.AuthenticationName
+                                }));
 
-                    //await httpcontext.SignInAsync(
-                    //    auth.AuthenticationName,
-                    //    new ClaimsPrincipal(claimsIdentity),
-                    //    authProps);
-                    httpcontext.Response.Redirect("/account/login/callback");
-                }).WithMetadata(new AllowAnonymousAttribute());
+                        httpcontext.Response.Redirect("/account/login/callback");
+                    }).WithMetadata(new AllowAnonymousAttribute());
             }
 
             endpoints.MapGet(Constants.UIConstants.DefaultRoutePaths.Login,
                 async r =>
                 {
-                  
                     var hasReturnUrl = r.Request.Query.TryGetValue("returnUrl", out StringValues returnUrlHeaders);
                     var redirect = hasReturnUrl ? returnUrlHeaders.FirstOrDefault() : "/";
                     // store the redirect in a cookie
-                   // r.Response.Cookies.Append(Constants.DefaultLoginRedirectCookie, redirect);
+                    // r.Response.Cookies.Append(Constants.DefaultLoginRedirectCookie, redirect);
 
                     var hasIdp = r.Request.Query.TryGetValue("idp", out StringValues idp);
                     if (hasIdp)
                     {
                         // if idp query param given, pass on directly to idp
-                        r.Response.Redirect($"/.auth/login/{idp.FirstOrDefault()}?redirectUri={new Uri(r.Request.GetDisplayUrl()).GetLeftPart( UriPartial.Authority)+ Constants.UIConstants.DefaultRoutePaths.LoginCallback}");
+                        r.Response.Redirect(
+                            $"/.auth/login/{idp.FirstOrDefault()}?redirectUri={new Uri(r.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority) + Constants.UIConstants.DefaultRoutePaths.LoginCallback}");
                     }
                     else
                     {
@@ -119,11 +117,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 // try to determine the unique id of the external user - the most common claim type for that are the sub claim and the NameIdentifier
                 // depending on the external provider, some other claim type might be used
-                var userIdClaim = claims.FirstOrDefault(x => x.Type == "sub");
-                if (userIdClaim == null)
-                {
-                    userIdClaim = claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-                }
+                var userIdClaim = claims.FirstOrDefault(x => x.Type == "sub") ??
+                                  claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier) ??
+                                  claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
+
                 if (userIdClaim == null)
                 {
                     throw new Exception("Unknown userid");
@@ -135,16 +132,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                 //  var external = await httpcontext.AuthenticateAsync(Constants.ExternalCookieAuthenticationScheme);
                 //var external = await httpcontext.AuthenticateAsync(loginflow.Properties.Items["schema"]);
 
-                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser,claims);
+                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser, claims);
 
                 await httpcontext.SignInAsync(Constants.DefaultCookieAuthenticationScheme,
-                    new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme)), new AuthenticationProperties(                    ));
+                    new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme)),
+                    new AuthenticationProperties());
 
                 await httpcontext.SignOutAsync(Constants.ExternalCookieAuthenticationScheme);
 
 
                 //TODO make better way to get that return url
-                if (httpcontext.Request.Cookies.TryGetValue(Constants.DefaultLoginRedirectCookie, out string redirectUri))
+                if (httpcontext.Request.Cookies.TryGetValue(Constants.DefaultLoginRedirectCookie,
+                    out string redirectUri))
                 {
                     httpcontext.Response.Cookies.Delete(Constants.DefaultLoginRedirectCookie);
                     httpcontext.Response.Redirect(redirectUri);
@@ -164,7 +163,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 //handle auth failures ect
 
-                await context.Response.WriteJsonAsync(auth.Principal.Claims.GroupBy(k=>k.Type).ToDictionary(k => k.Key, v => v.Skip(1).Any()? v.Select(c=>c.Value).ToArray(): v.Select(c => c.Value).First() as object));
+                await context.Response.WriteJsonAsync(auth.Principal.Claims.GroupBy(k => k.Type)
+                    .ToDictionary(k => k.Key,
+                        v => v.Skip(1).Any()
+                            ? v.Select(c => c.Value).ToArray()
+                            : v.Select(c => c.Value).First() as object));
             });
 
             endpoints.MapGet("/.auth/logout", async httpcontext =>

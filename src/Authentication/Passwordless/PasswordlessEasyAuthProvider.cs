@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
+using System.Net.Http;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Security.Claims;
@@ -9,12 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 {
@@ -24,11 +20,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
 
-
         public PasswordlessEasyAuthProvider() { }
 
         public PasswordlessEasyAuthProvider(
-           
             SmtpClient smtpClient,
             IOptions<PasswordlessEasyAuthOptions> options)
         {
@@ -38,17 +32,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         }
 
         public string AuthenticationName => "passwordless";
+        public HttpMethod CallbackHttpMethod => HttpMethod.Get;
+        public bool AutoGenerateRoutes { get; set; } = true;
 
         public RequestDelegate OnAuthenticate(string handleId, string callbackUrl)
         {
             return async (httpcontext) =>
             {
-                //var table = _storage.CreateCloudTableClient().GetTableReference("signin");
-              //  await table.CreateIfNotExistsAsync();
-
-                // var data = await JToken.ReadFromAsync(
-                //     new JsonTextReader(new StreamReader(httpcontext.Request.Body)));
-                // var email = data.SelectToken("$.email")?.ToString();
                 var email = httpcontext.Request.Query["email"].FirstOrDefault();
                 var redirectUri = httpcontext.Request.Query["redirectUri"].FirstOrDefault();
 
@@ -56,29 +46,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 
                 if (user == null)
                 {
-                    var uriBuilder = new UriBuilder(callbackUrl);
-                  
                     httpcontext.Response.Redirect(callbackUrl  + $"{(callbackUrl.Contains('?')?"&":"?")}error=access_denied&error_subcode=user_not_found");
-                  //  _options.Value.OnNotFound(httpcontext);
                     return;
                 }
 
                 var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
                     Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
 
-                //await table.ExecuteAsync(TableOperation.InsertOrReplace(new DynamicTableEntity
-                //{
-                //    ETag = "*", PartitionKey = handleId.URLSafeHash(), RowKey = "", Properties = new
-                //        Dictionary<string, EntityProperty>
-                //        {
-                //            ["ticket"] = EntityProperty.GeneratePropertyForByteArray(ticket),
-                //            ["redirectUri"] =
-                //                EntityProperty.GeneratePropertyForString(redirectUri)
-                //        }
-                //}));
-
                 await _options.Value.PersistTicketAsync(httpcontext,handleId.URLSafeHash(),ticket, redirectUri);
-
 
                 var options = JToken.FromObject(new
                 {
@@ -116,21 +91,34 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
             };
         }
 
-        public async Task<(ClaimsIdentity, string)> OnCallback(string handleId, HttpContext httpcontext)
+        public async Task<(ClaimsPrincipal, string)> OnCallback(string handleId, HttpContext httpcontext)
         {
-            //var table = _storage.CreateCloudTableClient().GetTableReference("signin");
-
             var (ticketInfo, redirectUri) = await _options.Value.GetTicketInfoAsync(httpcontext,handleId.URLSafeHash());
 
-            //  var ticketInfo = table.CreateQuery<DynamicTableEntity>()
-            //       .Where(c => c.PartitionKey == handleId.URLSafeHash()).Take(1).ToList().FirstOrDefault();
             var ticket = QueryHelpers.ParseNullableQuery
             (Encoding.UTF8.GetString(CryptographyHelpers.Decrypt(handleId.Sha512(), handleId.Sha1(),
                 ticketInfo)));
 
-            //var redirectUri = ticketInfo.Properties["redirectUri"].StringValue;
-            return await Task.FromResult((new ClaimsIdentity(ticket.Select(kv => new Claim(kv.Key, kv.Value)).ToArray(),
-                AuthenticationName), redirectUri));
+            var identity = new ClaimsIdentity(
+                ticket.Select(kv => new Claim(kv.Key, kv.Value)).ToArray(),
+                AuthenticationName);
+
+            return await Task.FromResult((new ClaimsPrincipal(identity), redirectUri));
+        }
+
+        public RequestDelegate OnSignout(string callbackUrl)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RequestDelegate OnSignedOut()
+        {
+            throw new NotImplementedException();
+        }
+
+        public RequestDelegate OnSingleSignOut(string callbackUrl)
+        {
+            throw new NotImplementedException();
         }
     }
 }
