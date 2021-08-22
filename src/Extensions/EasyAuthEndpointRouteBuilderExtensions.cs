@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
 using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using System.Net;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 {
@@ -161,13 +162,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                 // for now just take first authenticator
                 var auth = await context.AuthenticateAsync(Constants.DefaultCookieAuthenticationScheme);
 
-                //handle auth failures ect
+                if (auth.Succeeded)
+                {
 
-                await context.Response.WriteJsonAsync(auth.Principal.Claims.GroupBy(k => k.Type)
-                    .ToDictionary(k => k.Key,
-                        v => v.Skip(1).Any()
-                            ? v.Select(c => c.Value).ToArray()
-                            : v.Select(c => c.Value).First() as object));
+                    await context.Response.WriteJsonAsync(auth.Principal.Claims.GroupBy(k => k.Type).ToDictionary(k => k.Key, v => v.Skip(1).Any() ? v.Select(c => c.Value).ToArray() : v.Select(c => c.Value).First() as object));
+
+                }
+                else
+                {
+                        context.Response.StatusCode = 401; 
+                       await context.Response.WriteJsonAsync(new { error = "Not Authenticated"});
+
+                }
             });
 
             endpoints.MapGet("/.auth/logout", async httpcontext =>

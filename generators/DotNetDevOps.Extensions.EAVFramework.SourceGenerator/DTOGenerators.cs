@@ -30,6 +30,30 @@ using System.Threading.Tasks;
 namespace DotNetDevOps.Extensions.EAVFramework.Generators
 {
 
+    internal static class SourceGeneratorContextExtensions
+    {
+        private const string SourceItemGroupMetadata = "build_metadata.AdditionalFiles.SourceItemGroup";
+
+        public static string GetMSBuildProperty(
+            this GeneratorExecutionContext context,
+            string name,
+            string defaultValue = "")
+        {
+            context.AnalyzerConfigOptions.GlobalOptions.TryGetValue($"build_property.{name}", out var value);
+            return value ?? defaultValue;
+        }
+
+        public static string[] GetMSBuildItems(this GeneratorExecutionContext context, string name)
+            => context
+                .AdditionalFiles
+                .Where(f => context.AnalyzerConfigOptions
+                    .GetOptions(f)
+                    .TryGetValue(SourceItemGroupMetadata, out var sourceItemGroup)
+                    && sourceItemGroup == name)
+                .Select(f => f.Path)
+                .ToArray();
+    }
+
     /// <summary>
     /// https://dominikjeske.github.io/source-generators/
     /// https://github.com/dotnet/roslyn/issues/44093
@@ -39,7 +63,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
     {
         public void Execute(GeneratorExecutionContext context)
         {
-            context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
+            //context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
+
+            var @namespace = context.GetMSBuildProperty("RootNamespace") ?? context.GetMSBuildProperty("CustomizationPrefix", "EAVFramework.Extensions.Model");
+
             context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.GeneratePoco", out var GeneratePoco);
 
             var compilation = context.Compilation;
@@ -238,7 +265,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)),
                         IsRowVersionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)),
-
+                        HasConversionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion), new Type[] { }),
                     });
 
 
@@ -251,8 +279,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                     //Same approach as the codegenerator, make a class that is "shared" by the projects and runs on top of the generated DTO classes (EACH DTO class is a endpoint after all).
                     //Remember, dont make it perfect the first time, just get it work and we can add features.
 
-                     //)
-
+                    //)
+                    var enums = new HashSet<Type>();
                     foreach (var type in myModule.GetTypes().Where(t => { try { return t.GetCustomAttribute<EntityDTOAttribute>() != null; } catch (Exception) { } return false; }))
                     {
 
@@ -260,9 +288,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                         context.AddSource($"{type.Name}.cs", GenerateSourceCode(type, GeneratePoco == "true"));
 
+                        foreach(var prop in type.GetProperties().Where(p => (Nullable.GetUnderlyingType( p.PropertyType) ?? p.PropertyType).IsEnum))
+                        {
+                            enums.Add(Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                        }
                      
 
 
+                    }
+                    foreach (var enumtype in enums)
+                    {
+
+                        context.AddSource($"{enumtype.Name}.cs", GenerateSourceCode(enumtype, GeneratePoco == "true"));
                     }
 
                 }
@@ -304,6 +341,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
         private string GenerateSourceCode(Type type, bool generatePoco)
         {
             var namespaces = new HashSet<string>();
+
             var sb = new StringBuilder();
 
             sb.AppendLine($"namespace {type.Namespace}\r\n{{");
@@ -321,29 +359,60 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                 }
 
                 if(!generatePoco)
-                GenerateAttributes(sb, "\t", namespaces, type.CustomAttributes);
-                sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract ":" ")}class {type.Name}{inherience}\r\n\t{{");
+                    GenerateAttributes(sb, "\t", namespaces, type.CustomAttributes);
+
+                if (type.IsEnum)
                 {
-                    foreach (var ctor in type.GetConstructors())
+                    sb.AppendLine($"\tpublic enum {type.Name}\r\n\t{{");
                     {
-                        GenerateContructorSourceCode(sb, "\t\t", namespaces, ctor);
-                    }
-                    foreach (var method in type.GetMethods())
-                    {
-                        var body = method.GetMethodBody();
+                        System.Type enumUnderlyingType = System.Enum.GetUnderlyingType(type);
+                        System.Array enumValues = System.Enum.GetValues(type);
+                       // System.Array enumNames = System.Enum.GetNames(type);
 
-                    }
-                    foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public
-    | System.Reflection.BindingFlags.Instance
-    | System.Reflection.BindingFlags.DeclaredOnly))
-                    {
-                         
-                            GeneratePropertySource(sb, "\t\t", namespaces, prop);
-                        
-                    }
+                        for (int i = 0; i < enumValues.Length; i++)
+                        {
+                            // Retrieve the value of the ith enum item.
+                            object value = enumValues.GetValue(i);
+                           // object name = enumNames.GetValue(i);
 
+                            // Convert the value to its underlying type (int, byte, long, ...)
+                            object underlyingValue = System.Convert.ChangeType(value, enumUnderlyingType);
 
+                            sb.Append($"\t\t{value} = {underlyingValue}");
+                            if (i + 1 < enumValues.Length)
+                                sb.AppendLine(",");
+                            else
+                                sb.AppendLine();
+
+                        }
+                    }
                 }
+                else
+                {
+                    sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract " : " ")}class {type.Name}{inherience}\r\n\t{{");
+                    {
+                        foreach (var ctor in type.GetConstructors())
+                        {
+                            GenerateContructorSourceCode(sb, "\t\t", namespaces, ctor);
+                        }
+                        foreach (var method in type.GetMethods())
+                        {
+                            var body = method.GetMethodBody();
+
+                        }
+                        foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public
+        | System.Reflection.BindingFlags.Instance
+        | System.Reflection.BindingFlags.DeclaredOnly))
+                        {
+
+                            GeneratePropertySource(sb, "\t\t", namespaces, prop);
+
+                        }
+
+
+                    }
+                }
+
                 sb.AppendLine("\t}");
             }
             sb.AppendLine("}");

@@ -46,8 +46,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
 
             var strategy = _context.Database.CreateExecutionStrategy();
-            
-            
+             
 
             var _operation = await strategy.ExecuteAsync(async () =>
             {

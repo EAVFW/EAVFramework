@@ -206,6 +206,12 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.logger = logger;
 
             this.ChangeTracker.LazyLoadingEnabled = false;
+            
+        }
+
+        private void DynamicContext_SavingChanges(object sender, SavingChangesEventArgs e)
+        {
+           
         }
 
         public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
@@ -255,7 +261,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
-            optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
+           // optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
         }
 
         //  public List<MetadataEntity> _metaDataEntityList = new List<MetadataEntity>();
@@ -486,10 +492,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         var related=Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
                         //var keys = collection.Metadata.TargetEntityType.GetKeys();
                         //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
-                       
+
                         //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
-                       
-                        collection.Metadata.DeclaringEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+
+                        collection.Metadata.TargetEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
 
 
                         Attach(related);

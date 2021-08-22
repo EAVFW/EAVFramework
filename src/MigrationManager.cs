@@ -105,9 +105,18 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         }
                         else
                         {
-                            var prop = config.AddProperty(nav);
-                            prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-                            logger.LogWarning("Creating Prop for {entity}.{nav}", entity.Key, nav.Name);
+                            if ((Nullable.GetUnderlyingType(nav.PropertyType) ?? nav.PropertyType).IsEnum)
+                            {
+                                var prop = config.AddEnumProperty(nav);
+                                prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+                            }
+                            else
+                            {
+
+                                var prop = config.AddProperty(nav);
+                                prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+                            //    logger.LogWarning("Creating Prop for {entity}.{nav}", entity.Key, nav.Name);
+                            }
                         }
                     }
                     //foreach(var col in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<InversePropertyAttribute>() != null &&
@@ -213,6 +222,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)),
                      IsRowVersionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)),
+                     HasConversionMethod= typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion),new Type[] { }),
 
                  });
 

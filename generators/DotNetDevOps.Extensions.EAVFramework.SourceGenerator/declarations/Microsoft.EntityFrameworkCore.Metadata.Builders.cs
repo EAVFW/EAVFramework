@@ -13,6 +13,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders
         public virtual PropertyBuilder IsRequired(bool required = true) => throw new NotImplementedException();
          
         public virtual PropertyBuilder IsRowVersion() => throw new NotImplementedException();
+        public virtual PropertyBuilder HasConversion<TProvider>() => throw new NotImplementedException();
     }
     public class EntityTypeBuilder
     {

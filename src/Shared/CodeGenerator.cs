@@ -58,6 +58,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public Type EntityConfigurationInterface { get; internal set; }
         public string EntityConfigurationConfigureName { get; internal set; }
         public ConstructorInfo JsonPropertyNameAttributeCtor { get; internal set; }
+        public ConstructorInfo JsonConverterAttributeCtor { get; internal set; }
+        public Type ChoiceConverter { get; internal set; }
+
         public ConstructorInfo JsonPropertyAttributeCtor { get; internal set; }
         public Type DynamicTableType { get; internal set; }
         public string CreateTableBuilderPrimaryKeyName { get; internal set; }
@@ -79,7 +82,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo MigrationBuilderDropIndex { get; internal set; }
         public MethodInfo IsRowVersionMethod { get; internal set; }
         public MethodInfo IsRequiredMethod { get; internal set; }
-        
+        public MethodInfo HasConversionMethod { get; internal set; }
     }
 
     public interface ICodeGenerator
@@ -150,7 +153,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             //  ModuleBuilder myModule =
             //    builder.DefineDynamicModule(myAsmName.Name);
 
-            CreateDTO(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition.Value as JObject, manifest);
+            CreateDTO(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition, manifest);
             CreateDTOConfiguration(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition.Value as JObject, manifest);
 
             var (columnsCLRType, columnsctor, members) = CreateColumnsType(manifest, EntitySchameName, EntityCollectionSchemaName, entityDefinition.Value as JObject, builder);
@@ -381,6 +384,76 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
+            //foreach(var (entityDefinition,attributeDefinition2) in manifest.SelectToken("$.entities").OfType<JProperty>()
+            //    .SelectMany(e=>e.Value.SelectToken("$.attributes").OfType<JProperty>().Select(p=>(e,p)))
+            //    .Where(a=>a.p.Value.SelectToken("$.type.type")?.ToString().ToLower() == "choices")
+            //    .ToArray())
+            //{
+
+                 
+
+
+            //    var nentity = $"{attributeDefinition2.Value.SelectToken("$.type.name")}";
+
+
+            //    manifest["entities"][nentity] = JToken.FromObject(
+            //       new
+            //       {
+            //           pluralName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", ""),
+            //           logicalName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", "").ToLower(),
+            //           schemaName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", ""),
+            //           collectionSchemaName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", ""),
+            //           attributes = new
+            //           {
+            //               Id = new
+            //               {
+            //                   displayName = "Id",
+            //                   logicalName = "id",
+            //                   schemaName = "Id",
+            //                   type = "guid",                              
+            //                   isPrimaryKey = true,
+            //               },
+            //               Record = new 
+            //               {
+            //                   displayName = "Record",
+            //                   logicalName = "recordid",
+            //                   schemaName = "RecordId",
+            //                   type = new
+            //                   {
+            //                       type = "lookup",
+            //                       referenceType = entityDefinition.Name,
+            //                   },
+            //               },
+            //               Value = new
+            //               {
+
+            //                   displayName = "Value",
+            //                   logicalName = "value",
+            //                   schemaName = "Value",
+            //                   isPrimaryKey = true,
+            //                   type = new
+            //                   {
+            //                       type = "choice",
+            //                       name = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", "") + "Value",
+            //                       options = attributeDefinition2.Value.SelectToken("$.type.options")
+            //                   }
+            //               }
+            //           }
+            //       });
+            //    //attributeDefinition2.Value.SelectToken("$.type").Replace(JToken.FromObject(
+            //    //  new
+            //    //  {
+            //    //      type = "lookup",
+            //    //      referenceType = $"{attributeDefinition2.Value.SelectToken("$.type.name")}"
+            //    //  }
+            //    // ));
+
+            //    attributeDefinition2.Remove();
+
+            //    File.AppendAllLines("test1.txt", new[] { attributeDefinition2.ToString(Formatting.None), entityDefinition.ToString(Formatting.None), manifest["entities"][nentity].ToString(Formatting.None) });
+            //}
+
+
             var abstracts = manifest.SelectToken("$.entities").OfType<JProperty>()
                 .Where(entity => entity.Value.SelectToken("$.abstract") != null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity).CreateTypeInfo()).ToArray();
@@ -603,7 +676,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         }
 
-        public virtual Type GetCLRType(JToken attributeDefinition, out string manifestType)
+        public virtual Type GetCLRType(ModuleBuilder myModule, JProperty entityDefinition, JToken attributeDefinition, JToken manifest, out string manifestType)
         {
             var typeObj = attributeDefinition.SelectToken("$.type");
             manifestType = typeObj.ToString();
@@ -613,30 +686,24 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
 
             manifestType = manifestType.ToLower();
+
+            if (manifestType == "choice")
+            {
+                var enumValue = myModule.DefineEnum($"{options.Namespace}.{attributeDefinition.SelectToken("$.type.name")}".Replace(" ", ""), TypeAttributes.Public, typeof(int));
+                foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
+                {
+                    enumValue.DefineLiteral(optionPro.Name.Replace(" ",""), optionPro.Value.ToObject<int>());
+
+                }
+
+                return  typeof(Nullable<>).MakeGenericType(enumValue.CreateTypeInfo());
+            }
+
             return GetCLRType(manifestType);
         }
         public virtual Type GetCLRType(string manifestType)
         {
-            //switch (manifestType.ToLower())
-            //{
-            //    case "string":
-            //    case "text":
-            //    case "multilinetext":
-            //        return baseMethodType.MakeGenericMethod(typeof(string));
-            //    case "guid":
-            //        return baseMethodType.MakeGenericMethod(typeof(Guid));
-            //    case "int":
-            //    case "integer":
-            //        return baseMethodType.MakeGenericMethod(typeof(int));
-            //    case "datetime":
-            //        return baseMethodType.MakeGenericMethod(typeof(DateTime));
-            //    case "decimal":
-            //        return baseMethodType.MakeGenericMethod(typeof(decimal));
-            //    case "boolean":
-            //        return baseMethodType.MakeGenericMethod(typeof(bool));
-
-            //}
-
+           
             switch (manifestType.ToLower())
             {
                 case "text":
@@ -699,6 +766,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
             {
+                if (attributeDefinition.Value.SelectToken("$.type.type")?.ToString().ToLower() == "choices")
+                    continue;
+
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
               
@@ -733,6 +803,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRowVersionMethod);
                 }
 
+                if (attributeDefinition.Value.SelectToken("$.type.type")?.ToObject<string>().ToLower() == "choice")
+                {
+                    ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.HasConversionMethod.MakeGenericMethod(typeof(int)));
+                }
+
 
                 ConfigureMethod2IL.Emit(OpCodes.Pop);
 
@@ -740,32 +815,32 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             }
 
-            //alternativ keys
-            var keys = entityDefinition.SelectToken("$.keys") as JObject;
-            if (keys != null && !isTablePerTypeChild)
-            {
-                foreach(var key in keys.OfType<JProperty>())
-                {
-                    var props = key.Value.ToObject<string[]>();
+            ////alternativ keys
+            //var keys = entityDefinition.SelectToken("$.keys") as JObject;
+            //if (keys != null && !isTablePerTypeChild)
+            //{
+            //    foreach(var key in keys.OfType<JProperty>())
+            //    {
+            //        var props = key.Value.ToObject<string[]>();
 
-                    ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument
-                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4,props.Length); // Array length
-                    ConfigureMethod2IL.Emit(OpCodes.Newarr, typeof(string));
-                    for(var j = 0;j<props.Length;j++)
-                    {
-                        var attributeDefinition = entityDefinition.SelectToken($"$.attributes['{props[j]}']");
-                        var attributeSchemaName = attributeDefinition.SelectToken("$.schemaName")?.ToString();
-                        ConfigureMethod2IL.Emit(OpCodes.Dup);
-                        ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, j);
-                        ConfigureMethod2IL.Emit(OpCodes.Ldstr, attributeSchemaName);
-                        ConfigureMethod2IL.Emit(OpCodes.Stelem_Ref);
-                    }
+            //        ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument
+            //        ConfigureMethod2IL.Emit(OpCodes.Ldc_I4,props.Length); // Array length
+            //        ConfigureMethod2IL.Emit(OpCodes.Newarr, typeof(string));
+            //        for(var j = 0;j<props.Length;j++)
+            //        {
+            //            var attributeDefinition = entityDefinition.SelectToken($"$.attributes['{props[j]}']");
+            //            var attributeSchemaName = attributeDefinition.SelectToken("$.schemaName")?.ToString();
+            //            ConfigureMethod2IL.Emit(OpCodes.Dup);
+            //            ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, j);
+            //            ConfigureMethod2IL.Emit(OpCodes.Ldstr, attributeSchemaName);
+            //            ConfigureMethod2IL.Emit(OpCodes.Stelem_Ref);
+            //        }
 
                    
-                    ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.EntityTypeBuilderHasAlternateKey);
-                    ConfigureMethod2IL.Emit(OpCodes.Pop);
-                }
-            }
+            //        ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.EntityTypeBuilderHasAlternateKey);
+            //        ConfigureMethod2IL.Emit(OpCodes.Pop);
+            //    }
+            //}
 
 
             ConfigureMethod2IL.Emit(OpCodes.Ret);
@@ -775,7 +850,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
 
 
-        public void CreateDTO(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JObject entityDefinition, JToken manifest)
+        public void CreateDTO(ModuleBuilder myModule, string entityCollectionSchemaName, string entitySchameName, JProperty entityDefinition2, JToken manifest)
         {
             // var members = new Dictionary<string, PropertyBuilder>();
 
@@ -784,13 +859,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-            var entityLogicalName = entityDefinition.SelectToken("$.logicalName").ToString();
+            var entityLogicalName = entityDefinition2.Value.SelectToken("$.logicalName").ToString();
 
             // TypeBuilder entityType =
 
             // options.EntityDTOsBuilders[entityCollectionSchemaName] = entityType;
 
-            (TypeBuilder entityType, Type baseType) = GetOrCreateEntityBuilder(myModule, entitySchameName, manifest, entityDefinition);
+            (TypeBuilder entityType, Type baseType) = GetOrCreateEntityBuilder(myModule, entitySchameName, manifest, entityDefinition2.Value as JObject);
 
 //            if (!options.GeneratePoco)
             {
@@ -799,21 +874,24 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName))
                     }, new[] {
-                    entityDefinition.SelectToken("$.logicalName").ToString() ,
-                     entityDefinition.SelectToken("$.schemaName").ToString(),
-                      entityDefinition.SelectToken("$.collectionSchemaName").ToString()
+                    entityDefinition2.Value.SelectToken("$.logicalName").ToString() ,
+                     entityDefinition2.Value.SelectToken("$.schemaName").ToString(),
+                      entityDefinition2.Value.SelectToken("$.collectionSchemaName").ToString()
                     }));
-                    entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityDTOAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityDTOAttribute).GetProperty(nameof(EntityDTOAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() }));
+                    entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityDTOAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityDTOAttribute).GetProperty(nameof(EntityDTOAttribute.LogicalName)) }, new[] { entityDefinition2.Value.SelectToken("$.logicalName").ToString() }));
 
             }
             //  var propertyChangedMethod = options.EntityBaseClass.GetMethod("OnPropertyChanged", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
+            foreach (var attributeDefinition in entityDefinition2.Value.SelectToken("$.attributes").OfType<JProperty>())
             {
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
 
 
-                var clrType = GetCLRType(attributeDefinition.Value, out var manifestType);
+                var clrType = GetCLRType(myModule,entityDefinition2, attributeDefinition.Value,manifest, out var manifestType);
+                
+                
+
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
 
 
@@ -864,7 +942,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                             attFKProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
 
-                            CreateJsonSerializationAttribute( attFKProp, FKLogicalName);
+                            CreateJsonSerializationAttribute(attributeDefinition, attFKProp, FKLogicalName);
                             CreateDataMemberAttribute( attFKProp, FKLogicalName);
 
                         }
@@ -885,8 +963,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     CreateDataMemberAttribute( attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
 
-                    CreateJsonSerializationAttribute(attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
+                    CreateJsonSerializationAttribute(attributeDefinition, attProp);
 
+                    
 
                     //ConfigureMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                     //ConfigureMethodIL.Emit(OpCodes.Ldstr, attProp.Name); //Constant
@@ -906,7 +985,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     .Where(attribute =>
                     {
                         var type = attribute.Value.SelectToken("$.type.referenceType")?.ToString();
-                        return type != null && manifest.SelectToken($"$.entities['{type}'].logicalName")?.ToString() == entityDefinition.SelectToken("$.logicalName").ToString();
+                        return type != null && manifest.SelectToken($"$.entities['{type}'].logicalName")?.ToString() == entityDefinition2.Value.SelectToken("$.logicalName").ToString();
 
                     }).ToArray();
                 foreach (var attribute in attributes)
@@ -929,13 +1008,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                                 attProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
                                
-                                CreateJsonSerializationAttribute( attProp, attProp.Name.ToLower());
+                                CreateJsonSerializationAttribute(attribute, attProp, attProp.Name.ToLower());
                              //   CreateDataMemberAttribute(attProp, attProp.Name.ToLower());
 
                             }
                         }catch(Exception ex)
                         {
-                            File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
+                            File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
 
                             throw;
                         }
@@ -1001,7 +1080,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
 
-            return (options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
+            return (options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}",TypeAttributes.Public
                                                                         | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Abstract : TypeAttributes.Class)
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
@@ -1009,15 +1088,24 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                                                         | TypeAttributes.BeforeFieldInit, acceptableBasesClass)), acceptableBasesClass);
         }
 
-        private void CreateJsonSerializationAttribute(PropertyBuilder attProp, string name)
+        private void CreateJsonSerializationAttribute(JProperty attributeDefinition, PropertyBuilder attProp, string name=null)
         {
+            name = name ?? attributeDefinition.Value.SelectToken("$.logicalName").ToString();
+            //[Newtonsoft.Json.JsonConverter(typeof(ChoicesConverter),typeof(AllowedGrantType), "allowedgranttype")]
             if (!options.GeneratePoco)
             {
                 CustomAttributeBuilder JsonPropertyAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyAttributeCtor, new object[] { name });
                 CustomAttributeBuilder JsonPropertyNameAttributeBuilder = new CustomAttributeBuilder(options.JsonPropertyNameAttributeCtor, new object[] { name });
 
+
                 attProp.SetCustomAttribute(JsonPropertyAttributeBuilder);
                 attProp.SetCustomAttribute(JsonPropertyNameAttributeBuilder);
+
+                //if(attributeDefinition.Value.SelectToken("$.type.type")?.ToString().ToLower() == "choices")
+                //{
+                //    CustomAttributeBuilder JsonConverterAttributeBuideer = new CustomAttributeBuilder(options.JsonConverterAttributeCtor, new object[] { options.ChoiceConverter, new object[] {  });
+
+                //}
             }
         }
 
