@@ -80,8 +80,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                 
                 try
                 {
-                    File.WriteAllText("test1.txt", "Empty\n");
+                    File.WriteAllText("test1.txt", context.GetMSBuildProperty("EAVFrameworkSourceGenerator","Empty")+"\n 1.0.1");
                     File.AppendAllLines("test1.txt", new[] { $"includeEAVFrameworkBaseClass {GeneratePoco}" });
+
+                    if (!string.Equals(context.GetMSBuildProperty("EAVFrameworkSourceGenerator"),"true",StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
 
                     string text = manifest.GetText(context.CancellationToken).ToString();
 
