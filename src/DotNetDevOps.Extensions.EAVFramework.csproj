@@ -13,12 +13,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="obj\manifest.g.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ItemGroup>
+     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.0-rc2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.9" />
@@ -29,6 +25,7 @@
 
   <ItemGroup>
     <Folder Include="Authentication\Passwordless" />
+  
   </ItemGroup>
 
 </Project>
