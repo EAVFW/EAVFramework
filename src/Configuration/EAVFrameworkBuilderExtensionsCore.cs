@@ -192,7 +192,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.Configure(configureOptions);
             builder.Services.AddTransient<IEasyAuthProvider, T>();
             var name = at.AuthenticationName;
-            builder.Services.AddAuthentication(name)
+            builder.Services.AddAuthentication()
                 .AddCookie(name, o=>
                 {
                     
