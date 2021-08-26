@@ -991,7 +991,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 foreach (var attribute in attributes)
                 {
                     {
-                        File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+                      //  File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
 
                         try
@@ -1014,7 +1014,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                             }
                         }catch(Exception ex)
                         {
-                            File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
+                           // File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
 
                             throw;
                         }
@@ -1041,7 +1041,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         private bool CompairProps(Type c, string[] allProps)
         {
             var allPropsFromType = GetProperties(c).ToArray();
-            File.AppendAllLines("test1.txt", new[] { $"Compare for {c.Name}: {string.Join(",", allPropsFromType)}|{string.Join(",", allProps)}" });
+          //  File.AppendAllLines("test1.txt", new[] { $"Compare for {c.Name}: {string.Join(",", allPropsFromType)}|{string.Join(",", allProps)}" });
             return allPropsFromType.All(p => allProps.Contains(p));
         }
 
@@ -1078,7 +1078,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
 
 
-            File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
+         //   File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
 
             return (options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}",TypeAttributes.Public
                                                                         | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Abstract : TypeAttributes.Class)
