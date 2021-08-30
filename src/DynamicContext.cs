@@ -67,7 +67,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private IODataConverterFactory odatatConverterFactory;
         private MethodInfo entityProperty;
         private object MapperProvider;
-
+        //private readonly string serializedType;
         public SelectCoverter(Type type, IODataConverterFactory odatatConverterFactory)
         {
             this.type = type;
@@ -75,12 +75,13 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
             var SelectExpandWrapperConverter = type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
             this.MapperProvider = SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+            //serializedType = $"{type.GetGenericArguments().First().FullName}, {type.GetGenericArguments().First().Assembly.GetName().Name}";
         }
 
         public object Convert(object data)
         {
             var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
-
+            //poco["$type"] = serializedType;
             foreach (var kv in poco.ToArray())
             {
                 if(kv.Value == null)
@@ -117,6 +118,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         public object Convert(object data)
         {
+            if (data is byte[])
+                return data;
+
             var list = new List<object>();
             foreach (var i in data as IEnumerable)
             {
@@ -186,6 +190,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
     {
         public object Convert(object data)
         {
+            
             return data;
         }
     }
@@ -410,6 +415,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             }
             var odatafeature = request.ODataFeature();
+            
             return new PageResult<object>(resultList, null, odatafeature.TotalCount);
 
 

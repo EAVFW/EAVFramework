@@ -394,7 +394,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                 }
                 else
                 {
-                    sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract " : " ")}class {type.Name}{inherience}\r\n\t{{");
+                    sb.AppendLine($"\tpublic{(false && type.IsAbstract ? " abstract " : " ")}class {type.Name}{inherience}\r\n\t{{");
                     {
                         foreach (var ctor in type.GetConstructors())
                         {

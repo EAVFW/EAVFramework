@@ -15,9 +15,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     }
     internal class BaseEndpoint
     {
-        private readonly IEnumerable<EntityPlugin> _plugins;
+        protected readonly IEnumerable<EntityPlugin> _plugins;
         private readonly EntityPluginOperation _operation;
-        private readonly IPluginScheduler _pluginScheduler;
+        protected readonly IPluginScheduler _pluginScheduler;
 
         public BaseEndpoint(IEnumerable<EntityPlugin> plugins, EntityPluginOperation operation, IPluginScheduler pluginScheduler)
         {
@@ -28,16 +28,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         protected async Task RunAsyncPostOperation(HttpContext context, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry a)
         {
-            foreach (var plugin in _plugins.Where(plugin => plugin.Mode == EntityPluginMode.Async && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type == a.Entity.GetType()))
-            {
-                await _pluginScheduler.ScheduleAsync(plugin, a.Entity);
-                // await plugin.Execute(context.RequestServices, a);
-            }
+          
 
-            foreach (var navigation in a.References.Where(t => t.TargetEntry != null))
-            {
-                await RunAsyncPostOperation(context, navigation.TargetEntry);
-            }
+           
         }
 
         protected async Task RunPipelineAsync<TContext>(IServiceProvider serviceProvider, HttpContext context, OperationContext<TContext> operation) where TContext : DynamicContext
