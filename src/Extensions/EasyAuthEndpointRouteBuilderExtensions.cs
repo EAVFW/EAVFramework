@@ -60,12 +60,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
                             claimsPrincipal, new AuthenticationProperties(
+
                                 new Dictionary<string, string>
                                 {
                                     ["handleId"] = handleId,
                                     ["callbackUrl"] = redirectUri,
                                     ["schema"] = auth.AuthenticationName
-                                }));
+                                })
+                            {
+                                 RedirectUri = redirectUri 
+                            });
 
                         httpcontext.Response.Redirect("/account/login/callback");
                     }).WithMetadata(new AllowAnonymousAttribute());
@@ -141,7 +145,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 await httpcontext.SignOutAsync(Constants.ExternalCookieAuthenticationScheme);
 
-
+                if (!string.IsNullOrWhiteSpace(result.Properties.RedirectUri))
+                {
+                 
+                    httpcontext.Response.Redirect(result.Properties.RedirectUri);
+                }
+                else 
                 //TODO make better way to get that return url
                 if (httpcontext.Request.Cookies.TryGetValue(Constants.DefaultLoginRedirectCookie,
                     out string redirectUri))
@@ -151,6 +160,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                 }
                 else
                 {
+
+
                     var baseUrl =
                         $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
                     httpcontext.Response.Redirect(baseUrl);
@@ -180,7 +191,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             {
                 await httpcontext.SignOutAsync(Constants.DefaultCookieAuthenticationScheme);
 
-                httpcontext.Response.Redirect(httpcontext.Request.Query["post_logout_redirect_uri "]);
+                httpcontext.Response.Redirect(httpcontext.Request.Query["post_logout_redirect_uri"]);
             });
 
 

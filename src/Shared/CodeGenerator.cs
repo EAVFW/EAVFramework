@@ -83,6 +83,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo IsRowVersionMethod { get; internal set; }
         public MethodInfo IsRequiredMethod { get; internal set; }
         public MethodInfo HasConversionMethod { get; internal set; }
+        public MethodInfo HasPrecisionMethod { get; internal set; }
     }
 
     public interface ICodeGenerator
@@ -808,6 +809,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.HasConversionMethod.MakeGenericMethod(typeof(int)));
                 }
 
+                if (attributeDefinition.Value.SelectToken("$.type.type")?.ToObject<string>().ToLower() == "decimal")
+                {
+
+                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, attributeDefinition.Value.SelectToken("$.type.type.sql.precision")?.ToObject<int>() ?? 18);
+                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, attributeDefinition.Value.SelectToken("$.type.type.sql.scale")?.ToObject<int>() ?? 4);
+                    ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.HasPrecisionMethod);
+                }
 
                 ConfigureMethod2IL.Emit(OpCodes.Pop);
 
