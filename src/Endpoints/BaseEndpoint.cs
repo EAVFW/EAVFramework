@@ -159,7 +159,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             }
 
 
-            foreach (var navigation in a.References.Where(t => t.TargetEntry != null && t.IsModified))
+            foreach (var navigation in a.References.Where(t => t.TargetEntry != null && (t.IsModified || t.TargetEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)))
             {
                 if (!tracker.Contains(navigation.TargetEntry.Entity) && navigation.TargetEntry.State != Microsoft.EntityFrameworkCore.EntityState.Unchanged)
                     errors.AddRange(await RunPreValidation(serviceProvider, context, navigation.TargetEntry, GetOperation(navigation.TargetEntry.State)));
