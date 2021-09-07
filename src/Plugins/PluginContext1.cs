@@ -11,9 +11,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
         public TContext DB { get; set; }
         public ClaimsPrincipal ClaimsPrincipal { get; set; }
 
-        public PluginContext<TContext, T> AddValidationError<TField>(Expression<Func<T,TField>> propExpression,string error)
+        public PluginContext<TContext, T> AddValidationError<TField>(Expression<Func<T, TField>> propExpression,
+            string error, string attributeSchemaName)
         {
-            Errors.Add(new ValidationError { Error = error });
+            Errors.Add(new ValidationError { Error = error, AttributeSchemaName = attributeSchemaName });
 
             return this;
         }
