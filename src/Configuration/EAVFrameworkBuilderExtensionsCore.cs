@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
 using DotNetDevOps.Extensions.EAVFramework.Authentication;
+using DotNetDevOps.Extensions.EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
@@ -23,7 +24,6 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class EAVFrameworkBuilderExtensionsCore
     {
-
         /// <summary>
         /// Creates a builder.
         /// </summary>
@@ -83,6 +83,27 @@ namespace Microsoft.Extensions.DependencyInjection
             return services.AddEAVFramework<TContext>();
         }
 
+        /// <summary>
+        /// Registers validation plugins, which uses validation rules from the Manifest to validate input and
+        /// adds ValidationErrors to the context.
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
+        {
+            builder.Services.RegisterValidator<StringValidator, string>();
+            builder.Services.RegisterValidator<NumberValidator, decimal>();
+            builder.Services.RegisterValidator<NumberValidator, int>();
+
+            builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
+                EntityPluginExecution.PreValidate,
+                EntityPluginOperation.Create);
+            builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
+                EntityPluginExecution.PreValidate,
+                EntityPluginOperation.Update);
+
+            return builder;
+        }
 
         /// <summary>
         /// Adds the default cookie handlers and corresponding configuration
@@ -212,21 +233,19 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        //public static IEAVFrameworkBuilder AddPlugin<T>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, int order = 0)
-        //   where T : class, IPlugin
-        //{
-        //    builder.Services.AddTransient<T>();
-
-             
-
-        //    builder.Services.AddSingleton<EntityPlugin>(new EntityPlugin { Execution = execution, Order = order, Type = typeof(TEntity), Handler = typeof(T) });
-
-        //    return builder;
-        //}
-
-
+        /// <summary>
+        /// Add a validator to validate form payload per type when .AddValidation() is called.
+        /// </summary>
+        /// <typeparam name="TValidation">IValidator<> handler</typeparam>
+        /// <typeparam name="TType">Type being validated</typeparam>
+        public static IEAVFrameworkBuilder RegisterValidator<TValidation, TType>(this IEAVFrameworkBuilder builder) where TValidation : class
+        {
+            builder.Services.AddSingleton<TValidation>();
+            builder.Services.AddSingleton<ValidatorMetaData>(new ValidatorMetaData<TType>
+            {
+                Handler = typeof(TValidation)
+            });
+            return builder;
+        }
     }
-
-   
-
 }
