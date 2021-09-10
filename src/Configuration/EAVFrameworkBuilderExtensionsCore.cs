@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 using DotNetDevOps.Extensions.EAVFramework.Authentication;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
@@ -95,6 +96,12 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.RegisterValidator<NumberValidator, decimal>();
             builder.Services.RegisterValidator<NumberValidator, int>();
 
+            builder.Services.AddScoped<IRetrieveMetaData, RetrieveMetaData>(x =>
+            {
+                var options = x.GetRequiredService<IOptions<DynamicContextOptions>>();
+                return new RetrieveMetaData(options.Value?.Manifests.First());
+            });
+            
             builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Create);
