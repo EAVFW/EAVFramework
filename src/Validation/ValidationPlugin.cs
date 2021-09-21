@@ -40,9 +40,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
             {
                 foreach (var validatorMetaData in _validators.Where(x => x.Type == o.GetType()))
                 {
-                    if (!validatorMetaData.ValidationPassed(_serviceProvider, o, m, out var errorMessage))
+                    if (!validatorMetaData.ValidationPassed(_serviceProvider, o, m, out var error))
                     {
-                        context.AddValidationError(x => x, errorMessage, n.ToLower());
+                        error.AttributeSchemaName = n.ToLower();
+                        context.AddValidationError(x => x, error);
                     }
                 }
             }

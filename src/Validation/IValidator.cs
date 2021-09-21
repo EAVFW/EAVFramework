@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
+using Newtonsoft.Json.Linq;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
     public interface IValidator<in T>
     {
-        public bool ValidationPassed(T input, JToken manifest, out string error);
+        public bool ValidationPassed(T input, JToken manifest, out ValidationError error);
     }
 }

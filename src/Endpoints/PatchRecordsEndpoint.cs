@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using DotNetDevOps.Extensions.EAVFramework.Validation;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
