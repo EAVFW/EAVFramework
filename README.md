@@ -50,3 +50,8 @@ have a max- or minLength as described in the `manifest`.
 | `exclusiveMaximum`  | Much be smaller than or equal to {0} | 1                    |
 
 **The error code is the property prefixed with `err-`, e.g., `err-minLength`**.
+
+# Required attributes
+Attributes can be required, i.e. required=true in the associated type object in the manifest.
+
+The error code for this is `err-required` and default error is `Is a required field`. No error args is provided.

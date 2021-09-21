@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using DotNetDevOps.Extensions.EAVFramework.Authentication;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
@@ -106,6 +107,36 @@ namespace Microsoft.Extensions.DependencyInjection
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Create);
             builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
+                EntityPluginExecution.PreValidate,
+                EntityPluginOperation.Update);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Add generic check for required attributes, using manifest to determine if an attribute is required.
+        /// </summary>
+        /// <param name="builder">The builder</param>
+        /// <param name="ignoredAttributes">List of attributes to be ignored when checking for required attributes</param>
+        /// <returns></returns>
+        public static IEAVFrameworkBuilder AddRequired(this IEAVFrameworkBuilder builder,
+            List<string> ignoredAttributes = null)
+        {
+            builder.Services.AddScoped<IRetrieveMetaData, RetrieveMetaData>(x =>
+            {
+                var options = x.GetRequiredService<IOptions<DynamicContextOptions>>();
+                return new RetrieveMetaData(options.Value?.Manifests.First());
+            });
+
+            if (ignoredAttributes != null)
+            {
+                builder.Services.Configure<RequiredSettings>(x => x.IgnoredFields = ignoredAttributes);
+            }
+
+            builder.AddPlugin<RequiredPlugin, DynamicContext, DynamicEntity>(
+                EntityPluginExecution.PreValidate,
+                EntityPluginOperation.Create);
+            builder.AddPlugin<RequiredPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Update);
 
