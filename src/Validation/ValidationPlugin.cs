@@ -49,7 +49,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 
                 var value = property.GetValue(form);
 
-                foreach (var validatorMetaData in _validators.Where(x => x.Type == value.GetType()))
+
+                foreach (var validatorMetaData in _validators.Where(x => x.Type == property.PropertyType))
                 {
                     if (!validatorMetaData.ValidationPassed(_serviceProvider, value, attributeMetadata, out var errorMessage))
                     {
