@@ -96,7 +96,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.RegisterValidator<NumberValidator, decimal>();
             builder.Services.RegisterValidator<NumberValidator, int>();
 
-            builder.Services.AddScoped<IRetrieveMetaData, RetrieveMetaData>(x =>
+            builder.Services.AddSingleton<IRetrieveMetaData, RetrieveMetaData>(x =>
             {
                 var options = x.GetRequiredService<IOptions<DynamicContextOptions>>();
                 return new RetrieveMetaData(options.Value?.Manifests.First());

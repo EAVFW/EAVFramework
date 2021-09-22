@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using DotNetDevOps.Extensions.EAVFramework.Plugins;
+using DotNetDevOps.Extensions.EAVFramework.Shared;
 using Newtonsoft.Json.Linq;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Validation
@@ -22,32 +26,46 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _validators = validators ?? throw new ArgumentNullException(nameof(validators));
         }
-
+        private static ConcurrentDictionary<Type, string> _logicalNameMapping = new ConcurrentDictionary<Type, string>();
+         
         public Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
         {
-            var metaData = _metaData.GetAttributeMetaData(context.Input.GetType().Name);
+
+            var metaData = _metaData.GetAttributeMetaData( _logicalNameMapping.GetOrAdd( context.Input.GetType(), GetLogicalName));
     
             var form = context.Input;
 
-            var t = form.GetType().GetProperties() // 
-                .Select(attr =>
-                    (attrName: attr.Name, attrValue: attr.GetValue(form),
-                        metaData: metaData.FirstOrDefault(x => ((JProperty) x).Name.Replace(" ", "") == attr.Name)
-                            ?.First().SelectToken("$.type"))
-                ).Where(attr => attr.attrValue != null && attr.metaData?.Type == JTokenType.Object);
-
-            foreach (var (n, o, m) in t)
+            foreach(var property in form.GetType().GetProperties())
             {
-                foreach (var validatorMetaData in _validators.Where(x => x.Type == o.GetType()))
+                var attributeLogicalname = property.GetCustomAttribute<DataMemberAttribute>()?.Name;
+                if (attributeLogicalname == null)
+                    continue; // No dataMember attribute
+
+              
+              
+                var attributeMetadata = metaData.FirstOrDefault(attr => attr.Value.SelectToken("$.logicalName")?.ToString() == attributeLogicalname);
+                if (attributeMetadata == null)
+                    continue;
+
+                var value = property.GetValue(form);
+
+                foreach (var validatorMetaData in _validators.Where(x => x.Type == value.GetType()))
                 {
-                    if (!validatorMetaData.ValidationPassed(_serviceProvider, o, m, out var errorMessage))
+                    if (!validatorMetaData.ValidationPassed(_serviceProvider, value, attributeMetadata, out var errorMessage))
                     {
-                        context.AddValidationError(x => x, errorMessage, n.ToLower());
+                        context.AddValidationError(x => x, errorMessage, attributeLogicalname);
                     }
                 }
+
             }
+ 
             
             return Task.CompletedTask;
+        }
+
+        private string GetLogicalName(Type arg)
+        {
+            return arg.GetCustomAttribute<EntityDTOAttribute>().LogicalName;
         }
     }
 }
