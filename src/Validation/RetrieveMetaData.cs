@@ -19,7 +19,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 
         public IEnumerable<JProperty> GetAttributeMetaData(string entityLogicalName)
         {
-            return _metaData.SelectTokens("$.entities").OfType<JProperty>().FirstOrDefault(a => a.Value.SelectToken("$.logicalName")?.ToString() == entityLogicalName)?.Value.SelectToken("$.attributes").OfType<JProperty>();
+            return _metaData.SelectToken("$.entities").OfType<JProperty>().FirstOrDefault(a => a.Value.SelectToken("$.logicalName")?.ToString() == entityLogicalName)?.Value.SelectToken("$.attributes").OfType<JProperty>();
         
         }
     }
