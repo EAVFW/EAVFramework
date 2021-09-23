@@ -15,6 +15,9 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders
         public virtual PropertyBuilder IsRowVersion() => throw new NotImplementedException();
         public virtual PropertyBuilder HasConversion<TProvider>() => throw new NotImplementedException();
         public virtual PropertyBuilder HasPrecision(int precision, int scale) => throw new NotImplementedException();
+        public virtual PropertyBuilder ValueGeneratedOnAddOrUpdate() => throw new NotImplementedException();
+        public virtual PropertyBuilder ValueGeneratedNever() => throw new NotImplementedException();
+        
     }
     public class EntityTypeBuilder
     {

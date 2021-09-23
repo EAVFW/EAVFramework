@@ -222,7 +222,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)),
                      IsRowVersionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)),
-                     HasConversionMethod= typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                     ValueGeneratedOnUpdate = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                            .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.ValueGeneratedNever)),
+                     HasConversionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion),new Type[] { }),
                      HasPrecisionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
                             .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasPrecision),new Type[] { typeof(int),typeof(int)}),

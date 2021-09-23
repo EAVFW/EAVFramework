@@ -84,6 +84,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo IsRequiredMethod { get; internal set; }
         public MethodInfo HasConversionMethod { get; internal set; }
         public MethodInfo HasPrecisionMethod { get; internal set; }
+        public MethodInfo ValueGeneratedOnUpdate { get; set; }
     }
 
     public interface ICodeGenerator
@@ -799,15 +800,21 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     ConfigureMethod2IL.Emit(OpCodes.Ldc_I4_1);
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRequiredMethod);
                 }
+
+               
+
                 if (attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)
                 {
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRowVersionMethod);
                 }
+                 
 
                 if (attributeDefinition.Value.SelectToken("$.type.type")?.ToObject<string>().ToLower() == "choice")
                 {
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.HasConversionMethod.MakeGenericMethod(typeof(int)));
                 }
+
+
 
                 if (attributeDefinition.Value.SelectToken("$.type.type")?.ToObject<string>().ToLower() == "decimal")
                 {

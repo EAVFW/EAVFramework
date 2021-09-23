@@ -496,7 +496,18 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var type = manager.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-            var entity= this.Update(data.ToObject(type));
+
+           
+            var entity= this.Update(record);
+ 
+            foreach(var prop in entity.Properties)
+            {
+                var logicalName = prop.Metadata.ClrType.GetCustomAttribute<DataMemberAttribute>()?.Name;
+                if(!string.IsNullOrEmpty(logicalName))
+                    prop.IsModified = data[logicalName] != null;
+            }
+
+
             foreach (var collection in entity.Collections)
             {
                 var attr = collection.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>();

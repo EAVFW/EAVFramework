@@ -52,6 +52,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 };
 
                 operation.Entity = dynamicContext.Update(entityName, record);
+                
 
                 var errors = new List<ValidationError>();
                 var trackedEntities = dynamicContext.ChangeTracker.Entries()
@@ -145,8 +146,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
             var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
+            record["id"] = record["id"] ?? recordId;
 
-           
 
            var _operation= await _context.SaveChangesPipeline(entityName, record,context, _plugins,_pluginScheduler);
              
