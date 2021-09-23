@@ -143,7 +143,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddOptions();
             builder.Services.AddSingleton(
                 resolver => resolver.GetRequiredService<IOptions<EAVFrameworkOptions>>().Value);
-            builder.Services.AddScoped<IMigrationManager, MigrationManager>();
+            builder.Services.AddSingleton<IMigrationManager, MigrationManager>();
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
             builder.Services.AddSingleton<SavingIncepter>();
