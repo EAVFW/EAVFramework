@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -36,7 +37,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         }
 
         public static async ValueTask<OperationContext<TContext>> SaveChangesPipeline<TContext>(
-            this TContext dynamicContext,string entityName,JToken record, HttpContext context, IEnumerable<EntityPlugin> plugins,
+            this TContext dynamicContext, string entityName, JToken record, HttpContext context, IEnumerable<EntityPlugin> plugins,
             IPluginScheduler pluginScheduler)
              where TContext : DynamicContext
         {
@@ -52,7 +53,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 };
 
                 operation.Entity = dynamicContext.Update(entityName, record);
-                
+
 
                 var errors = new List<ValidationError>();
                 var trackedEntities = dynamicContext.ChangeTracker.Entries()
@@ -132,27 +133,44 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
       where TContext : DynamicContext
     {
         private readonly TContext _context;
+        private readonly ILogger<PatchRecordsEndpoint<TContext>> logger;
 
-        public PatchRecordsEndpoint(TContext context, IEnumerable<EntityPlugin> plugins, IPluginScheduler pluginScheduler) :base(plugins, EntityPluginOperation.Update, pluginScheduler)
+        public PatchRecordsEndpoint(TContext context, IEnumerable<EntityPlugin> plugins, IPluginScheduler pluginScheduler, ILogger<PatchRecordsEndpoint<TContext>> logger) : base(plugins, EntityPluginOperation.Update, pluginScheduler)
         {
             _context = context;
+            this.logger = logger;
         }
 
-       
+
         public async Task<IEndpointResult> ProcessAsync(HttpContext context)
         {
             var routeValues = context.GetRouteData().Values;
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
+            var reader = new StreamReader(context.Request.BodyReader.AsStream());
+            try
+            {
+                var record = await JToken.ReadFromAsync(new JsonTextReader(reader));
+                record["id"] = record["id"] ?? recordId;
 
-            var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
-            record["id"] = record["id"] ?? recordId;
 
 
-           var _operation= await _context.SaveChangesPipeline(entityName, record,context, _plugins,_pluginScheduler);
-             
-            return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
 
+                var _operation = await _context.SaveChangesPipeline(entityName, record, context, _plugins, _pluginScheduler);
+
+
+                if (_operation.Errors.Any())
+                    return new DataValidationErrorResult(new { errors = _operation.Errors });
+
+                return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
+
+            }
+            catch (Exception ex)
+            {
+
+                logger.LogWarning("failed to process: Payload {Payload}", reader.ReadToEnd());
+                throw;
+            }
 
         }
     }
