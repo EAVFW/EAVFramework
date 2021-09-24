@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using DotNetDevOps.Extensions.EAVFramework.Authentication;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
@@ -93,16 +92,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
+            
             builder.Services.RegisterValidator<StringValidator, string>();
             builder.Services.RegisterValidator<NumberValidator, decimal>();
             builder.Services.RegisterValidator<NumberValidator, int>();
 
-            builder.Services.AddScoped<IRetrieveMetaData, RetrieveMetaData>(x =>
-            {
-                var options = x.GetRequiredService<IOptions<DynamicContextOptions>>();
-                return new RetrieveMetaData(options.Value?.Manifests.First());
-            });
-            
             builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Create);
@@ -122,11 +117,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IEAVFrameworkBuilder AddRequired(this IEAVFrameworkBuilder builder,
             List<string> ignoredAttributes = null)
         {
-            builder.Services.AddScoped<IRetrieveMetaData, RetrieveMetaData>(x =>
-            {
-                var options = x.GetRequiredService<IOptions<DynamicContextOptions>>();
-                return new RetrieveMetaData(options.Value?.Manifests.First());
-            });
+            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
 
             if (ignoredAttributes != null)
             {
