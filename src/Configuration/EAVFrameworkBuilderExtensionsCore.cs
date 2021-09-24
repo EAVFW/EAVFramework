@@ -87,6 +87,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Registers validation plugins, which uses validation rules from the Manifest to validate input and
         /// adds ValidationErrors to the context.
+        /// Validation is run in PreValidation.
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
@@ -110,6 +111,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
         /// <summary>
         /// Add generic check for required attributes, using manifest to determine if an attribute is required.
+        /// This check is run as the last plugin in PreValidation. PreOperation is the stage where attributes are
+        /// populated based on calculations or other fields. 
         /// </summary>
         /// <param name="builder">The builder</param>
         /// <param name="ignoredAttributes">List of attributes to be ignored when checking for required attributes</param>
@@ -126,10 +129,12 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.AddPlugin<RequiredPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
-                EntityPluginOperation.Create);
+                EntityPluginOperation.Create,
+                5);
             builder.AddPlugin<RequiredPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
-                EntityPluginOperation.Update);
+                EntityPluginOperation.Update,
+                5);
 
             return builder;
         }
