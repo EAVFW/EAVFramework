@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OData.Abstracts;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Formatter.Value;
 using Microsoft.AspNetCore.OData.Query;
@@ -379,6 +380,14 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
+                IODataFeature odataFeature = request.HttpContext.ODataFeature();
+                odataFeature.RoutePrefix =  "/api/";
+               // odatafeature
+               //  odataFeature.Services = request.HttpContext.RequestServices;
+
+                //  typeof(ODataQueryContext).GetProperty("Request", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(context, request);
+                // IODataFeature odataFeature = httpContext.Features.Get<IODataFeature>();  typeof(ODataQueryContext).GetProperty("RequestContainer", BindingFlags.Public | BindingFlags.Instance).SetValue(context, request.HttpContext.RequestServices);
+
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
@@ -386,6 +395,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 context.DefaultQuerySettings.EnableSkipToken = true;
 
                 var odata = new ODataQueryOptions(context, request);
+              
                 metadataQuerySet = odata.ApplyTo(metadataQuerySet);
                 
             }
@@ -486,7 +496,18 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var type = manager.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-            var entity= this.Update(data.ToObject(type));
+
+           
+            var entity= this.Update(record);
+ 
+            foreach(var prop in entity.Properties)
+            {
+                var logicalName = prop.Metadata.ClrType.GetCustomAttribute<DataMemberAttribute>()?.Name;
+                if(!string.IsNullOrEmpty(logicalName))
+                    prop.IsModified = data[logicalName] != null;
+            }
+
+
             foreach (var collection in entity.Collections)
             {
                 var attr = collection.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>();

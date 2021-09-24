@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -37,7 +39,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         }
 
         public static async ValueTask<OperationContext<TContext>> SaveChangesPipeline<TContext>(
-            this TContext dynamicContext,string entityName,JToken record, HttpContext context, IEnumerable<EntityPlugin> plugins,
+            this TContext dynamicContext, string entityName, JToken record, HttpContext context, IEnumerable<EntityPlugin> plugins,
             IPluginScheduler pluginScheduler)
              where TContext : DynamicContext
         {
@@ -53,6 +55,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 };
 
                 operation.Entity = dynamicContext.Update(entityName, record);
+
 
                 var errors = new List<ValidationError>();
                 var trackedEntities = dynamicContext.ChangeTracker.Entries()
@@ -132,28 +135,64 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
       where TContext : DynamicContext
     {
         private readonly TContext _context;
+        private readonly ILogger<PatchRecordsEndpoint<TContext>> logger;
+        private readonly IConfiguration configuration;
 
-        public PatchRecordsEndpoint(TContext context, IEnumerable<EntityPlugin> plugins, IPluginScheduler pluginScheduler) :base(plugins, EntityPluginOperation.Update, pluginScheduler)
+        public PatchRecordsEndpoint(
+            TContext context, 
+            IEnumerable<EntityPlugin> plugins, 
+            IPluginScheduler pluginScheduler, 
+            ILogger<PatchRecordsEndpoint<TContext>> logger,
+            IConfiguration configuration
+            
+            ) : base(plugins, EntityPluginOperation.Update, pluginScheduler)
         {
             _context = context;
+            this.logger = logger;
+            this.configuration = configuration;
         }
 
-       
+
         public async Task<IEndpointResult> ProcessAsync(HttpContext context)
         {
             var routeValues = context.GetRouteData().Values;
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
-
-            var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
-
            
 
-           var _operation= await _context.SaveChangesPipeline(entityName, record,context, _plugins,_pluginScheduler);
+           
+                JToken record = await ReadRecordAsync(context, recordId);
+
+                var _operation = await _context.SaveChangesPipeline(entityName, record, context, _plugins, _pluginScheduler);
+
+
+                if (_operation.Errors.Any())
+                    return new DataValidationErrorResult(new { errors = _operation.Errors });
+
+                return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
+
              
-            return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
 
+        }
 
+        private async Task<JToken> ReadRecordAsync(HttpContext context, string recordId)
+        {
+            if (configuration.GetValue<bool>("EAVFramework:PatchRecordsEndpoint:LogPayload", false))
+            {
+                var reader = new StreamReader(context.Request.BodyReader.AsStream());
+                var text = await reader.ReadToEndAsync();
+                logger.LogInformation("PatchRecordsEndpoint Payload : {Payload}", text);
+
+                var record =  JToken.Parse(text);
+                record["id"] = record["id"] ?? recordId;
+                return record;
+            }
+            else
+            {
+                var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
+                record["id"] = record["id"] ?? recordId;
+                return record;
+            }
         }
     }
 }

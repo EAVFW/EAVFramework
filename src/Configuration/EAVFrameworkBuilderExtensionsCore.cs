@@ -92,7 +92,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
         {
-            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
+            builder.Services.TryAddSingleton<IRetrieveMetaData, RetrieveMetaData>();
             
             builder.Services.RegisterValidator<StringValidator, string>();
             builder.Services.RegisterValidator<NumberValidator, decimal>();
@@ -165,7 +165,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddOptions();
             builder.Services.AddSingleton(
                 resolver => resolver.GetRequiredService<IOptions<EAVFrameworkOptions>>().Value);
-            builder.Services.AddScoped<IMigrationManager, MigrationManager>();
+            builder.Services.AddSingleton<IMigrationManager, MigrationManager>();
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
             builder.Services.AddSingleton<SavingIncepter>();

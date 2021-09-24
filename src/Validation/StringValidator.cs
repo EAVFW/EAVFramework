@@ -8,7 +8,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
         {
             // TODO: Add format 
             var minLength = manifest.SelectToken("$.minLength")?.Value<int>();
-            if (input.Length > minLength)
+            if (minLength.HasValue && input.Length > minLength)
             {
                 error = new ValidationError
                 {
@@ -21,7 +21,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
             }
 
             var maxLength = manifest.SelectToken("$.maxLength")?.Value<int>();
-            if (input.Length > maxLength)
+            if (maxLength.HasValue && input.Length > maxLength)
             {
                 error = new ValidationError
                 {
