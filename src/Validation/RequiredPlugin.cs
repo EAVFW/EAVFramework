@@ -21,13 +21,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 
         public Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
         {
-            var metaData = _metaData.GetAttributeMetaData(context.Input.GetType().Name);
+            var metaData = _metaData.GetAttributeMetaData(context.Input.GetType().Name.ToLower());
 
             var form = context.Input;
 
             var requiredFields = metaData
-                .Where(x => x.First().SelectToken(".type.required")?.Value<bool>() ?? false)
-                .Select(x => ((JProperty) x).Name.Replace(" ", "").ToLower());
+                .Where(x => x.First().SelectToken("$.type.required")?.Value<bool>() ?? false)
+                .Select(x => x.First().SelectToken("$.logicalName"));
 
             var nullAndRequiredFields = form.GetType().GetProperties()
                 .Where(attr =>
