@@ -7,7 +7,6 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using DotNetDevOps.Extensions.EAVFramework.Shared;
-using Newtonsoft.Json.Linq;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
@@ -17,7 +16,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
         private readonly IServiceProvider _serviceProvider;
         private readonly IEnumerable<ValidatorMetaData> _validators;
 
-
         public ValidationPlugin(IRetrieveMetaData metaData,
             IServiceProvider serviceProvider,
             IEnumerable<ValidatorMetaData> validators)
@@ -26,7 +24,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _validators = validators ?? throw new ArgumentNullException(nameof(validators));
         }
-        private static ConcurrentDictionary<Type, string> _logicalNameMapping = new ConcurrentDictionary<Type, string>();
+        
+        private static readonly ConcurrentDictionary<Type, string> _logicalNameMapping = new ConcurrentDictionary<Type, string>();
          
         public Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
         {
@@ -48,11 +47,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
                 
                 foreach (var validatorMetaData in _validators.Where(x => x.Type == property.PropertyType))
                 {
-                    if (!validatorMetaData.ValidationPassed(_serviceProvider, value, attributeMetadata, out var error))
-                    {
-                        error.AttributeSchemaName = attributeLogicalName;
-                        context.AddValidationError(x => x, error);
-                    }
+                    if (validatorMetaData.ValidationPassed(_serviceProvider, value, attributeMetadata, out var error))
+                        continue;
+                    
+                    error.AttributeSchemaName = attributeLogicalName;
+                    context.AddValidationError(x => x, error);
                 }
             }
             
