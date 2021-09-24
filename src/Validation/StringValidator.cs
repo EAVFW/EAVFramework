@@ -4,27 +4,33 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
     public class StringValidator : IValidator<string>
     {
-        public bool ValidationPassed(string input, JToken manifest, out string error)
+        public bool ValidationPassed(string input, JToken manifest, out ValidationError error)
         {
-           // input = input ?? string.Empty;
             // TODO: Add format 
             var minLength = manifest.SelectToken("$.minLength")?.Value<int>();
-            // Factor det ud i facotry pattern
-            // En validator for hver type.
-            // En validator op mod en type
             if (minLength.HasValue && input.Length > minLength)
             {
-                error = $"Minimum length is {minLength}";
+                error = new ValidationError
+                {
+                    Error = $"Minimum length is {minLength}",
+                    Code = "err-minLength",
+                    ErrorArgs = new object[] {minLength}
+                };
+                
                 return false;
-                // context.AddValidationError(x => x, $"Minimum length is {minLength}", n.ToLower());
             }
 
             var maxLength = manifest.SelectToken("$.maxLength")?.Value<int>();
             if (maxLength.HasValue && input.Length > maxLength)
             {
-                error = $"Minimum length is {maxLength}";
+                error = new ValidationError
+                {
+                    Error = $"Maximum length is {maxLength}",
+                    Code = "err-maxLength",
+                    ErrorArgs = new object[] {maxLength}
+                };
+                
                 return false;
-                // context.AddValidationError(x => x, $"Minimum length is {maxLength}", n.ToLower());
             }
 
             error = null;
