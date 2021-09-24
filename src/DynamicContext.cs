@@ -502,8 +502,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
  
             foreach(var prop in entity.Properties)
             {
-                var logicalName = prop.Metadata.ClrType.GetCustomAttribute<DataMemberAttribute>()?.Name;
-                if(!string.IsNullOrEmpty(logicalName))
+                var logicalName = prop.Metadata.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name;
+                if(!string.IsNullOrEmpty(logicalName) && !prop.Metadata.IsPrimaryKey())
                     prop.IsModified = data[logicalName] != null;
             }
 
