@@ -16,13 +16,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 
         public RetrieveMetaData(IOptions<DynamicContextOptions> options)
         {
-            _metaData = options.IsDefined() ? options.Value.Manifests.First() : throw new ArgumentNullException(nameof(options));
+            _metaData = options.Value?.Manifests.First() ?? throw new ArgumentNullException(nameof(options));
         }
 
         public IEnumerable<JProperty> GetAttributeMetaData(string entityLogicalName)
         {
             return _metaData.SelectToken("$.entities").OfType<JProperty>().FirstOrDefault(a => a.Value.SelectToken("$.logicalName")?.ToString() == entityLogicalName)?.Value.SelectToken("$.attributes").OfType<JProperty>();
-        
         }
     }
     
