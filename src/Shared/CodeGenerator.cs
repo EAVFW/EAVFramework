@@ -21,6 +21,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string SchemaName { get; set; }
         public string CollectionSchemaName { get; set; }
     }
+
+    public class AttributeAttribute : Attribute
+    {
+        public string LogicalName { get; set; }
+        public string SchemaName { get; set; }
+        public string CollectionSchemaName { get; set; }
+    }
+
     public class EntityDTOAttribute : Attribute
     {
         public string LogicalName { get; set; }
@@ -694,7 +702,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 var enumValue = myModule.DefineEnum($"{options.Namespace}.{attributeDefinition.SelectToken("$.type.name")}".Replace(" ", ""), TypeAttributes.Public, typeof(int));
                 foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
                 {
-                    enumValue.DefineLiteral(optionPro.Name.Replace(" ",""), optionPro.Value.ToObject<int>());
+                    enumValue.DefineLiteral(optionPro.Name.Replace(" ",""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
 
                 }
 
@@ -980,7 +988,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     CreateJsonSerializationAttribute(attributeDefinition, attProp);
 
-                    
+
+                    CustomAttributeBuilder MetadataAttributeBuilder = new CustomAttributeBuilder(MetadataAttributeCtor, new object[] { }, new[] { MetadataAttributeSchemaNameProperty }, new[] { attributeSchemaName });
+
+                    attProp.SetCustomAttribute(MetadataAttributeBuilder);
 
                     //ConfigureMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                     //ConfigureMethodIL.Emit(OpCodes.Ldstr, attProp.Name); //Constant
@@ -1125,7 +1136,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
 
         static ConstructorInfo DataMemberAttributeCtor = typeof(DataMemberAttribute).GetConstructor(new Type[] { });
+        static ConstructorInfo MetadataAttributeCtor = typeof(AttributeAttribute).GetConstructor(new Type[] { });
         static PropertyInfo DataMemberAttributeNameProperty = typeof(DataMemberAttribute).GetProperty("Name");
+        static PropertyInfo MetadataAttributeSchemaNameProperty = typeof(AttributeAttribute).GetProperty("SchemaName");
 
 
         public virtual void CreateDataMemberAttribute(PropertyBuilder attProp, string name)
@@ -1135,7 +1148,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             attProp.SetCustomAttribute(DataMemberAttributeBuilder);
 
+
         }
+       
 
         private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(JToken manifest, string entitySchameName, string entityCollectionSchemaName, JObject entityDefinition, ModuleBuilder myModule)
         {

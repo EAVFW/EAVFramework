@@ -190,6 +190,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             endpoints.MapGet("/.auth/logout", async httpcontext =>
             {
                 await httpcontext.SignOutAsync(Constants.DefaultCookieAuthenticationScheme);
+                var impersonator = await httpcontext.AuthenticateAsync("eavfw.impersonator");
+                if (impersonator.Succeeded)
+                {
+                    await httpcontext.SignInAsync("eavfw",
+                    new ClaimsPrincipal(new ClaimsIdentity(impersonator.Principal.Claims, "eavfw")),
+                    new AuthenticationProperties());
+
+                    await httpcontext.SignOutAsync("eavfw.impersonator");
+                }
 
                 httpcontext.Response.Redirect(httpcontext.Request.Query["post_logout_redirect_uri"]);
             });
