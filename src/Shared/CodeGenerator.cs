@@ -989,9 +989,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     CreateJsonSerializationAttribute(attributeDefinition, attProp);
 
 
-                    CustomAttributeBuilder MetadataAttributeBuilder = new CustomAttributeBuilder(MetadataAttributeCtor, new object[] { }, new[] { MetadataAttributeSchemaNameProperty }, new[] { attributeSchemaName });
+                    //CustomAttributeBuilder MetadataAttributeBuilder = new CustomAttributeBuilder(MetadataAttributeCtor, new object[] { }, new[] { MetadataAttributeSchemaNameProperty }, new[] { attributeSchemaName });
 
-                    attProp.SetCustomAttribute(MetadataAttributeBuilder);
+                    //attProp.SetCustomAttribute(MetadataAttributeBuilder);
 
                     //ConfigureMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                     //ConfigureMethodIL.Emit(OpCodes.Ldstr, attProp.Name); //Constant
