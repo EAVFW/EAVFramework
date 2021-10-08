@@ -1,11 +1,11 @@
 ﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DotNetDevOps.Extensions.EAVFramework.Validation;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -57,9 +57,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             // var opeation = GetOperation(a.State) ;
 
-
-
-            foreach (var plugin in _plugins.Where(plugin => plugin.Operation == operation && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(a.Entity.GetType())))
+            
+            foreach (var plugin in SelectAndSortPlugins(a, operation, EntityPluginExecution.PostOperation))
             {
                 await plugin.Execute(serviceProvider, context.User, a);
             }
@@ -111,7 +110,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             tracker.Add(a.Entity);
 
 
-            foreach (var plugin in _plugins.Where(plugin => plugin.Operation == operation && plugin.Execution == EntityPluginExecution.PreOperation && plugin.Type.IsAssignableFrom(a.Entity.GetType())))
+            foreach (var plugin in SelectAndSortPlugins(a, operation, EntityPluginExecution.PreOperation))
             {
                 await plugin.Execute(serviceProvider, context.User, a);
             }
@@ -152,7 +151,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             operation ??= _operation;
 
-            foreach (var plugin in _plugins.Where(plugin => plugin.Operation == operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(a.Entity.GetType())))
+            foreach (var plugin in SelectAndSortPlugins(a, operation, EntityPluginExecution.PreValidate))
             {
                 var ctx = await plugin.Execute(serviceProvider, context.User, a);
                 errors.AddRange(ctx.Errors);
@@ -187,5 +186,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             return errors;
         }
 
+        private IOrderedEnumerable<EntityPlugin> SelectAndSortPlugins(EntityEntry a, EntityPluginOperation? operation,
+            EntityPluginExecution entityPluginExecution)
+        {
+            return _plugins
+                .Where(plugin =>
+                    plugin.Operation == operation && plugin.Execution == entityPluginExecution &&
+                    plugin.Type.IsInstanceOfType(a.Entity))
+                .OrderBy(x => x.Order);
+        }
     }
 }

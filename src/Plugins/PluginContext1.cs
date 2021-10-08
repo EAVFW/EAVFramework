@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Security.Claims;
+using DotNetDevOps.Extensions.EAVFramework.Validation;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 {
@@ -15,6 +16,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
             string error, string attributeSchemaName)
         {
             Errors.Add(new ValidationError { Error = error, AttributeSchemaName = attributeSchemaName });
+
+            return this;
+        }
+
+        public PluginContext<TContext, T> AddValidationError(Func<DynamicEntity, DynamicEntity> propExpression, ValidationError error)
+        {
+            Errors.Add(error);
 
             return this;
         }

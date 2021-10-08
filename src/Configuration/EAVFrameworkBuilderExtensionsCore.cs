@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using DotNetDevOps.Extensions.EAVFramework.Authentication;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
@@ -87,27 +87,54 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Registers validation plugins, which uses validation rules from the Manifest to validate input and
         /// adds ValidationErrors to the context.
+        /// Validation is run in PreValidation.
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.TryAddSingleton<IRetrieveMetaData, RetrieveMetaData>();
+            
             builder.Services.RegisterValidator<StringValidator, string>();
             builder.Services.RegisterValidator<NumberValidator, decimal>();
             builder.Services.RegisterValidator<NumberValidator, int>();
 
-            builder.Services.AddSingleton<IRetrieveMetaData, RetrieveMetaData>(x =>
-            {
-                var options = x.GetRequiredService<IOptions<DynamicContextOptions>>();
-                return new RetrieveMetaData(options.Value?.Manifests.First());
-            });
-            
             builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Create);
             builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Update);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Add generic check for required attributes, using manifest to determine if an attribute is required.
+        /// This check is run as the last plugin in PreValidation. PreOperation is the stage where attributes are
+        /// populated based on calculations or other fields. 
+        /// </summary>
+        /// <param name="builder">The builder</param>
+        /// <param name="ignoredAttributes">List of attributes to be ignored when checking for required attributes</param>
+        /// <returns></returns>
+        public static IEAVFrameworkBuilder AddRequired(this IEAVFrameworkBuilder builder,
+            List<string> ignoredAttributes = null)
+        {
+            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
+
+            if (ignoredAttributes != null)
+            {
+                builder.Services.Configure<RequiredSettings>(x => x.IgnoredFields = ignoredAttributes);
+            }
+
+            builder.AddPlugin<RequiredPlugin, DynamicContext, DynamicEntity>(
+                EntityPluginExecution.PreValidate,
+                EntityPluginOperation.Create,
+                5);
+            builder.AddPlugin<RequiredPlugin, DynamicContext, DynamicEntity>(
+                EntityPluginExecution.PreValidate,
+                EntityPluginOperation.Update,
+                5);
 
             return builder;
         }

@@ -10,7 +10,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
     {
         public Type Type { get; protected set; }
 
-        public abstract bool ValidationPassed(IServiceProvider serviceProvider, object input, JToken manifest, out string error);
+        public abstract bool ValidationPassed(IServiceProvider serviceProvider, object input, JToken manifest, out ValidationError error);
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
             Type = typeof(T);   
         }
 
-        public override bool ValidationPassed(IServiceProvider serviceProvider, object input, JToken manifest, out string error)
+        public override bool ValidationPassed(IServiceProvider serviceProvider, object input, JToken manifest, out ValidationError error)
         {
             if (serviceProvider.GetService(Handler) is IValidator<T> handler)
             {
