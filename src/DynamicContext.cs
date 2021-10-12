@@ -215,10 +215,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             
         }
 
-        private void DynamicContext_SavingChanges(object sender, SavingChangesEventArgs e)
-        {
-           
-        }
+        
 
         public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
         : this(options as DbContextOptions, modelOptions, migrationManager, logger as ILogger)
@@ -271,7 +268,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
         }
 
         //  public List<MetadataEntity> _metaDataEntityList = new List<MetadataEntity>();
-
+        public void EnsureModelCreated()
+        {
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -345,13 +345,14 @@ namespace DotNetDevOps.Extensions.EAVFramework
             base.OnModelCreating(modelBuilder);
         }
 
-        public IQueryable<DynamicEntity> Set(string entityCollectionSchemaName)
+        public DbSet<DynamicEntity> Set(string entityCollectionSchemaName)
         {
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
 
-            var metadataQuerySet = (IQueryable<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+            var metadataQuerySet = (DbSet<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
             return metadataQuerySet;
         }
+        
         public IQueryable Set(Type type)
         {
             return (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
@@ -377,7 +378,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             {
                 if (!request.Query.ContainsKey("$select"))
                 {
-                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                 //   request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 IODataFeature odataFeature = request.HttpContext.ODataFeature();
@@ -402,8 +403,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
 
             var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
-            Console.WriteLine(metadataQuerySet.ToQueryString());
-            logger.LogTrace(metadataQuerySet.ToQueryString());
+            //Console.WriteLine(metadataQuerySet.ToQueryString());
+            //logger.LogTrace(metadataQuerySet.ToQueryString());
 
 
             //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
@@ -459,6 +460,31 @@ namespace DotNetDevOps.Extensions.EAVFramework
             return this.Add(record);
 
         }
+
+        public async Task<EntityEntry> AddOrReplace(string entityName, JToken data)
+        {
+            var type = manager.EntityDTOs[entityName];
+            var record = data.ToObject(type);
+
+            var keys = this.Model.FindEntityType(type).FindPrimaryKey().Properties.Select(c => (data as JObject).GetValue(c.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name,StringComparison.OrdinalIgnoreCase)?.ToObject(c.PropertyInfo.PropertyType)).ToArray();
+            //  this.Set(entityName).FindAsync()
+          
+            
+            var db = await this.FindAsync(type, keys);
+            if(db==null)
+            {
+                return this.Add(record);
+            }
+            else
+            {
+                var entry = this.Entry(db);
+                entry.State = EntityState.Detached;
+                return this.Update(record);
+            }
+ 
+
+        }
+
         public EntityEntry Remove(string entityName, JToken data)
         {
             var type = manager.EntityDTOs[entityName];
@@ -483,6 +509,12 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         public ValueTask<object> FindAsync(string entityName, params object[] keyValues)
         {
+
+            if (!manager.EntityDTOs.ContainsKey(entityName))
+            {
+              throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", manager.EntityDTOs.Keys)}");
+            }
+
             var type = manager.EntityDTOs[entityName];
             //  var record = data.ToObject(type);
             return this.FindAsync(type, keyValues);
@@ -516,6 +548,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 {
                     foreach(var id in deletedItems)
                     {
+//#if NET5_0
                         var related=Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
                         //var keys = collection.Metadata.TargetEntityType.GetKeys();
                         //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
@@ -523,6 +556,17 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
 
                         collection.Metadata.TargetEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+//#else
+//                        var targetType = collection.Metadata.GetTargetType();
+//                        var related = Activator.CreateInstance(targetType.ClrType);
+//                        //var keys = collection.Metadata.TargetEntityType.GetKeys();
+//                        //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
+
+//                        //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
+
+//                        targetType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+//#endif
+
 
 
                         Attach(related);

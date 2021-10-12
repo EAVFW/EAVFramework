@@ -173,7 +173,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddSingleton<IMigrationManager, MigrationManager>();
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
-            builder.Services.AddSingleton<SavingIncepter>();
+            //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }
 
@@ -201,7 +201,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
 
             builder.Services.AddTransient<IEndpointRouter, EndpointRouter>();
-
+            builder.Services.AddScoped < EAVDBContext<TContext>>();
+            builder.Services.AddSingleton<PluginsAccesser>();
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<RetrieveRecordEndpoint<TContext>>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<CreateRecordsEndpoint<TContext>>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);

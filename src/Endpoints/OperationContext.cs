@@ -8,6 +8,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     {
         public TContext Context { get; set; }
         public List<ValidationError> Errors { get; set; } = new List<ValidationError>();
-        public EntityEntry Entity { get; set; }
+     //   public EntityEntry Entity { get; set; }
     }
 }

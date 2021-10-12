@@ -19,9 +19,107 @@ using System.Linq;
 using System.Threading.Tasks;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using System.Security.Claims;
+using System.Collections;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
+    public class PluginsAccesser : IEnumerable<EntityPlugin>
+    {
+        IEnumerable<EntityPlugin> _plugins { get; }
+        public PluginsAccesser(IEnumerable<EntityPlugin> plugins)
+        {
+            _plugins = plugins.OrderBy(x => x.Order).ToArray();
+        }
+
+        public IEnumerator<EntityPlugin> GetEnumerator()
+        {
+            return _plugins.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _plugins.GetEnumerator();
+        }
+    }
+
+    public struct ReadOptions
+    {
+        public bool LogPayload { get; set; }
+        public string RecordId { get; set; }
+    }
+    public class EAVDBContext<TContext> where TContext : DynamicContext
+    {
+        private readonly TContext context;
+        private readonly PluginsAccesser plugins;
+        private readonly ILogger<EAVDBContext<TContext>> logger;
+        private readonly IServiceScopeFactory scopeFactory;
+        private readonly IPluginScheduler pluginScheduler;
+
+      
+
+        public EAVDBContext(TContext context, PluginsAccesser plugins, ILogger<EAVDBContext<TContext>> logger, IServiceScopeFactory scopeFactory, IPluginScheduler pluginScheduler)
+        {
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
+            this.plugins = plugins;
+            this.logger = logger;
+            this.scopeFactory = scopeFactory;
+            this.pluginScheduler = pluginScheduler;
+        }
+
+        public async ValueTask<JToken> ReadRecordAsync(HttpContext context ,ReadOptions options)
+        {
+            if (options.LogPayload)
+            {
+                var reader = new StreamReader(context.Request.BodyReader.AsStream());
+                var text = await reader.ReadToEndAsync();
+                logger.LogInformation("Reading Payload : {Payload}", text);
+
+                var record = JToken.Parse(text);
+                if(!string.IsNullOrEmpty(options.RecordId))
+                    record["id"] =  options.RecordId;
+                return record;
+            }
+            else
+            {
+                var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
+                if (!string.IsNullOrEmpty(options.RecordId))
+                    record["id"] = options.RecordId;
+                return record;
+            }
+        }
+
+
+        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user)
+        {
+            return this.context.SaveChangesPipeline(scopeFactory, user, plugins, pluginScheduler);
+        }
+
+        public EntityEntry Update(string entityName, JToken data)
+        {
+            return this.context.Update(entityName, data);
+        }
+
+        public EntityEntry Add(string entityName, JToken record)
+        {
+            return this.context.Add(entityName, record);
+        }
+
+        public async ValueTask<EntityEntry> DeleteAsync(string entityName, params object[] keys)
+        {
+            var record=await this.context.FindAsync(entityName, keys);
+            if (record == null)
+                return null;
+            var entry= this.context.Entry(record);
+            entry.State = EntityState.Deleted;
+            return entry;
+
+        }
+        public DbSet<T> Set<T>() where T: DynamicEntity
+        {
+            return this.context.Set<T>();
+        }
+    }
     public static class ContextExtensions
     {
         private static EntityPluginOperation GetOperation(Microsoft.EntityFrameworkCore.EntityState state)
@@ -39,23 +137,20 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         }
 
         public static async ValueTask<OperationContext<TContext>> SaveChangesPipeline<TContext>(
-            this TContext dynamicContext, string entityName, JToken record, HttpContext context, IEnumerable<EntityPlugin> plugins,
-            IPluginScheduler pluginScheduler)
-             where TContext : DynamicContext
+           this TContext dynamicContext, IServiceScopeFactory scopeFactory, ClaimsPrincipal user, IEnumerable<EntityPlugin> plugins,
+           IPluginScheduler pluginScheduler)
+            where TContext : DynamicContext
         {
             var strategy = dynamicContext.Database.CreateExecutionStrategy();
 
             var _operation = await strategy.ExecuteAsync(async () =>
             {
-                using var scope = context.RequestServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+                using var scope = scopeFactory.CreateScope();
 
-                var operation = new OperationContext<TContext>
+                var _operation = new OperationContext<TContext>
                 {
                     Context = dynamicContext
                 };
-
-                operation.Entity = dynamicContext.Update(entityName, record);
-
 
 
                 var errors = new List<ValidationError>();
@@ -66,38 +161,30 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 foreach (var entity in trackedEntities)
                 {
-
-
-                    //  operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
                     foreach (var plugin in plugins.Where(plugin => plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        var ctx = await plugin.Execute(scope.ServiceProvider, context.User, entity.entity);
+                        var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
                     }
                 }
-                operation.Errors = errors;
+                _operation.Errors = errors;
 
-                if (operation.Errors.Any())
-                    return operation;
+                if (_operation.Errors.Any())
+                    return _operation;
 
 
-                var trans = await operation.Context.Database.BeginTransactionAsync();
+                var trans = await _operation.Context.Database.BeginTransactionAsync();
 
                 foreach (var entity in trackedEntities)
                 {
-
-
-                    //  operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
                     foreach (var plugin in plugins.Where(plugin => plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        var ctx = await plugin.Execute(scope.ServiceProvider, context.User, entity.entity);
+                        var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
                     }
                 }
 
                 await dynamicContext.SaveChangesAsync();
-
-
 
                 foreach (var entity in trackedEntities)
                 {
@@ -106,12 +193,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                     //  operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
                     foreach (var plugin in plugins.Where(plugin => plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        var ctx = await plugin.Execute(scope.ServiceProvider, context.User, entity.entity);
+                        var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
                     }
                 }
 
-                await operation.Context.SaveChangesAsync();
+                await _operation.Context.SaveChangesAsync();
 
                 await trans.CommitAsync();
 
@@ -121,32 +208,32 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                     foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Async && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
                         await pluginScheduler.ScheduleAsync(plugin, entity.entity.Entity);
-                        // await plugin.Execute(context.RequestServices, a);
                     }
                 }
 
-                return operation;
+                return _operation;
             });
 
             return _operation;
 
         }
+
+
     }
-    internal class PatchRecordsEndpoint<TContext> : BaseEndpoint, IEndpointHandler
+
+    internal class PatchRecordsEndpoint<TContext> : IEndpointHandler
       where TContext : DynamicContext
     {
-        private readonly TContext _context;
+        private readonly EAVDBContext<TContext> _context;
         private readonly ILogger<PatchRecordsEndpoint<TContext>> logger;
         private readonly IConfiguration configuration;
 
         public PatchRecordsEndpoint(
-            TContext context, 
-            IEnumerable<EntityPlugin> plugins, 
-            IPluginScheduler pluginScheduler, 
+            EAVDBContext<TContext> context,
             ILogger<PatchRecordsEndpoint<TContext>> logger,
             IConfiguration configuration
-            
-            ) : base(plugins, EntityPluginOperation.Update, pluginScheduler)
+
+            )
         {
             _context = context;
             this.logger = logger;
@@ -159,41 +246,23 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var routeValues = context.GetRouteData().Values;
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
-           
-
-           
-                JToken record = await ReadRecordAsync(context, recordId);
-
-                var _operation = await _context.SaveChangesPipeline(entityName, record, context, _plugins, _pluginScheduler);
-
-
-                if (_operation.Errors.Any())
-                    return new DataValidationErrorResult(new { errors = _operation.Errors });
-
-                return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
-
              
+            JToken record = await _context.ReadRecordAsync(context,new ReadOptions {RecordId= recordId, LogPayload = configuration.GetValue<bool>($"EAVFramework:PatchRecordsEndpoint:LogPayload", false) });
+            
+            var entity = _context.Update(entityName, record); ;
+
+            var _operation = await _context.SaveChangesAsync(context.User);
+
+
+            if (_operation.Errors.Any())
+                return new DataValidationErrorResult(new { errors = _operation.Errors });
+
+            return new DataEndpointResult(new { id = entity.CurrentValues.GetValue<Guid>("Id") });
+
+
 
         }
 
-        private async Task<JToken> ReadRecordAsync(HttpContext context, string recordId)
-        {
-            if (configuration.GetValue<bool>("EAVFramework:PatchRecordsEndpoint:LogPayload", false))
-            {
-                var reader = new StreamReader(context.Request.BodyReader.AsStream());
-                var text = await reader.ReadToEndAsync();
-                logger.LogInformation("PatchRecordsEndpoint Payload : {Payload}", text);
-
-                var record =  JToken.Parse(text);
-                record["id"] = record["id"] ?? recordId;
-                return record;
-            }
-            else
-            {
-                var record = await JToken.ReadFromAsync(new JsonTextReader(new StreamReader(context.Request.BodyReader.AsStream())));
-                record["id"] = record["id"] ?? recordId;
-                return record;
-            }
-        }
+      
     }
 }

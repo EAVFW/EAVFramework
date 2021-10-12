@@ -71,7 +71,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 CreateModel(name, manifest, options);
 
                 var builder = new ODataConventionModelBuilder();
-                var v = new ODataModelBuilder();
+             
+               // var v = new ODataModelBuilder();
                 builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
 
                 //   builder.EntitySet<Movie>("Movies");
@@ -79,8 +80,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
                 foreach (var entity in EntityDTOs)
                 {
-                    //  logger.LogWarning("Creating Model for {entity}", entity.Key);
+                   
                     var config = builder.AddEntityType(entity.Value);
+                    builder.AddEntitySet(entity.Key, config);
 
                     if (entity.Key.ToLower() == "identity")
                     {

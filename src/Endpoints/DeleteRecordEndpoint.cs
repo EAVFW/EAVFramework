@@ -4,6 +4,7 @@ using DotNetDevOps.Extensions.EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,21 +15,23 @@ using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
-    internal class DeleteRecordEndpoint<TContext> : BaseEndpoint, IEndpointHandler
+    internal class DeleteRecordEndpoint<TContext> : IEndpointHandler
         where TContext : DynamicContext
     {
-        private readonly TContext _context;
-
+        private readonly EAVDBContext<TContext> _context;
+        private readonly IConfiguration configuration;
         private readonly ILogger<DeleteRecordEndpoint<TContext>> _logger;
 
         public DeleteRecordEndpoint(
-            TContext context,
-            IEnumerable<EntityPlugin> plugins,
-            IPluginScheduler pluginScheduler,
-            ILogger<DeleteRecordEndpoint<TContext>> logger) : base(plugins, EntityPluginOperation.Delete, pluginScheduler)
+           EAVDBContext<TContext> context,
+            
+            IConfiguration configuration,
+          
+            ILogger<DeleteRecordEndpoint<TContext>> logger)  
         {
-            _context = context;
-            _logger = logger;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<IEndpointResult> ProcessAsync(HttpContext context)
@@ -37,46 +40,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
 
-            var strategy = _context.Database.CreateExecutionStrategy();
+            //var record = await _context.ReadRecordAsync(context, new ReadOptions { LogPayload = configuration.GetValue<bool>($"EAVFramework:DeleteRecordEndpoint:LogPayload", false) });
+
+            var record = await _context.DeleteAsync(entityName, Guid.Parse(recordId));
+           
+            var _operation = await _context.SaveChangesAsync(context.User);
+
+            if (_operation.Errors.Any())
+                return new DataValidationErrorResult(new { errors = _operation.Errors });
 
 
-            var _operation = await strategy.ExecuteAsync(async () =>
-            {
-                using var scope = context.RequestServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-
-                var operation = new OperationContext<TContext>
-                {
-                    Context = _context
-                };
-
-                var record = await _context.FindAsync(entityName, Guid.Parse(recordId));
-                operation.Entity = _context.Entry(record);
-
-                //foreach (var navigation in operation.Entity.Collections)
-                //{
-                //    await navigation.LoadAsync();
-                //}
-
-                operation.Entity.State = EntityState.Deleted;
-                 
-                operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
-
-                if (operation.Errors.Any())
-                    return operation;
-
-                await RunPipelineAsync(scope.ServiceProvider,context, operation);
-
-                return operation;
-
-            });
-
-
-         
-
-            await RunAsyncPostOperation(context, _operation.Entity);
-
-
-            return new DataEndpointResult(new { id = _operation.Entity.CurrentValues.GetValue<Guid>("Id") });
+            return new DataEndpointResult(new { id = record.CurrentValues.GetValue<Guid>("Id") });
 
         }
 
