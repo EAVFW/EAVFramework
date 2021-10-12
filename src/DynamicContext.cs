@@ -378,17 +378,12 @@ namespace DotNetDevOps.Extensions.EAVFramework
             {
                 if (!request.Query.ContainsKey("$select"))
                 {
-                 //   request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
                 var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 IODataFeature odataFeature = request.HttpContext.ODataFeature();
                 odataFeature.RoutePrefix =  "/api/";
-               // odatafeature
-               //  odataFeature.Services = request.HttpContext.RequestServices;
-
-                //  typeof(ODataQueryContext).GetProperty("Request", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(context, request);
-                // IODataFeature odataFeature = httpContext.Features.Get<IODataFeature>();  typeof(ODataQueryContext).GetProperty("RequestContainer", BindingFlags.Public | BindingFlags.Instance).SetValue(context, request.HttpContext.RequestServices);
-
+              
                 context.DefaultQuerySettings.EnableFilter = true;
                 context.DefaultQuerySettings.EnableExpand = true;
                 context.DefaultQuerySettings.EnableSelect = true;
