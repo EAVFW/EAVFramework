@@ -345,13 +345,13 @@ namespace DotNetDevOps.Extensions.EAVFramework
             base.OnModelCreating(modelBuilder);
         }
 
-        public DbSet<DynamicEntity> Set(string entityCollectionSchemaName)
-        {
-            var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
+        //public DbSet<DynamicEntity> Set(string entityCollectionSchemaName)
+        //{
+        //    var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];//typeof(DonorDTO);//
 
-            var metadataQuerySet = (DbSet<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
-            return metadataQuerySet;
-        }
+        //    var metadataQuerySet = (DbSet<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+        //    return metadataQuerySet;
+        //}
         
         public IQueryable Set(Type type)
         {

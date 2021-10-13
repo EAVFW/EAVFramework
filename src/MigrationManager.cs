@@ -103,7 +103,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                             prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
 
                             // prop.DisableAutoExpandWhenSelectIsPresent = true;
-                            logger.LogWarning("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
+                            logger.LogDebug("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
                         }
                         else
                         {
@@ -128,10 +128,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     //    config.AddCollectionProperty(col);
                     //}
 
-                    foreach (var prop in config.Properties)
-                    {
-                        logger.LogWarning("Prop for {entity}.{Prop}", entity.Key, prop.Name);
-                    }
+                   
 
                 }
                 Model = builder.GetEdmModel();
