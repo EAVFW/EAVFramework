@@ -100,6 +100,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             return this.context.Update(entityName, data);
         }
 
+        public async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
+        {
+            var obj= await this.context.FindAsync(entityName, keys);
+            if (obj == null)
+                return null;
+
+            return this.context.Entry(obj);
+        }
+
         public EntityEntry Add(string entityName, JToken record)
         {
             return this.context.Add(entityName, record);
@@ -248,8 +257,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
              
             JToken record = await _context.ReadRecordAsync(context,new ReadOptions {RecordId= recordId, LogPayload = configuration.GetValue<bool>($"EAVFramework:PatchRecordsEndpoint:LogPayload", false) });
-            
-            var entity = _context.Update(entityName, record); ;
+            var entity = await _context.FindAsync(entityName, Guid.Parse( recordId));
+
+            var serializer = new JsonSerializer();
+             
+            serializer.Populate(record.CreateReader(), entity.Entity);
+            entity.State = EntityState.Modified;
+
+           // var entity = _context.Update(entityName, record); ;
 
             var _operation = await _context.SaveChangesAsync(context.User);
 
