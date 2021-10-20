@@ -206,6 +206,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<RetrieveRecordEndpoint<TContext>>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<CreateRecordsEndpoint<TContext>>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);
+            builder.AddEndpoint<QueryEntityPermissionsEndpoint<TContext>>(EndpointNames.QueryEntityPermissions, RoutePatterns.QueryEntityPermissions.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<PatchRecordsEndpoint<TContext>>(EndpointNames.PatchRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Patch);
             builder.AddEndpoint<DeleteRecordEndpoint<TContext>>(EndpointNames.DeleteRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Delete);
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using DotNetDevOps.Extensions.EAVFramework.Endpoints;
 using DotNetDevOps.Extensions.EAVFramework.Plugins;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
@@ -38,11 +40,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 
             foreach (var nullField in nullAndRequiredFields)
             {
-                context.AddValidationError(x => x, new ValidationError
+                context.AddValidationError( new ValidationError
                 {
                     Error = "Is a required field",
                     Code = "err-required",
-                    AttributeSchemaName = nullField
+                    AttributeSchemaName = nullField,
+                    EntityCollectionSchemaName = context.EntityResource.EntityCollectionSchemaName,
                 });
             }
 

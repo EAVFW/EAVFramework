@@ -21,6 +21,8 @@ using DotNetDevOps.Extensions.EAVFramework.Validation;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
 using System.Security.Claims;
 using System.Collections;
+using System.Reflection;
+using DotNetDevOps.Extensions.EAVFramework.Shared;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -42,7 +44,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             return _plugins.GetEnumerator();
         }
     }
-
+    public class EAVResource
+    {
+        public Type EntityType { get; set; }
+        public string EntityCollectionSchemaName { get;  set; }
+    }
     public struct ReadOptions
     {
         public bool LogPayload { get; set; }
@@ -89,6 +95,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             }
         }
 
+        internal EAVResource CreateEAVResource(string entityName)
+        {
+            var type = context.GetEntityType(entityName);
+            return new EAVResource
+            {
+                EntityType = type,
+                EntityCollectionSchemaName =  type.GetCustomAttribute<EntityAttribute>().CollectionSchemaName
+            };
+        }
 
         public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user)
         {

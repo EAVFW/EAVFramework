@@ -6,5 +6,6 @@
         public string Code { get; set; }
         public object[] ErrorArgs { get; set; }
         public string AttributeSchemaName { get; set; }
+        public string EntityCollectionSchemaName { get;  set; }
     }
 }

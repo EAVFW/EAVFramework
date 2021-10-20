@@ -31,7 +31,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
                 {
                     Error = $"Much be larger than {minimum}",
                     Code = "err-minimum",
-                    ErrorArgs = new object[] {minimum}
+                    ErrorArgs = new object[] {minimum},
+                   
                 };
                 return false;
             }

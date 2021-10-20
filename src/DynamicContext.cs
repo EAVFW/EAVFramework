@@ -517,7 +517,11 @@ namespace DotNetDevOps.Extensions.EAVFramework
             // return this.Add(record);
 
         }
-
+        public Type GetEntityType(string entityName)
+        {
+             var type = manager.EntityDTOs[entityName];
+            return type;
+        }
         public EntityEntry Update(string entityName, JToken data)
         {
             var type = manager.EntityDTOs[entityName];

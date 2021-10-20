@@ -51,7 +51,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
                         continue;
                     
                     error.AttributeSchemaName = attributeLogicalName;
-                    context.AddValidationError(x => x, error);
+                    error.EntityCollectionSchemaName = context.EntityResource.EntityCollectionSchemaName;
+                    context.AddValidationError(error);
                 }
             }
             

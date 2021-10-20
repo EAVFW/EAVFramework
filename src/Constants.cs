@@ -13,6 +13,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             public const string QueryRecords = "QueryRecords";
 
             public const string CreateRecord = "CreateRecord";
+            public const string QueryEntityPermissions = nameof(QueryEntityPermissions);
             public const string RetrieveRecord = "RetrieveRecord";
             public const string PatchRecord = "PatchRecord";
             public const string DeleteRecord = "DeleteRecord";
@@ -24,6 +25,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
           
             public const string QueryRecords = "/entities/{EntityCollectionSchemaName}";
             public const string CreateRecord = "/entities/{EntityCollectionSchemaName}/records";
+            public const string QueryEntityPermissions = "/entities/{EntityCollectionSchemaName}/permissions";
             public const string RecordPattern = "/entities/{EntityCollectionSchemaName}/records/{RecordId}";
         }
         public static class RouteParams

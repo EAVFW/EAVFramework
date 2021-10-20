@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints;
+using DotNetDevOps.Extensions.EAVFramework.Shared;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
@@ -25,8 +27,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
                 {
                     Input = entity as T,
                     DB =  collectionEntry.EntityEntry.Context as TContext,
-                    ClaimsPrincipal = principal
-
+                    User = principal,
+                   
+                      EntityResource = new EAVResource
+                      {
+                          EntityType = entity.GetType(),
+                          EntityCollectionSchemaName = entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
+                      }
                 };
                 //var pluginContext = Activator.CreateInstance(typeof(PluginContext<,>).MakeGenericType(typeof(DBContext), entity.Entity.GetType()));
 
@@ -40,7 +47,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
                
             }
         }
-
+        
         public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) 
         {
             
@@ -48,8 +55,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
             {
                 Input = entity.Entity as T,
                 DB= entity.Context as TContext,
-                ClaimsPrincipal = principal
-
+                User = principal,
+                
+                EntityResource = new EAVResource
+                {
+                    EntityType = entity.Entity.GetType(),
+                    EntityCollectionSchemaName = entity.Entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
+                }
             };
             //var pluginContext = Activator.CreateInstance(typeof(PluginContext<,>).MakeGenericType(typeof(DBContext), entity.Entity.GetType()));
 
