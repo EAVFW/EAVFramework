@@ -110,9 +110,38 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             return this.context.SaveChangesPipeline(scopeFactory, user, plugins, pluginScheduler);
         }
 
-        public EntityEntry Update(string entityName, JToken data)
+        public async ValueTask<EntityEntry> PatchAsync(string entityName, Guid recordId, JToken record)
         {
-            return this.context.Update(entityName, data);
+            var entity = await FindAsync(entityName, recordId);
+
+            var serializer = new JsonSerializer();
+
+            serializer.Populate(record.CreateReader(), entity.Entity);
+            entity.State = EntityState.Modified;
+
+
+            foreach (var collection in entity.Collections)
+            {
+                var attr = collection.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>();
+                var deletedItems = record[$"{attr.PropertyName}@deleted"];
+                if (deletedItems != null)
+                {
+                    foreach (var id in deletedItems)
+                    {
+
+                        var related = Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
+
+                        collection.Metadata.TargetEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+
+
+
+                        context.Attach(related);
+                        context.Remove(related);
+                    }
+                }
+
+            }
+            return entity;
         }
 
         public async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
@@ -272,15 +301,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
              
             JToken record = await _context.ReadRecordAsync(context,new ReadOptions {RecordId= recordId, LogPayload = configuration.GetValue<bool>($"EAVFramework:PatchRecordsEndpoint:LogPayload", false) });
-            var entity = await _context.FindAsync(entityName, Guid.Parse( recordId));
 
-            var serializer = new JsonSerializer();
+            var entity = await _context.PatchAsync(entityName, Guid.Parse(recordId), record);
              
-            serializer.Populate(record.CreateReader(), entity.Entity);
-            entity.State = EntityState.Modified;
-
-           // var entity = _context.Update(entityName, record); ;
-
             var _operation = await _context.SaveChangesAsync(context.User);
 
 
