@@ -166,7 +166,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddRequiredPlatformServices(this IEAVFrameworkBuilder builder)
         {
-            builder.Services.TryAddScoped<IPermissionStore, DefaultPermissionStore>();
+           
             builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             builder.Services.AddOptions();
             builder.Services.AddSingleton(
@@ -174,6 +174,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddSingleton<IMigrationManager, MigrationManager>();
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
+            builder.Services.AddScoped(typeof(EAVDBContext<>),typeof(EAVDBContext<>));
             //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }
@@ -189,6 +190,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
             builder.Services.TryAddTransient<IPluginScheduler, DefaultPluginScheduler>();
+            builder.Services.TryAddTransient<IPermissionStore, DefaultPermissionStore>();
             return builder;
         }
 
@@ -202,7 +204,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
 
             builder.Services.AddTransient<IEndpointRouter, EndpointRouter>();
-            builder.Services.AddScoped < EAVDBContext<TContext>>();
+         
             builder.Services.AddSingleton<PluginsAccesser>();
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<RetrieveRecordEndpoint<TContext>>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
