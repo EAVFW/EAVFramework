@@ -2,10 +2,12 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,11 +17,36 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
     {
 
     }
+
     public class DefaultPluginScheduler : IPluginScheduler
     {
-        public Task ScheduleAsync(EntityPlugin plugin, object entity)
+        public Task ScheduleAsync(EntityPlugin plugin, string identityid, object entity)
         {
             return Task.CompletedTask;
+        }
+    }
+    public class DefaultPluginScheduler<TContext> : IPluginScheduler
+        where TContext : DynamicContext
+    {
+        private readonly IServiceProvider serviceProvider;
+        private readonly TContext context;
+        private readonly ILogger<DefaultPluginScheduler<TContext>> logger;
+
+        public DefaultPluginScheduler(IServiceProvider serviceProvider, TContext context, ILogger<DefaultPluginScheduler<TContext>> logger)
+        {
+            this.serviceProvider = serviceProvider;
+            this.context = context;
+            this.logger = logger;
+        }
+        public async Task ScheduleAsync(EntityPlugin plugin, string identityid, object entity)
+        {
+            var ctx = await plugin.Execute(serviceProvider, new System.Security.Claims.ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("sub", identityid) },"eavfw")), context.Entry( entity));
+
+            if (ctx.Errors.Any())
+            {
+                logger.LogWarning("Plugin ran with errors: {errors}",string.Join(",",ctx.Errors.Select(err=>err.Code)));
+            }
+                
         }
     }
 

@@ -143,7 +143,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                     foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Async && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        await pluginScheduler.ScheduleAsync(plugin, entity.entity.Entity);
+                        await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.entity.Entity);
                     }
                 }
 

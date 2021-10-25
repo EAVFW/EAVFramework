@@ -49,11 +49,13 @@ namespace Microsoft.Extensions.DependencyInjection
             var builder = services.AddEAVFrameworkBuilder();
 
             builder              
-                .AddDefaultEndpoints< TContext>()
+                .AddDefaultEndpoints< TContext>()                
                   .AddPluggableServices();
-              
 
-            
+
+            builder.Services.AddScoped<IPluginScheduler, DefaultPluginScheduler<TContext>>();
+
+
 
             return builder;
         }

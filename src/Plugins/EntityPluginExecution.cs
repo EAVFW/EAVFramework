@@ -24,6 +24,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 
     public interface IPluginScheduler
     {
-        Task ScheduleAsync(EntityPlugin plugin, object entity);
+        Task ScheduleAsync(EntityPlugin plugin, string identityid, object entity);
     }
 }
