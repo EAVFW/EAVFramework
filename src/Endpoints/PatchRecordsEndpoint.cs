@@ -97,7 +97,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 foreach (var entity in trackedEntities)
                 {
-                    foreach (var plugin in plugins.Where(plugin => plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
+                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
                         var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
@@ -113,7 +113,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 foreach (var entity in trackedEntities)
                 {
-                    foreach (var plugin in plugins.Where(plugin => plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
+                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
                         var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
@@ -127,7 +127,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
 
                     //  operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
-                    foreach (var plugin in plugins.Where(plugin => plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
+                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
                         var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
