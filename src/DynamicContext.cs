@@ -201,6 +201,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
+        private const string MigrationDefaultName = "Initial";
   
         protected DynamicContext(DbContextOptions options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger logger)
           : base(options)
@@ -226,26 +227,43 @@ namespace DotNetDevOps.Extensions.EAVFramework
         }
         public MigrationsInfo GetMigrations()
         {
-            
-            var name = $"{modelOptions.Value.PublisherPrefix}_Initial";
-            var model = manager.CreateModel(name, modelOptions.Value.Manifests.First(), this.modelOptions.Value);
-            return new MigrationsInfo
+            var types = new Dictionary<string, TypeInfo>
             {
-                Types = new Dictionary<string, TypeInfo>
-                {
-                    [name] = model.Item1
-                },
-                Factories = new Dictionary<TypeInfo, Func<Migration>>
-                {
-                    [model.Item1] = model.Item2
-                }
+
             };
+            var factories = new Dictionary<TypeInfo, Func<Migration>>();
+
+            //if(modelOptions.Value.Manifests.Any())
+            //{
+            //    var migration = modelOptions.Value.Manifests.First();
+            //    var name = $"{modelOptions.Value.PublisherPrefix}_{migration.SelectToken("$.version") ?? MigrationDefaultName}";
+            //    var model = manager.CreateModel(name, migration, this.modelOptions.Value);
+
+            //    types.Add(name, model.Item1);
+            //    factories.Add(model.Item1, model.Item2);
+            //}
+
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+
+            if (modelOptions.Value.EnableDynamicMigrations)
+            {
+                foreach (var migration in modelOptions.Value.Manifests.Select((m,i) => (target:m, source: i+1 == modelOptions.Value.Manifests.Length? new JObject(): modelOptions.Value.Manifests[i+1])).Reverse())
+                {
+                    
+                    var name = $"{modelOptions.Value.PublisherPrefix}_{migration.target.SelectToken("$.version")?.ToString().Replace(".","_") ?? MigrationDefaultName}";
+                   
+                    var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
+
+                    types.Add(name, model.Item1);
+                    factories.Add(model.Item1, model.Item2);
+                }
+            }
+            return new MigrationsInfo {  Factories = factories, Types = types};
+
+            
         }
 
-        //public virtual IReadOnlyDictionary<string, Migration> GetMigrations()
-        //{
-        //    return manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
-        //}
+       
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -261,34 +279,36 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             if (!optionsBuilder.IsConfigured)
             {
-                manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                EnsureModelCreated();
             }
 
            // optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
         }
 
-        //  public List<MetadataEntity> _metaDataEntityList = new List<MetadataEntity>();
+     
         public void EnsureModelCreated()
         {
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            var manifest = modelOptions.Value.Manifests.First();
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             Console.WriteLine("TEST");
             var sw = Stopwatch.StartNew();
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
-           // manager.BuildMigrations($"{modelOptions.Value.PublisherPrefix}_Initial", );
+
+            //  EnsureModelCreated();
+            if (this.modelOptions.Value.CreateLatestMigration)
+            {
+                manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            }
 
             foreach (var en in manager.EntityDTOs)
             {
                 var a = modelBuilder.Entity(en.Value);
                 var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                 config.Configure(a);
-                // Console.WriteLine(a.Metadata.ToDebugString(Microsoft.EntityFrameworkCore.Infrastructure.MetadataDebugStringOptions.LongDefault));
-                // Console.WriteLine(string.Join(",",a.Metadata.GetForeignKeys().Select(c=>c.GetConstraintName())));
-                Console.WriteLine(en.Value.Name);
-
+                 
             }
 
 
@@ -361,10 +381,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName, HttpRequest request)
         {
             var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
-
-
-            //  var migrations = GetMigrations(); //ensures that types are build
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_Initial",modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+             
+            EnsureModelCreated();
 
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
 

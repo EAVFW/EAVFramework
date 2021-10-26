@@ -14,6 +14,17 @@ using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Shared
 {
+    public class EntityMigrationAttribute : Attribute
+    {
+        public string LogicalName { get; set; }
+        public string MigrationName { get; set; }
+    }
+    public class EntityMigrationColumnsAttribute : Attribute
+    {
+        public string LogicalName { get; set; }
+        public string MigrationName { get; set; }
+        public string AttributeLogicalName { get; set; }
+    }
 
     public class EntityAttribute : Attribute
     {
@@ -93,6 +104,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo HasConversionMethod { get; internal set; }
         public MethodInfo HasPrecisionMethod { get; internal set; }
         public MethodInfo ValueGeneratedOnUpdate { get; set; }
+        public bool GenerateDTO { get; set; } = true;
+        public bool PartOfMigration { get;  set; }
+        public MethodInfo MigrationsBuilderAddColumn { get; internal set; }
     }
 
     public interface ICodeGenerator
@@ -147,7 +161,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         public Dictionary<string, StringBuilder> methodBodies = new Dictionary<string, StringBuilder>();
 
+        public TypeBuilder BuildMigrationDefinition(ModuleBuilder builder, string migrationName, JToken before, JToken after)
+        {
+            TypeBuilder entityTypeBuilder =
+             builder.DefineType($"{options.Namespace}.{migrationName}Builder", TypeAttributes.Public);
 
+            entityTypeBuilder.AddInterfaceImplementation(options.DynamicTableType);
+
+            //var schema = entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+
+
+            return entityTypeBuilder;
+        }
         public TypeBuilder BuildEntityDefinition(ModuleBuilder builder, JToken manifest, JProperty entityDefinition)
         {
             var EntitySchameName = entityDefinition.Name.Replace(" ", "");
@@ -162,21 +187,34 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             //  ModuleBuilder myModule =
             //    builder.DefineDynamicModule(myAsmName.Name);
+            if (options.GenerateDTO)
+            {
+                CreateDTO(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition, manifest);
+                CreateDTOConfiguration(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition.Value as JObject, manifest);
+            }
 
-            CreateDTO(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition, manifest);
-            CreateDTOConfiguration(builder, EntityCollectionSchemaName, EntitySchameName, entityDefinition.Value as JObject, manifest);
+            var logicalName = entityDefinition.Value.SelectToken("$.logicalName").ToString();
+            var hasPriorEntity = builder.GetTypes().FirstOrDefault(t => !IsPendingTypeBuilder(t)&& t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == logicalName);
 
-            var (columnsCLRType, columnsctor, members) = CreateColumnsType(manifest, EntitySchameName, EntityCollectionSchemaName, entityDefinition.Value as JObject, builder);
-
-            //   var test = Activator.CreateInstance(entityClrType,new[] { new ColumnsBuilder(new CreateTableOperation()) });
-
+            
+          
             TypeBuilder entityTypeBuilder =
-             builder.DefineType($"{options.Namespace}.{EntityCollectionSchemaName}Builder", TypeAttributes.Public);
+            builder.DefineType($"{options.Namespace}.{EntityCollectionSchemaName}Builder_{options.migrationName.Replace(".", "_")}", TypeAttributes.Public);
 
-            CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { entityDefinition.Value.SelectToken("$.logicalName").ToString() });
+
+            CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] {logicalName });
             entityTypeBuilder.SetCustomAttribute(EntityAttributeBuilder);
 
+            if (options.PartOfMigration)
+            {
+                CustomAttributeBuilder EntityMigrationAttributeBuilder = new CustomAttributeBuilder(typeof(EntityMigrationAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.LogicalName)), typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.MigrationName)) }, new[] { logicalName, options.migrationName });
+                entityTypeBuilder.SetCustomAttribute(EntityMigrationAttributeBuilder);
+            }
+
             entityTypeBuilder.AddInterfaceImplementation(options.DynamicTableType);
+
+            var (columnsCLRType, columnsctor, members) = CreateColumnsType(manifest, EntitySchameName, EntityCollectionSchemaName, entityDefinition.Value as JObject, builder);
+             
 
             //var (nameBuilder, namefield) = CreateProperty(entityTypeBuilder, nameof(IDynamicTable<>.Name), typeof(string), 
             //    methodAttributes: MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual);
@@ -213,12 +251,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 var primaryKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                 .Where(attribute =>attribute.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
+                 .Where(attribute => members.ContainsKey(attribute.Name))
                 .Select(attribute => members[attribute.Name].GetMethod)
                 .ToArray();
 
 
             var fKeys = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
+                 .Where(attribute => members.ContainsKey(attribute.Name))
                .Select(attribute => new { AttributeSchemaName = attribute.Value.SelectToken("$.schemaName").ToString(), PropertyGetMethod = members[attribute.Name].GetMethod, EntityName = attribute.Value.SelectToken("$.type.referenceType").ToString(), ForeignKey = attribute.Value.SelectToken("$.type.foreignKey") })
                .ToArray();
 
@@ -291,89 +331,180 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             ConstraintsMethodIL.Emit(OpCodes.Ret);
 
-            var schema = entityDefinition.Value.SelectToken("$.schama")?.ToString() ?? options.Schema ?? "dbo";
+            var schema = entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
 
             var UpMethod = entityTypeBuilder.DefineMethod("Up", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderCreateTable.DeclaringType });
 
             var UpMethodIL = UpMethod.GetILGenerator();
 
-            CreateTableImpl(EntityCollectionSchemaName, schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
-
-            //Create Indexes
-            //alternativ keys //TODO create dropindex
-            var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
-            if (keys != null)
+            if (hasPriorEntity == null)
             {
-                foreach (var key in keys.OfType<JProperty>())
+                CreateTableImpl(EntityCollectionSchemaName, schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
+
+                //Create Indexes
+                //alternativ keys //TODO create dropindex
+                var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
+                if (keys != null)
                 {
-                    var props = key.Value.ToObject<string[]>();
-
-                    UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                    UpMethodIL.Emit(OpCodes.Ldstr, key.Name); //Constant keyname 
-                    UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
-
-                   
-                    UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
-                    UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
-                    for (var j = 0; j < props.Length; j++)
+                    foreach (var key in keys.OfType<JProperty>())
                     {
-                        var attributeDefinition = entityDefinition.Value.SelectToken($"$.attributes['{props[j]}']");
-                        var attributeSchemaName = attributeDefinition.SelectToken("$.schemaName")?.ToString();
-                        UpMethodIL.Emit(OpCodes.Dup);
-                        UpMethodIL.Emit(OpCodes.Ldc_I4, j);
-                        UpMethodIL.Emit(OpCodes.Ldstr, attributeSchemaName);
-                        UpMethodIL.Emit(OpCodes.Stelem_Ref);
+                        var props = key.Value.ToObject<string[]>();
+
+                        UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                        UpMethodIL.Emit(OpCodes.Ldstr, key.Name); //Constant keyname 
+                        UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
+
+
+                        UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
+                        UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                        for (var j = 0; j < props.Length; j++)
+                        {
+                            var attributeDefinition = entityDefinition.Value.SelectToken($"$.attributes['{props[j]}']");
+                            var attributeSchemaName = attributeDefinition.SelectToken("$.schemaName")?.ToString();
+                            UpMethodIL.Emit(OpCodes.Dup);
+                            UpMethodIL.Emit(OpCodes.Ldc_I4, j);
+                            UpMethodIL.Emit(OpCodes.Ldstr, attributeSchemaName);
+                            UpMethodIL.Emit(OpCodes.Stelem_Ref);
+                        }
+
+
+
+                        UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
+                        UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
+                        UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                        UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                        UpMethodIL.Emit(OpCodes.Pop);
                     }
-
-
-
-                    UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
-                    UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
-                    UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
-
-
-                    UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
-                    UpMethodIL.Emit(OpCodes.Pop);
                 }
-            }
 
-            //Create indexes from lookup fields.
+                //Create indexes from lookup fields.
 
-            foreach(JProperty attribute in entityDefinition.Value.SelectToken("$.attributes"))
-            {
-                if(attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup" &&
-                    (attribute.Value.SelectToken("$.type.index") != null))
+                foreach (JProperty attribute in entityDefinition.Value.SelectToken("$.attributes"))
                 {
-                    var info = attribute.Value.SelectToken("$.type.index");
-                    var indexInfo = info.Type == JTokenType.Object ? info.ToObject<IndexInfo>():new IndexInfo { Unique = true };
+                    if (attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup" &&
+                        (attribute.Value.SelectToken("$.type.index") != null))
+                    {
+                        var info = attribute.Value.SelectToken("$.type.index");
+                        var indexInfo = info.Type == JTokenType.Object ? info.ToObject<IndexInfo>() : new IndexInfo { Unique = true };
+
+                        UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                        UpMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + attribute.Value.SelectToken("$.schemaName")?.ToString()); //Constant keyname 
+                        UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
+
+
+                        UpMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
+                        UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                        UpMethodIL.Emit(OpCodes.Dup);
+                        UpMethodIL.Emit(OpCodes.Ldc_I4_0);
+                        UpMethodIL.Emit(OpCodes.Ldstr, attribute.Value.SelectToken("$.schemaName")?.ToString());
+                        UpMethodIL.Emit(OpCodes.Stelem_Ref);
+
+
+                        UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
+                        UpMethodIL.Emit(indexInfo.Unique ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); //Constant unique=true
+                        UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                        UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                        UpMethodIL.Emit(OpCodes.Pop);
+
+                    }
+                }
+
+
+            }else if (members.Any())
+            {
+                foreach(var newMember in members)
+                {
 
                     UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                    UpMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + attribute.Value.SelectToken("$.schemaName")?.ToString()); //Constant keyname 
-                    UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
+                                                      //   MigrationsBuilderAddColumn
 
 
-                    UpMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
-                    UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
-                    UpMethodIL.Emit(OpCodes.Dup);
-                    UpMethodIL.Emit(OpCodes.Ldc_I4_0);
-                    UpMethodIL.Emit(OpCodes.Ldstr, attribute.Value.SelectToken("$.schemaName")?.ToString());
-                    UpMethodIL.Emit(OpCodes.Stelem_Ref);
+                    //
+                    // Summary:
+                    //     Builds an Microsoft.EntityFrameworkCore.Migrations.Operations.AddColumnOperation
+                    //     to add a new column to a table.
+                    //
+                    // Parameters:
+                    //   name:
+                    //     The column name.
+                    //
+                    //   table:
+                    //     The name of the table that contains the column.
+                    //
+                    //   type:
+                    //     The store/database type of the column.
+                    //
+                    //   unicode:
+                    //     Indicates whether or not the column can contain Unicode data, or null if not
+                    //     specified or not applicable.
+                    //
+                    //   maxLength:
+                    //     The maximum length of data that can be stored in the column, or null if not specified
+                    //     or not applicable.
+                    //
+                    //   rowVersion:
+                    //     Indicates whether or not the column acts as an automatic concurrency token, such
+                    //     as a rowversion/timestamp column in SQL Server.
+                    //
+                    //   schema:
+                    //     The schema that contains the table, or null if the default schema should be used.
+                    //
+                    //   nullable:
+                    //     Indicates whether or not the column can store null values.
+                    //
+                    //   defaultValue:
+                    //     The default value for the column.
+                    //
+                    //   defaultValueSql:
+                    //     The SQL expression to use for the column's default constraint.
+                    //
+                    //   computedColumnSql:
+                    //     The SQL expression to use to compute the column value.
+                    //
+                    //   fixedLength:
+                    //     Indicates whether or not the column is constrained to fixed-length data.
+                    //
+                    //   comment:
+                    //     A comment to associate with the column.
+                    //
+                    //   collation:
+                    //     A collation to apply to the column.
+                    //
+                    //   precision:
+                    //     The maximum number of digits that is allowed in this column, or null if not specified
+                    //     or not applicable.
+                    //
+                    //   scale:
+                    //     The maximum number of decimal places that is allowed in this column, or null
+                    //     if not specified or not applicable.
+                    //
+                    //   stored:
+                    //     Whether the value of the computed column is stored in the database or not.
+                    //
+                    // Type parameters:
+                    //   T:
+                    //     The CLR type that the column is mapped to.
+                    //
+                    // Returns:
+                    //     A builder to allow annotations to be added to the operation.
+                    var attributeDefinition = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
 
+                .FirstOrDefault(attribute => attribute.Name == newMember.Key);
 
-                    UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
-                    UpMethodIL.Emit(indexInfo.Unique? OpCodes.Ldc_I4_1: OpCodes.Ldc_I4_0); //Constant unique=true
-                    UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+                    var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
 
+                    BuildParametersForcolumn(UpMethodIL, attributeDefinition, typeObj, type, options.MigrationsBuilderAddColumn, EntityCollectionSchemaName, schema);
 
-                    UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                    UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderAddColumn.MakeGenericMethod(newMember.Value.PropertyType));
                     UpMethodIL.Emit(OpCodes.Pop);
-
                 }
             }
 
-
-
-          
+            
 
             UpMethodIL.Emit(OpCodes.Ret);
 
@@ -381,11 +512,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             var DownMethod = entityTypeBuilder.DefineMethod("Down", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderDropTable.DeclaringType });
             var DownMethodIL = DownMethod.GetILGenerator();
-            DownMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-            DownMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant
-            DownMethodIL.Emit(OpCodes.Ldstr, schema);
-            DownMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderDropTable);
-            DownMethodIL.Emit(OpCodes.Pop);
+
+            if (hasPriorEntity == null)
+            {
+                DownMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                DownMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant
+                DownMethodIL.Emit(OpCodes.Ldstr, schema);
+                DownMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderDropTable);
+                DownMethodIL.Emit(OpCodes.Pop);
+            }
             DownMethodIL.Emit(OpCodes.Ret);
 
             //  var type = entityTypeBuilder.CreateTypeInfo();
@@ -394,84 +529,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
-            //foreach(var (entityDefinition,attributeDefinition2) in manifest.SelectToken("$.entities").OfType<JProperty>()
-            //    .SelectMany(e=>e.Value.SelectToken("$.attributes").OfType<JProperty>().Select(p=>(e,p)))
-            //    .Where(a=>a.p.Value.SelectToken("$.type.type")?.ToString().ToLower() == "choices")
-            //    .ToArray())
-            //{
-
-                 
-
-
-            //    var nentity = $"{attributeDefinition2.Value.SelectToken("$.type.name")}";
-
-
-            //    manifest["entities"][nentity] = JToken.FromObject(
-            //       new
-            //       {
-            //           pluralName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", ""),
-            //           logicalName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", "").ToLower(),
-            //           schemaName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", ""),
-            //           collectionSchemaName = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", ""),
-            //           attributes = new
-            //           {
-            //               Id = new
-            //               {
-            //                   displayName = "Id",
-            //                   logicalName = "id",
-            //                   schemaName = "Id",
-            //                   type = "guid",                              
-            //                   isPrimaryKey = true,
-            //               },
-            //               Record = new 
-            //               {
-            //                   displayName = "Record",
-            //                   logicalName = "recordid",
-            //                   schemaName = "RecordId",
-            //                   type = new
-            //                   {
-            //                       type = "lookup",
-            //                       referenceType = entityDefinition.Name,
-            //                   },
-            //               },
-            //               Value = new
-            //               {
-
-            //                   displayName = "Value",
-            //                   logicalName = "value",
-            //                   schemaName = "Value",
-            //                   isPrimaryKey = true,
-            //                   type = new
-            //                   {
-            //                       type = "choice",
-            //                       name = $"{attributeDefinition2.Value.SelectToken("$.type.name")}".Replace(" ", "") + "Value",
-            //                       options = attributeDefinition2.Value.SelectToken("$.type.options")
-            //                   }
-            //               }
-            //           }
-            //       });
-            //    //attributeDefinition2.Value.SelectToken("$.type").Replace(JToken.FromObject(
-            //    //  new
-            //    //  {
-            //    //      type = "lookup",
-            //    //      referenceType = $"{attributeDefinition2.Value.SelectToken("$.type.name")}"
-            //    //  }
-            //    // ));
-
-            //    attributeDefinition2.Remove();
-
-            //    File.AppendAllLines("test1.txt", new[] { attributeDefinition2.ToString(Formatting.None), entityDefinition.ToString(Formatting.None), manifest["entities"][nentity].ToString(Formatting.None) });
-            //}
-
-
+             
             var abstracts = manifest.SelectToken("$.entities").OfType<JProperty>()
                 .Where(entity => entity.Value.SelectToken("$.abstract") != null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity).CreateTypeInfo()).ToArray();
 
-            //var ordered = manifest.SelectToken("$.entities").OfType<JProperty>().ToDictionary(k => k.Name,
-            //    v => v.Value.SelectToken("$.attributes").OfType<JProperty>()
-            //    .Where(a=>a.Value.SelectToken("$.type.type")?.ToString()?.ToLower() == "lookup").Select(a=>a.Value.SelectToken("$.type.referenceType")?.ToString()).ToArray());
-
+         
             var entities = manifest.SelectToken("$.entities").OfType<JProperty>().ToArray();
 
 
@@ -490,7 +553,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 var EntitySchameName = entityDefinition.Name.Replace(" ", "");
                 var EntityCollectionSchemaName = (entityDefinition.Value.SelectToken("$.pluralName")?.ToString() ?? EntitySchameName).Replace(" ", "");
                 var entityLogicalName = entityDefinition.Value.SelectToken("$.logicalName").ToString();
-                options.EntityDTOs[EntityCollectionSchemaName] = options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityLogicalName)?.GetTypeInfo() ?? options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
+                
+                if(!options.EntityDTOs.ContainsKey(EntityCollectionSchemaName))
+                    options.EntityDTOs[EntityCollectionSchemaName] = options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityLogicalName)?.GetTypeInfo() ?? options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
 
             }
 
@@ -505,6 +570,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             var attributeBuilder = new CustomAttributeBuilder(options.MigrationAttributeCtor, new object[] { options.migrationName });
             migrationType.SetCustomAttribute(attributeBuilder);
+
+           
 
             ConstructorBuilder entityTypeCtorBuilder =
                  migrationType.DefineConstructor(MethodAttributes.Public,
@@ -1150,14 +1217,23 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
         }
-       
 
-        private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(JToken manifest, string entitySchameName, string entityCollectionSchemaName, JObject entityDefinition, ModuleBuilder myModule)
+        private static bool IsPendingTypeBuilder(Type foo)
         {
+            return (foo is TypeBuilder) && !((foo as TypeBuilder).IsCreated());
+        }
 
+        private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(JToken manifest, string entitySchameName, string entityCollectionSchemaName, JObject entityDefinition, ModuleBuilder builder)
+        {
+            var logicalName = entityDefinition.SelectToken("$.logicalName").ToString();
+           
             var members = new Dictionary<string, PropertyBuilder>();
             TypeBuilder entityType =
-                myModule.DefineType($"{options.Namespace}.{entitySchameName}Columns", TypeAttributes.Public);
+                builder.DefineType($"{options.Namespace}.{entitySchameName}Columns_{options.migrationName.Replace(".", "_")}", TypeAttributes.Public);
+
+
+       
+
 
             CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() });
             entityType.SetCustomAttribute(EntityAttributeBuilder);
@@ -1181,37 +1257,29 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
             {
+                var attributeLogicalName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString();
+                var hasPriorEntity = builder.GetTypes().FirstOrDefault(t => !IsPendingTypeBuilder(t) && t.GetCustomAttributes<EntityMigrationColumnsAttribute>().Any(migrationattribute => migrationattribute.LogicalName == logicalName && migrationattribute.AttributeLogicalName == attributeLogicalName));
+
+
+
+                if (hasPriorEntity != null)
+                    continue;
+
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
 
-
-
-
-
-
-                var typeObj = attributeDefinition.Value.SelectToken("$.type");
-
-                var type = typeObj.ToString().ToLower();
-                if (typeObj.Type == JTokenType.Object)
+                if (options.PartOfMigration)
                 {
-                    type = typeObj.SelectToken("$.type").ToString()?.ToLower();
-                    //type["type"] = type["dbtype"];
-
-                    if (type == "lookup")
-                    {
-                        var fatAttributes = manifest.SelectToken($"$.entities['{typeObj.SelectToken("$.referenceType").ToString()}'].attributes");
-                        var fat = fatAttributes.OfType<JProperty>().Where(c => c.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
-                            .Select(a => a.Value.SelectToken("$.type")).Single();
-
-                        type = fat.ToString().ToLower();
-                        if (fat.Type == JTokenType.Object)
-                        {
-                            type = fat.SelectToken("$.type").ToString().ToLower();
-                        }
-
-                        // attributeSchemaName = attributeSchemaName + "Id";
-                    }
+                    CustomAttributeBuilder EntityMigrationColumnsAttributeBuilder = new CustomAttributeBuilder(typeof(EntityMigrationColumnsAttribute)
+                        .GetConstructor(new Type[] { }), new object[] { }, new[] {
+                        typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.LogicalName)),
+                        typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.MigrationName)),
+                         typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.AttributeLogicalName))
+                        },
+                            new[] { entityDefinition.SelectToken("$.logicalName").ToString(), options.migrationName, attributeLogicalName });
+                    entityType.SetCustomAttribute(EntityMigrationColumnsAttributeBuilder);
                 }
 
+               var (typeObj,type) = GetTypeInfo(manifest, attributeDefinition);
 
                 var method = GetColumnForType(type);
                 if (method == null)
@@ -1276,95 +1344,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 //
 
 
-                foreach (var arg1 in method.GetParameters())
-                {
-
-                    var argName = arg1.Name;
-                    if (argName == "name")
-                        argName = "columnName";
-
-
-                    switch (argName)
-                    {
-                        case "comment" when typeObj.Type == JTokenType.Object && typeObj["description"] is JToken comment:
-                            entityCtorBuilderIL.Emit(OpCodes.Ldstr, comment.ToString());
-                            continue;
-                    }
-
-                    if (typeObj.Type == JTokenType.Object && typeObj.SelectToken($"$.sql.{argName}") is JToken sqlColumnArgs)
-                    {
-                        if (sqlColumnArgs.Type == JTokenType.String)
-                        {
-                            entityCtorBuilderIL.Emit(OpCodes.Ldstr, sqlColumnArgs.ToString());
-                        }
-                        else if (sqlColumnArgs.Type == JTokenType.Integer)
-                        {
-                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, sqlColumnArgs.ToObject<int>());
-                            if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                            {
-                                entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
-                                // It's nullable
-                            }
-                        }
-                        else if (sqlColumnArgs.Type == JTokenType.Boolean)
-                        {
-                            entityCtorBuilderIL.Emit(sqlColumnArgs.ToObject<bool>() ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-                            if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                            {
-                                entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
-                                // It's nullable
-                            }
-
-                        }
-                        else
-                        {
-                            entityCtorBuilderIL.Emit(OpCodes.Ldnull);
-                        }
-
-
-                    }
-                    else
-                    {
-                        var hasMaxLength = typeObj?.SelectToken($"$.sql.maxLength") is JToken;
-
-                        switch (argName)
-                        {
-                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)):
-                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)):
-                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? false)):
-                            case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
-                                //  var a = ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
-                                entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0);
-                                break;
-                            case "nullable":
-                                entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
-                                break;
-                            case "type" when type == "multilinetext":
-                                entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)");
-                                break;
-
-                            case "type" when type == "text" && !hasMaxLength:
-                            case "type" when type == "string" && !hasMaxLength:
-                                entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false) ? 255 : 100)})");
-                                break;
-                            case "rowVersion" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
-                                entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
-                                break;
-                            default:
-                                
-                                entityCtorBuilderIL.Emit(OpCodes.Ldnull);
-                                break;
-                        }
-
-
-                    }
-                    //
-                    //new ColumnsBuilder(null).Column<Guid>(
-                    //    type:"",unicode:false,maxLength:0,rowVersion:false,name:"a",nullable:false,defaultValue:null,defaultValueSql:null,
-                    //    computedColumnSql:null, fixedLength:false,comment:"",collation:"",precision:0,scale:0,stored:false);
-                    //type:
-
-                }
+                BuildParametersForcolumn(entityCtorBuilderIL, attributeDefinition, typeObj, type, method);
 
                 entityCtorBuilderIL.Emit(OpCodes.Callvirt, method);
                 entityCtorBuilderIL.Emit(OpCodes.Call, attProp.SetMethod);
@@ -1378,6 +1358,131 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             var entityClrType = entityType.CreateTypeInfo();
             return (entityClrType, entityCtorBuilder, members);
+        }
+
+        private static (JToken,string) GetTypeInfo(JToken manifest, JProperty attributeDefinition)
+        {
+ 
+            var typeObj = attributeDefinition.Value.SelectToken("$.type");
+            var type = typeObj.ToString().ToLower();
+            if (typeObj.Type == JTokenType.Object)
+            {
+                type = typeObj.SelectToken("$.type").ToString()?.ToLower();
+                //type["type"] = type["dbtype"];
+
+                if (type == "lookup")
+                {
+                    var fatAttributes = manifest.SelectToken($"$.entities['{typeObj.SelectToken("$.referenceType").ToString()}'].attributes");
+                    var fat = fatAttributes.OfType<JProperty>().Where(c => c.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
+                        .Select(a => a.Value.SelectToken("$.type")).Single();
+
+                    type = fat.ToString().ToLower();
+                    if (fat.Type == JTokenType.Object)
+                    {
+                        type = fat.SelectToken("$.type").ToString().ToLower();
+                    }
+
+                    // attributeSchemaName = attributeSchemaName + "Id";
+                }
+            }
+
+            return (typeObj, type);
+        }
+
+        private static void BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, JProperty attributeDefinition, JToken typeObj, string type, MethodInfo method, string tableName=null,string schema=null)
+        {
+            foreach (var arg1 in method.GetParameters())
+            {
+
+                var argName = arg1.Name;
+                if (argName == "name")
+                    argName = "columnName";
+
+
+                switch (argName)
+                {
+                    case "comment" when typeObj.Type == JTokenType.Object && typeObj["description"] is JToken comment:
+                        entityCtorBuilderIL.Emit(OpCodes.Ldstr, comment.ToString());
+                        continue;
+                }
+
+                if (typeObj.Type == JTokenType.Object && typeObj.SelectToken($"$.sql.{argName}") is JToken sqlColumnArgs)
+                {
+                    if (sqlColumnArgs.Type == JTokenType.String)
+                    {
+                        entityCtorBuilderIL.Emit(OpCodes.Ldstr, sqlColumnArgs.ToString());
+                    }
+                    else if (sqlColumnArgs.Type == JTokenType.Integer)
+                    {
+                        entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, sqlColumnArgs.ToObject<int>());
+                        if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
+                        {
+                            entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
+                            // It's nullable
+                        }
+                    }
+                    else if (sqlColumnArgs.Type == JTokenType.Boolean)
+                    {
+                        entityCtorBuilderIL.Emit(sqlColumnArgs.ToObject<bool>() ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                        if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
+                        {
+                            entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
+                            // It's nullable
+                        }
+
+                    }
+                    else
+                    {
+                        entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                    }
+
+
+                }
+                else
+                {
+                    var hasMaxLength = typeObj?.SelectToken($"$.sql.maxLength") is JToken;
+
+                    switch (argName)
+                    {
+                        case "table" when !string.IsNullOrEmpty(tableName): entityCtorBuilderIL.Emit(OpCodes.Ldstr,tableName); break;
+                        case "schema" when !string.IsNullOrEmpty(schema): entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema); break;
+                        case "columnName": entityCtorBuilderIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
+                        case "nullable" when ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)):
+                        case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)):
+                        case "nullable" when ((attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? false)):
+                        case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
+                            //  var a = ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
+                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0);
+                            break;
+                        case "nullable":
+                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
+                            break;
+                        case "type" when type == "multilinetext":
+                            entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)");
+                            break;
+
+                        case "type" when type == "text" && !hasMaxLength:
+                        case "type" when type == "string" && !hasMaxLength:
+                            entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false) ? 255 : 100)})");
+                            break;
+                        case "rowVersion" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
+                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
+                            break;
+                        default:
+
+                            entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                            break;
+                    }
+
+
+                }
+                //
+                //new ColumnsBuilder(null).Column<Guid>(
+                //    type:"",unicode:false,maxLength:0,rowVersion:false,name:"a",nullable:false,defaultValue:null,defaultValueSql:null,
+                //    computedColumnSql:null, fixedLength:false,comment:"",collation:"",precision:0,scale:0,stored:false);
+                //type:
+
+            }
         }
 
         private MethodInfo GetColumnForType(string manifestType)

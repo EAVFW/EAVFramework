@@ -216,7 +216,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                     {
                         myModule = myModule,
                         Namespace = @namespace,
-                        migrationName = $"{@namespace}_Initial",
+                        migrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}",
                         DTOBaseClasses = baseTypes.ToArray(),
 
 
