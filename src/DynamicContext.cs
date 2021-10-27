@@ -247,7 +247,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
-                foreach (var migration in modelOptions.Value.Manifests.Select((m,i) => (target:m, source: i+1 == modelOptions.Value.Manifests.Length? new JObject(): modelOptions.Value.Manifests[i+1])).Reverse())
+                foreach (var migration in modelOptions.Value.Manifests
+                    .Select((m,i) => (target:m, source: i+1 == modelOptions.Value.Manifests.Length? new JObject(): modelOptions.Value.Manifests[i+1]))
+
+                    .Reverse())
                 {
                     
                     var name = $"{modelOptions.Value.PublisherPrefix}_{migration.target.SelectToken("$.version")?.ToString().Replace(".","_") ?? MigrationDefaultName}";

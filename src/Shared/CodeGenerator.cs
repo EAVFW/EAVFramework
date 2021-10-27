@@ -418,6 +418,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             {
                 foreach(var newMember in members)
                 {
+                    var attributeDefinition = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
+                        .FirstOrDefault(attribute => attribute.Name == newMember.Key);
+
+                    var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
+
+
+                    var method = GetColumnForType(options.MigrationsBuilderAddColumn, type);
+                    if (method == null)
+                        continue;
 
                     UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                                                       //   MigrationsBuilderAddColumn
@@ -491,15 +500,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     //
                     // Returns:
                     //     A builder to allow annotations to be added to the operation.
-                    var attributeDefinition = entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
+                   
 
-                .FirstOrDefault(attribute => attribute.Name == newMember.Key);
+                  
 
-                    var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
+                    BuildParametersForcolumn(UpMethodIL, attributeDefinition, typeObj, type, method, EntityCollectionSchemaName, schema);
 
-                    BuildParametersForcolumn(UpMethodIL, attributeDefinition, typeObj, type, options.MigrationsBuilderAddColumn, EntityCollectionSchemaName, schema);
-
-                    UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderAddColumn.MakeGenericMethod(newMember.Value.PropertyType));
+                    UpMethodIL.Emit(OpCodes.Callvirt, method);
                     UpMethodIL.Emit(OpCodes.Pop);
                 }
             }
@@ -1281,7 +1288,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                var (typeObj,type) = GetTypeInfo(manifest, attributeDefinition);
 
-                var method = GetColumnForType(type);
+                var method = GetColumnForType(options.ColumnsBuilderColumnMethod,type);
                 if (method == null)
                     continue;
 
@@ -1485,14 +1492,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
         }
 
-        private MethodInfo GetColumnForType(string manifestType)
+        private MethodInfo GetColumnForType(MethodInfo method, string manifestType)
         {
 
-            var baseMethodType = options.ColumnsBuilderColumnMethod;
+            
 
             var type = GetCLRType(manifestType);
             if (type != null)
-                return baseMethodType.MakeGenericMethod(type);
+                return method.MakeGenericMethod(type);
 
             //switch (manifestType.ToLower())
             //{
