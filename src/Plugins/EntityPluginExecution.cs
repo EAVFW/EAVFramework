@@ -22,7 +22,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
         Async
     }
 
-    public interface IPluginScheduler
+    public interface IPluginScheduler<TContext> where TContext : DynamicContext
     {
         Task ScheduleAsync(EntityPlugin plugin, string identityid, object entity);
     }

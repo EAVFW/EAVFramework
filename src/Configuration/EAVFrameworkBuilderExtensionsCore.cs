@@ -53,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
                   .AddPluggableServices();
 
 
-            builder.Services.AddScoped<IPluginScheduler, DefaultPluginScheduler<TContext>>();
+          //  builder.Services.AddScoped<IPluginScheduler, DefaultPluginScheduler<TContext>>();
 
 
 
@@ -191,7 +191,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
-            builder.Services.TryAddTransient<IPluginScheduler, DefaultPluginScheduler>();
+            builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
             builder.Services.TryAddTransient<IPermissionStore, DefaultPermissionStore>();
             return builder;
         }

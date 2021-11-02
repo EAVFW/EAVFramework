@@ -23,11 +23,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         private readonly PluginsAccesser plugins;
         private readonly ILogger<EAVDBContext<TContext>> logger;
         private readonly IServiceScopeFactory scopeFactory;
-        private readonly IPluginScheduler pluginScheduler;
+        private readonly IPluginScheduler<TContext> pluginScheduler;
 
       
 
-        public EAVDBContext(TContext context, PluginsAccesser plugins, ILogger<EAVDBContext<TContext>> logger, IServiceScopeFactory scopeFactory, IPluginScheduler pluginScheduler)
+        public EAVDBContext(TContext context, PluginsAccesser plugins, ILogger<EAVDBContext<TContext>> logger, IServiceScopeFactory scopeFactory, IPluginScheduler<TContext> pluginScheduler)
         {
             this.context = context ?? throw new ArgumentNullException(nameof(context));
             this.plugins = plugins;

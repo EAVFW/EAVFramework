@@ -18,14 +18,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 
     }
 
-    public class DefaultPluginScheduler : IPluginScheduler
-    {
-        public Task ScheduleAsync(EntityPlugin plugin, string identityid, object entity)
-        {
-            return Task.CompletedTask;
-        }
-    }
-    public class DefaultPluginScheduler<TContext> : IPluginScheduler
+   
+    public class DefaultPluginScheduler<TContext> : IPluginScheduler<TContext>
         where TContext : DynamicContext
     {
         private readonly IServiceProvider serviceProvider;
