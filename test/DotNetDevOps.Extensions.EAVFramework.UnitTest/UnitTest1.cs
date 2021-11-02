@@ -14,6 +14,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
     [TestClass]
     public class UnitTest1
     {
+
+
+ 
+
+
         //[TestMethod]
         //public async Task TestMethod1()
         //{
@@ -73,7 +78,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
         //   var test =  ctx.GetMigrations();
 
         //    var migrator = ctx.Database.GetInfrastructure().GetRequiredService<IMigrator>();
-           
+
         //    await migrator.MigrateAsync("0"); //Clean up
         //    await migrator.MigrateAsync(); //Move to latest migration
 

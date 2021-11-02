@@ -1,4 +1,5 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints;
+﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using DotNetDevOps.Extensions.EAVFramework.Endpoints;
 using DotNetDevOps.Extensions.EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,64 @@ using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 {
+
+    public interface IPluginRegistration
+    {
+
+    }
+
+    public static class PluginAutoReg
+    {
+        public static IEAVFrameworkBuilder AddPlugin<T>(this IEAVFrameworkBuilder builder)
+            where T : class, IPluginRegistration
+        {
+
+            builder.Services.AddTransient<T>();
+            var pluginType = typeof(T);
+
+            foreach (var attr in pluginType.GetCustomAttributes<PluginRegistrationAttribute>())
+            {
+
+                var plugin = pluginType.GetInterface("IPlugin`2").GenericTypeArguments;
+
+                var contexttype = plugin[0];
+                var entitytype = plugin[1];
+
+                var entry = (EntityPlugin)Activator.CreateInstance(typeof(EntityPlugin<,>).MakeGenericType(contexttype, entitytype));
+
+                entry.Execution = attr.Execution;
+                entry.Mode = attr.Mode;
+                entry.Order = attr.Order;
+                entry.Operation = attr.Operation;
+                entry.Type = entitytype;
+                entry.Handler = pluginType;
+
+
+                builder.Services.AddSingleton(entry);
+            }
+
+            return builder;
+        }
+       
+    }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple =true, Inherited =false)]
+    public class PluginRegistrationAttribute : Attribute
+    {
+        public EntityPluginExecution Execution { get; }
+        public EntityPluginOperation Operation { get; }
+        public EntityPluginMode Mode { get; }
+        public int Order { get; }
+        public PluginRegistrationAttribute(EntityPluginExecution execution, EntityPluginOperation operation, int order = 0, EntityPluginMode mode = EntityPluginMode.Sync)
+        {
+            Execution = execution;
+            Operation = operation;
+            Order = order;
+            Mode = mode;
+        }
+    }
+
+
     internal class EntityPlugin<TContext,T> : EntityPlugin
         where TContext : DynamicContext
         where T : DynamicEntity

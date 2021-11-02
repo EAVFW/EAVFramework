@@ -82,13 +82,11 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 {
                    
                     var config = builder.AddEntityType(entity.Value);
-                    builder.AddEntitySet(entity.Key, config);
-
-                    if (entity.Key.ToLower() == "identity")
+                    if (options.WithODATAEntitySet)
                     {
-
+                        builder.AddEntitySet(entity.Key, config);
                     }
-
+  
                     //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
                     //{
                     //    config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);

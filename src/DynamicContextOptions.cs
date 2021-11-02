@@ -15,5 +15,6 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public Assembly DTOAssembly { get; set; }
         public Type[] DTOBaseClasses { get; set; }
         public bool CreateLatestMigration { get; set; } = true;
+        public bool WithODATAEntitySet { get; set; } = true;
     }
 }
