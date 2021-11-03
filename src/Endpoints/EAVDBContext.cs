@@ -95,14 +95,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             serializer.Populate(record.CreateReader(), entity.Entity);
             entity.State = EntityState.Modified;
 
-            var trackedEntities = context.ChangeTracker.Entries()
-                  .Where(e => e.State != EntityState.Unchanged && e != entity)
-                  
-                  .ToArray();
-            foreach(var a in trackedEntities)
-            {
-               
-            }
+           
 
 
             foreach (var collection in entity.Collections)
