@@ -14,6 +14,7 @@ using System.Reflection;
 using DotNetDevOps.Extensions.EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Linq;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -84,10 +85,24 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         {
             var entity = await FindAsync(entityName, recordId);
 
+            var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
+
+            await Task.WhenAll(relatedProps.Select(related =>
+                entity.References.First(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase)).LoadAsync()));
+           
             var serializer = new JsonSerializer();
 
             serializer.Populate(record.CreateReader(), entity.Entity);
             entity.State = EntityState.Modified;
+
+            var trackedEntities = context.ChangeTracker.Entries()
+                  .Where(e => e.State != EntityState.Unchanged && e != entity)
+                  
+                  .ToArray();
+            foreach(var a in trackedEntities)
+            {
+               
+            }
 
 
             foreach (var collection in entity.Collections)

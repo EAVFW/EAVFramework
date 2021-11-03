@@ -23,8 +23,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
             where T : class, IPluginRegistration
         {
 
-            builder.Services.AddTransient<T>();
-            var pluginType = typeof(T);
+            return builder.AddPlugin(typeof(T));
+        }
+
+
+        public static IEAVFrameworkBuilder AddPlugin(this IEAVFrameworkBuilder builder, Type pluginType)           
+        {
+
+            builder.Services.AddTransient(pluginType);
+             
 
             foreach (var attr in pluginType.GetCustomAttributes<PluginRegistrationAttribute>())
             {
@@ -49,7 +56,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 
             return builder;
         }
-       
+
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple =true, Inherited =false)]
