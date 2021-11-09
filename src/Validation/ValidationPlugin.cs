@@ -27,9 +27,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
         
         private static readonly ConcurrentDictionary<Type, string> _logicalNameMapping = new ConcurrentDictionary<Type, string>();
          
-        public Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
         {
-            var metaData = _metaData.GetAttributeMetaData( _logicalNameMapping.GetOrAdd( context.Input.GetType(), GetLogicalName));
+            var metaData = await _metaData.GetAttributeMetaData( _logicalNameMapping.GetOrAdd( context.Input.GetType(), GetLogicalName));
     
             var form = context.Input;
 
@@ -56,7 +56,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
                 }
             }
             
-            return Task.CompletedTask;
+          
         }
 
         private string GetLogicalName(Type arg)

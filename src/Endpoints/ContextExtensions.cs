@@ -27,15 +27,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         }
 
         public static async ValueTask<OperationContext<TContext>> SaveChangesPipeline<TContext>(
-           this TContext dynamicContext, IServiceScopeFactory scopeFactory, ClaimsPrincipal user, IEnumerable<EntityPlugin> plugins,
-           IPluginScheduler<TContext> pluginScheduler)
+           this TContext dynamicContext, IServiceProvider serviceProvider, ClaimsPrincipal user, IEnumerable<EntityPlugin> plugins,
+           IPluginScheduler<TContext> pluginScheduler, Func<Task> onBeforeCommit = null)
             where TContext : DynamicContext
         {
             var strategy = dynamicContext.Database.CreateExecutionStrategy();
 
             var _operation = await strategy.ExecuteAsync(async () =>
             {
-                using var scope = scopeFactory.CreateScope();
+              //  using var scope = scopeFactory.CreateScope();
 
                 var _operation = new OperationContext<TContext>
                 {
@@ -53,7 +53,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 {
                     foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
+                        var ctx = await plugin.Execute(serviceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
                     }
                 }
@@ -69,7 +69,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 {
                     foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
+                        var ctx = await plugin.Execute(serviceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
                     }
                 }
@@ -83,12 +83,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                     //  operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
                     foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
-                        var ctx = await plugin.Execute(scope.ServiceProvider, user, entity.entity);
+                        var ctx = await plugin.Execute(serviceProvider, user, entity.entity);
                         errors.AddRange(ctx.Errors);
                     }
                 }
 
                 await _operation.Context.SaveChangesAsync();
+              
+                if (onBeforeCommit != null)
+                    await onBeforeCommit();
+
+                //await onBeforeCommit?.Invoke() ?? Task.CompletedTask;
 
                 await trans.CommitAsync();
 

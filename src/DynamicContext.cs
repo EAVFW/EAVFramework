@@ -195,6 +195,25 @@ namespace DotNetDevOps.Extensions.EAVFramework
             return data;
         }
     }
+
+    public interface IFormContextFeature
+    {
+        public ValueTask<JToken> GetManifestAsync();
+    }
+    public class DefaultFormContextFeature :IFormContextFeature
+    {
+        private readonly IOptions<DynamicContextOptions> options;
+
+        public DefaultFormContextFeature(IOptions<DynamicContextOptions> options)
+        {
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
+        }
+
+        public ValueTask<JToken> GetManifestAsync()
+        {
+            return new ValueTask<JToken>(options.Value.Manifests.First());
+        }
+    }
     public class DynamicContext : DbContext, IDynamicContext
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
@@ -213,6 +232,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.logger = logger;
 
             this.ChangeTracker.LazyLoadingEnabled = false;
+
+         
             
         }
 
@@ -299,7 +320,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         {
             Console.WriteLine("TEST");
             var sw = Stopwatch.StartNew();
-
+    
             //  EnsureModelCreated();
             if (this.modelOptions.Value.CreateLatestMigration)
             {

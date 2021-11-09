@@ -48,6 +48,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
     public class MigrationManager: IMigrationManager
     {
+        public bool SkipValidateSchemaNameForRemoteTypes { get; set; }
+
+
         public  IEdmModel Model { get; set; }
         public MigrationManager(ILogger<MigrationManager> logger)
         {
@@ -57,6 +60,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
         public MethodInfo EntityTypeBuilderHasKey { get; private set; }
         public ConstructorInfo JsonPropertyAttributeCtor { get; private set; }
+       
 
         //   public Assembly Assembly { get; set; }
         private ConcurrentDictionary<string, Migration> _migrations = new ConcurrentDictionary<string, Migration>();
@@ -201,6 +205,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         DTOAssembly = options.DTOAssembly,
                         GenerateDTO = fromMigration ? false : true,
                         PartOfMigration = fromMigration,
+                        SkipValidateSchemaNameForRemoteTypes= SkipValidateSchemaNameForRemoteTypes,
                         //   EntityDTOsBuilders = EntityDTOsBuilders,
 
                         myModule = myModule,

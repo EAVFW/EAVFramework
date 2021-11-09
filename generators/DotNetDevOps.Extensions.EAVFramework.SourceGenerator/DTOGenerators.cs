@@ -64,9 +64,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
         public void Execute(GeneratorExecutionContext context)
         {
             //context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
-
-            var @namespace = context.GetMSBuildProperty("RootNamespace") ?? context.GetMSBuildProperty("CustomizationPrefix", "EAVFramework.Extensions.Model");
-
+            var @schema = context.GetMSBuildProperty("CustomizationPrefix");
+            var @namespace = context.GetMSBuildProperty("RootNamespace") ?? @schema ?? "EAVFramework.Extensions.Model";
+          
             context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.GeneratePoco", out var GeneratePoco);
 
             var compilation = context.Compilation;
@@ -219,7 +219,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         migrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}",
                         DTOBaseClasses = baseTypes.ToArray(),
 
-
+                        Schema = @schema,
 
 
                         MigrationBuilderDropTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)),

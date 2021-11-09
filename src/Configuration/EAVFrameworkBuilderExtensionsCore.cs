@@ -95,7 +95,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
         {
-            builder.Services.TryAddSingleton<IRetrieveMetaData, RetrieveMetaData>();
+            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
             
             builder.Services.RegisterValidator<StringValidator, string>();
             builder.Services.RegisterValidator<NumberValidator, decimal>();
@@ -193,6 +193,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
             builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
             builder.Services.TryAddTransient<IPermissionStore, DefaultPermissionStore>();
+            builder.Services.TryAddTransient<IFormContextFeature, DefaultFormContextFeature>();
             return builder;
         }
 

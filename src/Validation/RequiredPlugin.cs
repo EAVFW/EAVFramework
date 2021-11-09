@@ -21,9 +21,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
             _requiredSettings = requiredSettings?.Value;
         }
 
-        public Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
         {
-            var metaData = _metaData.GetAttributeMetaData(context.Input.GetType().Name.ToLower());
+            var metaData = await _metaData.GetAttributeMetaData(context.Input.GetType().Name.ToLower());
 
             var form = context.Input;
 
@@ -49,7 +49,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
                 });
             }
 
-            return Task.CompletedTask;
+           
         }
     }
 }
