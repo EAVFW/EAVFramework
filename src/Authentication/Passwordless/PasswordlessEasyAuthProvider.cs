@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
+using DotNetDevOps.Extensions.EAVFramework.Extensions;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
 {

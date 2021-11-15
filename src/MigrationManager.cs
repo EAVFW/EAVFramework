@@ -48,7 +48,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
     public class MigrationManager: IMigrationManager
     {
-        public bool SkipValidateSchemaNameForRemoteTypes { get; set; }
+        public bool SkipValidateSchemaNameForRemoteTypes { get; set; } = true;
 
 
         public  IEdmModel Model { get; set; }

@@ -1197,7 +1197,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             //var _new = entity.SelectToken("$.new")?.ToObject<bool>() ?? false;
             string foreighentityLogicalName = entity.SelectToken("$.logicalName")?.ToString();
 
-            return options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == foreighentityLogicalName && (options.SkipValidateSchemaNameForRemoteTypes || string.Equals( attr.Schema , schema,StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+            var result= options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == foreighentityLogicalName && (options.SkipValidateSchemaNameForRemoteTypes || string.Equals( attr.Schema , schema,StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+            return result;
         }
 
         private bool CompairProps(Type c, string[] allProps)
