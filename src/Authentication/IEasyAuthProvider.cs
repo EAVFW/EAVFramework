@@ -3,7 +3,15 @@ using System.Net.Http;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using System.Text.Encodings.Web;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Authentication
 {
@@ -17,16 +25,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
         public RequestDelegate OnSignout(string callbackUrl);
         public RequestDelegate OnSignedOut();
         public RequestDelegate OnSingleSignOut(string callbackUrl);
-    }
-    
-    public class AuthProviderMetadata<T> where T : IEasyAuthProvider
-    {
-        private static readonly PropertyInfo prop = typeof(T).GetProperty("AuthenticationName");
-
-        public string AuthenticationName()
-        {
-            return (string) prop.GetValue(null);
-        }
     }
  
 }
