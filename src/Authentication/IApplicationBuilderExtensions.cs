@@ -24,24 +24,26 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
             return builder.SetForwardedSubjectId("X-EasyAuth-UserID", authSchemas);
         }
         
-        public static T SetForwardedSubjectId<T>(this T builder, string headerName = "X-EasyAuth-UserID", params string[] authSchemas) where T: IApplicationBuilder
+        public static T SetForwardedSubjectId<T>(this T builder, string headerName= "X-EasyAuth-UserID", string[] authSchemas=null) where T: IApplicationBuilder
         {
 
             builder.Use(async (context, next) =>
             {
-                
 
-                foreach(var schema in authSchemas)
+                if (authSchemas != null)
                 {
-                    var auth = await context.AuthenticateAsync(schema);
-
-                    if (auth.Succeeded && auth.Principal.FindFirstValue("sub") is string subject && subject.IsPresent())
+                    foreach (var schema in authSchemas)
                     {
-                        context.Request.Headers.Add(headerName, subject);
+                        var auth = await context.AuthenticateAsync(schema);
 
-                        break;
+                        if (auth.Succeeded && auth.Principal.FindFirstValue("sub") is string subject && subject.IsPresent())
+                        {
+                            context.Request.Headers.Add(headerName, subject);
+
+                            break;
+                        }
+
                     }
-
                 }
                  
 
