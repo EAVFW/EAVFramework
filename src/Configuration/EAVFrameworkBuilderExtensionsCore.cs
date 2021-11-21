@@ -253,7 +253,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var at = Activator.CreateInstance<T>();
             builder.Services.Configure(configureOptions);
-            builder.Services.AddTransient<IEasyAuthProvider, T>();
+            builder.Services.AddSingleton<T>();
+            builder.Services.AddSingleton<IEasyAuthProvider>(sp=>sp.GetRequiredService<T>());
             var name = at.AuthenticationName;
             builder.Services.AddAuthentication()
                 .AddCookie(name, o=>
