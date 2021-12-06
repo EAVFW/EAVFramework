@@ -33,7 +33,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
         {
             var sp = endpoints.ServiceProvider;
             var options = endpoints.ServiceProvider.GetService<EAVFrameworkOptions>();
-            var authProviders = sp.GetServices<IEasyAuthProvider>().ToList();
+            using var scope = sp.CreateScope();
+            var authProviders = scope.ServiceProvider.GetServices<IEasyAuthProvider>().ToList();
 
             foreach (var auth in authProviders.Where(x => x.AutoGenerateRoutes))
             {
@@ -172,7 +173,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
             {
                 // for now just take first authenticator
                 var auth = await context.AuthenticateAsync(Constants.DefaultCookieAuthenticationScheme);
-
+                
                 if (auth.Succeeded)
                 {
 
