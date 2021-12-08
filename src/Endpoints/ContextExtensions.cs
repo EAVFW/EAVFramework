@@ -28,7 +28,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         public static async ValueTask<OperationContext<TContext>> SaveChangesPipeline<TContext>(
            this TContext dynamicContext, IServiceProvider serviceProvider, ClaimsPrincipal user, IEnumerable<EntityPlugin> plugins,
-           IPluginScheduler<TContext> pluginScheduler, Func<Task> onBeforeCommit = null)
+           IPluginScheduler<TContext> pluginScheduler, Func<OperationContext<TContext>,Task> onBeforeCommit = null)
             where TContext : DynamicContext
         {
             var strategy = dynamicContext.Database.CreateExecutionStrategy();
@@ -91,7 +91,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 await _operation.Context.SaveChangesAsync();
               
                 if (onBeforeCommit != null)
-                    await onBeforeCommit();
+                    await onBeforeCommit(_operation);
+
+                
+                if (_operation.Errors.Any())
+                    return _operation;
 
                 //await onBeforeCommit?.Invoke() ?? Task.CompletedTask;
 

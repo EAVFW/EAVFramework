@@ -75,7 +75,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     }
     public class EAVDBContext<TContext> where TContext : DynamicContext
     {
-        private readonly TContext context;
+        public TContext Context { get; }
+      
         private readonly PluginsAccesser plugins;
         private readonly ILogger<EAVDBContext<TContext>> logger;
         private readonly IServiceProvider serviceProvider;
@@ -86,7 +87,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         public EAVDBContext(TContext context, PluginsAccesser plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
-            this.context = context ?? throw new ArgumentNullException(nameof(context));
+            this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.plugins = plugins;
             this.logger = logger;
             this.serviceProvider = serviceProvider;
@@ -95,7 +96,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         }
         public async Task MigrateAsync()
         {
-            var migrator = context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
+            var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
             var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
             await migrator.MigrateAsync();
 
@@ -125,7 +126,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         internal EAVResource CreateEAVResource(string entityName)
         {
-            var type = context.GetEntityType(entityName);
+            var type = Context.GetEntityType(entityName);
             return new EAVResource
             {
                 EntityType = type,
@@ -133,9 +134,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             };
         }
 
-        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<Task> onBeforeCommit = null)
+        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>,Task> onBeforeCommit = null)
         {
-            return this.context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler, onBeforeCommit);
+            return this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler, onBeforeCommit);
         }
 
         public async ValueTask<EntityEntry> PatchAsync(string entityName, Guid recordId, JToken record)
@@ -170,8 +171,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
 
 
-                        context.Attach(related);
-                        context.Remove(related);
+                        Context.Attach(related);
+                        Context.Remove(related);
                     }
                 }
 
@@ -181,31 +182,31 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         public async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
         {
-            var obj= await this.context.FindAsync(entityName, keys);
+            var obj= await this.Context.FindAsync(entityName, keys);
             if (obj == null)
                 return null;
 
-            return this.context.Entry(obj);
+            return this.Context.Entry(obj);
         }
 
         public EntityEntry Add(string entityName, JToken record)
         {
-            return this.context.Add(entityName, record);
+            return this.Context.Add(entityName, record);
         }
 
         public async ValueTask<EntityEntry> DeleteAsync(string entityName, params object[] keys)
         {
-            var record=await this.context.FindAsync(entityName, keys);
+            var record=await this.Context.FindAsync(entityName, keys);
             if (record == null)
                 return null;
-            var entry= this.context.Entry(record);
+            var entry= this.Context.Entry(record);
             entry.State = EntityState.Deleted;
             return entry;
 
         }
         public DbSet<T> Set<T>() where T: DynamicEntity
         {
-            return this.context.Set<T>();
+            return this.Context.Set<T>();
         }
     }
 }

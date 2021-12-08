@@ -109,6 +109,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool PartOfMigration { get;  set; }
         public MethodInfo MigrationsBuilderAddColumn { get;  set; }
         public bool SkipValidateSchemaNameForRemoteTypes { get;  set; }
+        public bool UseOnlyExpliciteExternalDTOClases { get; internal set; }
     }
 
     public interface ICodeGenerator
@@ -151,14 +152,76 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool Unique { get; set; } = true;
         public string Name { get; set; }
     }
+
+    public interface IChoiceEnumBuilder
+    {
+        string GetEnumName(CodeGeneratorOptions options, JToken attributeDefinition);
+    }
+    public class DefaultChoiceEnumBuilder : IChoiceEnumBuilder
+    {
+        public string GetEnumName(CodeGeneratorOptions options, JToken attributeDefinition)
+        {
+            var optionSetDefinedName = attributeDefinition.SelectToken("$.type.name");
+            var schemaName= attributeDefinition.SelectToken("$.schemaName");
+            
+            return $"{options.Namespace}.{optionSetDefinedName ?? schemaName+"Options"}".Replace(" ", "");
+        }
+    }
+    public interface IManifestTypeMapper
+    {
+        Type GetCLRType(string manifestType);
+    }
+    public class DefaultManifestTypeMapper : IManifestTypeMapper
+    {
+        public Type GetCLRType(string manifestType)
+        {
+            switch (manifestType.ToLower())
+            {
+                case "text":
+                case "string":
+                case "multilinetext":
+                    return typeof(string);
+                case "guid":
+                case "lookup":
+                    return typeof(Guid?);
+                case "integer":
+                case "int":
+
+                    return typeof(int?);
+                case "decimal":
+                    return typeof(decimal?);
+                case "datetime":
+                case "date":
+                    return typeof(DateTime?);
+                case "boolean":
+                    return typeof(bool?);
+                case "choice":
+                    return typeof(int?);
+                case "customer":
+                    return typeof(Guid?);
+                case "binary":
+                    return typeof(byte[]);
+                case "number":
+                    return typeof(double?);
+            }
+            return null;
+        }
+    }
+
     public class CodeGenerator : ICodeGenerator
     {
 
         private readonly CodeGeneratorOptions options;
+        private readonly IChoiceEnumBuilder choiceEnumBuilder;
+        private readonly IManifestTypeMapper typemapper;
 
-        public CodeGenerator(CodeGeneratorOptions options)
+        public CodeGenerator(CodeGeneratorOptions options,
+            IChoiceEnumBuilder choiceEnumBuilder = null,
+            IManifestTypeMapper typemapper = null)
         {
             this.options = options;
+            this.choiceEnumBuilder=choiceEnumBuilder??new DefaultChoiceEnumBuilder();
+            this.typemapper=typemapper??new DefaultManifestTypeMapper();
         }
 
         public Dictionary<string, StringBuilder> methodBodies = new Dictionary<string, StringBuilder>();
@@ -586,7 +649,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 
                 if (!options.EntityDTOs.ContainsKey(EntityCollectionSchemaName))
                     options.EntityDTOs[EntityCollectionSchemaName] =  
-                        GetRemoteTypeIfExist(entityDefinition.Value) ?? options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
+                        GetRemoteTypeIfExist(entityDefinition.Value) ??
+                        options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
 
             }
 
@@ -800,7 +864,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             if (manifestType == "choice")
             {
-                var enumValue = myModule.DefineEnum($"{options.Namespace}.{attributeDefinition.SelectToken("$.type.name")}".Replace(" ", ""), TypeAttributes.Public, typeof(int));
+                var enumName = choiceEnumBuilder.GetEnumName(options, attributeDefinition);
+                var enumValue = myModule.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
                 foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
                 {
                     enumValue.DefineLiteral(optionPro.Name.Replace(" ",""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
@@ -814,34 +879,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
         public virtual Type GetCLRType(string manifestType)
         {
-           
-            switch (manifestType.ToLower())
-            {
-                case "text":
-                case "string":
-                case "multilinetext":
-                    return typeof(string);
-                case "guid":
-                case "lookup":
-                    return typeof(Guid?);
-                case "integer":
-                case "int":
-
-                    return typeof(int?);
-                case "decimal":
-                    return typeof(decimal?);
-                case "datetime":
-                    return typeof(DateTime?);
-                case "boolean":
-                    return typeof(bool?);
-                case "choice":
-                    return typeof(int?);
-                case "customer":
-                    return typeof(Guid?);
-                case "binary":
-                    return typeof(byte[]);
-            }
-            return null;
+            return typemapper.GetCLRType(manifestType);
+            
         }
 
 
@@ -1028,7 +1067,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 if (clrType != null)
                 {
+                    if (attributeSchemaName=="Loadguaranteeprovided")
+                    {
 
+                    }
                     var (attProp, attField) = CreateProperty(entityType, attributeSchemaName, clrType);
 
 
@@ -1193,6 +1235,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         private TypeInfo GetRemoteTypeIfExist(JToken entity)
         {
             var schema = entity.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+
+            //if (options.UseOnlyExpliciteExternalDTOClases)
+            //{
+            //    entity.SelectToken("$.external")
+            //}
           
             //var _new = entity.SelectToken("$.new")?.ToObject<bool>() ?? false;
             string foreighentityLogicalName = entity.SelectToken("$.logicalName")?.ToString();

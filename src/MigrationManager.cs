@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Newtonsoft.Json;
@@ -45,16 +46,20 @@ namespace DotNetDevOps.Extensions.EAVFramework
         (TypeInfo, Func<Migration>) CreateMigration(string migrationName,JToken afterManifest, JToken beforeManifest, DynamicContextOptions options);
     } 
   
-
-    public class MigrationManager: IMigrationManager
+    public class MigrationManagerOptions
     {
         public bool SkipValidateSchemaNameForRemoteTypes { get; set; } = true;
+    }
+    public class MigrationManager: IMigrationManager
+    {
+     
 
 
         public  IEdmModel Model { get; set; }
-        public MigrationManager(ILogger<MigrationManager> logger)
+        public MigrationManager(ILogger<MigrationManager> logger, IOptions<MigrationManagerOptions> options)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.options=options??throw new ArgumentNullException(nameof(options));
         }
         public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
@@ -66,6 +71,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private ConcurrentDictionary<string, Migration> _migrations = new ConcurrentDictionary<string, Migration>();
         private ConcurrentDictionary<string, ModuleBuilder> _modules = new ConcurrentDictionary<string, ModuleBuilder>();
         private readonly ILogger<MigrationManager> logger;
+        private readonly IOptions<MigrationManagerOptions> options;
 
         public void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
         { 
@@ -205,7 +211,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         DTOAssembly = options.DTOAssembly,
                         GenerateDTO = fromMigration ? false : true,
                         PartOfMigration = fromMigration,
-                        SkipValidateSchemaNameForRemoteTypes= SkipValidateSchemaNameForRemoteTypes,
+                        SkipValidateSchemaNameForRemoteTypes= this.options.Value.SkipValidateSchemaNameForRemoteTypes,
+                        UseOnlyExpliciteExternalDTOClases=options.UseOnlyExpliciteExternalDTOClases,
                         //   EntityDTOsBuilders = EntityDTOsBuilders,
 
                         myModule = myModule,
