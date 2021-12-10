@@ -254,7 +254,7 @@ namespace Microsoft.Extensions.DependencyInjection
             var at = Activator.CreateInstance<T>();
             builder.Services.Configure(configureOptions);
             builder.Services.TryAddScoped<T>();
-            builder.Services.TryAddScoped<IEasyAuthProvider>(sp=>sp.GetRequiredService<T>());
+            builder.Services.AddScoped<IEasyAuthProvider>(sp=>sp.GetRequiredService<T>());
             var name = at.AuthenticationName;
             builder.Services.AddAuthentication()
                 .AddCookie(name, o=>
