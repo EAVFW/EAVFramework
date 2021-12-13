@@ -26,6 +26,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var query = await _context.ExecuteHttpRequest(entityName, context.Request);
 
+            if (!query.Items.Any())
+                return new NotFoundResult();
+
             return new DataEndpointResult(new { value = query.Items.First() });
 
 
