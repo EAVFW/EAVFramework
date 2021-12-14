@@ -12,7 +12,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
         {
             //var json = ObjectSerializer.ToString(o);
 
-            var json = JsonConvert.SerializeObject(o, new JsonSerializerSettings { Formatting = formatting, NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+            var json = JsonConvert.SerializeObject(o,
+                new JsonSerializerSettings { Formatting = formatting, 
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
 
             await response.WriteJsonAsync(json, contentType);
             await response.Body.FlushAsync();
