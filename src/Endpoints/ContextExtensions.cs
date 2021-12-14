@@ -104,7 +104,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 foreach (var entity in trackedEntities)
                 {
 
-                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Async && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
+                    foreach (var plugin in plugins.Where(plugin =>
+                        plugin.Mode == EntityPluginMode.Async &&
+                        plugin.Execution == EntityPluginExecution.PostOperation &&
+                        plugin.Operation == entity.operation &&
+                        plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
                     {
                         await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.entity.Entity);
                     }
