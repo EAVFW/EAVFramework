@@ -7,11 +7,67 @@ using System.Linq;
 using System.Threading.Tasks;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
+    public struct TrackedPipelineItem
+    {
+        public EntityPluginOperation Operation { get; set; }
+        public EntityEntry Entity { get; set; }
+    }
     public static class ContextExtensions
     {
+        private static async ValueTask<bool> EmptyPreValQueue<TContext>(IServiceProvider serviceProvider,  TContext dynamicContext, OperationContext<TContext> operationContext, IEnumerable<EntityPlugin> plugins, ClaimsPrincipal user, EntityPluginExecution stage, HashSet<object> discovered_prevalitems)
+       where TContext : DynamicContext
+        {
+           
+
+            var items = dynamicContext.ChangeTracker.Entries()
+           .Where(e => e.State != EntityState.Unchanged)           
+           .ToArray();
+
+            var queue_for_preval = new Queue<TrackedPipelineItem>();
+
+            foreach (var item in items)
+            {
+                if (!discovered_prevalitems.Contains(item.Entity))
+                {
+                    discovered_prevalitems.Add(item.Entity);
+                    queue_for_preval.Enqueue(new TrackedPipelineItem { Operation = GetOperation(item.State), Entity = item });
+                }
+            }
+
+            if (!queue_for_preval.Any())
+            {
+                return false;
+            }
+
+            while (queue_for_preval.Count >0)
+            {
+                var entity = queue_for_preval.Dequeue();
+                foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.Operation && plugin.Execution == stage && plugin.Type.IsAssignableFrom(entity.Entity.Entity.GetType())))
+                {
+                    var ctx = await plugin.Execute(serviceProvider, user, entity.Entity);
+                    operationContext.Errors.AddRange(ctx.Errors);
+                }
+
+                //foreach (var tracked in dynamicContext.ChangeTracker.Entries()
+                //    .Where(e => e.State != EntityState.Unchanged).ToArray())
+                //{
+                //    if (!discovered_prevalitems.Contains(tracked.Entity))
+                //    {
+                //        discovered_prevalitems.Add(tracked.Entity);
+                //        queue_for_preval.Enqueue(new TrackedPipelineItem { Operation = GetOperation(tracked.State), Entity = tracked });
+                //    }
+
+                //}
+
+            }
+
+            return true;
+        }
+
         private static EntityPluginOperation GetOperation(Microsoft.EntityFrameworkCore.EntityState state)
         {
             switch (state)
@@ -43,52 +99,61 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 };
 
 
-                var errors = new List<ValidationError>();
-                var trackedEntities = dynamicContext.ChangeTracker.Entries()
-                    .Where(e => e.State != EntityState.Unchanged)
-                    .Select(e => new { operation = GetOperation(e.State), entity = e })
-                    .ToArray();
+              
 
-                foreach (var entity in trackedEntities)
+                
+                var discovered_prevalitems = new HashSet<object>();
+
+                var newItems_preval = true;
+                do
                 {
-                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
-                    {
-                        var ctx = await plugin.Execute(serviceProvider, user, entity.entity);
-                        errors.AddRange(ctx.Errors);
-                    }
-                }
-                _operation.Errors = errors;
+                    newItems_preval=   await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+                } while (newItems_preval);
+
 
                 if (_operation.Errors.Any())
                     return _operation;
 
 
+
                 var trans = await _operation.Context.Database.BeginTransactionAsync();
 
-                foreach (var entity in trackedEntities)
+                var discovered_preoperation = new HashSet<object>();
+
+                var newItems_preop = true;
+                do
                 {
-                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PreOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
-                    {
-                        var ctx = await plugin.Execute(serviceProvider, user, entity.entity);
-                        errors.AddRange(ctx.Errors);
-                    }
-                }
+                    newItems_preop= await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreOperation, discovered_preoperation);
 
-                await dynamicContext.SaveChangesAsync();
+                    await dynamicContext.SaveChangesAsync();
 
-                foreach (var entity in trackedEntities)
+                    newItems_preval= await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+
+                } while (newItems_preop || newItems_preval);
+               
+                 
+
+
+               
+
+                var discovered_postoperation = new HashSet<object>();
+                var newItems_postop = true;
+
+                do
                 {
+                    newItems_postop = await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PostOperation, discovered_postoperation);
 
+                    await _operation.Context.SaveChangesAsync();
 
-                    //  operation.Errors = await RunPreValidation(scope.ServiceProvider, context, operation.Entity);
-                    foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.operation && plugin.Execution == EntityPluginExecution.PostOperation && plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
-                    {
-                        var ctx = await plugin.Execute(serviceProvider, user, entity.entity);
-                        errors.AddRange(ctx.Errors);
-                    }
-                }
+                    newItems_preval= await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+                     
+                    newItems_preop = await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreOperation, discovered_preoperation);
 
-                await _operation.Context.SaveChangesAsync();
+                    await _operation.Context.SaveChangesAsync();
+
+                } while (newItems_preop || newItems_preval || newItems_postop);
+                 
+                
               
                 if (onBeforeCommit != null)
                     await onBeforeCommit(_operation);
@@ -101,16 +166,22 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 await trans.CommitAsync();
 
-                foreach (var entity in trackedEntities)
-                {
 
+                var items = dynamicContext.ChangeTracker.Entries()
+               .Where(e => e.State != EntityState.Unchanged)
+               .ToArray();
+
+
+                foreach (var item in items)
+                {
+                    var entity = new TrackedPipelineItem { Operation = GetOperation(item.State), Entity = item };
                     foreach (var plugin in plugins.Where(plugin =>
                         plugin.Mode == EntityPluginMode.Async &&
                         plugin.Execution == EntityPluginExecution.PostOperation &&
-                        plugin.Operation == entity.operation &&
-                        plugin.Type.IsAssignableFrom(entity.entity.Entity.GetType())))
+                        plugin.Operation == entity.Operation &&
+                        plugin.Type.IsAssignableFrom(entity.Entity.Entity.GetType())))
                     {
-                        await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.entity.Entity);
+                        await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.Entity.Entity);
                     }
                 }
 

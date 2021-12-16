@@ -61,8 +61,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             }
 
 
-
             JToken record = await _context.ReadRecordAsync(context, new ReadOptions { LogPayload = _configuration.GetValue<bool>($"EAVFramework:CreateRecordsEndpoint:LogPayload", false) });
+
+
+            if (context.Request.Headers.ContainsKey("x-batch"))
+            {
+
+            
+            
+            }
+
 
             var entity = _context.Add(entityName, record); ;
 
