@@ -17,5 +17,6 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public bool CreateLatestMigration { get; set; } = true;
         public bool WithODATAEntitySet { get; set; } = true;
         public bool UseOnlyExpliciteExternalDTOClases { get; set; }
+        public Type[] DisabledPlugins { get; set; }
     }
 }

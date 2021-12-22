@@ -49,6 +49,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
     public class MigrationManagerOptions
     {
         public bool SkipValidateSchemaNameForRemoteTypes { get; set; } = true;
+        public bool RequiredSupport { get; set; } = true;
     }
     public class MigrationManager: IMigrationManager
     {
@@ -281,6 +282,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
                                .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion), new Type[] { }),
                         HasPrecisionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
                                .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasPrecision), new Type[] { typeof(int), typeof(int) }),
+                  
+                    
+                     RequiredSupport = this.options.Value.RequiredSupport
                     });
 
                     var migrationType = generator.CreateDynamicMigration(manifest);

@@ -77,7 +77,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     {
         public TContext Context { get; }
       
-        private readonly PluginsAccesser plugins;
+        private readonly PluginsAccesser<TContext> plugins;
         private readonly ILogger<EAVDBContext<TContext>> logger;
         private readonly IServiceProvider serviceProvider;
         private readonly IPluginScheduler<TContext> pluginScheduler;
@@ -85,7 +85,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
      //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
       
 
-        public EAVDBContext(TContext context, PluginsAccesser plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
+        public EAVDBContext(TContext context, PluginsAccesser<TContext> plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.plugins = plugins;

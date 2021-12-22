@@ -109,7 +109,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool PartOfMigration { get;  set; }
         public MethodInfo MigrationsBuilderAddColumn { get;  set; }
         public bool SkipValidateSchemaNameForRemoteTypes { get;  set; }
-        public bool UseOnlyExpliciteExternalDTOClases { get; internal set; }
+        public bool UseOnlyExpliciteExternalDTOClases { get;  set; }
+        public bool RequiredSupport { get; set; } = true;
     }
 
     public interface ICodeGenerator
@@ -943,7 +944,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.EntityTypeBuilderPropertyMethod);
 
-                if (attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)
+                if (options.RequiredSupport && (attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false))
                 {
                     ConfigureMethod2IL.Emit(OpCodes.Ldc_I4_1);
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRequiredMethod);
@@ -1506,7 +1507,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return (typeObj, type);
         }
 
-        private static void BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, JProperty attributeDefinition, JToken typeObj, string type, MethodInfo method, string tableName=null,string schema=null)
+        private void BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, JProperty attributeDefinition, JToken typeObj, string type, MethodInfo method, string tableName=null,string schema=null)
         {
             foreach (var arg1 in method.GetParameters())
             {
@@ -1565,8 +1566,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         case "schema" when !string.IsNullOrEmpty(schema): entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema); break;
                         case "columnName": entityCtorBuilderIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
                         case "nullable" when ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)):
-                        case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)):
-                        case "nullable" when ((attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? false)):
+                        case "nullable" when (options.RequiredSupport && (attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)):
+                        case "nullable" when (options.RequiredSupport && (attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? false)):
                         case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
                             //  var a = ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0);

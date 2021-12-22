@@ -189,6 +189,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddPluggableServices(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.TryAddScoped(typeof(PluginsAccesser<>));
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
             builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
@@ -208,7 +209,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.Services.AddTransient<IEndpointRouter, EndpointRouter>();
          
-            builder.Services.AddSingleton<PluginsAccesser>();
+           
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<RetrieveRecordEndpoint<TContext>>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<CreateRecordsEndpoint<TContext>>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);

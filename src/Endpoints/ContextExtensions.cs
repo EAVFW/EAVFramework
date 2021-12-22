@@ -70,7 +70,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             while (queue_for_preval.Count >0)
             {
                 var entity = queue_for_preval.Dequeue();
-                foreach (var plugin in plugins.Where(plugin => plugin.Mode == EntityPluginMode.Sync && plugin.Operation == entity.Operation && plugin.Execution == stage && plugin.Type.IsAssignableFrom(entity.Entity.Entity.GetType())))
+                foreach (var plugin in plugins
+                    .Where(plugin => 
+                        plugin.Mode == EntityPluginMode.Sync && 
+                        plugin.Operation == entity.Operation && 
+                        plugin.Execution == stage && 
+                        plugin.Type.IsAssignableFrom(entity.Entity.Entity.GetType())))
                 {
                     var ctx = await plugin.Execute(serviceProvider, user, entity.Entity);
                     operationContext.Errors.AddRange(ctx.Errors);

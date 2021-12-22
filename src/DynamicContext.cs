@@ -620,6 +620,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         }
 
-       
+        internal bool IsPluginEnabled(Type handler)
+        {
+            return !modelOptions.Value.DisabledPlugins?.Contains(handler) ??true;
+            
+        }
     }
 }
