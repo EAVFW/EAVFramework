@@ -145,15 +145,102 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
 
-            await Task.WhenAll(relatedProps.Select(related =>
-                entity.References.First(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase)).LoadAsync()));
-           
+            foreach (var related in relatedProps.Select(related =>
+                 entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
+            {
+                if (related!=null)
+                {
+                    await related.LoadAsync();
+                }
+            }
+
             var serializer = new JsonSerializer();
 
             serializer.Populate(record.CreateReader(), entity.Entity);
             entity.State = EntityState.Modified;
 
-           
+            TraverseDeleteCollections(record, new Lazy<Type>(entity.Entity.GetType()));
+            return entity;
+        }
+
+        private void TraverseDeleteCollections(JToken record, Lazy<Type> clrType)
+        {
+            foreach (var prop in record.OfType<JProperty>())
+            {
+                if (prop.Name.EndsWith("@deleted"))
+                {
+                    var collection  = clrType.Value.GetProperties().FirstOrDefault(propertyInfo =>
+                        propertyInfo.GetCustomAttribute<JsonPropertyAttribute>().PropertyName == prop.Name.Substring(0, prop.Name.IndexOf('@')));
+
+                    var deletedItems = prop.Value;
+
+                    foreach (var id in deletedItems)
+                    {
+
+                        var related = Activator.CreateInstance(collection.PropertyType.GenericTypeArguments[0]);
+
+                        collection.PropertyType.GenericTypeArguments[0].GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+
+                        Context.Attach(related);
+                        Context.Remove(related);
+
+                    }
+
+                }
+                else if (prop.Value.Type == JTokenType.Array)
+                {
+                    foreach (var value in prop.Value)
+                    {
+
+                        TraverseDeleteCollections(value, new Lazy<Type>(() =>
+                        {
+
+                            var collection = clrType.Value.GetProperties().FirstOrDefault(propertyInfo =>
+                                propertyInfo.GetCustomAttribute<JsonPropertyAttribute>().PropertyName == prop.Name);
+
+                            return collection.PropertyType.GenericTypeArguments[0];
+
+
+                        }));
+                    }
+                }
+
+
+
+
+
+            }
+
+            //foreach (var collection in entity.Collections)
+            //{
+            //    var attr = collection.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>();
+            //    var deletedItems = record[$"{attr.PropertyName}@deleted"];
+            //    if (deletedItems != null)
+            //    {
+            //        foreach (var id in deletedItems)
+            //        {
+
+            //            var related = Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
+
+            //            collection.Metadata.TargetEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+
+
+
+            //            Context.Attach(related);
+            //            Context.Remove(related);
+
+
+
+            //        }
+            //    }
+
+
+
+            //}
+        }
+
+        private void TraverseDeleteCollections(JToken record, EntityEntry entity)
+        {
 
 
             foreach (var collection in entity.Collections)
@@ -173,11 +260,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                         Context.Attach(related);
                         Context.Remove(related);
+
+
+
                     }
                 }
 
+
+
             }
-            return entity;
         }
 
         public async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
