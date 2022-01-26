@@ -23,18 +23,25 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
             {
                 this.Logger.LogWarning("No EasyAuth UserID provided");
             }
-            
-            return Task.FromResult(AuthenticateResult.Success(
-                new AuthenticationTicket(
-                    new ClaimsPrincipal(new ClaimsIdentity(
-                        (hasHeader
+            var claims = (hasHeader
                             ? new[]
                             {
                                 new Claim("sub", Context.Request.Headers[Options.HeaderName])
                             }
                             : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix))
-                            .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value))),
-                        Scheme.Name)), Scheme.Name)));
+                            .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value, Scheme.Name)));
+
+            this.Logger.LogInformation("Handle EasyAuthForwardedAuth: {Prefix}" +
+                " {Headers} {Claims}", 
+                Options.HeaderPrefix,
+                string.Join("|", Context.Request.Headers.Select(x=>$"{x.Key}: {x.Value}")),
+                string.Join("|", claims.Select(x => $"{x.Type}: {x.Value}")));
+
+            return Task.FromResult(AuthenticateResult.Success(
+                new AuthenticationTicket(
+                    new ClaimsPrincipal(new ClaimsIdentity(
+                       claims))
+                       , Scheme.Name)));
         }
     }
  
