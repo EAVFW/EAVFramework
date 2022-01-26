@@ -33,7 +33,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
                                 new Claim("sub", Context.Request.Headers[Options.HeaderName])
                             }
                             : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix))
-                            .Select(k => new Claim(k.Key, k.Value))),
+                            .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value))),
                         Scheme.Name)), Scheme.Name)));
         }
     }

@@ -14,6 +14,10 @@ using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Shared
 {
+    public class PrimaryFieldAttribute : Attribute
+    {
+
+    }
     public class EntityMigrationAttribute : Attribute
     {
         public string LogicalName { get; set; }
@@ -1046,8 +1050,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
                 var clrType = GetCLRType(myModule,entityDefinition2, attributeDefinition.Value,manifest, out var manifestType);
+
+
                 
-                
+
+
+
 
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
 
@@ -1128,7 +1136,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     CreateDataMemberAttribute( attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
 
                     CreateJsonSerializationAttribute(attributeDefinition, attProp);
+                    
+                    var isprimaryField = attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false;
 
+                    if (isprimaryField)
+                    {
+                        CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(PrimaryFieldAttributeCtor,new object[] { });
+
+                        attProp.SetCustomAttribute(PrimaryFieldAttributeBuilder);
+                    }
 
                     //CustomAttributeBuilder MetadataAttributeBuilder = new CustomAttributeBuilder(MetadataAttributeCtor, new object[] { }, new[] { MetadataAttributeSchemaNameProperty }, new[] { attributeSchemaName });
 
@@ -1322,6 +1338,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         static ConstructorInfo DataMemberAttributeCtor = typeof(DataMemberAttribute).GetConstructor(new Type[] { });
         static ConstructorInfo MetadataAttributeCtor = typeof(AttributeAttribute).GetConstructor(new Type[] { });
+        static ConstructorInfo PrimaryFieldAttributeCtor = typeof(PrimaryFieldAttribute).GetConstructor(new Type[] { });
         static PropertyInfo DataMemberAttributeNameProperty = typeof(DataMemberAttribute).GetProperty("Name");
         static PropertyInfo MetadataAttributeSchemaNameProperty = typeof(AttributeAttribute).GetProperty("SchemaName");
 

@@ -35,9 +35,17 @@ using System.Threading.Tasks;
 namespace DotNetDevOps.Extensions.EAVFramework
 {
 
+    public class QueryContext
+    {
+        public DynamicContext Context { get; set; }
+        public Type Type { get; set; }
+        public HttpRequest Request { get; set; }
+
+        public Dictionary<IQueryExtender, bool> SkipQueryExtenders { get; set; } = new Dictionary<IQueryExtender, bool>();
+    }
     public interface IQueryExtender
     {
-        IQueryable ApplyTo(IQueryable metadataQuerySet, DynamicContext context, Type type, HttpRequest request);
+        IQueryable ApplyTo(IQueryable metadataQuerySet, QueryContext context);
     }
 
     public static class TypeChanger
@@ -404,14 +412,25 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName, HttpRequest request)
         {
-            var queryInspector = request.HttpContext.RequestServices.GetService<IQueryExtender>();
+            var queryInspectors = request.HttpContext.RequestServices.GetService<IEnumerable<IQueryExtender>>().ToList();
              
             EnsureModelCreated();
 
             var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
 
             var metadataQuerySet = Set(type);
-            metadataQuerySet = queryInspector?.ApplyTo(metadataQuerySet, this, type, request).Cast(type) ?? metadataQuerySet;
+
+            var queryContext = new QueryContext
+            {
+                Type = type,
+                Request = request,
+                SkipQueryExtenders = queryInspectors.ToDictionary(x => x, v => false),
+                Context = this
+            };
+
+
+            foreach (var queryInspector in queryInspectors.Where(q=>!queryContext.SkipQueryExtenders[q]))
+                metadataQuerySet = queryInspector.ApplyTo(metadataQuerySet, queryContext).Cast(type) ?? metadataQuerySet;
 
 
 
@@ -485,10 +504,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         }
 
-        public Type GetRecordType(string entityName)
-        {
-            return manager.EntityDTOs[entityName];
-        }
+        
         public EntityEntry Add(string entityName, JToken data)
         {
             var type = manager.EntityDTOs[entityName];

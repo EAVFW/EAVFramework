@@ -52,6 +52,34 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
 
             return builder;
         }
+        public static T SetForwardedClaim<T>(this T builder, string headerName, string claim, string[] authSchemas = null) where T : IApplicationBuilder
+        {
+
+            builder.Use(async (context, next) =>
+            {
+
+                if (authSchemas != null)
+                {
+                    foreach (var schema in authSchemas)
+                    {
+                        var auth = await context.AuthenticateAsync(schema);
+
+                        if (auth.Succeeded && auth.Principal.FindFirstValue(claim) is string value && value.IsPresent())
+                        {
+                            context.Request.Headers.Add(headerName, value);
+
+                            break;
+                        }
+
+                    }
+                }
+
+
+                await next().ConfigureAwait(false);
+            });
+
+            return builder;
+        }
     }
  
 }
