@@ -23,13 +23,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
             {
                 this.Logger.LogWarning("No EasyAuth UserID provided");
             }
+            
             var claims = (hasHeader
                             ? new[]
                             {
                                 new Claim("sub", Context.Request.Headers[Options.HeaderName])
                             }
                             : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix, System.StringComparison.OrdinalIgnoreCase ))
-                            .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value, Scheme.Name)));
+                            .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value)));
 
             this.Logger.LogInformation("Handle EasyAuthForwardedAuth: {Prefix}" +
                 " {Headers} {Claims}", 
@@ -40,7 +41,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
             return Task.FromResult(AuthenticateResult.Success(
                 new AuthenticationTicket(
                     new ClaimsPrincipal(new ClaimsIdentity(
-                       claims))
+                       claims, Scheme.Name))
                        , Scheme.Name)));
         }
     }
