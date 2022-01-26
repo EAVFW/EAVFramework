@@ -28,7 +28,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
                             {
                                 new Claim("sub", Context.Request.Headers[Options.HeaderName])
                             }
-                            : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix))
+                            : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix, System.StringComparison.OrdinalIgnoreCase ))
                             .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value, Scheme.Name)));
 
             this.Logger.LogInformation("Handle EasyAuthForwardedAuth: {Prefix}" +
