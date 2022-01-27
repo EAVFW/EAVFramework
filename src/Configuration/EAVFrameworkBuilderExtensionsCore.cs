@@ -17,6 +17,8 @@ using DotNetDevOps.Extensions.EAVFramework.Authentication;
 using DotNetDevOps.Extensions.EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
 using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using System.Threading.Tasks;
+using System.Net;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -149,7 +151,10 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IEAVFrameworkBuilder AddCookieAuthentication(this IEAVFrameworkBuilder builder)
         {
             builder.Services.AddAuthentication(Constants.DefaultCookieAuthenticationScheme)
-                .AddCookie(Constants.DefaultCookieAuthenticationScheme)
+                .AddCookie(Constants.DefaultCookieAuthenticationScheme, options =>
+                {
+                    options.Events.OnRedirectToAccessDenied = UnAuthorizedResponse;
+                })
                 .AddCookie(Constants.ExternalCookieAuthenticationScheme)
                 .AddCookie(Constants.DefaultLoginRedirectCookie);
 
@@ -159,6 +164,12 @@ namespace Microsoft.Extensions.DependencyInjection
           //  builder.Services.AddTransientDecorator<IAuthenticationHandlerProvider, FederatedSignoutAuthenticationHandlerProvider>();
 
             return builder;
+        }
+        
+        internal static Task UnAuthorizedResponse(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            return Task.CompletedTask;
         }
 
         /// <summary>

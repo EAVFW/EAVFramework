@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using DotNetDevOps.Extensions.EAVFramework.Shared;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
 using Microsoft.AspNetCore.OData.Extensions;
@@ -70,12 +71,101 @@ namespace DotNetDevOps.Extensions.EAVFramework
     {
         IODataConverter CreateConverter(Type type);
     }
+    public interface IODataRuntimeType
+    {
+        string GetDataType(object data);
+    }
+    public interface IODataRuntimeTypeFactory
+    {
+        IODataRuntimeType CreateTypeParser(Type type, object data);
+    }
+    public class SelectSomeOfT : IODataRuntimeType
+    {
+        private IODataRuntimeTypeFactory oDataRuntimeTypeFactory;
+
+       
+        private static PropertyInfo untypedInstance  =  typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
+            .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper")?.GetProperty("UntypedInstance");
+        private static PropertyInfo container = typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
+            .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper")?.GetProperty("Container");
+
+        public SelectSomeOfT(IODataRuntimeTypeFactory oDataRuntimeTypeFactory)
+        {
+            this.oDataRuntimeTypeFactory=oDataRuntimeTypeFactory;
+           
+        }
+        private ConcurrentDictionary<Type, PropertyInfo> _NamedPropertyBag = new ConcurrentDictionary<Type, PropertyInfo>();
+
+        public string GetDataType(object data)
+        {
+            var instance = untypedInstance?.GetValue(data);
+            if (instance== null)
+            {
+
+                var c = container.GetValue(data);
+                var namedProperty = _NamedPropertyBag.GetOrAdd(c.GetType(), (t) => t.GetProperty("Value"));
+                var n = namedProperty.GetValue(c);
+                instance=untypedInstance.GetValue(n);
+            }
+            var serializedType = instance?.GetType().GetCustomAttribute<EntityAttribute>()?.LogicalName;
+            return serializedType;
+        }
+    }
+
+    public class ConstantRuntimeType : IODataRuntimeType
+    {
+        private string logicalName;
+
+        public ConstantRuntimeType(string logicalName)
+        {
+            this.logicalName=logicalName;
+        }
+
+        public string GetDataType(object data)
+        {
+            return logicalName;
+        }
+    }
+    public class ODataRuntimeTypeFactory : IODataRuntimeTypeFactory
+    {
+        private static ConcurrentDictionary<Type, IODataRuntimeType> _typeParsers = new ConcurrentDictionary<Type, IODataRuntimeType>();
+        private static Type selectexpandwrapper = typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
+            .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper`1");
+       
+
+        public IODataRuntimeType CreateTypeParser(Type type, object data)
+        {
+            return ODataRuntimeTypeFactory._typeParsers.GetOrAdd(type, type=>Factory(type,data));
+           
+        }
+
+        private IODataRuntimeType Factory(Type type, object data)
+        {
+            //
+            if (type.IsGenericType && 
+                ODataRuntimeTypeFactory.selectexpandwrapper.MakeGenericType(type.GenericTypeArguments[0]).IsAssignableFrom(type) &&
+                 
+                type.GenericTypeArguments[0].GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && !attr.IsBaseClass)
+            {
+                return new ConstantRuntimeType(attr.LogicalName);
+            }
+
+            return new SelectSomeOfT(this);
+
+        }
+    }
     internal class SelectCoverter : IODataConverter
     {
+        private static IODataRuntimeTypeFactory typeParser = new ODataRuntimeTypeFactory();
+
         private Type type;
         private IODataConverterFactory odatatConverterFactory;
         private MethodInfo entityProperty;
-        private object MapperProvider;
+      
+        
+
+        //  private PropertyInfo namedProperty;
+        private Func<IEdmModel, IEdmStructuredType, IPropertyMapper> MapperProvider;
         //private readonly string serializedType;
         public SelectCoverter(Type type, IODataConverterFactory odatatConverterFactory)
         {
@@ -83,14 +173,32 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.odatatConverterFactory = odatatConverterFactory;
             this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
             var SelectExpandWrapperConverter = type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
-            this.MapperProvider = SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
-            //serializedType = $"{type.GetGenericArguments().First().FullName}, {type.GetGenericArguments().First().Assembly.GetName().Name}";
+            this.MapperProvider =(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+          
+            
+
+           // this.namedProperty =type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Container.NamedProperty`1")?.GetProperty("Value");
+           //serializedType = $"{type.GetGenericArguments().First().FullName}, {type.GetGenericArguments().First().Assembly.GetName().Name}";
         }
+
+       
+
+        //Microsoft.AspNetCore.OData.Query.Container.NamedProperty<T> //https://github.com/OData/AspNetCoreOData/blob/main/src/Microsoft.AspNetCore.OData/Query/Container/NamedPropertyOfT.cs
+
+
 
         public object Convert(object data)
         {
-            var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
-            //poco["$type"] = serializedType;
+             
+            //https://github.com/OData/AspNetCoreOData/blob/main/src/Microsoft.AspNetCore.OData/Query/Wrapper/SelectAllOfT.cs
+            //Microsoft.AspNetCore.OData.Query.Wrapper.SelectAll<KFST.Vanddata.Model.Identity>
+            
+            var poco =(data as Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper).ToDictionary(MapperProvider);
+
+            var typeParser = SelectCoverter.typeParser.CreateTypeParser(data.GetType(),data);
+            // var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
+            poco["$type"] = typeParser.GetDataType(data);
+
             foreach (var kv in poco.ToArray())
             {
                 if(kv.Value == null)

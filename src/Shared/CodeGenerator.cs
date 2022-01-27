@@ -35,6 +35,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string LogicalName { get; set; }
         public string SchemaName { get; set; }
         public string CollectionSchemaName { get; set; }
+
+        public bool IsBaseClass { get; set; }
     }
 
     public class AttributeAttribute : Attribute
@@ -1226,11 +1228,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             entityType.SetCustomAttribute(new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] {
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
-                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName))
-                    }, new[] {
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName)),
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.IsBaseClass))
+                        
+                    }, new object[] {
                     entityDefinition.Value.SelectToken("$.logicalName").ToString() ,
                      entityDefinition.Value.SelectToken("$.schemaName").ToString(),
-                      entityDefinition.Value.SelectToken("$.collectionSchemaName").ToString()
+                      entityDefinition.Value.SelectToken("$.collectionSchemaName").ToString(),
+                      entityDefinition.Value.SelectToken("$.abstract")?.ToObject<bool>()??false
                     }));
         }
 
@@ -1308,7 +1313,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
          //   File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
 
             return (options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}",TypeAttributes.Public
-                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Abstract : TypeAttributes.Class)
+                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
                                                                         | TypeAttributes.Serializable

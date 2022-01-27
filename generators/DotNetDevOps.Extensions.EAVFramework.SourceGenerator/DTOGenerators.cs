@@ -500,6 +500,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
             {
                 return $"\"{str}\"";
             }
+            else if (value is bool)
+            {
+                return value.ToString().ToLower();
+            }
             return $"\"{value}\"";
         }
 
