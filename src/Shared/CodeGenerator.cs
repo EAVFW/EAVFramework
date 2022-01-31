@@ -22,6 +22,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
     {
         public string LogicalName { get; set; }
         public string MigrationName { get; set; }
+        public string RawUpMigration { get; set; }
     }
     public class EntityMigrationColumnsAttribute : Attribute
     {
@@ -39,6 +40,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool IsBaseClass { get; set; }
     }
 
+    
     public class AttributeAttribute : Attribute
     {
         public string LogicalName { get; set; }
@@ -63,6 +65,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string migrationName { get; set; }
 
         public MethodInfo MigrationBuilderCreateTable { get; set; }
+        public MethodInfo MigrationBuilderSQL { get; set; }
         public Type ColumnsBuilderType { get; set; }
         public Type CreateTableBuilderType { get; set; }
         public Type EntityTypeBuilderType { get; set; }
@@ -277,9 +280,30 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] {logicalName });
             entityTypeBuilder.SetCustomAttribute(EntityAttributeBuilder);
 
+
+            var upSqlToken = entityDefinition.Value.SelectToken("$.sql.migrations.up");
+            string upSql = null;
+            if(upSqlToken?.Type == JTokenType.String)
+            {
+                upSql=upSqlToken.ToString();
+            }else if (upSqlToken?.Type == JTokenType.Array)
+            {
+                upSql = string.Join("\n", upSqlToken.Select(c => c.ToString()));
+            }
+
             if (options.PartOfMigration)
             {
-                CustomAttributeBuilder EntityMigrationAttributeBuilder = new CustomAttributeBuilder(typeof(EntityMigrationAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.LogicalName)), typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.MigrationName)) }, new[] { logicalName, options.migrationName });
+                CustomAttributeBuilder EntityMigrationAttributeBuilder = new CustomAttributeBuilder(
+                    typeof(EntityMigrationAttribute).GetConstructor(new Type[] { }), 
+                    new object[] { },
+                    new[] {
+                        typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.LogicalName)),
+                        typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.MigrationName)) ,
+                        typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.RawUpMigration)) 
+                    },
+
+
+                    new[] { logicalName, options.migrationName, upSql });
                 entityTypeBuilder.SetCustomAttribute(EntityMigrationAttributeBuilder);
             }
 
@@ -604,11 +628,28 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     }
                 }
 
+              //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
+                if(!string.IsNullOrEmpty(upSql))
+                {
+                   var alreadyExists= builder.GetTypes().FirstOrDefault(t =>
+                        !IsPendingTypeBuilder(t) &&
+                        t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute &&
+                        migrationAttribute.LogicalName == logicalName && migrationAttribute.RawUpMigration == upSql);
 
+                    if (alreadyExists == null)
+                    {
+
+                        UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                        UpMethodIL.Emit(OpCodes.Ldstr, upSql);
+
+                        UpMethodIL.Emit(OpCodes.Ldnull);
+                        UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderSQL);
+                        UpMethodIL.Emit(OpCodes.Pop);
+                    }
+                    
+                }
 
                 UpMethodIL.Emit(OpCodes.Ret);
-
-
 
                 var DownMethod = entityTypeBuilder.DefineMethod("Down", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderDropTable.DeclaringType });
                 var DownMethodIL = DownMethod.GetILGenerator();
@@ -1580,10 +1621,20 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 }
                 else
                 {
-                    var hasMaxLength = typeObj?.SelectToken($"$.sql.maxLength") is JToken;
+                    var hasMaxLength = (typeObj?.SelectToken("$.sql.maxLength")??typeObj?.SelectToken("$.maxLength")) is JToken;
 
                     switch (argName)
                     {
+                        case "maxLength" when typeObj?.SelectToken("$.maxLength") is JToken maxLength: 
+                            
+                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, maxLength.ToObject<int>());
+                            if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
+                            {
+                                entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
+                                // It's nullable
+                            }
+
+                            break;
                         case "table" when !string.IsNullOrEmpty(tableName): entityCtorBuilderIL.Emit(OpCodes.Ldstr,tableName); break;
                         case "schema" when !string.IsNullOrEmpty(schema): entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema); break;
                         case "columnName": entityCtorBuilderIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;

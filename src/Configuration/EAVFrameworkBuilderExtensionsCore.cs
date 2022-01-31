@@ -188,6 +188,8 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
             builder.Services.AddScoped(typeof(EAVDBContext<>),typeof(EAVDBContext<>));
+            builder.Services.AddSingleton<IODataConverterFactory, OdatatConverterFactory>();
+        
             //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }

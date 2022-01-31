@@ -62,12 +62,12 @@ namespace DotNetDevOps.Extensions.EAVFramework
         }
     }
 
-    internal interface IODataConverter
+    public interface IODataConverter
     {
         object Convert(object data);
 
     }
-    internal interface IODataConverterFactory
+    public interface IODataConverterFactory
     {
         IODataConverter CreateConverter(Type type);
     }
@@ -247,7 +247,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             return list;
         }
     }
-    internal class OdatatConverterFactory : IODataConverterFactory
+    public class OdatatConverterFactory : IODataConverterFactory
     {
         private static ConcurrentDictionary<Type, IODataConverter> _converters = new ConcurrentDictionary<Type, IODataConverter>();
 

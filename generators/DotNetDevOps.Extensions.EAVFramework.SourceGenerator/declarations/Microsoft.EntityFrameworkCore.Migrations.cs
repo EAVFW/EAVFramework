@@ -23,6 +23,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     {
 
     }
+    public class SqlOperation
+    {
+
+    }
     public class DropIndexOperation
     {
 
@@ -34,6 +38,22 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     }
     public class MigrationBuilder
     {
+        // Summary:
+        //     Builds an Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation to
+        //     execute raw SQL.
+        //
+        // Parameters:
+        //   sql:
+        //     The SQL string to be executed to perform the operation.
+        //
+        //   suppressTransaction:
+        //     Indicates whether or not transactions will be suppressed while executing the
+        //     SQL.
+        //
+        // Returns:
+        //     A builder to allow annotations to be added to the operation.
+        public virtual OperationBuilder<SqlOperation> Sql([NotNullAttribute] string sql, bool suppressTransaction = false) => throw new NotImplementedException();
+         
 
         public virtual OperationBuilder<DropTableOperation> DropTable([NotNullAttribute] string name, [CanBeNullAttribute] string schema = null) => throw new NotImplementedException();
         public virtual CreateTableBuilder<TColumns> CreateTable<TColumns>([NotNullAttribute] string name, [NotNullAttribute] Func<ColumnsBuilder, TColumns> columns, [CanBeNullAttribute] string schema = null, [CanBeNullAttribute] Action<CreateTableBuilder<TColumns>> constraints = null, [CanBeNullAttribute] string comment = null) => throw new NotImplementedException();
