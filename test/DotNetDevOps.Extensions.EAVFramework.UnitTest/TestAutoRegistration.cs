@@ -30,7 +30,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
         public async Task TestAutoRegistration()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddTransient<PluginsAccesser>();
+            serviceCollection.AddTransient<PluginsAccesser<DynamicContext>>();
 
             var builder = new EAVFrameworkBuilder(serviceCollection);
 
@@ -38,7 +38,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
             builder.AddPlugin<TestPlugin>();
 
             var sp = serviceCollection.BuildServiceProvider();
-            var plugins = sp.GetRequiredService<PluginsAccesser>();
+            var plugins = sp.GetRequiredService<PluginsAccesser<DynamicContext>>();
 
 
             Assert.AreEqual(2, plugins.Count());
