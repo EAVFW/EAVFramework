@@ -31,7 +31,9 @@ stages:
     #- task: NuGetToolInstaller@1
     #  inputs:
     #    versionSpec: 5.x
-
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk'
+ 
     - task: DotNetCoreCLI@2
       inputs:
         command: 'restore'
