@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework
 {
-    internal static class Constants
+    public static class Constants
     {
         public static class EndpointNames
         {
@@ -34,7 +34,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             public const string RecordIdRouteParam = "RecordId";
         }
 
-
+       
         public const string DefaultCookieAuthenticationScheme = "eavfw";
         public const string ExternalCookieAuthenticationScheme = "eavfw.external";
         public const string DefaultCheckSessionCookieName = "eavfw.session";
