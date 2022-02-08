@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <PackageId>DotNetDevOps.Extensions.EAVFramework</PackageId>
     <Authors>Poul Kjeldager</Authors>
     <Company>DotNetDevOps</Company>
@@ -15,24 +15,21 @@
 
     <ItemGroup>
      <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.4" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.10" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.10" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
-  </ItemGroup>
-  <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.17" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.7" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
+     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.7" />
 
-  </ItemGroup>-->
+     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
+    </ItemGroup>
   
-  <ItemGroup>
-    <Folder Include="Authentication\Passwordless" />
-  
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net6.0' ">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.13" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1" />
+  </ItemGroup>
+  
 
 </Project>
