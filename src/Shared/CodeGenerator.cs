@@ -57,6 +57,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
     {
 
     }
+    [AttributeUsage( AttributeTargets.Class,AllowMultiple =true)]
     public class GenericTypeArgumentAttribute : Attribute
     {
         public string ManifestKey { get; set; }
