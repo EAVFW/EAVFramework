@@ -53,10 +53,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string LogicalName { get; set; }
         public string Schema { get; set; }
     }
+    
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class BaseEntityAttribute : Attribute
     {
-
+        public string EntityKey { get; set; }
     }
+
     [AttributeUsage( AttributeTargets.Class,AllowMultiple =true)]
     public class GenericTypeArgumentAttribute : Attribute
     {
@@ -1109,7 +1112,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
 
 
-                if (baseType.GetProperties().Any(p => p.Name == attributeSchemaName))
+                if ((baseType).GetProperties().Any(p => p.Name == attributeSchemaName))
                 {
                     continue;
                 }
@@ -1345,8 +1348,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var tpt = entityDefinition.SelectToken($"$.TPT")?.ToString(); ;
             if (!string.IsNullOrEmpty(tpt))
             {
+                var ty = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()];
+                File.AppendAllLines("test1.txt", new[] { $"{entitySchameName}, {ty.FullName} : Loading baseclass " + manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString() });
 
-                acceptableBasesClass = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()].CreateTypeInfo();
+                var typeBuilder = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()];
+                acceptableBasesClass = typeBuilder.CreateTypeInfo();
             }
 
 
@@ -1356,15 +1362,47 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     acceptableBasesClass = typeof(object);
             }
 
+          
+            var _type = options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => {
 
-         //   File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName}" });
+                if (acceptableBasesClass.IsGenericType)
+                {
+                    File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
+                }
 
-            return (options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => myModule.DefineType($"{options.Namespace}.{_}",TypeAttributes.Public
-                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
-                                                                        | TypeAttributes.AutoClass
-                                                                        | TypeAttributes.AnsiClass
-                                                                        | TypeAttributes.Serializable
-                                                                        | TypeAttributes.BeforeFieldInit, acceptableBasesClass)), acceptableBasesClass);
+                File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
+
+                var type= myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
+                                                                            | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
+                                                                            | TypeAttributes.AutoClass
+                                                                            | TypeAttributes.AnsiClass
+                                                                            | TypeAttributes.Serializable
+                                                                            | TypeAttributes.BeforeFieldInit);
+
+
+
+                if (acceptableBasesClass.IsGenericType)
+                {
+                    var args = acceptableBasesClass.GetCustomAttributes<GenericTypeArgumentAttribute>();
+
+                    
+                    type.SetParent(acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[t.ManifestKey]).ToArray()));
+                }
+                else
+                {
+                    type.SetParent(acceptableBasesClass);
+                }
+
+
+
+               
+
+                return type;
+
+            });
+
+            
+            return (_type, acceptableBasesClass);
         }
 
         private void CreateJsonSerializationAttribute(JProperty attributeDefinition, PropertyBuilder attProp, string name=null)
