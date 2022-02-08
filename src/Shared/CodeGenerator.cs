@@ -57,6 +57,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
     {
 
     }
+    public class GenericTypeArgumentAttribute : Attribute
+    {
+        public string ManifestKey { get; set; }
+        public string ArgumentName { get; set; }
+    }
 
     public class CodeGeneratorOptions
     {
