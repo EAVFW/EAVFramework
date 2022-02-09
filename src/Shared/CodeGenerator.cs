@@ -60,7 +60,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string EntityKey { get; set; }
     }
 
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
     public class EntityInterfaceAttribute : Attribute
     {
         public string EntityKey { get; set; }
