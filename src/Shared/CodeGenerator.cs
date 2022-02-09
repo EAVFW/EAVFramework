@@ -60,6 +60,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string EntityKey { get; set; }
     }
 
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class EntityInterfaceAttribute : Attribute
+    {
+        public string EntityKey { get; set; }
+    }
+
     [AttributeUsage( AttributeTargets.Class,AllowMultiple =true)]
     public class GenericTypeArgumentAttribute : Attribute
     {
@@ -1085,7 +1091,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
             // options.EntityDTOsBuilders[entityCollectionSchemaName] = entityType;
 
-            (TypeBuilder entityType, Type baseType) = GetOrCreateEntityBuilder(myModule, entitySchameName, manifest, entityDefinition2.Value as JObject);
+            (TypeBuilder entityType, Type baseType) = GetOrCreateEntityBuilder(myModule, entitySchameName, manifest, entityDefinition2.Value as JObject, entityDefinition2.Name);
 
             //            if (!options.GeneratePoco)
             {
@@ -1159,7 +1165,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ?
                                     entityType :
                                     GetRemoteTypeIfExist(foreigh) ??
-                                    GetOrCreateEntityBuilder(myModule, foreighSchemaName, manifest, foreigh).Item1 as Type);
+                                    GetOrCreateEntityBuilder(myModule, foreighSchemaName, manifest, foreigh, (foreigh.Parent as JProperty).Name).Item1 as Type);
 
 
                             CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.ForeignKeyAttributeCtor, new object[] { attProp.Name });
@@ -1231,7 +1237,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                         try
                         {
-                            TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), manifest, entity.Value as JObject).Item1;
+                            TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), manifest, entity.Value as JObject,entity.Name).Item1;
 
                             //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
                             {
@@ -1336,11 +1342,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return c.GetProperties().Select(p => p.Name).Where(p => !fk.Any(fkp => string.Equals(fkp + "id", p, StringComparison.OrdinalIgnoreCase)));
         }
 
-        private (TypeBuilder, Type) GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, JToken manifest, JObject entityDefinition)
+        private (TypeBuilder, Type) GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, JToken manifest, JObject entityDefinition,string entityKey)
         {
             var allProps = entityDefinition.SelectToken("$.attributes").OfType<JProperty>().Select(attributeDefinition => attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "")).ToArray();
 
-            var acceptableBasesClass = options.DTOBaseClasses.Concat(new[] { typeof(DynamicEntity) }).Where(c => CompairProps(c, allProps))
+            var acceptableBasesClass = 
+                options.DTOBaseClasses.FirstOrDefault(dto=>dto.GetCustomAttributes<BaseEntityAttribute>().Any(att=>att?.EntityKey == entityKey)) ??  
+                options.DTOBaseClasses
+                    .Where(dto=> dto.GetCustomAttributes<BaseEntityAttribute>(false).Any(attr=>string.IsNullOrEmpty(attr.EntityKey)))
+                    .Concat(new[] { typeof(DynamicEntity) })
+                    .Where(c => CompairProps(c, allProps))
               .OrderByDescending(c => c.GetProperties().Length)
               .First();
 
@@ -1362,31 +1373,40 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     acceptableBasesClass = typeof(object);
             }
 
-          
+
             var _type = options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => {
 
-                if (acceptableBasesClass.IsGenericType)
-                {
-                    File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
-                }
+            if (acceptableBasesClass.IsGenericType)
+            {
+                File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
+            }
 
-                File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
+            File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
 
-                var type= myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
-                                                                            | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
-                                                                            | TypeAttributes.AutoClass
-                                                                            | TypeAttributes.AnsiClass
-                                                                            | TypeAttributes.Serializable
-                                                                            | TypeAttributes.BeforeFieldInit);
+            var type = myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
+                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
+                                                                        | TypeAttributes.AutoClass
+                                                                        | TypeAttributes.AnsiClass
+                                                                        | TypeAttributes.Serializable
+                                                                        | TypeAttributes.BeforeFieldInit);
 
 
 
-                if (acceptableBasesClass.IsGenericType)
-                {
-                    var args = acceptableBasesClass.GetCustomAttributes<GenericTypeArgumentAttribute>();
+            if (acceptableBasesClass.IsGenericType)
+            {
 
-                    
-                    type.SetParent(acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[t.ManifestKey]).ToArray()));
+                var args = acceptableBasesClass.GetCustomAttributes<GenericTypeArgumentAttribute>(false);
+
+                    var types = args.Where(t => t.ManifestKey != _)
+                        .Select(t => GetOrCreateEntityBuilder(myModule, manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString(),manifest, manifest.SelectToken($"$.entities['{t.ManifestKey}']") as JObject, t.ManifestKey))
+                        .ToArray();
+
+                    File.AppendAllLines("test1.txt", new[] {  $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+
+                    File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
+
+
+                    type.SetParent(acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]).ToArray()));
                 }
                 else
                 {
