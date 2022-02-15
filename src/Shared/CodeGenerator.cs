@@ -40,7 +40,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool IsBaseClass { get; set; }
     }
 
-    
+
     public class AttributeAttribute : Attribute
     {
         public string LogicalName { get; set; }
@@ -53,7 +53,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string LogicalName { get; set; }
         public string Schema { get; set; }
     }
-    
+
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class BaseEntityAttribute : Attribute
     {
@@ -66,7 +66,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string EntityKey { get; set; }
     }
 
-    [AttributeUsage( AttributeTargets.Class,AllowMultiple =true)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class GenericTypeArgumentAttribute : Attribute
     {
         public string ManifestKey { get; set; }
@@ -117,11 +117,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public ConstructorInfo MigrationAttributeCtor { get; internal set; }
         public MethodInfo MigrationBuilderDropTable { get; internal set; }
         public Assembly DTOAssembly { get; set; }
-        public Type[] DTOBaseClasses { get; internal set; }
+        public Type[] DTOBaseClasses { get; set; } = Array.Empty<Type>();
+        public Type[] DTOBaseInterfaces { get; set; } = Array.Empty<Type>();
 
         public Action<JToken, PropertyBuilder> OnDTOTypeGeneration { get; set; }
         public bool GeneratePoco { get; set; } = false;
-        public MethodInfo EntityTypeBuilderHasAlternateKey { get;  set; }
+        public MethodInfo EntityTypeBuilderHasAlternateKey { get; set; }
         public MethodInfo MigrationBuilderCreateIndex { get; internal set; }
         public MethodInfo MigrationBuilderDropIndex { get; internal set; }
         public MethodInfo IsRowVersionMethod { get; internal set; }
@@ -130,10 +131,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public MethodInfo HasPrecisionMethod { get; internal set; }
         public MethodInfo ValueGeneratedOnUpdate { get; set; }
         public bool GenerateDTO { get; set; } = true;
-        public bool PartOfMigration { get;  set; }
-        public MethodInfo MigrationsBuilderAddColumn { get;  set; }
-        public bool SkipValidateSchemaNameForRemoteTypes { get;  set; }
-        public bool UseOnlyExpliciteExternalDTOClases { get;  set; }
+        public bool PartOfMigration { get; set; }
+        public MethodInfo MigrationsBuilderAddColumn { get; set; }
+        public bool SkipValidateSchemaNameForRemoteTypes { get; set; }
+        public bool UseOnlyExpliciteExternalDTOClases { get; set; }
         public bool RequiredSupport { get; set; } = true;
     }
 
@@ -187,8 +188,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string GetEnumName(CodeGeneratorOptions options, JToken attributeDefinition)
         {
             var optionSetDefinedName = attributeDefinition.SelectToken("$.type.name");
-            var schemaName= attributeDefinition.SelectToken("$.schemaName");
-            
+            var schemaName = attributeDefinition.SelectToken("$.schemaName");
+
             return $"{options.Namespace}.{optionSetDefinedName ?? schemaName+"Options"}".Replace(" ", "");
         }
     }
@@ -286,22 +287,23 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var logicalName = entityDefinition.Value.SelectToken("$.logicalName").ToString();
             var hasPriorEntity = builder.GetTypes().FirstOrDefault(t => !IsPendingTypeBuilder(t)&& t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == logicalName);
 
-            
-          
+
+
             TypeBuilder entityTypeBuilder =
             builder.DefineType($"{options.Namespace}.{EntityCollectionSchemaName}Builder_{options.migrationName.Replace(".", "_")}", TypeAttributes.Public);
 
 
-            CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] {logicalName });
+            CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { logicalName });
             entityTypeBuilder.SetCustomAttribute(EntityAttributeBuilder);
 
 
             var upSqlToken = entityDefinition.Value.SelectToken("$.sql.migrations.up");
             string upSql = null;
-            if(upSqlToken?.Type == JTokenType.String)
+            if (upSqlToken?.Type == JTokenType.String)
             {
                 upSql=upSqlToken.ToString();
-            }else if (upSqlToken?.Type == JTokenType.Array)
+            }
+            else if (upSqlToken?.Type == JTokenType.Array)
             {
                 upSql = string.Join("\n", upSqlToken.Select(c => c.ToString()));
             }
@@ -309,12 +311,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             if (options.PartOfMigration)
             {
                 CustomAttributeBuilder EntityMigrationAttributeBuilder = new CustomAttributeBuilder(
-                    typeof(EntityMigrationAttribute).GetConstructor(new Type[] { }), 
+                    typeof(EntityMigrationAttribute).GetConstructor(new Type[] { }),
                     new object[] { },
                     new[] {
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.LogicalName)),
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.MigrationName)) ,
-                        typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.RawUpMigration)) 
+                        typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.RawUpMigration))
                     },
 
 
@@ -643,13 +645,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     }
                 }
 
-              //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
-                if(!string.IsNullOrEmpty(upSql))
+                //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
+                if (!string.IsNullOrEmpty(upSql))
                 {
-                   var alreadyExists= builder.GetTypes().FirstOrDefault(t =>
-                        !IsPendingTypeBuilder(t) &&
-                        t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute &&
-                        migrationAttribute.LogicalName == logicalName && migrationAttribute.RawUpMigration == upSql);
+                    var alreadyExists = builder.GetTypes().FirstOrDefault(t =>
+                          !IsPendingTypeBuilder(t) &&
+                          t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute &&
+                          migrationAttribute.LogicalName == logicalName && migrationAttribute.RawUpMigration == upSql);
 
                     if (alreadyExists == null)
                     {
@@ -661,7 +663,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderSQL);
                         UpMethodIL.Emit(OpCodes.Pop);
                     }
-                    
+
                 }
 
                 UpMethodIL.Emit(OpCodes.Ret);
@@ -686,12 +688,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
-             
+
             var abstracts = manifest.SelectToken("$.entities").OfType<JProperty>()
                 .Where(entity => entity.Value.SelectToken("$.abstract") != null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity).CreateTypeInfo()).ToArray();
 
-         
+
             var entities = manifest.SelectToken("$.entities").OfType<JProperty>().ToArray();
 
 
@@ -709,13 +711,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             {
                 var EntitySchameName = entityDefinition.Name.Replace(" ", "");
                 var EntityCollectionSchemaName = (entityDefinition.Value.SelectToken("$.pluralName")?.ToString() ?? EntitySchameName).Replace(" ", "");
-                
+
                 if (!options.EntityDTOs.ContainsKey(EntityCollectionSchemaName))
-                    options.EntityDTOs[EntityCollectionSchemaName] =  
+                    options.EntityDTOs[EntityCollectionSchemaName] =
                         GetRemoteTypeIfExist(entityDefinition.Value) ??
                         options.EntityDTOsBuilders[EntitySchameName].CreateTypeInfo();
 
             }
+
+            Console.WriteLine(string.Join("\n", options.EntityDTOs.Select(t => $"{t.Key}: {t.Value.Assembly.FullName}")));
 
             return tables;
         }
@@ -732,7 +736,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var attributeBuilder = new CustomAttributeBuilder(options.MigrationAttributeCtor, new object[] { options.migrationName });
             migrationType.SetCustomAttribute(attributeBuilder);
 
-           
+
 
             ConstructorBuilder entityTypeCtorBuilder =
                  migrationType.DefineConstructor(MethodAttributes.Public,
@@ -909,7 +913,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             UpMethodIL.Emit(OpCodes.Callvirt, createTableMethod);
             UpMethodIL.Emit(OpCodes.Pop);
 
-          
+
 
 
         }
@@ -931,11 +935,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 var enumValue = myModule.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
                 foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
                 {
-                    enumValue.DefineLiteral(optionPro.Name.Replace(" ",""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
+                    enumValue.DefineLiteral(optionPro.Name.Replace(" ", ""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
 
                 }
 
-                return  typeof(Nullable<>).MakeGenericType(enumValue.CreateTypeInfo());
+                return typeof(Nullable<>).MakeGenericType(enumValue.CreateTypeInfo());
             }
 
             return GetCLRType(manifestType);
@@ -943,7 +947,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public virtual Type GetCLRType(string manifestType)
         {
             return typemapper.GetCLRType(manifestType);
-            
+
         }
 
 
@@ -984,7 +988,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
                 var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
-              
+
                 if (isprimaryKey && !isTablePerTypeChild)
                 {
 
@@ -1012,13 +1016,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRequiredMethod);
                 }
 
-               
+
 
                 if (attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)
                 {
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRowVersionMethod);
                 }
-                 
+
 
                 if (attributeDefinition.Value.SelectToken("$.type.type")?.ToObject<string>().ToLower() == "choice")
                 {
@@ -1062,7 +1066,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             //            ConfigureMethod2IL.Emit(OpCodes.Stelem_Ref);
             //        }
 
-                   
+
             //        ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.EntityTypeBuilderHasAlternateKey);
             //        ConfigureMethod2IL.Emit(OpCodes.Pop);
             //    }
@@ -1107,10 +1111,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
 
 
-                var clrType = GetCLRType(myModule,entityDefinition2, attributeDefinition.Value,manifest, out var manifestType);
+                var clrType = GetCLRType(myModule, entityDefinition2, attributeDefinition.Value, manifest, out var manifestType);
 
 
-                
+
 
 
 
@@ -1156,7 +1160,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         var foreigh = manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType").ToString()}']") as JObject;
                         //  name= foreigh.SelectToken("$.pluralName")?.ToString()
                         var foreighSchemaName = foreigh.SelectToken("$.schemaName")?.ToString();
-                       
+
                         //  var foreighEntityCollectionSchemaName = (foreigh.SelectToken("$.pluralName")?.ToString() ?? (foreigh.Parent as JProperty).Name).Replace(" ", "");
 
                         try
@@ -1191,15 +1195,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     options.OnDTOTypeGeneration?.Invoke(attributeDefinition.Value, attProp);
 
-                    CreateDataMemberAttribute( attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
+                    CreateDataMemberAttribute(attProp, attributeDefinition.Value.SelectToken("$.logicalName").ToString());
 
                     CreateJsonSerializationAttribute(attributeDefinition, attProp);
-                    
+
                     var isprimaryField = attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false;
 
                     if (isprimaryField)
                     {
-                        CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(PrimaryFieldAttributeCtor,new object[] { });
+                        CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(PrimaryFieldAttributeCtor, new object[] { });
 
                         attProp.SetCustomAttribute(PrimaryFieldAttributeBuilder);
                     }
@@ -1232,12 +1236,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 foreach (var attribute in attributes)
                 {
                     {
-                      //  File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+                        //  File.AppendAllLines("test1.txt", new[] { $"{entity.Value.SelectToken("$.collectionSchemaName")?.ToString()} in {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
 
                         try
                         {
-                            TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), manifest, entity.Value as JObject,entity.Name).Item1;
+                            TypeBuilder related = GetOrCreateEntityBuilder(myModule, entity.Name.Replace(" ", ""), manifest, entity.Value as JObject, entity.Name).Item1;
 
                             //  if (options.EntityDTOsBuilders.ContainsKey(entity.Value.SelectToken("$.collectionSchemaName")?.ToString()))
                             {
@@ -1248,14 +1252,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.InverseAttributeCtor, new object[] { attribute.Name.Replace(" ", "") });
 
                                 attProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
-                               
+
                                 CreateJsonSerializationAttribute(attribute, attProp, attProp.Name.ToLower());
-                             //   CreateDataMemberAttribute(attProp, attProp.Name.ToLower());
+                                //   CreateDataMemberAttribute(attProp, attProp.Name.ToLower());
 
                             }
-                        }catch(Exception ex)
+                        }
+                        catch (Exception ex)
                         {
-                           // File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
+                            // File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
 
                             throw;
                         }
@@ -1286,7 +1291,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName)),
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.IsBaseClass))
-                        
+
                     }, new object[] {
                     entityDefinition.Value.SelectToken("$.logicalName").ToString() ,
                      entityDefinition.Value.SelectToken("$.schemaName").ToString(),
@@ -1318,18 +1323,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             //{
             //    entity.SelectToken("$.external")
             //}
-          
+
             //var _new = entity.SelectToken("$.new")?.ToObject<bool>() ?? false;
             string foreighentityLogicalName = entity.SelectToken("$.logicalName")?.ToString();
 
-            var result= options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == foreighentityLogicalName && (options.SkipValidateSchemaNameForRemoteTypes || string.Equals( attr.Schema , schema,StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+            var result = options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == foreighentityLogicalName && (options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
             return result;
         }
 
         private bool CompairProps(Type c, string[] allProps)
         {
             var allPropsFromType = GetProperties(c).ToArray();
-          //  File.AppendAllLines("test1.txt", new[] { $"Compare for {c.Name}: {string.Join(",", allPropsFromType)}|{string.Join(",", allProps)}" });
+            //  File.AppendAllLines("test1.txt", new[] { $"Compare for {c.Name}: {string.Join(",", allPropsFromType)}|{string.Join(",", allProps)}" });
             return allPropsFromType.All(p => allProps.Contains(p));
         }
 
@@ -1342,14 +1347,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return c.GetProperties().Select(p => p.Name).Where(p => !fk.Any(fkp => string.Equals(fkp + "id", p, StringComparison.OrdinalIgnoreCase)));
         }
 
-        private (TypeBuilder, Type) GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, JToken manifest, JObject entityDefinition,string entityKey)
+        private (TypeBuilder, Type) GetOrCreateEntityBuilder(ModuleBuilder myModule, string entitySchameName, JToken manifest, JObject entityDefinition, string entityKey)
         {
             var allProps = entityDefinition.SelectToken("$.attributes").OfType<JProperty>().Select(attributeDefinition => attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "")).ToArray();
 
-            var acceptableBasesClass = 
-                options.DTOBaseClasses.FirstOrDefault(dto=>dto.GetCustomAttributes<BaseEntityAttribute>().Any(att=>att?.EntityKey == entityKey)) ??  
+            var acceptableBasesClass =
+                options.DTOBaseClasses.FirstOrDefault(dto => dto.GetCustomAttributes<BaseEntityAttribute>().Any(att => att?.EntityKey == entityKey)) ??
                 options.DTOBaseClasses
-                    .Where(dto=> dto.GetCustomAttributes<BaseEntityAttribute>(false).Any(attr=>string.IsNullOrEmpty(attr.EntityKey)))
+                    .Where(dto => dto.GetCustomAttributes<BaseEntityAttribute>(false).Any(attr => string.IsNullOrEmpty(attr.EntityKey)))
                     .Concat(new[] { typeof(DynamicEntity) })
                     .Where(c => CompairProps(c, allProps))
               .OrderByDescending(c => c.GetProperties().Length)
@@ -1374,34 +1379,46 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
 
 
-            var _type = options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ => {
-
-            if (acceptableBasesClass.IsGenericType)
-            {
-                File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
-            }
-
-            File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
-
-            var type = myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
-                                                                        | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
-                                                                        | TypeAttributes.AutoClass
-                                                                        | TypeAttributes.AnsiClass
-                                                                        | TypeAttributes.Serializable
-                                                                        | TypeAttributes.BeforeFieldInit);
-
-
-
-            if (acceptableBasesClass.IsGenericType)
+            var _type = options.EntityDTOsBuilders.GetOrAdd(entitySchameName, _ =>
             {
 
-                var args = acceptableBasesClass.GetCustomAttributes<GenericTypeArgumentAttribute>(false);
+                if (acceptableBasesClass.IsGenericType)
+                {
+                    File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
+                }
+
+                File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
+
+                var type = myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
+                                                                            | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
+                                                                            | TypeAttributes.AutoClass
+                                                                            | TypeAttributes.AnsiClass
+                                                                            | TypeAttributes.Serializable
+                                                                            | TypeAttributes.BeforeFieldInit);
+
+
+                var interfaces = options.DTOBaseInterfaces.Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey)).ToList();
+                File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for {type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" });
+                foreach (var @interface in interfaces)
+                {
+                    File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName} to {type.FullName}]" });
+                  
+                    type.AddInterfaceImplementation(@interface);
+
+
+                }
+
+
+                if (acceptableBasesClass.IsGenericTypeDefinition)
+                {
+
+                    var args = acceptableBasesClass.GetCustomAttributes<GenericTypeArgumentAttribute>(false);
 
                     var types = args.Where(t => t.ManifestKey != _)
-                        .Select(t => GetOrCreateEntityBuilder(myModule, manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString(),manifest, manifest.SelectToken($"$.entities['{t.ManifestKey}']") as JObject, t.ManifestKey))
+                        .Select(t => GetOrCreateEntityBuilder(myModule, manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString(), manifest, manifest.SelectToken($"$.entities['{t.ManifestKey}']") as JObject, t.ManifestKey))
                         .ToArray();
 
-                    File.AppendAllLines("test1.txt", new[] {  $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+                    File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
                     File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
 
@@ -1415,17 +1432,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-               
+
 
                 return type;
 
             });
 
-            
+
             return (_type, acceptableBasesClass);
         }
 
-        private void CreateJsonSerializationAttribute(JProperty attributeDefinition, PropertyBuilder attProp, string name=null)
+        private void CreateJsonSerializationAttribute(JProperty attributeDefinition, PropertyBuilder attProp, string name = null)
         {
             name = name ?? attributeDefinition.Value.SelectToken("$.logicalName").ToString();
             //[Newtonsoft.Json.JsonConverter(typeof(ChoicesConverter),typeof(AllowedGrantType), "allowedgranttype")]
@@ -1471,13 +1488,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(JToken manifest, string entitySchameName, string entityCollectionSchemaName, JObject entityDefinition, ModuleBuilder builder)
         {
             var logicalName = entityDefinition.SelectToken("$.logicalName").ToString();
-           
+
             var members = new Dictionary<string, PropertyBuilder>();
             TypeBuilder entityType =
                 builder.DefineType($"{options.Namespace}.{entitySchameName}Columns_{options.migrationName.Replace(".", "_")}", TypeAttributes.Public);
 
 
-       
+
 
 
             CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { entityDefinition.SelectToken("$.logicalName").ToString() });
@@ -1524,9 +1541,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     entityType.SetCustomAttribute(EntityMigrationColumnsAttributeBuilder);
                 }
 
-               var (typeObj,type) = GetTypeInfo(manifest, attributeDefinition);
+                var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
 
-                var method = GetColumnForType(options.ColumnsBuilderColumnMethod,type);
+                var method = GetColumnForType(options.ColumnsBuilderColumnMethod, type);
                 if (method == null)
                     continue;
 
@@ -1605,9 +1622,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return (entityClrType, entityCtorBuilder, members);
         }
 
-        private static (JToken,string) GetTypeInfo(JToken manifest, JProperty attributeDefinition)
+        private static (JToken, string) GetTypeInfo(JToken manifest, JProperty attributeDefinition)
         {
- 
+
             var typeObj = attributeDefinition.Value.SelectToken("$.type");
             var type = typeObj.ToString().ToLower();
             if (typeObj.Type == JTokenType.Object)
@@ -1634,7 +1651,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return (typeObj, type);
         }
 
-        private void BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, JProperty attributeDefinition, JToken typeObj, string type, MethodInfo method, string tableName=null,string schema=null)
+        private void BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, JProperty attributeDefinition, JToken typeObj, string type, MethodInfo method, string tableName = null, string schema = null)
         {
             foreach (var arg1 in method.GetParameters())
             {
@@ -1689,8 +1706,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     switch (argName)
                     {
-                        case "maxLength" when typeObj?.SelectToken("$.maxLength") is JToken maxLength: 
-                            
+                        case "maxLength" when typeObj?.SelectToken("$.maxLength") is JToken maxLength:
+
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, maxLength.ToObject<int>());
                             if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
                             {
@@ -1699,7 +1716,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                             }
 
                             break;
-                        case "table" when !string.IsNullOrEmpty(tableName): entityCtorBuilderIL.Emit(OpCodes.Ldstr,tableName); break;
+                        case "table" when !string.IsNullOrEmpty(tableName): entityCtorBuilderIL.Emit(OpCodes.Ldstr, tableName); break;
                         case "schema" when !string.IsNullOrEmpty(schema): entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema); break;
                         case "columnName": entityCtorBuilderIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
                         case "nullable" when ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)):
@@ -1743,7 +1760,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         private MethodInfo GetColumnForType(MethodInfo method, string manifestType)
         {
 
-            
+
 
             var type = GetCLRType(manifestType);
             if (type != null)

@@ -61,6 +61,52 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
     [Generator]
     public class DTOSourceGenerator : ISourceGenerator
     {
+
+        private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol root)
+        {
+            if (root != null)
+            {
+                foreach (var namespaceOrTypeSymbol in root.GetMembers())
+                {
+                    if (namespaceOrTypeSymbol is INamespaceSymbol @namespace)
+                    {
+                        foreach (var nested in GetAllTypes(@namespace)) { yield return nested; }
+                    }
+
+                    else if (namespaceOrTypeSymbol is INamedTypeSymbol type) yield return type;
+                }
+            }
+        }
+        public IEnumerable<INamedTypeSymbol> FindReferencedBaseTypes(GeneratorExecutionContext context, string attribute)
+        {
+
+            foreach(var referencedSymbol in context.Compilation.SourceModule.ReferencedAssemblySymbols)
+            {
+                var list = new List<INamedTypeSymbol>();
+                try
+                {
+                    var main = referencedSymbol.Identity.Name.Split('.')?.Aggregate(referencedSymbol.GlobalNamespace, (s, c) => s.GetNamespaceMembers().SingleOrDefault(m => m.Name.Equals(c)));
+
+                    var types = GetAllTypes(main).Where(t=>t.GetAttributes().Any(n=>n.AttributeClass.Name ==attribute));
+
+                    File.AppendAllLines("test1.txt", new[] { 
+                        "Refrenced Identity: "+  referencedSymbol.Identity.Name,
+                        "Main: " + main?.Name }.Concat(types.Select(c => c.GetFullName()+ "<"+ string.Join(",",c.TypeArguments.Select(cc=>cc.Name)) + ">: "+ string.Join(",",c.GetAttributes().Select(a=>"["+a.AttributeClass.Name+"]")))));
+
+                    list.AddRange(types);
+                  
+                
+                }catch(Exception ex)
+                {
+
+                }
+
+                foreach (var type in list)
+                    yield return type;
+            }
+ 
+        }
+
         public void Execute(GeneratorExecutionContext context)
         {
             //context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
@@ -88,6 +134,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         return;
                     }
 
+                    var referencedBaseTypes = FindReferencedBaseTypes(context, "BaseEntityAttribute").ToArray();
+                    var interfaces = FindReferencedBaseTypes(context, "EntityInterfaceAttribute").ToArray();
+
+                    //if (!context.Compilation.ReferencedAssemblyNames.Any(ai => ai.Name.Equals("Newtonsoft.Json", StringComparison.OrdinalIgnoreCase)))
+                    //{
+
+                    //}
+
                     string text = manifest.GetText(context.CancellationToken).ToString();
 
                     //var ms = new MemoryStream();
@@ -110,6 +164,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                     // var baseType = typeof(DynamicEntity);
                     var baseTypes = new List<Type>() { typeof(DynamicEntity) };
+
+                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>();
 
                     // if (context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.DTOBaseClass", out var DTOBaseClass))
                     {
@@ -151,39 +207,58 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         File.AppendAllLines("test1.txt", new[] { baseclases.Length.ToString(), string.Join(",", baseClass.Select(n=>n.GetFullName())) });
 
                         File.AppendAllLines("test1.txt", new[] { a });
-                      
-                       // File.AppendAllLines("test1.txt", withAtt.Select(baseType=> baseType.GetFullName()));
+
+                        // File.AppendAllLines("test1.txt", withAtt.Select(baseType=> baseType.GetFullName()));
 
                         //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", a, "", DiagnosticSeverity.Warning, true), null));
 
                         //var withAtt = baseClass
                         //.Where(c => c.AttributeLists.FirstOrDefault()?.Attributes.Any(aa => aa.Name.NormalizeWhitespace().ToFullString() == nameof(BaseEntityAttribute)) ?? false)
                         //.ToArray();
+                      
 
-                        var baseTypesDict = new ConcurrentDictionary<string, Type>() { [typeof(DynamicEntity).FullName] = typeof(DynamicEntity) };
+                        var baseTypesDict = new ConcurrentDictionary<string, Type>() { 
+                            [typeof(DynamicEntity).FullName] = typeof(DynamicEntity) 
+                        };
 
                         Type CreateTypeForBaseClass(string basefullname)
                         {
                             var baseType = withAtt.Single(c => c.GetFullName() == basefullname);
                             var model = compilation.GetSemanticModel(baseType.SyntaxTree);
                             var myClassSymbol = model.GetDeclaredSymbol(baseType);
-                            if (myClassSymbol.TypeArguments.Any())
-                            {
-                                File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c=>c.Name)) });
-                                File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c => c.Name)) });
-                            }
+                          
                             var baseTypeName =  $"{myClassSymbol.BaseType.ContainingNamespace.ToString()}.{myClassSymbol.BaseType.Name}";
 
 
                             File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() + " : " + baseTypeName });
+
+                            var basetype = baseTypesDict.GetOrAdd(baseTypeName, (fullname) => CreateTypeForBaseClass(fullname));
+
+                            if (basetype.IsGenericType)
+                            {
+                                File.AppendAllLines("test1.txt", new[] { $"{basefullname} Generic: {basetype.Name}<{basetype.GetGenericTypeDefinition().GetGenericArguments()[0].Name}>" });
+                              //  basetype = basetype.MakeGenericType(basetype.GetGenericArguments().Select(t => typeof(DynamicEntity)).ToArray());
+                            }
 
                             TypeBuilder entityType = myModule.DefineType(baseType.GetFullName(), TypeAttributes.Public
                                                               | TypeAttributes.Class
                                                               | TypeAttributes.AutoClass
                                                               | TypeAttributes.AnsiClass
                                                               | TypeAttributes.Serializable
-                                                              | TypeAttributes.BeforeFieldInit, baseTypesDict.GetOrAdd(baseTypeName, (fullname) => CreateTypeForBaseClass(fullname)));
+                                                              | TypeAttributes.BeforeFieldInit, basetype);
+                           
+                            if (myClassSymbol.TypeArguments.Any())
+                            {
+                                File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c => c.Name)) });
+                                 
+                                var typeParams = entityType.DefineGenericParameters(myClassSymbol.TypeArguments.Select(c => c.Name).ToArray());
 
+                                foreach (var argument in typeParams)
+                                {
+                                    argument.SetBaseTypeConstraint(typeof(DynamicEntity));
+                                }
+
+                            }
 
                             foreach (var property in baseType.Members.OfType<PropertyDeclarationSyntax>())
                             {
@@ -201,14 +276,165 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                             return entityType.CreateTypeInfo();
                         }
 
+
+                        Type CreateTypeForReferencedBaseClass(INamedTypeSymbol baseType)
+                        {
+
+                            var parentTypeSymbol = referencedBaseTypes.FirstOrDefault(t => t.Name == baseType.BaseType.Name);
+                            var parentType = parentTypeSymbol==null? typeof(DynamicEntity) :baseTypesDict.GetOrAdd(parentTypeSymbol.GetFullName(), (fullname) => CreateTypeForReferencedBaseClass(parentTypeSymbol));
+
+                            if (parentType.IsGenericType)
+                            {
+                                File.AppendAllLines("test1.txt", new[] { "ParentType IS Generic" });
+
+                            }
+
+                            TypeBuilder entityType = myModule.DefineType(baseType.GetFullName(), TypeAttributes.Public
+                                                                | TypeAttributes.Class
+                                                                | TypeAttributes.AutoClass
+                                                                | TypeAttributes.AnsiClass
+                                                                | TypeAttributes.Serializable
+                                                                | TypeAttributes.BeforeFieldInit);
+
+
+                            
+
+                            if (baseType.TypeArguments.Any())
+                            {
+                                entityType.SetParent(parentType);
+                                File.AppendAllLines("test1.txt", new[] { "CreateTypeForReferencedBaseClass: ", baseType.GetFullName() +"<"+String.Join(",", baseType.TypeArguments.Select(c => c.Name).ToArray()) +"> : "+ parentType?.FullName });
+                                var typeParams = entityType.DefineGenericParameters(baseType.TypeArguments.Select(c=>c.Name).ToArray());
+
+                                foreach (var argument in typeParams)
+                                {
+                                    argument.SetBaseTypeConstraint(typeof(DynamicEntity));
+                                }
+
+                            }
+                            else
+                            {
+                                
+                                entityType.SetParent(parentType.MakeGenericType(entityType));
+                                File.AppendAllLines("test1.txt", new[] { "CreateTypeForReferencedBaseClass: ", baseType.GetFullName() + " : "+ (parentType.FullName) });
+
+                            }
+
+                    //   baseType.
+
+
+
+                            foreach (var property in baseType.GetMembers().OfType<IPropertySymbol>())
+                            {
+
+                                if (property.GetAttributes().Any(attr => attr.AttributeClass.Name == "ForeignKeyAttribute")) { continue; }
+
+                                // File.AppendAllLines("test1.txt", new[] { property.Identifier.ToString() });
+                                CodeGenerator.CreateProperty(entityType, property.Name, typeof(string));
+                            }
+
+                            var generic = baseType.GetAttributes().Where(attr => attr.AttributeClass.Name == "GenericTypeArgumentAttribute").ToArray();
+
+                           foreach(var attr in generic)
+                            {
+                                CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(GenericTypeArgumentAttribute).GetConstructor(new Type[] { }),
+                                    new object[] { }, new[] {
+                                        typeof(GenericTypeArgumentAttribute).GetProperty(nameof(GenericTypeArgumentAttribute.ArgumentName)),
+                                          typeof(GenericTypeArgumentAttribute).GetProperty(nameof(GenericTypeArgumentAttribute.ManifestKey))
+                                    }, 
+                                    new[] {
+                                        attr.NamedArguments.FirstOrDefault(c=>c.Key ==nameof(GenericTypeArgumentAttribute.ArgumentName)).Value.Value,
+                                     attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(GenericTypeArgumentAttribute.ManifestKey)).Value.Value 
+                                     });
+                                entityType.SetCustomAttribute(EntityAttributeBuilder);
+                            }
+
+
+                            var BaseEntityAttributes = baseType.GetAttributes().Where(attr => attr.AttributeClass.Name == "BaseEntityAttribute").ToArray();
+
+                            foreach (var attr in BaseEntityAttributes)
+                            {
+                                File.AppendAllLines("test1.txt", new[] { $"Adding ${baseType.GetFullName()} [BaseEntity(EntityKey = \"{ attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(BaseEntityAttribute.EntityKey)).Value.Value }\")]" });
+
+                                CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(BaseEntityAttribute).GetConstructor(new Type[] { }),
+                                    new object[] { }, new[] {
+                                        typeof(BaseEntityAttribute).GetProperty(nameof(BaseEntityAttribute.EntityKey)),                                         
+                                    },
+                                    new[] {
+                                        attr.NamedArguments.FirstOrDefault(c=>c.Key ==nameof(BaseEntityAttribute.EntityKey)).Value.Value,
+                                    
+                                     });
+                                entityType.SetCustomAttribute(EntityAttributeBuilder);
+                            }
+
+
+                            //if (baseType.TypeArguments.Any())
+                            //{
+                            //    return entityType.CreateTypeInfo().MakeGenericType(baseType.TypeArguments.Select(c => typeof(DynamicEntity)).ToArray());
+                            //}
+
+                            return entityType.CreateTypeInfo();
+                        }
+
+                        foreach(var @interface in interfaces){
+
+                            baseTypeInterfaces.GetOrAdd(@interface.GetFullName(), (fullname) =>
+                            {
+
+                                TypeBuilder entityType = myModule.DefineType(@interface.GetFullName(), TypeAttributes.Public
+                                                              | TypeAttributes.Interface
+                                                              | TypeAttributes.Abstract
+                                                              | TypeAttributes.AutoClass
+                                                              | TypeAttributes.AnsiClass
+                                                              | TypeAttributes.Serializable
+                                                              | TypeAttributes.BeforeFieldInit);
+                           
+                                var BaseEntityAttributes = @interface.GetAttributes().Where(attr => attr.AttributeClass.Name == "EntityInterfaceAttribute").ToArray();
+
+                                foreach (var attr in BaseEntityAttributes)
+                                {
+
+                                    File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.GetFullName()} [EntityInterfaceAttribute(EntityKey = \"{ attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(EntityInterfaceAttribute.EntityKey)).Value.Value }\")]" });
+
+                                    CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityInterfaceAttribute).GetConstructor(new Type[] { }),
+                                      new object[] { }, new[] {
+                                        typeof(EntityInterfaceAttribute).GetProperty(nameof(EntityInterfaceAttribute.EntityKey)),
+                                      },
+                                      new[] {
+                                        attr.NamedArguments.FirstOrDefault(c=>c.Key ==nameof(EntityInterfaceAttribute.EntityKey)).Value.Value,
+
+                                       });
+                                    entityType.SetCustomAttribute(EntityAttributeBuilder);
+                                }
+                                return entityType.CreateTypeInfo();
+
+                            });
+
+
+
+                        }
+                        foreach (var baseType in referencedBaseTypes)
+                        {
+
+
+                            baseTypes.Add(baseTypesDict.GetOrAdd(baseType.GetFullName(), (fullname) => CreateTypeForReferencedBaseClass(baseType)));
+                            //File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() +" ok" });
+                            //return entityType.CreateTypeInfo();
+
+                        }
+
                         foreach (var baseType in withAtt)
                         {
                             File.AppendAllLines("test1.txt", new[] { $"Base type: {baseType.GetFullName()}" });
                             baseTypes.Add( baseTypesDict.GetOrAdd(baseType.GetFullName(), (fullname)=> CreateTypeForBaseClass(fullname)));
                         }
 
+                      
+
+                       
 
                     }
+
+
 
                      
 
@@ -218,7 +444,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         Namespace = @namespace,
                         migrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}",
                         DTOBaseClasses = baseTypes.ToArray(),
-
+                        DTOBaseInterfaces = baseTypeInterfaces.Values.ToArray(),
                         Schema = @schema,
 
 
@@ -366,7 +592,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                 if (!string.IsNullOrEmpty(inherience))
                 {
-                    inherience = " : " + inherience;
+                    inherience = " : " + SerializeGenericType(type.BaseType, namespaces);
+                }
+
+                Type[] allInterfaces = type.GetInterfaces();
+                var exceptInheritedInterfaces = allInterfaces.Where(i =>  !type.BaseType.GetInterfaces().Any(i2 => i2 == i));
+
+                foreach (var @interface in exceptInheritedInterfaces)
+                {
+                    inherience += ", "+SerializeGenericType(@interface, namespaces);
                 }
 
                 if(!generatePoco)
@@ -400,7 +634,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                 }
                 else
                 {
-                    sb.AppendLine($"\tpublic{(false && type.IsAbstract ? " abstract " : " ")}class {type.Name}{inherience}\r\n\t{{");
+                    sb.AppendLine($"\tpublic{(false && type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
                     {
                         foreach (var ctor in type.GetConstructors())
                         {
@@ -488,7 +722,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
             {
                 var gen = propertyType.GetGenericTypeDefinition();
                 namespaces.Add(gen.Namespace);
-                return $"{gen.Name.Substring(0, gen.Name.IndexOf('`'))}<{string.Join(",", propertyType.GenericTypeArguments.Select(t => SerializeType(t, namespaces)))}>";
+                return $"{gen.Name.Substring(0, gen.Name.IndexOf('`')==-1 ? gen.Name.Length : gen.Name.IndexOf('`'))}<{string.Join(",", propertyType.GenericTypeArguments.Select(t => SerializeType(t, namespaces)))}>";
 
             }
             namespaces.Add(propertyType.Namespace);

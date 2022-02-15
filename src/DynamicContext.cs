@@ -434,7 +434,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            Console.WriteLine("TEST");
+            Console.WriteLine("Test");   
             var sw = Stopwatch.StartNew();
     
             //  EnsureModelCreated();
@@ -445,9 +445,17 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             foreach (var en in manager.EntityDTOs)
             {
-                var a = modelBuilder.Entity(en.Value);
-                var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
-                config.Configure(a);
+                try
+                {
+                    var a = modelBuilder.Entity(en.Value);
+                    var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
+                    config.Configure(a);
+                }catch(Exception ex)
+                {
+                    Console.WriteLine($"Failed to configure: { en.Key}: { en.Value.FullName}");
+                    logger.LogWarning(ex, "Failed to configure: {Model}: {Class}", en.Key, en.Value.FullName);
+                    throw;
+                }
                  
             }
 

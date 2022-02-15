@@ -290,6 +290,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
                     var migrationType = generator.CreateDynamicMigration(manifest);
                     var tables = generator.GetTables(manifest, myModule);
+
+                   
+
                     return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
                 }catch(Exception ex)
                 {

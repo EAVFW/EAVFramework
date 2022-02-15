@@ -40,5 +40,27 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
             var result = sb.ToString();
             return result;
         }
+
+        public static string GetFullName(this ITypeSymbol source)
+        {
+            if (source==null)
+                return null;
+
+            var items = new List<string>() { source.Name };
+            var parent = source.ContainingNamespace;
+            while (parent !=null && !string.IsNullOrEmpty(parent.Name))
+            {
+                items.Add(parent.Name);
+                parent = parent.ContainingNamespace;
+            }
+
+
+            var sb = new StringBuilder();
+            items.Reverse();
+            items.ForEach(i => { sb.Append(i).Append(NAMESPACE_CLASS_DELIMITER); });
+          
+            var result = sb.ToString(0,sb.Length-1);
+            return result;
+        }
     }
 }
