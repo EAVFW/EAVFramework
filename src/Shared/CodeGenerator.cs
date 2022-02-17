@@ -1365,7 +1365,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             if (!string.IsNullOrEmpty(tpt))
             {
                 var ty = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()];
-                File.AppendAllLines("test1.txt", new[] { $"{entitySchameName}, {ty.FullName} : Loading baseclass " + manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString() });
+               // File.AppendAllLines("test1.txt", new[] { $"{entitySchameName}, {ty.FullName} : Loading baseclass " + manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString() });
 
                 var typeBuilder = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()];
                 acceptableBasesClass = typeBuilder.CreateTypeInfo();
@@ -1384,10 +1384,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 if (acceptableBasesClass.IsGenericType)
                 {
-                    File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
+                   // File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
                 }
 
-                File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
+               // File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
 
                 var type = myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
                                                                             | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
@@ -1398,10 +1398,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
                 var interfaces = options.DTOBaseInterfaces.Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey)).ToList();
-                File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for {type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" });
+               // File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for {type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" });
                 foreach (var @interface in interfaces)
                 {
-                    File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName} to {type.FullName}]" });
+                   // File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName} to {type.FullName}]" });
                   
                     type.AddInterfaceImplementation(@interface);
 
@@ -1418,9 +1418,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         .Select(t => GetOrCreateEntityBuilder(myModule, manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString(), manifest, manifest.SelectToken($"$.entities['{t.ManifestKey}']") as JObject, t.ManifestKey))
                         .ToArray();
 
-                    File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+                   // File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
-                    File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
+                   // File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
 
 
                     type.SetParent(acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]).ToArray()));
