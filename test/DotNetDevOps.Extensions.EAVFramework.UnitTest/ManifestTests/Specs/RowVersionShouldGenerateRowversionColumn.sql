@@ -29,7 +29,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_rowversion].[__MigrationsHistory] WHERE [MigrationId] = N'tests_Initial')
 BEGIN
     INSERT INTO [manifest_rowversion].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_Initial', N'5.0.10');
+    VALUES (N'tests_Initial', N'5.0.14');
 END;
 GO
 

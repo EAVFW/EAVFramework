@@ -68,7 +68,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\Rowversion.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\RowVersionShouldGenerateRowversionColumn.sql");
 
             Assert.AreEqual(expectedSQL, sql);
         }

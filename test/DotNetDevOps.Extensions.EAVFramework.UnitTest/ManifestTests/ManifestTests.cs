@@ -81,6 +81,62 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
         }
 
         [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddLookup.sql", "specs")]
+        public async Task CarsAndTrucksModel_AddLookup()
+        {
+            var manifestA = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Garage = CreateCustomEntity("Garage", "Garages")
+                }
+            });
+
+            var manifestB = JToken.FromObject(new
+            {
+                version = "1.0.1",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Garage = CreateCustomEntity("Garage", "Garages")
+                }
+            });
+
+            //AppendAttribute(manifestA, "Car", "GarageToPark", new
+            //{
+            //    schemaName = "GarageToPark",
+            //    logicalName = "GarageToPark",
+            //    type = new
+            //    {
+            //        type = "lookup",
+            //        referenceType = "Garage"
+            //    },
+
+            //});
+
+
+            AppendAttribute(manifestB, "Car", "GarageToPark", new
+            {
+                schemaName = "GarageToParkId",
+                logicalName = "GarageToParkId",
+                type = new
+                {
+                    type = "lookup",
+                    referenceType = "Garage"
+                },
+
+            });
+
+            var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup.sql");
+
+            Assert.AreEqual(expectedSQL, sql);
+        }
+
+        [TestMethod]
         [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddAttribute.sql", "specs")]
         public async Task CarsAndTrucksModel_AddAttributeTest()
         {

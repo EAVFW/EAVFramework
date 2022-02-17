@@ -454,6 +454,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         MigrationBuilderCreateIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }) ?? throw new ArgumentNullException("MigrationBuilderCreateIndex"),
                         MigrationBuilderDropIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)) ?? throw new ArgumentNullException("MigrationBuilderDropIndex"),
 
+
+
                         ColumnsBuilderType = typeof(ColumnsBuilder),
                         CreateTableBuilderType = typeof(CreateTableBuilder<>),
                         CreateTableBuilderPrimaryKeyName = nameof(CreateTableBuilder<object>.PrimaryKey),

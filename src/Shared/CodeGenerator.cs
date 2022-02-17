@@ -136,6 +136,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool SkipValidateSchemaNameForRemoteTypes { get; set; }
         public bool UseOnlyExpliciteExternalDTOClases { get; set; }
         public bool RequiredSupport { get; set; } = true;
+        public MethodInfo MigrationsBuilderAddForeignKey { get; set; }
     }
 
     public interface ICodeGenerator
@@ -234,20 +235,70 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
     }
 
+    public interface ILookupBuilder
+    {
+        void CreateLookupIndexes(CodeGeneratorOptions options, JProperty entityDefinition, string entityCollectionSchemaName, string schema, ILGenerator upMethodIL);
+        void CreateLoopupIndex(CodeGeneratorOptions options, string EntityCollectionSchemaName, string schema, ILGenerator upMethodIL, JProperty attributeDefinition);
+
+
+    }
+    public class DefaultLookupBuilder : ILookupBuilder
+    {
+        public void CreateLookupIndexes(CodeGeneratorOptions options, JProperty entityDefinition, string EntityCollectionSchemaName, string schema, ILGenerator upMethodIL)
+        {
+            foreach (JProperty attributeDefinition in entityDefinition.Value.SelectToken("$.attributes"))
+                CreateLoopupIndex(options, EntityCollectionSchemaName, schema, upMethodIL, attributeDefinition);
+        }
+
+        public void CreateLoopupIndex(CodeGeneratorOptions options, string EntityCollectionSchemaName, string schema, ILGenerator upMethodIL, JProperty attributeDefinition)
+        {
+            if (attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup" &&
+                (attributeDefinition.Value.SelectToken("$.type.index") != null))
+            {
+                var info = attributeDefinition.Value.SelectToken("$.type.index");
+                var indexInfo = info.Type == JTokenType.Object ? info.ToObject<IndexInfo>() : new IndexInfo { Unique = true };
+
+                upMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                upMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + attributeDefinition.Value.SelectToken("$.schemaName")?.ToString()); //Constant keyname 
+                upMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
+
+
+                upMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
+                upMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                upMethodIL.Emit(OpCodes.Dup);
+                upMethodIL.Emit(OpCodes.Ldc_I4_0);
+                upMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName")?.ToString());
+                upMethodIL.Emit(OpCodes.Stelem_Ref);
+
+
+                upMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
+                upMethodIL.Emit(indexInfo.Unique ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); //Constant unique=true
+                upMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                upMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                upMethodIL.Emit(OpCodes.Pop);
+
+            }
+        }
+    }
     public class CodeGenerator : ICodeGenerator
     {
 
         private readonly CodeGeneratorOptions options;
         private readonly IChoiceEnumBuilder choiceEnumBuilder;
         private readonly IManifestTypeMapper typemapper;
+        private readonly ILookupBuilder lookupPropertyBuilder;
 
         public CodeGenerator(CodeGeneratorOptions options,
             IChoiceEnumBuilder choiceEnumBuilder = null,
-            IManifestTypeMapper typemapper = null)
+            IManifestTypeMapper typemapper = null,
+            ILookupBuilder lookupPropertyBuilder = null)
         {
             this.options = options;
             this.choiceEnumBuilder=choiceEnumBuilder??new DefaultChoiceEnumBuilder();
             this.typemapper=typemapper??new DefaultManifestTypeMapper();
+            this.lookupPropertyBuilder=lookupPropertyBuilder??new DefaultLookupBuilder();
         }
 
         public Dictionary<string, StringBuilder> methodBodies = new Dictionary<string, StringBuilder>();
@@ -514,38 +565,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     //Create indexes from lookup fields.
 
-                    foreach (JProperty attribute in entityDefinition.Value.SelectToken("$.attributes"))
-                    {
-                        if (attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup" &&
-                            (attribute.Value.SelectToken("$.type.index") != null))
-                        {
-                            var info = attribute.Value.SelectToken("$.type.index");
-                            var indexInfo = info.Type == JTokenType.Object ? info.ToObject<IndexInfo>() : new IndexInfo { Unique = true };
-
-                            UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                            UpMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + attribute.Value.SelectToken("$.schemaName")?.ToString()); //Constant keyname 
-                            UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
-
-
-                            UpMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
-                            UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
-                            UpMethodIL.Emit(OpCodes.Dup);
-                            UpMethodIL.Emit(OpCodes.Ldc_I4_0);
-                            UpMethodIL.Emit(OpCodes.Ldstr, attribute.Value.SelectToken("$.schemaName")?.ToString());
-                            UpMethodIL.Emit(OpCodes.Stelem_Ref);
-
-
-                            UpMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
-                            UpMethodIL.Emit(indexInfo.Unique ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); //Constant unique=true
-                            UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
-
-
-                            UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
-                            UpMethodIL.Emit(OpCodes.Pop);
-
-                        }
-                    }
-
+                    lookupPropertyBuilder.CreateLookupIndexes(options,entityDefinition, EntityCollectionSchemaName, schema, UpMethodIL);
 
                 }
                 else if (members.Any())
@@ -642,6 +662,91 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                         UpMethodIL.Emit(OpCodes.Callvirt, method);
                         UpMethodIL.Emit(OpCodes.Pop);
+
+
+
+                        if (attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup")
+                        {
+
+                            //
+                            // Summary:
+                            //     Builds an Microsoft.EntityFrameworkCore.Migrations.Operations.AddForeignKeyOperation
+                            //     to add a new foreign key to a table.
+                            //
+                            // Parameters:
+                            //   name:
+                            //     The foreign key constraint name.
+                            //
+                            //   table:
+                            //     The table that contains the foreign key.
+                            //
+                            //   column:
+                            //     The column that is constrained.
+                            //
+                            //   principalTable:
+                            //     The table to which the foreign key is constrained.
+                            //
+                            //   schema:
+                            //     The schema that contains the table, or null if the default schema should be used.
+                            //
+                            //   principalSchema:
+                            //     The schema that contains principal table, or null if the default schema should
+                            //     be used.
+                            //
+                            //   principalColumn:
+                            //     The column to which the foreign key column is constrained, or null to constrain
+                            //     to the primary key column.
+                            //
+                            //   onUpdate:
+                            //     The action to take on updates.
+                            //
+                            //   onDelete:
+                            //     The action to take on deletes.
+                            //
+                            // Returns:
+                            //     A builder to allow annotations to be added to the operation.
+
+                            
+
+                            UpMethodIL.Emit(OpCodes.Ldarg_1);
+
+                            var entityName = attributeDefinition.Value.SelectToken("$.type.referenceType");
+                            
+                            var principalSchema = manifest.SelectToken($"$.entities['{entityName}'].schema")?.ToString() ?? options.Schema ?? "dbo";
+                            var principalTable = manifest.SelectToken($"$.entities['{entityName}'].pluralName").ToString().Replace(" ", "");
+                            var principalColumn = manifest.SelectToken($"$.entities['{entityName}'].attributes").OfType<JProperty>()
+                                .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false).Name.Replace(" ", "");
+
+                            foreach (var arg1 in options.MigrationsBuilderAddForeignKey.GetParameters())
+                            {
+                                var argName = arg1.Name.ToLower();
+                                 
+                                switch (argName)
+                                {
+                                    case "table" when !string.IsNullOrEmpty(EntityCollectionSchemaName): UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); break;
+                                    case "schema" when !string.IsNullOrEmpty(schema): UpMethodIL.Emit(OpCodes.Ldstr, schema); break;
+                                    case "name":   UpMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType")}'].pluralName")}_{attributeDefinition.Value.SelectToken("$.schemaName")}".Replace(" ", "")); break;
+                                    case "column": UpMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
+                                    case "principalschema": UpMethodIL.Emit(OpCodes.Ldstr, principalSchema); break;
+                                    case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable);break;
+                                    case "principalcolumn":  UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
+                                    case "onupdate":  UpMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction);break;
+                                    case "ondelete":   UpMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction);break;
+                                 
+                                    default:
+
+                                        UpMethodIL.Emit(OpCodes.Ldnull);
+                                        break;
+                                }
+                            }
+
+
+                            UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderAddForeignKey);
+                            UpMethodIL.Emit(OpCodes.Pop);
+
+                            lookupPropertyBuilder.CreateLoopupIndex(options, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
+                        }
+
                     }
                 }
 
@@ -686,6 +791,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 return entityTypeBuilder;
             }
         }
+
+       
+
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
 
@@ -1365,7 +1473,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             if (!string.IsNullOrEmpty(tpt))
             {
                 var ty = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()];
-               // File.AppendAllLines("test1.txt", new[] { $"{entitySchameName}, {ty.FullName} : Loading baseclass " + manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString() });
+                // File.AppendAllLines("test1.txt", new[] { $"{entitySchameName}, {ty.FullName} : Loading baseclass " + manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString() });
 
                 var typeBuilder = options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{tpt}'].schemaName").ToString()];
                 acceptableBasesClass = typeBuilder.CreateTypeInfo();
@@ -1384,10 +1492,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                 if (acceptableBasesClass.IsGenericType)
                 {
-                   // File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
+                    // File.AppendAllLines("test1.txt", new[] { acceptableBasesClass.FullName +" is generic basecalass" });
                 }
 
-               // File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
+                // File.AppendAllLines("test1.txt", new[] { $"Creating Entity Type for {options.Namespace}.{entitySchameName} with baseclass: {acceptableBasesClass.FullName}" });
 
                 var type = myModule.DefineType($"{options.Namespace}.{_}", TypeAttributes.Public
                                                                             | (entityDefinition.SelectToken("$.abstract")?.ToObject<bool>() ?? false ? TypeAttributes.Class : TypeAttributes.Class)
@@ -1398,11 +1506,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
                 var interfaces = options.DTOBaseInterfaces.Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey)).ToList();
-               // File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for {type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" });
+                // File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for {type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" });
                 foreach (var @interface in interfaces)
                 {
-                   // File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName} to {type.FullName}]" });
-                  
+                    // File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName} to {type.FullName}]" });
+
                     type.AddInterfaceImplementation(@interface);
 
 
@@ -1418,9 +1526,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         .Select(t => GetOrCreateEntityBuilder(myModule, manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString(), manifest, manifest.SelectToken($"$.entities['{t.ManifestKey}']") as JObject, t.ManifestKey))
                         .ToArray();
 
-                   // File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
+                    // File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", args.Select(t => t.ManifestKey))} => {string.Join(",", options.EntityDTOsBuilders.Keys)}" });
 
-                   // File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
+                    // File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
 
 
                     type.SetParent(acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]).ToArray()));

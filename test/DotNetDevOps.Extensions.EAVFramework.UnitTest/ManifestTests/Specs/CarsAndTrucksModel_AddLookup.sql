@@ -27,14 +27,14 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
-    CREATE TABLE [tests].[Trucks] (
+    CREATE TABLE [tests].[Garages] (
         [Id] uniqueidentifier NOT NULL,
         [Name] nvarchar(255) NULL,
-        CONSTRAINT [PK_Trucks] PRIMARY KEY ([Id])
+        CONSTRAINT [PK_Garages] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Trucks';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Garages';
 END;
 GO
 
@@ -42,6 +42,31 @@ IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [M
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
     VALUES (N'tests_1_0_0', N'5.0.14');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
+BEGIN
+    ALTER TABLE [tests].[Cars] ADD [GarageToParkId] uniqueidentifier NULL;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
+BEGIN
+    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([id]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
+BEGIN
+    INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'tests_1_0_1', N'5.0.14');
 END;
 GO
 

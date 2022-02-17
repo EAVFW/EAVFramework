@@ -227,6 +227,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         MigrationBuilderCreateIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }),
                         MigrationBuilderDropIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)),
                         MigrationsBuilderAddColumn = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)),
+                        MigrationsBuilderAddForeignKey = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey),new Type[] {typeof(string), typeof( string ), typeof( string) , typeof(string) , typeof(string), typeof( string), typeof(string),typeof( ReferentialAction) , typeof(ReferentialAction )}),
 
                         ColumnsBuilderType = typeof(ColumnsBuilder),
                         CreateTableBuilderType = typeof(CreateTableBuilder<>),
