@@ -10,11 +10,11 @@ using Newtonsoft.Json.Linq;
 namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
 
-    public class RetrieveMetaData : IRetrieveMetaData
+    public class RetrieveMetaData<TDynamicContext> : IRetrieveMetaData<TDynamicContext> where TDynamicContext : DynamicContext
     {
-        private readonly IFormContextFeature formContextFeature;
+        private readonly IFormContextFeature<TDynamicContext> formContextFeature;
 
-        public RetrieveMetaData(IFormContextFeature formContextFeature)
+        public RetrieveMetaData(IFormContextFeature<TDynamicContext> formContextFeature)
         {
             this.formContextFeature = formContextFeature;
         }
@@ -26,7 +26,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
         }
     }
     
-    public interface IRetrieveMetaData
+    public interface IRetrieveMetaData<TDynamicContext> where TDynamicContext : DynamicContext
     {
         public ValueTask<IEnumerable<JProperty>> GetAttributeMetaData(string entityLogicalName);
     }

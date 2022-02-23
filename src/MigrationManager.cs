@@ -145,7 +145,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             }
 
         }
-        private  ConcurrentDictionary<string, (TypeInfo, Func<Migration>)> _cache = new ConcurrentDictionary<string, (TypeInfo, Func<Migration>)>();
+        private  ConcurrentDictionary<string, Lazy<(TypeInfo, Func<Migration>)>> _cache = new ConcurrentDictionary<string, Lazy<(TypeInfo, Func<Migration>)>>();
 
         /// <summary>
         /// Use this to loop over all manifests starting with beforeManifest being {}
@@ -186,7 +186,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         private (TypeInfo, Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options, bool fromMigration)
         {
-            return _cache.GetOrAdd(migrationName, (migrationName) =>
+            return _cache.GetOrAdd(migrationName,   (migrationName) => new Lazy<(TypeInfo, Func<Migration>)>(()=>
             {
 
                 try
@@ -300,7 +300,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     _modules.Remove(options.Namespace, out var _);
                     throw;
                 }
-            });
+            })).Value;
         }
         public (TypeInfo,Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options)
         {

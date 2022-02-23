@@ -312,11 +312,11 @@ namespace DotNetDevOps.Extensions.EAVFramework
         }
     }
 
-    public interface IFormContextFeature
+    public interface IFormContextFeature<TDynamicContext> where TDynamicContext : DynamicContext
     {
         public ValueTask<JToken> GetManifestAsync();
     }
-    public class DefaultFormContextFeature :IFormContextFeature
+    public class DefaultFormContextFeature<TDynamicContext> :IFormContextFeature<DynamicContext> where TDynamicContext : DynamicContext
     {
         private readonly IOptions<DynamicContextOptions> options;
 
@@ -347,9 +347,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
             this.manager = migrationManager;
             this.logger = logger;
 
-            this.ChangeTracker.LazyLoadingEnabled = false;
 
-         
+             
             
         }
 
@@ -360,7 +359,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
 
         {
-
+            ChangeTracker.LazyLoadingEnabled = false;
         }
         public MigrationsInfo GetMigrations()
         {
@@ -407,6 +406,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+          
+
             if (this.modelOptions.Value.EnableDynamicMigrations)
             {
                 ConfigureMigrationAsesmbly(optionsBuilder);

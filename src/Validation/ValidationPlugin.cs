@@ -12,11 +12,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
     public class ValidationPlugin : IPlugin<DynamicContext, DynamicEntity>
     {
-        private readonly IRetrieveMetaData _metaData;
+        private readonly IRetrieveMetaData<DynamicContext> _metaData;
         private readonly IServiceProvider _serviceProvider;
         private readonly IEnumerable<ValidatorMetaData> _validators;
 
-        public ValidationPlugin(IRetrieveMetaData metaData,
+        public ValidationPlugin(IRetrieveMetaData<DynamicContext> metaData,
             IServiceProvider serviceProvider,
             IEnumerable<ValidatorMetaData> validators)
         {

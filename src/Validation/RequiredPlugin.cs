@@ -11,11 +11,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
     public class RequiredPlugin : IPlugin<DynamicContext, DynamicEntity>
     {
-        private readonly IRetrieveMetaData _metaData;
+        private readonly IRetrieveMetaData<DynamicContext> _metaData;
         private readonly RequiredSettings _requiredSettings;
 
 
-        public RequiredPlugin(IRetrieveMetaData metaData, IOptions<RequiredSettings> requiredSettings)
+        public RequiredPlugin(IRetrieveMetaData<DynamicContext> metaData, IOptions<RequiredSettings> requiredSettings)
         {
             _metaData = metaData ?? throw new ArgumentNullException(nameof(metaData));
             _requiredSettings = requiredSettings?.Value;

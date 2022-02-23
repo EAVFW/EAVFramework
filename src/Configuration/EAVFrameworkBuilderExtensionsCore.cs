@@ -97,7 +97,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
         {
-            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
+            builder.Services.TryAddScoped(typeof(IRetrieveMetaData<>),typeof(RetrieveMetaData<>));
             
             builder.Services.RegisterValidator<StringValidator, string>();
             builder.Services.RegisterValidator<NumberValidator, decimal>();
@@ -124,7 +124,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IEAVFrameworkBuilder AddRequired(this IEAVFrameworkBuilder builder,
             List<string> ignoredAttributes = null)
         {
-            builder.Services.TryAddScoped<IRetrieveMetaData, RetrieveMetaData>();
+            builder.Services.TryAddScoped(typeof(IRetrieveMetaData<>), typeof(RetrieveMetaData<>));
 
             if (ignoredAttributes != null)
             {
@@ -207,7 +207,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
             builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
             builder.Services.TryAddTransient<IPermissionStore, DefaultPermissionStore>();
-            builder.Services.TryAddTransient<IFormContextFeature, DefaultFormContextFeature>();
+            builder.Services.TryAddTransient<IFormContextFeature<DynamicContext>, DefaultFormContextFeature<DynamicContext>>();
             return builder;
         }
 
