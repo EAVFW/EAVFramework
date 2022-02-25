@@ -71,7 +71,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             {
                 var entity = queue_for_preval.Dequeue();
                 foreach (var plugin in plugins
-                    .Where(plugin => 
+
+                    .Where(plugin =>        
+                      
                         plugin.Mode == EntityPluginMode.Sync && 
                         plugin.Operation == entity.Operation && 
                         plugin.Execution == stage && 

@@ -10,13 +10,13 @@ using DotNetDevOps.Extensions.EAVFramework.Shared;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
-    public class ValidationPlugin : IPlugin<DynamicContext, DynamicEntity>
+    public class ValidationPlugin<TDynamicContext> : IPlugin<TDynamicContext, DynamicEntity> where TDynamicContext : DynamicContext
     {
-        private readonly IRetrieveMetaData<DynamicContext> _metaData;
+        private readonly IRetrieveMetaData<TDynamicContext> _metaData;
         private readonly IServiceProvider _serviceProvider;
         private readonly IEnumerable<ValidatorMetaData> _validators;
 
-        public ValidationPlugin(IRetrieveMetaData<DynamicContext> metaData,
+        public ValidationPlugin(IRetrieveMetaData<TDynamicContext> metaData,
             IServiceProvider serviceProvider,
             IEnumerable<ValidatorMetaData> validators)
         {
@@ -27,7 +27,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
         
         private static readonly ConcurrentDictionary<Type, string> _logicalNameMapping = new ConcurrentDictionary<Type, string>();
          
-        public async Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<TDynamicContext, DynamicEntity> context)
         {
             var metaData = await _metaData.GetAttributeMetaData( _logicalNameMapping.GetOrAdd( context.Input.GetType(), GetLogicalName));
     

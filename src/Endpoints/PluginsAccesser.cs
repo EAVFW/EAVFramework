@@ -11,7 +11,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         IEnumerable<EntityPlugin> _plugins { get; }
         public PluginsAccesser(IEnumerable<EntityPlugin> plugins, TContext context)
         {
-            _plugins = plugins.OrderBy(x => x.Order).Where(x=>context.IsPluginEnabled( x.Handler)).ToArray();
+            _plugins = plugins.OrderBy(x => x.Order)
+                .Where(x=>context.IsPluginEnabled( x.Handler))               
+                .ToArray();
         }
 
         public IEnumerator<EntityPlugin> GetEnumerator()

@@ -76,7 +76,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
     }
 
 
-    internal class EntityPlugin<TContext,T> : EntityPlugin
+    public class EntityPlugin<TContext,T> : EntityPlugin
         where TContext : DynamicContext
         where T : DynamicEntity
     {

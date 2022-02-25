@@ -95,7 +95,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddValidation(this IEAVFrameworkBuilder builder)
+        public static IEAVFrameworkBuilder AddValidation<TDynamicContext>(this IEAVFrameworkBuilder builder) where TDynamicContext:DynamicContext
         {
             builder.Services.TryAddScoped(typeof(IRetrieveMetaData<>),typeof(RetrieveMetaData<>));
             
@@ -103,10 +103,10 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.RegisterValidator<NumberValidator, decimal>();
             builder.Services.RegisterValidator<NumberValidator, int>();
 
-            builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
+            builder.AddPlugin<ValidationPlugin<TDynamicContext>, TDynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Create);
-            builder.AddPlugin<ValidationPlugin, DynamicContext, DynamicEntity>(
+            builder.AddPlugin<ValidationPlugin<TDynamicContext>, TDynamicContext, DynamicEntity>(
                 EntityPluginExecution.PreValidate,
                 EntityPluginOperation.Update);
 
