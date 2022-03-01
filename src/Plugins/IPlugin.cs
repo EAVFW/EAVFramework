@@ -14,7 +14,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
     {
 
     }
-    public interface IPlugin<TContext,T> : IPlugin
+    public interface IPlugin<TContext> : IPlugin 
+        where TContext : DynamicContext
+    {
+
+    }
+    public interface IPlugin<TContext,T> : IPlugin<TContext>
         where TContext : DynamicContext
         where T : DynamicEntity
     {

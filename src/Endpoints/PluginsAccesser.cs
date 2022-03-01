@@ -12,7 +12,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         public PluginsAccesser(IEnumerable<EntityPlugin> plugins, TContext context)
         {
             _plugins = plugins.OrderBy(x => x.Order)
-                .Where(x=>context.IsPluginEnabled( x.Handler))               
+                .Where(x=>x is EntityPlugin<TContext> &&  context.IsPluginEnabled( x.Handler))               
                 .ToArray();
         }
 

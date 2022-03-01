@@ -808,7 +808,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             var builders = entities.TSort(v =>
                 v.Value.SelectToken("$.attributes").OfType<JProperty>()
                 .Where(a => a.Value.SelectToken("$.type.type")?.ToString()?.ToLower() == "lookup")
-                .Select(a => entities.First(k => k.Name == a.Value.SelectToken("$.type.referenceType")?.ToString())))
+                .Select(a => entities.FirstOrDefault(k => k.Name == a.Value.SelectToken("$.type.referenceType")?.ToString()) ?? throw new KeyNotFoundException(a.Value.SelectToken("$.type.referenceType")?.ToString())))
                 .Where(entity => entity.Value.SelectToken("$.abstract") == null)
                 .Select(entity => this.BuildEntityDefinition(builder, manifest, entity)).ToArray();
 
@@ -1040,14 +1040,22 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             if (manifestType == "choice")
             {
                 var enumName = choiceEnumBuilder.GetEnumName(options, attributeDefinition);
-                var enumValue = myModule.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
-                foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
+                try
                 {
-                    enumValue.DefineLiteral(optionPro.Name.Replace(" ", ""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
+                   
+                    var enumValue = myModule.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
+                    foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
+                    {
+                        enumValue.DefineLiteral(optionPro.Name.Replace(" ", ""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
 
+                    }
+
+                    return typeof(Nullable<>).MakeGenericType(enumValue.CreateTypeInfo());
+                }catch(Exception ex)
+                {
+
+                    throw;
                 }
-
-                return typeof(Nullable<>).MakeGenericType(enumValue.CreateTypeInfo());
             }
 
             return GetCLRType(manifestType);

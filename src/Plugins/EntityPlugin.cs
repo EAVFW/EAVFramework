@@ -9,9 +9,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
     public class AnyEntity : DynamicEntity
     {
 
-    }  
+    }
 
+    public abstract class EntityPlugin<TContext> : EntityPlugin
+       where TContext : DynamicContext
+    {
+
+    }
+       
     public abstract class EntityPlugin
+         
     {
         public EntityPluginMode Mode { get; set; } = EntityPluginMode.Sync;
 
