@@ -50,6 +50,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
            .Where(e => e.State != EntityState.Unchanged)    
            .Select(item=> new TrackedPipelineItem { Operation = GetOperation(item.State), Entity = item })
            .ToArray();
+            
 
             var queue_for_preval = new Queue<TrackedPipelineItem>();
 
@@ -147,7 +148,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
 
 
-                var trans = await _operation.Context.Database.BeginTransactionAsync();
+                var trans = await _operation.Context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadUncommitted);
 
                 var discovered_preoperation = new HashSet<TrackedPipelineItem>();
 

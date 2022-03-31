@@ -17,6 +17,10 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Concurrent;
+using System.Runtime.Serialization;
+using System.Collections.Generic;
+using System.Collections;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -30,7 +34,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         public void Parse(string dataUrl)
         {
-            if(!dataUrl.StartsWith("data:"))
+            if (!dataUrl.StartsWith("data:"))
             {
                 Data = Convert.FromBase64String(dataUrl);
                 return;
@@ -49,17 +53,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             Data =  Convert.FromBase64String(matches.Groups["data"].Value);
         }
     }
-    
+
     public class DataUrlConverter : JsonConverter
     {
-         
+
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(byte[]);
         }
 
-         
-      
+
+
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var a = new DataUrlHelper();
@@ -76,14 +80,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     public class EAVDBContext<TContext> where TContext : DynamicContext
     {
         public TContext Context { get; }
-      
+
         private readonly PluginsAccesser<TContext> plugins;
         private readonly ILogger<EAVDBContext<TContext>> logger;
         private readonly IServiceProvider serviceProvider;
         private readonly IPluginScheduler<TContext> pluginScheduler;
 
-     //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
-      
+        //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
+
 
         public EAVDBContext(TContext context, PluginsAccesser<TContext> plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
@@ -101,7 +105,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             await migrator.MigrateAsync();
 
         }
-        public async ValueTask<JToken> ReadRecordAsync(HttpContext context ,ReadOptions options)
+        public async ValueTask<JToken> ReadRecordAsync(HttpContext context, ReadOptions options)
         {
             if (options.LogPayload)
             {
@@ -110,7 +114,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 logger.LogInformation("Reading Payload : {Payload}", text);
 
                 var record = JToken.Parse(text);
-                if(!string.IsNullOrEmpty(options.RecordId))
+                if (!string.IsNullOrEmpty(options.RecordId))
                     record["id"] =  options.RecordId;
                 return record;
             }
@@ -134,33 +138,174 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             };
         }
 
-        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>,Task> onBeforeCommit = null)
+        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>, Task> onBeforeCommit = null)
         {
             return this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler, onBeforeCommit);
         }
+        static ConcurrentDictionary<string, PropertyInfo> methods = new ConcurrentDictionary<string, PropertyInfo>();
 
         public async ValueTask<EntityEntry> PatchAsync(string entityName, Guid recordId, JToken record)
         {
+            //   this.Context.ChangeTracker.LazyLoadingEnabled=true;
             var entity = await FindAsync(entityName, recordId);
 
-            var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
+            //var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
 
-            foreach (var related in relatedProps.Select(related =>
-                 entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
-            {
-                if (related!=null)
-                {
-                    await related.LoadAsync();
-                }
-            }
+            //foreach (var related in relatedProps.Select(related =>
+            //     entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
+            //{
+            //    if (related!=null)
+            //    {
+            //        await related.LoadAsync();
+            //    }
+            //}
+
 
             var serializer = new JsonSerializer();
 
-            serializer.Populate(record.CreateReader(), entity.Entity);
-            entity.State = EntityState.Modified;
+            Populate(record, entity, serializer);
 
-            TraverseDeleteCollections(record, new Lazy<Type>(entity.Entity.GetType()));
+
+
+            // TraverseDeleteCollections(record, new Lazy<Type>(entity.Entity.GetType()));
+
+            logger.LogInformation("Patching {EntityName}<{RecordId}>: {Changes}", entityName, recordId, this.Context.ChangeTracker.DebugView.LongView);
+
             return entity;
+        }
+
+        private void Populate(JToken record, EntityEntry entity, JsonSerializer serializer)
+        {
+            foreach (var prop in record.OfType<JProperty>())
+            {
+                var propName = prop.Name.EndsWith("@deleted") ? prop.Name.Substring(0, prop.Name.IndexOf('@')) : prop.Name;
+
+                var method = methods.GetOrAdd(entity.Metadata.GetSchemaQualifiedTableName()+propName, (_) => entity.Entity.GetType().GetProperties().FirstOrDefault(c => c.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == propName));
+
+                
+                if (method!=null)
+                {
+                    if (prop.Name.EndsWith("@deleted"))
+                    {
+                        // var collection = clrType.Value.GetProperties().FirstOrDefault(propertyInfo =>
+                        //    propertyInfo.GetCustomAttribute<JsonPropertyAttribute>().PropertyName == prop.Name.Substring(0, prop.Name.IndexOf('@')));
+
+                        var deletedItems = prop.Value;
+
+                        foreach (var id in deletedItems)
+                        {
+
+                            var related = Activator.CreateInstance(method.PropertyType.GenericTypeArguments[0]);
+
+                            var entry = Context.Entry(related);
+
+                            var p = entry.Metadata.FindPrimaryKey().Properties.SingleOrDefault();
+
+                            var reader = id?.CreateReader();
+                            if (reader!=null)
+                            {
+                                p.PropertyInfo.SetValue(related, serializer.Deserialize(reader, p.PropertyInfo.PropertyType));
+
+                            }
+
+                            Context.Attach(related);
+                            Context.Remove(related);
+
+                        }
+
+                    }else if (prop.Value.Type == JTokenType.Object)
+                    {
+
+                        var existing = method.GetValue(entity.Entity);
+                        if (existing==null)
+                        {
+                            existing=Activator.CreateInstance(method.PropertyType);
+                            method.SetValue(entity.Entity, existing);
+                        }
+
+
+                        EntityEntry entry = Attach(serializer, prop.Value, existing);
+
+                        Populate(prop.Value, entry, serializer);
+
+                        //Populate 
+
+
+                    }
+                    else if (prop.Value.Type == JTokenType.Array)
+                    {
+                        var collectionElementType = method.PropertyType.GetGenericArguments().First();
+                        IList existingCollection = method.GetValue(entity.Entity) as IList;
+
+                        if (existingCollection==null)
+                        {
+                            existingCollection=Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType)) as IList;
+                            method.SetValue(entity.Entity, existingCollection);
+                        }
+
+                        foreach (var obj in prop.Value)
+                        {
+                            var element = Activator.CreateInstance(collectionElementType);
+                            existingCollection.Add(element);
+                            EntityEntry entry = Attach(serializer, obj, element);
+                            //Populate
+                            Populate(obj, entry, serializer);
+
+                        }
+                    }
+                    else
+                    {
+                        method.SetValue(entity.Entity, serializer.Deserialize(prop.Value.CreateReader(), method.PropertyType));
+                    }
+                }
+                else
+                {
+
+                }
+            }
+
+            entity.DetectChanges();
+
+        }
+
+        private EntityEntry Attach(JsonSerializer serializer, JToken obj, object element)
+        {
+            var entry = Context.Entry(element);
+            var hasKey = false;
+            foreach (var p in entry.Metadata.FindPrimaryKey().Properties)
+            {
+                var reader = obj[p.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName]?.CreateReader();
+                if (reader!=null)
+                {
+                    p.PropertyInfo.SetValue(element, serializer.Deserialize(reader, p.PropertyInfo.PropertyType));
+                    hasKey=true;
+                }
+            }
+
+            foreach (var p in entry.Properties.Where(p => p.Metadata.IsConcurrencyToken))
+            {
+                var reader = obj[p.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName]?.CreateReader();
+                if (reader!=null)
+                {
+                    p.Metadata.PropertyInfo.SetValue(element, serializer.Deserialize(obj[p.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName].CreateReader(), p.Metadata.PropertyInfo.PropertyType));
+
+                }
+            }
+
+            if (entry.State == EntityState.Detached)
+            {
+                if (hasKey)
+                {
+                    entry=Context.Attach(element);
+                }
+                else
+                {
+                    entry=Context.Add(element);
+
+                }
+            }
+
+            return entry;
         }
 
         private void TraverseDeleteCollections(JToken record, Lazy<Type> clrType)
@@ -169,8 +314,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             {
                 if (prop.Name.EndsWith("@deleted"))
                 {
-                    var collection  = clrType.Value.GetProperties().FirstOrDefault(propertyInfo =>
-                        propertyInfo.GetCustomAttribute<JsonPropertyAttribute>().PropertyName == prop.Name.Substring(0, prop.Name.IndexOf('@')));
+                    var collection = clrType.Value.GetProperties().FirstOrDefault(propertyInfo =>
+                       propertyInfo.GetCustomAttribute<JsonPropertyAttribute>().PropertyName == prop.Name.Substring(0, prop.Name.IndexOf('@')));
 
                     var deletedItems = prop.Value;
 
@@ -273,7 +418,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         public async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
         {
-            var obj= await this.Context.FindAsync(entityName, keys);
+            var obj = await this.Context.FindAsync(entityName, keys);
             if (obj == null)
                 return null;
 
@@ -287,15 +432,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
         public async ValueTask<EntityEntry> DeleteAsync(string entityName, params object[] keys)
         {
-            var record=await this.Context.FindAsync(entityName, keys);
+            var record = await this.Context.FindAsync(entityName, keys);
             if (record == null)
                 return null;
-            var entry= this.Context.Entry(record);
+            var entry = this.Context.Entry(record);
             entry.State = EntityState.Deleted;
             return entry;
 
         }
-        public DbSet<T> Set<T>() where T: DynamicEntity
+        public DbSet<T> Set<T>() where T : DynamicEntity
         {
             return this.Context.Set<T>();
         }
