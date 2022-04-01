@@ -149,16 +149,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             //   this.Context.ChangeTracker.LazyLoadingEnabled=true;
             var entity = await FindAsync(entityName, recordId);
 
-            //var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
+            var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
 
-            //foreach (var related in relatedProps.Select(related =>
-            //     entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
-            //{
-            //    if (related!=null)
-            //    {
-            //        await related.LoadAsync();
-            //    }
-            //}
+            foreach (var related in relatedProps.Select(related =>
+                 entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
+            {
+                if (related!=null)
+                {
+                    await related.LoadAsync();
+                }
+            }
 
 
             var serializer = new JsonSerializer();
