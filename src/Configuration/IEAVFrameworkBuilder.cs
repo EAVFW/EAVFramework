@@ -18,19 +18,4 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
         /// </value>
         IServiceCollection Services { get; }
     }
-    public static class IEAVFrameworkBuilderExtensions
-    {
-        public static IEAVFrameworkBuilder WithPluginsDiscovery<T>(this IEAVFrameworkBuilder builder)
-        {
-            var autoPlugins = typeof(T).Assembly.GetTypes().Where(type => type.GetCustomAttributes<PluginRegistrationAttribute>().Any())
-                .ToArray();
-
-            foreach (var plugin in autoPlugins)
-            {
-                builder.AddPlugin(plugin);
-            }
-
-            return builder;
-        }
-    }
 }
