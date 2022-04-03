@@ -565,7 +565,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     //Create indexes from lookup fields.
 
-                    lookupPropertyBuilder.CreateLookupIndexes(options,entityDefinition, EntityCollectionSchemaName, schema, UpMethodIL);
+                    lookupPropertyBuilder.CreateLookupIndexes(options, entityDefinition, EntityCollectionSchemaName, schema, UpMethodIL);
 
                 }
                 else if (members.Any())
@@ -706,12 +706,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                             // Returns:
                             //     A builder to allow annotations to be added to the operation.
 
-                            
+
 
                             UpMethodIL.Emit(OpCodes.Ldarg_1);
 
                             var entityName = attributeDefinition.Value.SelectToken("$.type.referenceType");
-                            
+
                             var principalSchema = manifest.SelectToken($"$.entities['{entityName}'].schema")?.ToString() ?? options.Schema ?? "dbo";
                             var principalTable = manifest.SelectToken($"$.entities['{entityName}'].pluralName").ToString().Replace(" ", "");
                             var principalColumn = manifest.SelectToken($"$.entities['{entityName}'].attributes").OfType<JProperty>()
@@ -720,19 +720,19 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                             foreach (var arg1 in options.MigrationsBuilderAddForeignKey.GetParameters())
                             {
                                 var argName = arg1.Name.ToLower();
-                                 
+
                                 switch (argName)
                                 {
                                     case "table" when !string.IsNullOrEmpty(EntityCollectionSchemaName): UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); break;
                                     case "schema" when !string.IsNullOrEmpty(schema): UpMethodIL.Emit(OpCodes.Ldstr, schema); break;
-                                    case "name":   UpMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType")}'].pluralName")}_{attributeDefinition.Value.SelectToken("$.schemaName")}".Replace(" ", "")); break;
+                                    case "name": UpMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType")}'].pluralName")}_{attributeDefinition.Value.SelectToken("$.schemaName")}".Replace(" ", "")); break;
                                     case "column": UpMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
                                     case "principalschema": UpMethodIL.Emit(OpCodes.Ldstr, principalSchema); break;
-                                    case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable);break;
-                                    case "principalcolumn":  UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
-                                    case "onupdate":  UpMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction);break;
-                                    case "ondelete":   UpMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction);break;
-                                 
+                                    case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable); break;
+                                    case "principalcolumn": UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
+                                    case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction); break;
+                                    case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, options.ReferentialActionNoAction); break;
+
                                     default:
 
                                         UpMethodIL.Emit(OpCodes.Ldnull);
@@ -792,7 +792,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
         }
 
-       
+
 
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
@@ -1015,7 +1015,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             UpMethodIL.Emit(OpCodes.Ldarg_0); //this
             UpMethodIL.Emit(OpCodes.Ldftn, ConstraintsMethod);
             UpMethodIL.Emit(OpCodes.Newobj, typeof(Action<>).MakeGenericType(options.CreateTableBuilderType.MakeGenericType(columnsCLRType)).GetConstructors().Single());
-
+             
             UpMethodIL.Emit(OpCodes.Ldstr, "comment");
 
             UpMethodIL.Emit(OpCodes.Callvirt, createTableMethod);
@@ -1042,7 +1042,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 var enumName = choiceEnumBuilder.GetEnumName(options, attributeDefinition);
                 try
                 {
-                   
+
                     var enumValue = myModule.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
                     foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
                     {
@@ -1051,7 +1051,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     }
 
                     return typeof(Nullable<>).MakeGenericType(enumValue.CreateTypeInfo());
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
 
                     throw;
@@ -1769,6 +1770,61 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
         private void BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, JProperty attributeDefinition, JToken typeObj, string type, MethodInfo method, string tableName = null, string schema = null)
         {
+
+            var locals = new Dictionary<Type, LocalBuilder>
+            {
+                [typeof(bool?)]= entityCtorBuilderIL.DeclareLocal(typeof(bool?)),
+                [typeof(int?)]= entityCtorBuilderIL.DeclareLocal(typeof(int?)),
+
+            };
+            //var a = method.GetParameters();
+            ////  entityCtorBuilderIL.Emit(OpCodes.Ldstr, "Id"); //string name
+            ////         entityCtorBuilderIL.Emit(OpCodes.Ldstr, "Test");//string table
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldnull); //string type = null
+
+            //// entityCtorBuilderIL.Emit(OpCodes.Initobj,);
+            ////  entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0);//bool? unicode = null
+            //entityCtorBuilderIL.Emit(OpCodes.Ldloca_S, locals[typeof(bool?)].LocalIndex);
+            //entityCtorBuilderIL.Emit(OpCodes.Initobj, typeof(bool?));
+            //entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[typeof(bool?)]);
+
+            ////entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, 255); //int? maxLength = null
+            ////entityCtorBuilderIL.Emit(OpCodes.Newobj, typeof(int?).GetConstructor(new[] { typeof(int) }));
+            //entityCtorBuilderIL.Emit(OpCodes.Ldloca_S, locals[typeof(int?)].LocalIndex);
+            //entityCtorBuilderIL.Emit(OpCodes.Initobj, typeof(int?));
+            //entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[typeof(int?)]);
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0); //bool rowVersion = false, 
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldstr, "Id"); //string name = null
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0); // bool nullable = false
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldnull); //object defaultValue = null, 
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldnull); //string defaultValueSql = null
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldnull); //string computedColumnSql = null, 
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0); //bool? fixedLength = null
+            //entityCtorBuilderIL.Emit(OpCodes.Newobj, typeof(bool?).GetConstructor(new[] { typeof(bool) }));
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldnull); //string comment = null, 
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldnull); //string collation = null
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, 17); //int? precision = null
+            //entityCtorBuilderIL.Emit(OpCodes.Newobj, typeof(int?).GetConstructor(new[] { typeof(int) }));
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, 17); //int? scale = null
+            //entityCtorBuilderIL.Emit(OpCodes.Newobj, typeof(int?).GetConstructor(new[] { typeof(int) }));
+
+            //entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0); // bool? stored = null
+            //entityCtorBuilderIL.Emit(OpCodes.Newobj, typeof(bool?).GetConstructor(new[] { typeof(bool) }));
+
+
+            //return;
             foreach (var arg1 in method.GetParameters())
             {
 
@@ -1780,38 +1836,46 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 switch (argName)
                 {
                     case "comment" when typeObj.Type == JTokenType.Object && typeObj["description"] is JToken comment:
-                        entityCtorBuilderIL.Emit(OpCodes.Ldstr, comment.ToString());
+
+                        EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, comment.ToString()), arg1);
+
                         continue;
                 }
+
+
+
+
 
                 if (typeObj.Type == JTokenType.Object && typeObj.SelectToken($"$.sql.{argName}") is JToken sqlColumnArgs)
                 {
                     if (sqlColumnArgs.Type == JTokenType.String)
                     {
-                        entityCtorBuilderIL.Emit(OpCodes.Ldstr, sqlColumnArgs.ToString());
+                        EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, sqlColumnArgs.ToString()), arg1);
                     }
                     else if (sqlColumnArgs.Type == JTokenType.Integer)
                     {
-                        entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, sqlColumnArgs.ToObject<int>());
-                        if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                        {
-                            entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
-                            // It's nullable
-                        }
+                        EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, sqlColumnArgs.ToObject<int>()), arg1);
+
                     }
                     else if (sqlColumnArgs.Type == JTokenType.Boolean)
                     {
-                        entityCtorBuilderIL.Emit(sqlColumnArgs.ToObject<bool>() ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-                        if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                        {
-                            entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
-                            // It's nullable
-                        }
+                        EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(sqlColumnArgs.ToObject<bool>() ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0), arg1);
 
                     }
                     else
                     {
-                        entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                        if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
+                        {
+                            entityCtorBuilderIL.Emit(OpCodes.Ldloca_S, locals[arg1.ParameterType].LocalIndex);
+                            entityCtorBuilderIL.Emit(OpCodes.Initobj, arg1.ParameterType);
+                            entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[arg1.ParameterType]);
+
+                           
+                        }
+                        else
+                        {
+                            entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                        }
                     }
 
 
@@ -1822,43 +1886,55 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                     switch (argName)
                     {
+
+
                         case "maxLength" when typeObj?.SelectToken("$.maxLength") is JToken maxLength:
 
-                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, maxLength.ToObject<int>());
-                            if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
-                            {
-                                entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
-                                // It's nullable
-                            }
+                            EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, maxLength.ToObject<int>()), arg1);
 
                             break;
                         case "table" when !string.IsNullOrEmpty(tableName): entityCtorBuilderIL.Emit(OpCodes.Ldstr, tableName); break;
-                        case "schema" when !string.IsNullOrEmpty(schema): entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema); break;
+                        case "schema" when !string.IsNullOrEmpty(schema): EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema), arg1); break;
                         case "columnName": entityCtorBuilderIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
                         case "nullable" when ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)):
                         case "nullable" when (options.RequiredSupport && (attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)):
                         case "nullable" when (options.RequiredSupport && (attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? false)):
                         case "nullable" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
-                            //  var a = ((attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1;
-                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0);
+                            EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0), arg1);
                             break;
                         case "nullable":
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
                             break;
                         case "type" when type == "multilinetext":
-                            entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)");
+                            EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)"), arg1);
                             break;
 
                         case "type" when type == "text" && !hasMaxLength:
                         case "type" when type == "string" && !hasMaxLength:
-                            entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false) ? 255 : 100)})");
+                            EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false) ? 255 : 100)})"), arg1);
                             break;
                         case "rowVersion" when ((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)):
-                            entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
-                            break;
-                        default:
+                            entityCtorBuilderIL.Emit(((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false)) ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 
-                            entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+
+                            break;
+                          
+                        default:
+                            if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
+                            {
+                                entityCtorBuilderIL.Emit(OpCodes.Ldloca_S, locals[arg1.ParameterType].LocalIndex);
+                                entityCtorBuilderIL.Emit(OpCodes.Initobj, arg1.ParameterType);
+                                entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[arg1.ParameterType]);
+                            }else if(arg1.ParameterType == typeof(bool))
+                            {
+                                entityCtorBuilderIL.Emit(Convert.ToBoolean(arg1.DefaultValue) ==true ? OpCodes.Ldc_I4_1: OpCodes.Ldc_I4_0);
+                            }
+                            else
+                            {
+                                 
+                                entityCtorBuilderIL.Emit(OpCodes.Ldnull);
+                            }
+
                             break;
                     }
 
@@ -1870,6 +1946,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 //    computedColumnSql:null, fixedLength:false,comment:"",collation:"",precision:0,scale:0,stored:false);
                 //type:
 
+            }
+        }
+
+        private void EmitNullable(ILGenerator entityCtorBuilderIL, Action p, ParameterInfo arg1)
+        {
+
+            p();//NullableContextAttribute 
+            if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
+            {
+                entityCtorBuilderIL.Emit(OpCodes.Newobj, arg1.ParameterType.GetConstructor(new[] { Nullable.GetUnderlyingType(arg1.ParameterType) }));
+                // It's nullable
             }
         }
 

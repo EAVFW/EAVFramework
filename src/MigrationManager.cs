@@ -221,13 +221,13 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         Schema = options.PublisherPrefix,
                         migrationName = migrationName,
 
-                        MigrationBuilderDropTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)),
-                        MigrationBuilderCreateTable = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)),
-                        MigrationBuilderSQL = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.Sql)),
-                        MigrationBuilderCreateIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }),
-                        MigrationBuilderDropIndex = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)),
-                        MigrationsBuilderAddColumn = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)),
-                        MigrationsBuilderAddForeignKey = typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey),new Type[] {typeof(string), typeof( string ), typeof( string) , typeof(string) , typeof(string), typeof( string), typeof(string),typeof( ReferentialAction) , typeof(ReferentialAction )}),
+                        MigrationBuilderDropTable = Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)), "MigrationBuilderDropTable"),
+                        MigrationBuilderCreateTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)), "MigrationBuilderCreateTable"),
+                        MigrationBuilderSQL = Resolve(()=>typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.Sql)), "MigrationBuilderSQL"),
+                        MigrationBuilderCreateIndex = Resolve(()=>typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }),"MigrationBuilderCreateIndex"),
+                        MigrationBuilderDropIndex = Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
+                        MigrationsBuilderAddColumn = Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)), "MigrationsBuilderAddColumn"),
+                        MigrationsBuilderAddForeignKey =Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey),new Type[] {typeof(string), typeof( string ), typeof( string) , typeof(string) , typeof(string), typeof( string), typeof(string),typeof( ReferentialAction) , typeof(ReferentialAction )}), "MigrationsBuilderAddForeignKey"),
 
                         ColumnsBuilderType = typeof(ColumnsBuilder),
                         CreateTableBuilderType = typeof(CreateTableBuilder<>),
@@ -235,22 +235,22 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         CreateTableBuilderForeignKeyName = nameof(CreateTableBuilder<object>.ForeignKey),
 
                         EntityTypeBuilderType = typeof(EntityTypeBuilder),
-                        EntityTypeBuilderPropertyMethod = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }),
-                        EntityTypeBuilderToTable = typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }),
-                        EntityTypeBuilderHasKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }),
-                        EntityTypeBuilderHasAlternateKey = typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasAlternateKey), 0, new[] { typeof(string[]) }),
+                        EntityTypeBuilderPropertyMethod = Resolve(()=> typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }), "EntityTypeBuilderPropertyMethod"),
+                        EntityTypeBuilderToTable = Resolve(()=> typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }), "EntityTypeBuilderToTable"),
+                        EntityTypeBuilderHasKey = Resolve(()=>typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasKey"),
+                        EntityTypeBuilderHasAlternateKey = Resolve(()=> typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasAlternateKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasAlternateKey"),
 
 
 
-                        ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
-                        InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
+                        ForeignKeyAttributeCtor = Resolve(()=> typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }), "ForeignKeyAttributeCtor"),
+                        InverseAttributeCtor = Resolve(()=> typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }), "InverseAttributeCtor"),
 
                         EntityDTOs = EntityDTOs,
                         EntityDTOConfigurations = EntityDTOConfigurations,
 
                         OperationBuilderAddColumnOptionType = typeof(OperationBuilder<AddColumnOperation>),
-                        ColumnsBuilderColumnMethod = typeof(ColumnsBuilder).GetMethod(nameof(ColumnsBuilder.Column), BindingFlags.Public | BindingFlags.Instance),
-                        LambdaBase = typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null),
+                        ColumnsBuilderColumnMethod = Resolve(()=> typeof(ColumnsBuilder).GetMethod(nameof(ColumnsBuilder.Column), BindingFlags.Public | BindingFlags.Instance), "ColumnsBuilderColumnMethod"),
+                        LambdaBase =Resolve(()=> typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null), "LambdaBase"),
 
                         // EntityBaseClass = options.DTOBaseClass ?? typeof(DynamicEntity),
                         // BaseClassProperties = (options.DTOBaseClass ?? typeof(DynamicEntity)).GetProperties().Select(p=>p.Name).ToList(),
@@ -271,21 +271,22 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         ReferentialActionNoAction = (int)ReferentialAction.NoAction,
 
                         DynamicMigrationType = typeof(DynamicMigration),
-                        MigrationAttributeCtor = typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }),
+                        MigrationAttributeCtor = Resolve(()=> typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }), "MigrationAttributeCtor"),
                         OnDTOTypeGeneration = this.OnDTOTypeGeneration,
 
-                        IsRequiredMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)),
-                        IsRowVersionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)),
-                        ValueGeneratedOnUpdate = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.ValueGeneratedNever)),
-                        HasConversionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion), new Type[] { }),
-                        HasPrecisionMethod = typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasPrecision), new Type[] { typeof(int), typeof(int) }),
-                  
-                    
+                        IsRequiredMethod = Resolve(()=> typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)), "IsRequiredMethod"),
+                        IsRowVersionMethod = Resolve(()=>typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)), "IsRowVersionMethod"),
+                        ValueGeneratedOnUpdate = Resolve(()=>typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.ValueGeneratedNever)), "ValueGeneratedOnUpdate"),
+                        HasConversionMethod = Resolve(()=> typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion),1, new Type[] { }), "HasConversionMethod"),
+                        HasPrecisionMethod =Resolve(()=> typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
+                               .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasPrecision), new Type[] { typeof(int), typeof(int) }), "HasPrecisionMethod"),
+
+
+
                      RequiredSupport = this.options.Value.RequiredSupport
                     });
 
@@ -302,6 +303,18 @@ namespace DotNetDevOps.Extensions.EAVFramework
                 }
             })).Value;
         }
+
+        private T Resolve<T>(Func<T> p, string onError)
+        {
+            try
+            {
+                return p();
+            }catch(Exception ex)
+            {
+                throw new Exception("Failed to get option: "+onError, ex);
+            }
+        }
+
         public (TypeInfo,Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options)
         {
             return this.CreateModel(migrationName, manifest, options, false);
