@@ -50,18 +50,26 @@ namespace DotNetDevOps.Extensions.EAVFramework
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             //    var model = JToken.Parse("{}");
+           
+            //migrationBuilder.CreateTable(
+            //              name: "test",
+            //              columns: (c) => new Test(),
+            //              schema: "hello",
+            //              constraints: null,
+            //              comment: "generated");
 
             foreach (var dynamicEntity in tables)
             {
 
-                dynamicEntity.Up(migrationBuilder);
-                ///ynamicTable dynamicEntity = new MigrationManager().buildColumns(entity);
-                //  migrationBuilder.CreateTable(
-                //                name: dynamicEntity.Name,
-                //                columns: columns => dynamicEntity.Columns(columns),
-                //                schema: dynamicEntity.Schema,
-                //                constraints: dynamicEntity.Constraints,
-                //                comment: "generated");
+               dynamicEntity.Up(migrationBuilder);
+
+               // var dynamicTable  = new MigrationManager(null,null).buildColumns(entity);
+                //migrationBuilder.CreateTable(
+                //              name: "test",
+                //              columns: columns => dynamicEntity.Columns(columns),
+                //              schema: dynamicEntity.Schema,
+                //              constraints: dynamicEntity.Constraints,
+                //              comment: "generated");
 
                 // migrationBuilder.CreateTable(
                 //name: "PKSTests",

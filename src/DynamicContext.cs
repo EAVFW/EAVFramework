@@ -410,6 +410,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
+                int i = 0;
                 foreach (var migration in modelOptions.Value.Manifests
                     .Select((m,i) => (target:m, source: i+1 == modelOptions.Value.Manifests.Length? new JObject(): modelOptions.Value.Manifests[i+1]))
 
@@ -420,7 +421,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                    
                     var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
 
-                    types.Add(name, model.Item1);
+                    types.Add($"{++i:D16}{name}", model.Item1);
                     factories.Add(model.Item1, model.Item2);
                 }
             }
