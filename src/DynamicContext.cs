@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -357,6 +358,16 @@ namespace DotNetDevOps.Extensions.EAVFramework
             return new ValueTask<JToken>(options.Value.Manifests.First());
         }
     }
+
+    public class UtcValueConverter : ValueConverter<DateTime, DateTime>
+    {
+        public static UtcValueConverter Instance = new UtcValueConverter();
+        public UtcValueConverter()
+            : base(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc))
+        {
+        }
+    }
+
     public class DynamicContext : DbContext, IDynamicContext
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
@@ -387,6 +398,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
 
         {
             ChangeTracker.LazyLoadingEnabled = false;
+
+
         }
         public MigrationsInfo GetMigrations()
         {
@@ -460,7 +473,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var manifest = modelOptions.Value.Manifests.First();
             manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
         }
-
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             Console.WriteLine("Test");   
@@ -479,6 +492,10 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     var a = modelBuilder.Entity(en.Value);
                     var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                     config.Configure(a);
+                    foreach(var prop in a.Metadata.GetProperties().Where(c=>(Nullable.GetUnderlyingType( c.ClrType) ?? c.ClrType) == typeof(DateTime)))
+                    {
+                        prop.SetValueConverter(UtcValueConverter.Instance);
+                    }
                 }catch(Exception ex)
                 {
                     Console.WriteLine($"Failed to configure: { en.Key}: { en.Value.FullName}");
