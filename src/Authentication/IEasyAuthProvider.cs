@@ -20,8 +20,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication
         public string AuthenticationName { get; }
         public HttpMethod CallbackHttpMethod { get; }
         public bool AutoGenerateRoutes { get; set; }
-        RequestDelegate OnAuthenticate(string handleId, string redirectUrl);
-        Task<(ClaimsPrincipal, string)> OnCallback(string handleId, HttpContext httpcontext);
+        Task OnAuthenticate(HttpContext httpcontext,string handleId, string redirectUrl);
+        Task<(ClaimsPrincipal, string,string)> OnCallback(HttpContext httpcontext);
         public RequestDelegate OnSignout(string callbackUrl);
         public RequestDelegate OnSignedOut();
         public RequestDelegate OnSingleSignOut(string callbackUrl);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DotNetDevOps.Extensions.EAVFramework.Authentication;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -40,9 +41,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Configuration
         /// </value>
         public bool RequireAuthenticatedUserForSignOutMessage { get; set; } = false;
 
-        public Func<HttpContext, ClaimsPrincipal, List<Claim>, ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
+        public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
 
-        static internal ValueTask DefaultPopulateAuthenticationClaimsAsync(HttpContext http, ClaimsPrincipal principal, List<Claim> claims) => default;
+        public Func<HttpContext, ValueTask<string>> GenerateHandleId { get; set; } = DefaultHandleIdGenerator;
+
+        private static ValueTask<string> DefaultHandleIdGenerator(HttpContext httpcontext) => new ValueTask<string>( CryptographyHelpers.CreateCryptographicallySecureGuid().ToString("N"));
+     
+
+        public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> OnAuthenticatedAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
+
+
+        static internal ValueTask DefaultPopulateAuthenticationClaimsAsync(HttpContext http, ClaimsPrincipal principal, List<Claim> claims,string provider, string handleid) => default;
 
         /// <summary>
         /// Gets or sets the name of the cookie used for the check session endpoint.

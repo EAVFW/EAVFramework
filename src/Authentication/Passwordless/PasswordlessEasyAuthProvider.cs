@@ -36,10 +36,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         public HttpMethod CallbackHttpMethod => HttpMethod.Get;
         public bool AutoGenerateRoutes { get; set; } = true;
 
-        public RequestDelegate OnAuthenticate(string handleId, string callbackUrl)
+        public async Task OnAuthenticate(HttpContext httpcontext, string handleId, string callbackUrl)
         {
-            return async (httpcontext) =>
+           // return async (httpcontext) =>
             {
+
                 var email = httpcontext.Request.Query["email"].FirstOrDefault();
                 var redirectUri = httpcontext.Request.Query["redirectUri"].FirstOrDefault();
 
@@ -92,8 +93,9 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
             };
         }
 
-        public async Task<(ClaimsPrincipal, string)> OnCallback(string handleId, HttpContext httpcontext)
+        public async Task<(ClaimsPrincipal, string,string)> OnCallback(HttpContext httpcontext)
         {
+            var handleId = httpcontext.Request.Query["token"].FirstOrDefault();
             var (ticketInfo, redirectUri) = await _options.Value.GetTicketInfoAsync(httpcontext,handleId.URLSafeHash());
 
             var ticket = QueryHelpers.ParseNullableQuery
@@ -104,7 +106,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
                 ticket.Select(kv => new Claim(kv.Key, kv.Value)).ToArray(),
                 AuthenticationName);
 
-            return await Task.FromResult((new ClaimsPrincipal(identity), redirectUri));
+            return await Task.FromResult((new ClaimsPrincipal(identity), redirectUri, handleId));
         }
 
         public RequestDelegate OnSignout(string callbackUrl)

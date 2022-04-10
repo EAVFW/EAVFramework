@@ -43,12 +43,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 endpoints.MapGet(authUrl, async (httpcontext) =>
                 {
-                    var handleId = CryptographyHelpers.CreateCryptographicallySecureGuid().ToString("N");
+                  
+
+                    var handleId = await options.Authentication.GenerateHandleId(httpcontext);
+
                     var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
                     var callbackUrl = $"{baseUrl}/.auth/login/{auth.AuthenticationName}/callback?token={handleId}";
 
-                    var requestDelegate = auth.OnAuthenticate(handleId, callbackUrl);
-                    await requestDelegate(httpcontext);
+                    await auth.OnAuthenticate(httpcontext,handleId, callbackUrl);
+                  //  await requestDelegate(httpcontext);
                 }).WithMetadata(new AllowAnonymousAttribute());
 
                 endpoints.MapMethods(
@@ -56,8 +59,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                     new[] { auth.CallbackHttpMethod.ToString().ToUpperInvariant() },
                     async (httpcontext) =>
                     {
-                        var handleId = httpcontext.Request.Query["token"].FirstOrDefault();
-                        var (claimsPrincipal, redirectUri) = await auth.OnCallback(handleId, httpcontext);
+                       
+                        var (claimsPrincipal, redirectUri, handleId) = await auth.OnCallback(httpcontext);
 
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
                             claimsPrincipal, new AuthenticationProperties(
@@ -118,6 +121,21 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
                     throw new Exception("External authentication error");
                 }
 
+                var handleId = string.Empty;
+                if (result.Properties.Items.ContainsKey("handleId"))
+                {
+                    handleId=result.Properties.Items["handleId"];
+                }
+
+                var provider = string.Empty;
+
+                if (result.Properties.Items.ContainsKey("schema"))
+                {
+                    provider=result.Properties.Items["schema"];
+                }
+                
+                
+
                 // retrieve claims of the external user
                 var claims = externalUser.Claims.ToList();
 
@@ -134,15 +152,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Extensions
 
                 var externalUserId = userIdClaim.Value;
                 var externalProvider = userIdClaim.Issuer;
+                 
+                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser, claims, provider,  handleId);
 
-                //  var external = await httpcontext.AuthenticateAsync(Constants.ExternalCookieAuthenticationScheme);
-                //var external = await httpcontext.AuthenticateAsync(loginflow.Properties.Items["schema"]);
-
-                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser, claims);
-
-                await httpcontext.SignInAsync(Constants.DefaultCookieAuthenticationScheme,
-                    new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme)),
+                var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme));
+                await httpcontext.SignInAsync(Constants.DefaultCookieAuthenticationScheme, principal,
                     new AuthenticationProperties());
+
+                await options.Authentication.OnAuthenticatedAsync(httpcontext, principal, claims, provider, handleId);
 
                 await httpcontext.SignOutAsync(Constants.ExternalCookieAuthenticationScheme);
 
