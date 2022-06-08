@@ -41,12 +41,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
     }
     public static class ContextExtensions
     {
-        private static async ValueTask<bool> EmptyPreValQueue<TContext>(IServiceProvider serviceProvider,  TContext dynamicContext, OperationContext<TContext> operationContext, IEnumerable<EntityPlugin> plugins, ClaimsPrincipal user, EntityPluginExecution stage, HashSet<TrackedPipelineItem> discovered_prevalitems)
+        private static async ValueTask<bool> EmptyPreValQueue<TContext>(IServiceProvider serviceProvider,  TContext dynamicContext, OperationContext<TContext> operationContext, IEnumerable<EntityPlugin> plugins, ClaimsPrincipal user, EntityPluginExecution stage, HashSet<TrackedPipelineItem> discovered_prevalitems, HashSet<TrackedPipelineItem> preoperation_items = null)
        where TContext : DynamicContext
         {
            
 
-            var items = dynamicContext.ChangeTracker.Entries()
+            var items = preoperation_items?.ToArray() ?? dynamicContext.ChangeTracker.Entries()
            .Where(e => e.State != EntityState.Unchanged)    
            .Select(item=> new TrackedPipelineItem { Operation = GetOperation(item.State), Entity = item })
            .ToArray();
@@ -164,6 +164,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                      
                 } while (newItems_preop || newItems_preval);
 
+              
                 await dynamicContext.SaveChangesAsync();
 
 
@@ -175,7 +176,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                 do
                 {
-                    newItems_postop = await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PostOperation, discovered_postoperation);
+                    newItems_postop = await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PostOperation, discovered_postoperation, discovered_preoperation);
 
                     do
                     {
