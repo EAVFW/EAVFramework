@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System.Collections;
+using System.Diagnostics;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -98,10 +99,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             this.pluginScheduler = pluginScheduler;
             context.EnsureModelCreated();
         }
+        [DebuggerStepThrough]
         public async Task MigrateAsync()
         {
             var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
             var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+            logger.LogInformation("Migrating: {SQL}", sql);
             await migrator.MigrateAsync();
 
         }
@@ -165,7 +168,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             Populate(record, entity, serializer);
 
-
+            entity.State = EntityState.Modified; //Always be modifed on the main entity to trigger plugins.
 
             // TraverseDeleteCollections(record, new Lazy<Type>(entity.Entity.GetType()));
 
@@ -253,9 +256,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                         }
                     }
+                    else if(prop.Value.Type == JTokenType.Null)
+                    {
+                        method.SetValue(entity.Entity, serializer.Deserialize(prop.Value.CreateReader(), method.PropertyType));
+                        entity.Property(method.Name).IsModified=true;
+                    }
                     else
                     {
                         method.SetValue(entity.Entity, serializer.Deserialize(prop.Value.CreateReader(), method.PropertyType));
+
                     }
                 }
                 else
