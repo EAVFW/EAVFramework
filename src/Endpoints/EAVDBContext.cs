@@ -166,7 +166,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
             var serializer = new JsonSerializer();
 
-            Populate(record, entity, serializer);
+            await PopulateAsync(record, entity, serializer);
 
             entity.State = EntityState.Modified; //Always be modifed on the main entity to trigger plugins.
 
@@ -177,7 +177,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             return entity;
         }
 
-        private void Populate(JToken record, EntityEntry entity, JsonSerializer serializer)
+        private async Task PopulateAsync(JToken record, EntityEntry entity, JsonSerializer serializer)
         {
             foreach (var prop in record.OfType<JProperty>())
             {
@@ -203,15 +203,27 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                             var entry = Context.Entry(related);
 
                             var p = entry.Metadata.FindPrimaryKey().Properties.SingleOrDefault();
+                           
+                            var deleteItem = id.ToString().Split("@");
+                            p.PropertyInfo.SetValue(related, p.PropertyInfo.PropertyType == typeof(Guid) ? Guid.Parse(deleteItem[0]): throw new Exception("Primary type other than guid is not supported"));
 
-                            var reader = id?.CreateReader();
-                            if (reader!=null)
+                           
+                            var ct = entry.Metadata.GetProperties().FirstOrDefault(c => c.IsConcurrencyToken);
+                            if (ct != null)
                             {
-                                p.PropertyInfo.SetValue(related, serializer.Deserialize(reader, p.PropertyInfo.PropertyType));
+                                if (deleteItem.Length > 1)
+                                {
 
+                                    ct.PropertyInfo.SetValue(related, Convert.FromBase64String(deleteItem[1]));
+                                }
+                                else
+                                {
+                                    await entry.ReloadAsync();
+                                }
                             }
 
-                            Context.Attach(related);
+                                
+                                Context.Attach(related);
                             Context.Remove(related);
 
                         }
@@ -229,7 +241,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 
                         EntityEntry entry = Attach(serializer, prop.Value, existing);
 
-                        Populate(prop.Value, entry, serializer);
+                        await PopulateAsync(prop.Value, entry, serializer);
 
                         //Populate 
 
@@ -252,7 +264,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                             existingCollection.Add(element);
                             EntityEntry entry = Attach(serializer, obj, element);
                             //Populate
-                            Populate(obj, entry, serializer);
+                            await PopulateAsync(obj, entry, serializer);
 
                         }
                     }
