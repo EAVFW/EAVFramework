@@ -265,18 +265,50 @@ namespace Microsoft.Extensions.DependencyInjection
             Action<TOptions> configureOptions) where T: class, IEasyAuthProvider
             where TOptions:class
         {
+             
+            builder.Services.AddOptions<TOptions>().Configure(configureOptions);
+
+            return builder.AddAuthenticationProvider<T>();
+        }
+
+        private static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T>(this AuthenticatedEAVFrameworkBuilder builder) where T : class, IEasyAuthProvider
+        {
             var at = Activator.CreateInstance<T>();
-            builder.Services.Configure(configureOptions);
             builder.Services.TryAddScoped<T>();
-            builder.Services.AddScoped<IEasyAuthProvider>(sp=>sp.GetRequiredService<T>());
+            builder.Services.AddScoped<IEasyAuthProvider>(sp => sp.GetRequiredService<T>());
             var name = at.AuthenticationName;
             builder.Services.AddAuthentication()
-                .AddCookie(name, o=>
+                .AddCookie(name, o =>
                 {
-                    
+
                     o.LoginPath = "/account/login";
                 });
             return builder;
+        }
+
+        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T, TOptions,TDep>(
+           this AuthenticatedEAVFrameworkBuilder builder,
+           Action<TOptions,TDep> configureOptions) where T : class, IEasyAuthProvider
+           where TOptions : class
+           where TDep:class
+        {
+            
+            builder.Services.AddOptions<TOptions>().Configure(configureOptions);
+             
+            return builder.AddAuthenticationProvider<T>();
+        }
+
+        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T, TOptions, TDep1, TDep2>(
+          this AuthenticatedEAVFrameworkBuilder builder,
+          Action<TOptions, TDep1,TDep2> configureOptions) where T : class, IEasyAuthProvider
+          where TOptions : class
+          where TDep1 : class
+          where TDep2 : class
+        {
+
+            builder.Services.AddOptions<TOptions>().Configure(configureOptions);
+
+            return builder.AddAuthenticationProvider<T>();
         }
 
         public static IEAVFrameworkBuilder AddPlugin<T,TContext,TEntity>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, EntityPluginOperation operation, int order=0, EntityPluginMode mode = EntityPluginMode.Sync)
