@@ -41,7 +41,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         /// <summary>
         /// Persist the ticket information
         /// </summary>
-        public Func<HttpContext,string, byte[],string,Task> PersistTicketAsync { get; set; }
+        public Func<HttpContext,string,string, byte[],string,Task> PersistTicketAsync { get; set; }
 
         /// <summary>
         /// Get the ticket information

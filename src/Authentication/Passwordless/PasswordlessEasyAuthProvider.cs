@@ -55,7 +55,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
                 var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
                     Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
 
-                await _options.Value.PersistTicketAsync(httpcontext,handleId,ticket, redirectUri);
+                await _options.Value.PersistTicketAsync(httpcontext, user, handleId,ticket, redirectUri);
 
                 var options = JToken.FromObject(new
                 {
