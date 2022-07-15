@@ -55,7 +55,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
                 var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
                     Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
 
-                await _options.Value.PersistTicketAsync(httpcontext,handleId.URLSafeHash(),ticket, redirectUri);
+                await _options.Value.PersistTicketAsync(httpcontext,handleId,ticket, redirectUri);
 
                 var options = JToken.FromObject(new
                 {
@@ -96,7 +96,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
         public async Task<(ClaimsPrincipal, string,string)> OnCallback(HttpContext httpcontext)
         {
             var handleId = httpcontext.Request.Query["token"].FirstOrDefault();
-            var (ticketInfo, redirectUri) = await _options.Value.GetTicketInfoAsync(httpcontext,handleId.URLSafeHash());
+            var (ticketInfo, redirectUri) = await _options.Value.GetTicketInfoAsync(httpcontext,handleId);
 
             var ticket = QueryHelpers.ParseNullableQuery
             (Encoding.UTF8.GetString(CryptographyHelpers.Decrypt(handleId.Sha512(), handleId.Sha1(),
