@@ -1,3 +1,4 @@
+using DotNetDevOps.Extensions.EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -16,7 +17,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
     {
 
 
- 
+        [TestMethod]
+        public async Task TestMethod1()
+        {
+            var a = new DefaultChoiceEnumBuilder();
+            Assert.AreEqual("DirectDebitReturnOrRefund", a.GetLiteralName("Direct Debit return/refund"));
+        }
 
 
         //[TestMethod]

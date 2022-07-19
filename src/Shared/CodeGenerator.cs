@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -183,15 +184,27 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
     public interface IChoiceEnumBuilder
     {
         string GetEnumName(CodeGeneratorOptions options, JToken attributeDefinition);
+        string GetLiteralName(string name);
     }
     public class DefaultChoiceEnumBuilder : IChoiceEnumBuilder
     {
+       
         public string GetEnumName(CodeGeneratorOptions options, JToken attributeDefinition)
         {
             var optionSetDefinedName = attributeDefinition.SelectToken("$.type.name");
             var schemaName = attributeDefinition.SelectToken("$.schemaName");
 
             return $"{options.Namespace}.{optionSetDefinedName ?? schemaName+"Options"}".Replace(" ", "");
+        }
+
+        public string GetLiteralName(string name)
+        {
+          
+            TextInfo info = CultureInfo.CurrentCulture.TextInfo;
+            return  info.ToTitleCase(name.Replace("/"," Or ")).Replace(" ", string.Empty);
+
+
+         
         }
     }
     public interface IManifestTypeMapper
@@ -1046,7 +1059,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     var enumValue = myModule.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
                     foreach (JProperty optionPro in attributeDefinition.SelectToken("$.type.options"))
                     {
-                        enumValue.DefineLiteral(optionPro.Name.Replace(" ", ""), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
+                        
+                        enumValue.DefineLiteral(choiceEnumBuilder.GetLiteralName(optionPro.Name), (optionPro.Value.Type== JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
 
                     }
 
