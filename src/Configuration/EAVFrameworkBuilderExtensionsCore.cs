@@ -153,11 +153,16 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddAuthentication(Constants.DefaultCookieAuthenticationScheme)
                 .AddCookie(Constants.DefaultCookieAuthenticationScheme, options =>
                 {
-                    options.Events.OnRedirectToAccessDenied = UnAuthorizedResponse;
+
+
+                    options.Events.OnRedirectToAccessDenied = ReplaceRedirector(HttpStatusCode.Forbidden, options.Events.OnRedirectToAccessDenied);
+                    options.Events.OnRedirectToLogin = ReplaceRedirector(HttpStatusCode.Unauthorized, options.Events.OnRedirectToLogin);
+
+
                 })
                 .AddCookie(Constants.ExternalCookieAuthenticationScheme)
                 .AddCookie(Constants.DefaultLoginRedirectCookie);
-
+          
             builder.Services.AddSingleton<IConfigureOptions<CookieAuthenticationOptions>, ConfigureInternalCookieOptions>();
             builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, PostConfigureInternalCookieOptions>();
           //  builder.Services.AddTransientDecorator<IAuthenticationService, IdentityServerAuthenticationService>();
@@ -165,12 +170,16 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return builder;
         }
-        
-        internal static Task UnAuthorizedResponse(RedirectContext<CookieAuthenticationOptions> context)
+
+        static Func<RedirectContext<CookieAuthenticationOptions>, Task> ReplaceRedirector(HttpStatusCode statusCode, Func<RedirectContext<CookieAuthenticationOptions>, Task> existingRedirector) =>
+    context => {
+        if (context.Request.Path.StartsWithSegments("/api"))
         {
-            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            context.Response.StatusCode = (int)statusCode;
             return Task.CompletedTask;
         }
+        return existingRedirector(context);
+    };
 
         /// <summary>
         /// Adds the required platform services.
