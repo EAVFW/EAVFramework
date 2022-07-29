@@ -87,12 +87,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 
         public override async Task Execute(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry collectionEntry)
         {
+            var db = services.GetRequiredService<EAVDBContext<TContext>>();
             foreach (var entity in collectionEntry.CurrentValue)
             {
                 var plugincontext = new PluginContext<TContext, T>
                 {
                     Input = entity as T,
-                    DB =  collectionEntry.EntityEntry.Context as TContext,
+                    DB = db,
                     User = principal,
                    
                       EntityResource = new EAVResource
@@ -116,11 +117,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
         
         public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) 
         {
-            
+            var db = services.GetRequiredService<EAVDBContext<TContext>>();
             var plugincontext = new PluginContext<TContext, T>
             {
                 Input = entity.Entity as T,
-                DB= entity.Context as TContext,
+                DB= db,
                 User = principal,
                 
                 EntityResource = new EAVResource

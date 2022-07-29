@@ -11,7 +11,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
 {
     public static class PluginContextFactory
     {
-        public static PluginContext<TContext,T> CreateContext<TContext,T>(TContext context, EntityEntry entry, ClaimsPrincipal user )
+        public static PluginContext<TContext,T> CreateContext<TContext,T>(EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user )
+            where TContext : DynamicContext
         {
              var plugincontext = new PluginContext<TContext, T>
             {
@@ -33,10 +34,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Plugins
         }
     }
     public class PluginContext<TContext,T> : PluginContext
+        where TContext : DynamicContext
     {
       
         public T Input { get; set; }
-        public TContext DB { get; set; }
+        public EAVDBContext<TContext> DB { get; set; }
         public ClaimsPrincipal User { get; set; }
       
         public EAVResource EntityResource { get; internal set; }
