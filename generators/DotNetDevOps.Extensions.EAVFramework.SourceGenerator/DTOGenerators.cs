@@ -79,8 +79,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
         }
         public IEnumerable<INamedTypeSymbol> FindReferencedBaseTypes(GeneratorExecutionContext context, string attribute)
         {
-
-            foreach(var referencedSymbol in context.Compilation.SourceModule.ReferencedAssemblySymbols)
+            
+            foreach (var referencedSymbol in context.Compilation.SourceModule.ReferencedAssemblySymbols.Concat(new[] { context.Compilation.SourceModule.ContainingAssembly }))
             {
                 var list = new List<INamedTypeSymbol>();
                 try
@@ -118,7 +118,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
             var compilation = context.Compilation;
 
            
-         
+          
             //  context.Compilation.GetSemanticModel(classSyntax.SyntaxTree)
             var manifest = context.AdditionalFiles.FirstOrDefault(f => Path.GetFileName(f.Path) == "manifest.g.json");
             if (manifest != null)
@@ -374,20 +374,51 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
 
                             return entityType.CreateTypeInfo();
                         }
-
+                        var interfacebuilders = new ConcurrentDictionary<string, TypeBuilder>();
                         foreach(var @interface in interfaces){
 
                             baseTypeInterfaces.GetOrAdd(@interface.GetFullName(), (fullname) =>
                             {
 
-                                TypeBuilder entityType = myModule.DefineType(@interface.GetFullName(), TypeAttributes.Public
+                                TypeBuilder interfaceEntityType = myModule.DefineType(@interface.GetFullName(), TypeAttributes.Public
                                                               | TypeAttributes.Interface
                                                               | TypeAttributes.Abstract
                                                               | TypeAttributes.AutoClass
                                                               | TypeAttributes.AnsiClass
                                                               | TypeAttributes.Serializable
                                                               | TypeAttributes.BeforeFieldInit);
-                           
+
+
+                                if (@interface.IsGenericType)
+                                {
+                                    File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
+                                    //var entityType = interfacebuilders[@interface.GetFullName()];
+                                    var b = interfaceEntityType.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
+                                    .Select((argument, i) =>
+                                    {
+                                        argument.SetInterfaceConstraints(@interface.TypeParameters[i].ConstraintTypes.Select(ct => baseTypeInterfaces[ct.GetFullName()]).ToArray());
+                                        return argument;
+                                    }).ToArray();
+                                }
+
+                                CustomAttributeBuilder CodeGenInterfacePropertiesAttributeBuilder = new CustomAttributeBuilder(typeof(CodeGenInterfacePropertiesAttribute).GetConstructor(new Type[] { }),
+                                     new object[] { }, new[] {
+                                        typeof(CodeGenInterfacePropertiesAttribute).GetProperty(nameof(CodeGenInterfacePropertiesAttribute.Propeties)),
+                                     },
+                                     new[] {
+                                         @interface.GetMembers().OfType<IPropertySymbol>().Select(c=>c.Name).ToArray(),
+
+                                      });
+                                interfaceEntityType.SetCustomAttribute(CodeGenInterfacePropertiesAttributeBuilder);
+
+                                //foreach (var prop in @interface.GetMembers().OfType<IPropertySymbol>())
+                                //{
+                                //    if (prop.Kind == SymbolKind.Property) {
+                                //        CodeGenerator.CreateProperty(interfaceEntityType,prop.Name,prop.Type.)
+                                        
+                                //        }
+                                //}
+
                                 var BaseEntityAttributes = @interface.GetAttributes().Where(attr => attr.AttributeClass.Name == "EntityInterfaceAttribute").ToArray();
 
                                 foreach (var attr in BaseEntityAttributes)
@@ -403,15 +434,37 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                                         attr.NamedArguments.FirstOrDefault(c=>c.Key ==nameof(EntityInterfaceAttribute.EntityKey)).Value.Value,
 
                                        });
-                                    entityType.SetCustomAttribute(EntityAttributeBuilder);
+                                    interfaceEntityType.SetCustomAttribute(EntityAttributeBuilder);
                                 }
-                                return entityType.CreateTypeInfo();
+                                return interfaceEntityType.CreateTypeInfo();
 
                             });
 
 
 
                         }
+                        //foreach (var @interface in interfaces)
+                        //{
+                            
+                        //    if (@interface.IsGenericType)
+                        //    {
+                        //        File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p=>p.ConstraintTypes).Select(c=>c.GetFullName()+":"+c.ContainingAssembly.Name))}>" });
+                        //        var entityType = interfacebuilders[@interface.GetFullName()];
+                        //        var b = entityType.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
+                        //        .Select((argument, i) =>
+                        //        {
+                        //            argument.SetInterfaceConstraints(@interface.TypeParameters[i].ConstraintTypes.Select(ct=>interfacebuilders[ct.GetFullName()]).ToArray());
+                        //            return argument;
+                        //        }).ToArray();
+                        //    }
+                        //}
+
+                        //foreach (var @interface in interfacebuilders)
+                        //{ 
+                        //    baseTypeInterfaces.TryAdd(@interface.Key, @interface.Value.CreateTypeInfo());
+                        //}
+                        
+
                         foreach (var baseType in referencedBaseTypes)
                         {
 

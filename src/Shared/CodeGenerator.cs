@@ -15,6 +15,11 @@ using System.Threading.Tasks;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Shared
 {
+
+    public class CodeGenInterfacePropertiesAttribute : Attribute
+    {
+        public string[] Propeties { get; set; }
+    }
     public class PrimaryFieldAttribute : Attribute
     {
 
@@ -1313,7 +1318,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         }
                         catch (Exception ex)
                         {
-                            File.AppendAllLines("err.txt", new[] { $"Faiiled for {entitySchameName}.{attributeSchemaName} with {foreighSchemaName}" });
+                          //  File.AppendAllLines("err.txt", new[] { $"Faiiled for {entitySchameName}.{attributeSchemaName} with {foreighSchemaName}" });
 
                             throw;
                         }
@@ -1482,6 +1487,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         {
             var allProps = entityDefinition.SelectToken("$.attributes").OfType<JProperty>().Select(attributeDefinition => attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "")).ToArray();
 
+            var allPropsWithLookups = entityDefinition.SelectToken("$.attributes").OfType<JProperty>()
+                .SelectMany(attributeDefinition => attributeDefinition.Value.SelectToken("$.type.type")?.ToString().ToLower() == "lookup" ?
+                 new[] { GetSchemaName(attributeDefinition), GetSchemaName(attributeDefinition, true) } : new []{ GetSchemaName(attributeDefinition)} ).ToArray();
+
             var acceptableBasesClass =
                 options.DTOBaseClasses.FirstOrDefault(dto => dto.GetCustomAttributes<BaseEntityAttribute>().Any(att => att?.EntityKey == entityKey)) ??
                 options.DTOBaseClasses
@@ -1528,11 +1537,46 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                                                             | TypeAttributes.BeforeFieldInit);
 
 
-                var interfaces = options.DTOBaseInterfaces.Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey)).ToList();
-                // File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for {type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" });
+                var interfaces = options.DTOBaseInterfaces
+                .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey ||
+                (attr.EntityKey == "*")))
+                .ToList();
+                // File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for " +
+                //     $"{type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" +
+                //     $"AllProps : {string.Join(",",allProps)}" });
+
+                //                var star_interfaces = options.DTOBaseInterfaces
+                //               .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => 
+                //              attr.EntityKey == "*" ))
+                //             .ToList();
+                //foreach(var star in star_interfaces)
+                //{
+                //    File.AppendAllLines("test1.txt", new[] { $"Star Interface {star.FullName}[ {string.Join(",",star.GetProperties(BindingFlags.Public | BindingFlags.Instance| BindingFlags.NonPublic).Select(p=>p.Name))}] to {string.Join(",",allProps.Select(p=>$"{p}={star.GetProperty(p)==null}"))}]" });
+                //}
                 foreach (var @interface in interfaces)
                 {
-                    // File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName} to {type.FullName}]" });
+  //                  File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName}[{@interface.ContainsGenericParameters},{@interface.IsGenericTypeDefinition},{@interface.IsGenericType}]" +
+    //                     $"<{(@interface.IsGenericTypeDefinition? string.Join(",",@interface.GetGenericArguments().Select(c=>$"{c.Name}:{string.Join(",",c.GetGenericParameterConstraints().Select(ccc=>ccc.FullName))}")):"")}>" +
+      //                   $"({string.Join(",",@interface.GetCustomAttributes<EntityInterfaceAttribute>(false).Select(c=>c.EntityKey))}) to {type.FullName}]" });
+
+                    if (@interface.IsGenericTypeDefinition)
+                    {
+                        //var t = @interface.MakeGenericType(@interface.GetGenericArguments().Select(c =>  c.GetGenericParameterConstraints().Single()).ToArray());
+
+                        //                      File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties)}=>{string.Join(",", allPropsWithLookups)}" });
+
+                        if (@interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties.All(c => allPropsWithLookups.Contains(c)))
+                        {
+                            var genericArgs = @interface.GetGenericArguments().Select(c => GetTypeBuilderFromConstraint(manifest, c.GetGenericParameterConstraints().Single())).ToArray();
+                         //   File.AppendAllLines("test1.txt", new[] { $"{@interface.GenericTypeArguments.Length} {genericArgs.Length}" });
+
+                            var a = @interface.MakeGenericType(genericArgs);
+
+                            type.AddInterfaceImplementation(a);
+                        }
+
+                        continue;
+                    }
 
                     type.AddInterfaceImplementation(@interface);
 
@@ -1571,6 +1615,28 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
             return (_type, acceptableBasesClass);
+        }
+
+        private static string GetSchemaName(JProperty attributeDefinition, bool trimToNavigationName=false)
+        {
+            var name= attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
+            if (trimToNavigationName)
+                return name.Substring(0,name.Length-2);
+            return name;
+        }
+
+        private TypeBuilder GetTypeBuilderFromConstraint(JToken manifest, Type @interface)
+        {
+            var entityKey = @interface.GetCustomAttribute<EntityInterfaceAttribute>().EntityKey;
+            var schemaName = manifest.SelectToken($"$.entities['{entityKey}'].schemaName").ToString();
+            try
+            {
+                return options.EntityDTOsBuilders[schemaName];
+            }catch(Exception ex)
+            {
+                throw new KeyNotFoundException($"Could not find  {schemaName} in {string.Join(",", options.EntityDTOsBuilders.Keys)}", ex);
+            }
+
         }
 
         private void CreateJsonSerializationAttribute(JProperty attributeDefinition, PropertyBuilder attProp, string name = null)
