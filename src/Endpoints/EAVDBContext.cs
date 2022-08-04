@@ -131,7 +131,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             }
         }
 
-        internal EAVResource CreateEAVResource(string entityName)
+        public EAVResource CreateEAVResource(string entityName)
         {
             var type = Context.GetEntityType(entityName);
             return new EAVResource

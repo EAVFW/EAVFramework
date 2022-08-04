@@ -9,17 +9,37 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
 {
     [TestClass]
     public class ManifestTests : BaseManifestTests
     {
-      
 
-       
 
-    
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/MinimapSpec.json", "specs")]
+        public async Task TestMinimalSpec()
+        {
+            //Arrange
+            var manifest =JToken.Parse( File.ReadAllText(@"specs\MinimapSpec.json"));
+
+
+            //Act
+            var sql = RunDBWithSchema("manifest_migrations", manifest);
+
+
+            //Assure
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel.sql");
+
+            Assert.AreEqual(expectedSQL, sql);
+
+        }
+
+
+
         [TestMethod]
         [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel.sql","specs")]
         public async Task CarsAndTrucksModelTest()

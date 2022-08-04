@@ -1487,7 +1487,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         {
             var allProps = entityDefinition.SelectToken("$.attributes").OfType<JProperty>().Select(attributeDefinition => attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "")).ToArray();
 
-            var allPropsWithLookups = entityDefinition.SelectToken("$.attributes").OfType<JProperty>()
+            var allPropsWithLookups = GetAllAttributes(manifest,entityDefinition)
                 .SelectMany(attributeDefinition => attributeDefinition.Value.SelectToken("$.type.type")?.ToString().ToLower() == "lookup" ?
                  new[] { GetSchemaName(attributeDefinition), GetSchemaName(attributeDefinition, true) } : new []{ GetSchemaName(attributeDefinition)} ).ToArray();
 
@@ -1563,7 +1563,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     {
                         //var t = @interface.MakeGenericType(@interface.GetGenericArguments().Select(c =>  c.GetGenericParameterConstraints().Single()).ToArray());
 
-                        //                      File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties)}=>{string.Join(",", allPropsWithLookups)}" });
+                                   //        File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties)}=>{string.Join(",", allPropsWithLookups)}" });
 
                         if (@interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties.All(c => allPropsWithLookups.Contains(c)))
                         {
@@ -1615,6 +1615,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
             return (_type, acceptableBasesClass);
+        }
+
+        private IEnumerable<JProperty> GetAllAttributes(JToken manifest, JObject entityDefinition)
+        {
+            if(entityDefinition.SelectToken("$.TPT") != null)
+            {
+                return manifest.SelectToken($"$.entities['{entityDefinition.SelectToken("$.TPT")}'].attributes")
+                    .OfType<JProperty>().Concat(entityDefinition.SelectToken("$.attributes").OfType<JProperty>());
+            }
+            
+            return entityDefinition.SelectToken("$.attributes").OfType<JProperty>();
         }
 
         private static string GetSchemaName(JProperty attributeDefinition, bool trimToNavigationName=false)
