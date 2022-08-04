@@ -1555,16 +1555,18 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 //}
                 foreach (var @interface in interfaces)
                 {
-  //                  File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName}[{@interface.ContainsGenericParameters},{@interface.IsGenericTypeDefinition},{@interface.IsGenericType}]" +
-    //                     $"<{(@interface.IsGenericTypeDefinition? string.Join(",",@interface.GetGenericArguments().Select(c=>$"{c.Name}:{string.Join(",",c.GetGenericParameterConstraints().Select(ccc=>ccc.FullName))}")):"")}>" +
-      //                   $"({string.Join(",",@interface.GetCustomAttributes<EntityInterfaceAttribute>(false).Select(c=>c.EntityKey))}) to {type.FullName}]" });
+                    //                  File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName}[{@interface.ContainsGenericParameters},{@interface.IsGenericTypeDefinition},{@interface.IsGenericType}]" +
+                    //                     $"<{(@interface.IsGenericTypeDefinition? string.Join(",",@interface.GetGenericArguments().Select(c=>$"{c.Name}:{string.Join(",",c.GetGenericParameterConstraints().Select(ccc=>ccc.FullName))}")):"")}>" +
+                    //                   $"({string.Join(",",@interface.GetCustomAttributes<EntityInterfaceAttribute>(false).Select(c=>c.EntityKey))}) to {type.FullName}]" });
+
+                        //   File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties)}=>{string.Join(",", allPropsWithLookups)}" });
+
 
                     if (@interface.IsGenericTypeDefinition)
                     {
                         //var t = @interface.MakeGenericType(@interface.GetGenericArguments().Select(c =>  c.GetGenericParameterConstraints().Single()).ToArray());
 
-                                   //        File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties)}=>{string.Join(",", allPropsWithLookups)}" });
-
+                                  
                         if (@interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties.All(c => allPropsWithLookups.Contains(c)))
                         {
                             var genericArgs = @interface.GetGenericArguments().Select(c => GetTypeBuilderFromConstraint(manifest, c.GetGenericParameterConstraints().Single())).ToArray();
@@ -1578,7 +1580,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                         continue;
                     }
 
-                    type.AddInterfaceImplementation(@interface);
+                    if (@interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties.All(c => allPropsWithLookups.Contains(c)))
+                    {
+                      //  File.AppendAllLines("test1.txt", new[] { "adding " + @interface.Name + " to " + type.Name});
+                        type.AddInterfaceImplementation(@interface);
+                    }
 
 
                 }
