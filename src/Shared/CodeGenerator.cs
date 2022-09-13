@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -37,7 +38,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public string AttributeLogicalName { get; set; }
 
         public int MaxLength { get; set; }
-
+        public string AttributeHash { get; set; }
+        public string AttributeTypeHash { get; set; }
         internal IDictionary<string,object> GetChanges(EntityMigrationColumnsAttribute value)
         {
             var changes = new Dictionary<string, object>();
@@ -46,6 +48,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 changes["maxlength"] = value.MaxLength;
 
             return changes;
+        }
+
+        internal bool HasAttributeTypeChanged(EntityMigrationColumnsAttribute value)
+        {
+            return this.AttributeTypeHash != value.AttributeTypeHash;
+        }
+        internal bool HasAttributeChanged(EntityMigrationColumnsAttribute value)
+        {
+            return this.AttributeHash != value.AttributeHash;
         }
     }
 
@@ -171,6 +182,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         public bool RequiredSupport { get; set; } = true;
         public MethodInfo MigrationsBuilderAddForeignKey { get; set; }
         public MethodInfo MigrationsBuilderAlterColumn { get; set; }
+        public MethodInfo MigrationsBuilderDropForeignKey { get;  set; }
     }
 
     public interface ICodeGenerator
@@ -666,90 +678,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                             UpMethodIL.Emit(OpCodes.Callvirt, method);
                             UpMethodIL.Emit(OpCodes.Pop);
 
-
-
-
+                             
                             if (attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup")
                             {
-
-                                //
-                                // Summary:
-                                //     Builds an Microsoft.EntityFrameworkCore.Migrations.Operations.AddForeignKeyOperation
-                                //     to add a new foreign key to a table.
-                                //
-                                // Parameters:
-                                //   name:
-                                //     The foreign key constraint name.
-                                //
-                                //   table:
-                                //     The table that contains the foreign key.
-                                //
-                                //   column:
-                                //     The column that is constrained.
-                                //
-                                //   principalTable:
-                                //     The table to which the foreign key is constrained.
-                                //
-                                //   schema:
-                                //     The schema that contains the table, or null if the default schema should be used.
-                                //
-                                //   principalSchema:
-                                //     The schema that contains principal table, or null if the default schema should
-                                //     be used.
-                                //
-                                //   principalColumn:
-                                //     The column to which the foreign key column is constrained, or null to constrain
-                                //     to the primary key column.
-                                //
-                                //   onUpdate:
-                                //     The action to take on updates.
-                                //
-                                //   onDelete:
-                                //     The action to take on deletes.
-                                //
-                                // Returns:
-                                //     A builder to allow annotations to be added to the operation.
-
-
-
-                                UpMethodIL.Emit(OpCodes.Ldarg_1);
-
-                                var entityName = attributeDefinition.Value.SelectToken("$.type.referenceType");
-
-                                var principalSchema = manifest.SelectToken($"$.entities['{entityName}'].schema")?.ToString() ?? options.Schema ?? "dbo";
-                                var principalTable = manifest.SelectToken($"$.entities['{entityName}'].pluralName").ToString().Replace(" ", "");
-                                var principalColumn = manifest.SelectToken($"$.entities['{entityName}'].attributes").OfType<JProperty>()
-                                    .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false).Name.Replace(" ", "");
-
-                                var onDeleteCascade = attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType) ?? options.ReferentialActionNoAction;
-                                var onUpdateCascade = attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType) ?? options.ReferentialActionNoAction;
-
-                                foreach (var arg1 in options.MigrationsBuilderAddForeignKey.GetParameters())
-                                {
-                                    var argName = arg1.Name.ToLower();
-
-                                    switch (argName)
-                                    {
-                                        case "table" when !string.IsNullOrEmpty(EntityCollectionSchemaName): UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); break;
-                                        case "schema" when !string.IsNullOrEmpty(schema): UpMethodIL.Emit(OpCodes.Ldstr, schema); break;
-                                        case "name": UpMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType")}'].pluralName")}_{attributeDefinition.Value.SelectToken("$.schemaName")}".Replace(" ", "")); break;
-                                        case "column": UpMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
-                                        case "principalschema": UpMethodIL.Emit(OpCodes.Ldstr, principalSchema); break;
-                                        case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable); break;
-                                        case "principalcolumn": UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
-                                        case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onUpdateCascade); break;
-                                        case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onDeleteCascade); break;
-
-                                        default:
-
-                                            UpMethodIL.Emit(OpCodes.Ldnull);
-                                            break;
-                                    }
-                                }
-
-
-                                UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderAddForeignKey);
-                                UpMethodIL.Emit(OpCodes.Pop);
+                                AddForeignKey(manifest, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
 
                                 lookupPropertyBuilder.CreateLoopupIndex(options, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
                             }
@@ -774,11 +706,39 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                 UpMethodIL.Emit(OpCodes.Callvirt, method);
                                 UpMethodIL.Emit(OpCodes.Pop);
 
-                              
-                                //SOMETHING CHANGED
-                            
-                            
+                                
+                                    //SOMETHING CHANGED
+
+
+                                
                             }
+
+                            if (test[test.Length - 2].HasAttributeTypeChanged( test[test.Length - 1]) && attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup")
+                            {
+                                UpMethodIL.Emit(OpCodes.Ldarg_1);
+                                var tableName = EntityCollectionSchemaName;
+                                foreach (var arg1 in options.MigrationsBuilderDropForeignKey.GetParameters())
+                                {
+                                    var argName = arg1.Name;
+                                    if (argName == "name")
+                                        argName = "columnName";
+
+                                    switch (argName)
+                                    {
+                                        case "table" when !string.IsNullOrEmpty(tableName): UpMethodIL.Emit(OpCodes.Ldstr, tableName); break;
+                                        case "schema" when !string.IsNullOrEmpty(schema): EmitNullable(UpMethodIL, () => UpMethodIL.Emit(OpCodes.Ldstr, schema), arg1); break;
+                                        case "columnName": UpMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
+                                    }
+                                }
+
+
+                                UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderDropForeignKey);
+                                UpMethodIL.Emit(OpCodes.Pop);
+
+                                AddForeignKey(manifest, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
+
+                            }
+
                         }
                     }
                 }
@@ -825,7 +785,87 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             }
         }
 
+        private void AddForeignKey(JToken manifest, string EntityCollectionSchemaName, string schema, ILGenerator UpMethodIL, JProperty attributeDefinition)
+        {
+            //
+            // Summary:
+            //     Builds an Microsoft.EntityFrameworkCore.Migrations.Operations.AddForeignKeyOperation
+            //     to add a new foreign key to a table.
+            //
+            // Parameters:
+            //   name:
+            //     The foreign key constraint name.
+            //
+            //   table:
+            //     The table that contains the foreign key.
+            //
+            //   column:
+            //     The column that is constrained.
+            //
+            //   principalTable:
+            //     The table to which the foreign key is constrained.
+            //
+            //   schema:
+            //     The schema that contains the table, or null if the default schema should be used.
+            //
+            //   principalSchema:
+            //     The schema that contains principal table, or null if the default schema should
+            //     be used.
+            //
+            //   principalColumn:
+            //     The column to which the foreign key column is constrained, or null to constrain
+            //     to the primary key column.
+            //
+            //   onUpdate:
+            //     The action to take on updates.
+            //
+            //   onDelete:
+            //     The action to take on deletes.
+            //
+            // Returns:
+            //     A builder to allow annotations to be added to the operation.
 
+
+
+            UpMethodIL.Emit(OpCodes.Ldarg_1);
+
+            var entityName = attributeDefinition.Value.SelectToken("$.type.referenceType");
+
+            var principalSchema = manifest.SelectToken($"$.entities['{entityName}'].schema")?.ToString() ?? options.Schema ?? "dbo";
+            var principalTable = manifest.SelectToken($"$.entities['{entityName}'].pluralName").ToString().Replace(" ", "");
+            var principalColumn = manifest.SelectToken($"$.entities['{entityName}'].attributes").OfType<JProperty>()
+                .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false).Name.Replace(" ", "");
+
+            var onDeleteCascade = attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType) ?? options.ReferentialActionNoAction;
+            var onUpdateCascade = attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType) ?? options.ReferentialActionNoAction;
+
+            foreach (var arg1 in options.MigrationsBuilderAddForeignKey.GetParameters())
+            {
+                var argName = arg1.Name.ToLower();
+
+                switch (argName)
+                {
+                    case "table" when !string.IsNullOrEmpty(EntityCollectionSchemaName): UpMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); break;
+                    case "schema" when !string.IsNullOrEmpty(schema): UpMethodIL.Emit(OpCodes.Ldstr, schema); break;
+                    case "name": UpMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType")}'].pluralName")}_{attributeDefinition.Value.SelectToken("$.schemaName")}".Replace(" ", "")); break;
+                    case "column": UpMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
+                    case "principalschema": UpMethodIL.Emit(OpCodes.Ldstr, principalSchema); break;
+                    case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable); break;
+                    case "principalcolumn": UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
+                    case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onUpdateCascade); break;
+                    case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onDeleteCascade); break;
+
+                    default:
+
+                        UpMethodIL.Emit(OpCodes.Ldnull);
+                        break;
+                }
+            }
+
+
+            UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderAddForeignKey);
+            UpMethodIL.Emit(OpCodes.Pop);
+        }
 
         public IDynamicTable[] GetTables(JToken manifest, ModuleBuilder builder)
         {
@@ -1772,12 +1812,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     var attributeProperties = columparams.Keys.Concat(new[] {
                             typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.LogicalName)),
                             typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.MigrationName)),
-                            typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.AttributeLogicalName))
+                            typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.AttributeLogicalName)),
+                            typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.AttributeHash)),
+                             typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.AttributeTypeHash))
                         }).ToArray();
                     var attributesValues = columparams.Values.Concat(new[] {
                                 entityDefinition.SelectToken("$.logicalName").ToString(),
                                 options.migrationName,
-                                attributeLogicalName }).ToArray();
+                                attributeLogicalName,
+                                HashExtensions.Sha256( attributeDefinition.Value.ToString()),
+                                HashExtensions.Sha256( attributeDefinition.Value.SelectToken("$.type")?.ToString())
+                    }).ToArray();
 
                     CustomAttributeBuilder EntityMigrationColumnsAttributeBuilder = new CustomAttributeBuilder(typeof(EntityMigrationColumnsAttribute)
                         .GetConstructor(new Type[] { }), 

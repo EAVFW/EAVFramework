@@ -10,4 +10,8 @@ namespace Microsoft.EntityFrameworkCore.Migrations.Operations
     {
 
     }
+    public class DropForeignKeyOperation
+    {
+
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using DotNetDevOps.Extensions.EAVFramework;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Newtonsoft.Json.Linq;
 using System;
@@ -31,10 +32,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     {
 
     }
-    public class AddColumnOperation
-    {
-
-    }
+ 
     public class AlterOperationBuilder<T>
     {
 
@@ -181,6 +179,17 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             bool? oldStored = null)
          => throw new NotImplementedException();
 
+        /// <summary>
+        ///     Builds an <see cref="DropForeignKeyOperation" /> to drop an existing foreign key constraint.
+        /// </summary>
+        /// <param name="name"> The name of the foreign key constraint to drop. </param>
+        /// <param name="table"> The table that contains the foreign key. </param>
+        /// <param name="schema"> The schema that contains the table, or <see langword="null" /> to use the default schema. </param>
+        /// <returns> A builder to allow annotations to be added to the operation. </returns>
+        public virtual OperationBuilder<DropForeignKeyOperation> DropForeignKey(
+            [NotNull] string name,
+            [NotNull] string table,
+            [CanBeNull] string schema = null) => throw new NotImplementedException();
 
 
         public virtual OperationBuilder<DropTableOperation> DropTable([NotNullAttribute] string name, [CanBeNullAttribute] string schema = null) => throw new NotImplementedException();

@@ -286,18 +286,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
                 }
             });
 
-            //AppendAttribute(manifestA, "Car", "GarageToPark", new
-            //{
-            //    schemaName = "GarageToPark",
-            //    logicalName = "GarageToPark",
-            //    type = new
-            //    {
-            //        type = "lookup",
-            //        referenceType = "Garage"
-            //    },
-
-            //});
-
+         
 
             AppendAttribute(manifestB, "Car", "GarageToPark", new
             {
@@ -314,6 +303,79 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup.sql");
+
+            Assert.AreEqual(expectedSQL, sql);
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddLookup_WithCascade.sql", "specs")]
+        public async Task CarsAndTrucksModel_AddLookupWithCascade()
+        {
+            var manifestA = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Garage = CreateCustomEntity("Garage", "Garages")
+                }
+            });
+
+            var manifestB = JToken.FromObject(new
+            {
+                version = "1.0.1",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Garage = CreateCustomEntity("Garage", "Garages")
+                }
+            });
+
+
+
+            AppendAttribute(manifestB, "Car", "GarageToPark", new
+            {
+                schemaName = "GarageToParkId",
+                logicalName = "GarageToParkId",
+                type = new
+                {
+                    type = "lookup",
+                    referenceType = "Garage"
+                },
+
+            });
+
+            var manifestC = JToken.FromObject(new
+            {
+                version = "1.0.10",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Garage = CreateCustomEntity("Garage", "Garages")
+                }
+            });
+
+
+
+            AppendAttribute(manifestC, "Car", "GarageToPark", new
+            {
+                schemaName = "GarageToParkId",
+                logicalName = "GarageToParkId",
+                type = new
+                {
+                    type = "lookup",
+                    referenceType = "Garage",
+                    cascade = new
+                    {
+                        delete = "cascade"
+                    }
+                },
+               
+            });
+
+            var sql = RunDBWithSchema("manifest_migrations", manifestC,manifestB, manifestA);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup_WithCascade.sql");
 
             Assert.AreEqual(expectedSQL, sql);
         }

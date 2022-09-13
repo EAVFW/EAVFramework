@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\Constants.cs" Link="Constants.cs" />
+    <Compile Include="..\..\src\Extensions\HashExtensions.cs" Link="HashExtensions.cs" />
+    <Compile Include="..\..\src\Extensions\StringExtensions.cs" Link="StringExtensions.cs" />
     <Compile Include="..\..\src\Shared\CodeGenerator.cs" Link="CodeGenerator.cs" />
     <Compile Include="..\..\src\Shared\IDynamicTable.cs" Link="IDynamicTable.cs" />
     <Compile Include="..\..\src\Shared\IEntityTypeConfiguration.cs" Link="IEntityTypeConfiguration.cs" />
