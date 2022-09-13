@@ -17,6 +17,7 @@ BEGIN
     CREATE TABLE [tests].[Cars] (
         [Id] uniqueidentifier NOT NULL,
         [Name] nvarchar(255) NULL,
+        [FullName] nvarchar(100) NULL,
         CONSTRAINT [PK_Cars] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
@@ -40,6 +41,18 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
+    DECLARE @var0 sysname;
+    SELECT @var0 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[tests].[Cars]') AND [c].[name] = N'FullName');
+    IF @var0 IS NOT NULL EXEC(N'ALTER TABLE [tests].[Cars] DROP CONSTRAINT [' + @var0 + '];');
+    ALTER TABLE [tests].[Cars] ALTER COLUMN [FullName] nvarchar(255) NULL;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
+BEGIN
     CREATE TABLE [tests].[Trucks] (
         [Id] uniqueidentifier NOT NULL,
         [Name] nvarchar(255) NULL,
@@ -55,6 +68,31 @@ IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [M
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
     VALUES (N'tests_1_0_1', N'5.0.15');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_10')
+BEGIN
+    DECLARE @var1 sysname;
+    SELECT @var1 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[tests].[Cars]') AND [c].[name] = N'FullName');
+    IF @var1 IS NOT NULL EXEC(N'ALTER TABLE [tests].[Cars] DROP CONSTRAINT [' + @var1 + '];');
+    ALTER TABLE [tests].[Cars] ALTER COLUMN [FullName] nvarchar(555) NULL;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_10')
+BEGIN
+    INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'tests_1_0_10', N'5.0.15');
 END;
 GO
 

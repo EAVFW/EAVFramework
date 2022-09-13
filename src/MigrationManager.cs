@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using PropertyBuilder = System.Reflection.Emit.PropertyBuilder;
+using static DotNetDevOps.Extensions.EAVFramework.Shared.TypeHelper;
 
 namespace DotNetDevOps.Extensions.EAVFramework
 {
@@ -228,6 +229,8 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         MigrationBuilderDropIndex = Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
                         MigrationsBuilderAddColumn = Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)), "MigrationsBuilderAddColumn"),
                         MigrationsBuilderAddForeignKey =Resolve(()=> typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey),new Type[] {typeof(string), typeof( string ), typeof( string) , typeof(string) , typeof(string), typeof( string), typeof(string),typeof( ReferentialAction) , typeof(ReferentialAction )}), "MigrationsBuilderAddForeignKey"),
+                        MigrationsBuilderAlterColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AlterColumn)), "MigrationsBuilderAlterColumn"),
+
 
                         ColumnsBuilderType = typeof(ColumnsBuilder),
                         CreateTableBuilderType = typeof(CreateTableBuilder<>),
@@ -304,16 +307,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
             })).Value;
         }
 
-        private T Resolve<T>(Func<T> p, string onError)
-        {
-            try
-            {
-                return p();
-            }catch(Exception ex)
-            {
-                throw new Exception("Failed to get option: "+onError, ex);
-            }
-        }
+         
 
         public (TypeInfo,Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options)
         {

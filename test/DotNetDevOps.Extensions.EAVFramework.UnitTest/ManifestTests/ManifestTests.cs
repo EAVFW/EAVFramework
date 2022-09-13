@@ -19,6 +19,28 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
 
 
         [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/CascadingTest.manifest.json", "specs")]
+        [DeploymentItem(@"ManifestTests/specs/CascadingTest.sql", "specs")]
+        public async Task TestCascading()
+        {
+            //Arrange
+            var manifest = JToken.Parse(File.ReadAllText(@"specs\CascadingTest.manifest.json"));
+
+
+            //Act
+            var sql = RunDBWithSchema("manifest_migrations", manifest);
+
+
+            //Assure
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CascadingTest.sql");
+
+            Assert.AreEqual(expectedSQL, sql);
+
+        }
+
+        [Ignore]
+        [TestMethod]
         [DeploymentItem(@"ManifestTests/specs/MinimapSpec.json", "specs")]
         public async Task TestMinimalSpec()
         {
@@ -79,8 +101,55 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
                 version = "1.0.0",
                 entities = new
                 {
-                    Car = CreateCustomEntity("Car", "Cars")
+                    Car = CreateCustomEntity("Car", "Cars"),
                 }
+            });
+
+           
+
+            var manifestB = JToken.FromObject(new
+            {
+                version = "1.0.1",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Truck = CreateCustomEntity("Truck", "Trucks")
+                }
+            });
+ 
+
+            var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddEntity.sql");
+
+            Assert.AreEqual(expectedSQL, sql);
+        }
+
+
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_ChangePropertyTextLength.sql", "specs")]
+        public async Task CarsAndTrucksModel_ChangePropertyTextLength()
+        {
+            var manifestA = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifestA, "Car", "FullName", new
+            {
+                schemaName = "FullName",
+                logicalName = "fullname",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+
+                },
+
             });
 
             var manifestB = JToken.FromObject(new
@@ -93,9 +162,102 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
                 }
             });
 
+            AppendAttribute(manifestB, "Car", "FullName", new
+            {
+                schemaName = "FullName",
+                logicalName = "fullname",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 255
+
+                },
+
+            });
+
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddEntity.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_ChangePropertyTextLength.sql");
+
+            Assert.AreEqual(expectedSQL, sql);
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql", "specs")]
+        public async Task CarsAndTrucksModel_ChangePropertyTextLengthTwice()
+        {
+            var manifestA = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifestA, "Car", "FullName", new
+            {
+                schemaName = "FullName",
+                logicalName = "fullname",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+
+                },
+
+            });
+
+            var manifestB = JToken.FromObject(new
+            {
+                version = "1.0.1",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Truck = CreateCustomEntity("Truck", "Trucks")
+                }
+            });
+
+            AppendAttribute(manifestB, "Car", "FullName", new
+            {
+                schemaName = "FullName",
+                logicalName = "fullname",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 255
+
+                },
+
+            });
+
+
+            var manifestC = JToken.FromObject(new
+            {
+                version = "1.0.10",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                    Truck = CreateCustomEntity("Truck", "Trucks")
+                }
+            });
+
+            AppendAttribute(manifestC, "Car", "FullName", new
+            {
+                schemaName = "FullName",
+                logicalName = "fullname",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 555
+
+                },
+
+            });
+
+            var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
 
             Assert.AreEqual(expectedSQL, sql);
         }
