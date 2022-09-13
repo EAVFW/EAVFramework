@@ -105,6 +105,20 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                 semaphoreSlim.Release();
             }
         }
+        public async ValueTask<T> ExecuteAsync<T>(ValueTask<T> query, CancellationToken cancellationToken = default)
+        {
+
+            try
+            {
+                await semaphoreSlim.WaitAsync(cancellationToken);
+
+                return await query;
+            }
+            finally
+            {
+                semaphoreSlim.Release();
+            }
+        }
 
         public ValueTask<T> FindAsync<T>(params object[] keys)
             where T : DynamicEntity
