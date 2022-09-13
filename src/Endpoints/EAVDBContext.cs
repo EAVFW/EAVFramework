@@ -22,6 +22,7 @@ using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System.Collections;
 using System.Diagnostics;
+using System.Threading;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -88,7 +89,30 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         private readonly IPluginScheduler<TContext> pluginScheduler;
 
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
+        private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+        
+        public async Task<T> ExecuteAsync<T>(Task<T> query, CancellationToken cancellationToken = default)
+        {
+            
+            try
+            {
+                await semaphoreSlim.WaitAsync(cancellationToken);
+                
+                return await query;
+            }
+            finally
+            {
+                semaphoreSlim.Release();
+            }
+        }
 
+        public ValueTask<T> FindAsync<T>(params object[] keys)
+            where T : DynamicEntity
+        {
+            return this.Context.FindAsync<T>(keys);
+        }
+
+         
 
         public EAVDBContext(TContext context, PluginsAccesser<TContext> plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
