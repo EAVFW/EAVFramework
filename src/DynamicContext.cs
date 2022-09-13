@@ -672,7 +672,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
             var type = manager.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-            return this.Add(record);
+            var a= this.Attach(record);
+            a.State = EntityState.Added;
+            return a;
 
         }
 
