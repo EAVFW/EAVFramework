@@ -91,28 +91,28 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
         
-        public async Task<T> ExecuteAsync<T>(Task<T> query, CancellationToken cancellationToken = default)
+        public async Task<T> ExecuteAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
         {
             
             try
             {
                 await semaphoreSlim.WaitAsync(cancellationToken);
                 
-                return await query;
+                return await query();
             }
             finally
             {
                 semaphoreSlim.Release();
             }
         }
-        public async ValueTask<T> ExecuteAsync<T>(ValueTask<T> query, CancellationToken cancellationToken = default)
+        public async ValueTask<T> ExecuteAsync<T>(Func<ValueTask<T>> query, CancellationToken cancellationToken = default)
         {
 
             try
             {
                 await semaphoreSlim.WaitAsync(cancellationToken);
 
-                return await query;
+                return await query();
             }
             finally
             {
