@@ -78,7 +78,7 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_10')
 BEGIN
-    ALTER TABLE [tests].[Cars] DROP CONSTRAINT [GarageToParkId];
+    ALTER TABLE [tests].[Cars] DROP CONSTRAINT [FK_Cars_Garages_GarageToParkId];
 END;
 GO
 

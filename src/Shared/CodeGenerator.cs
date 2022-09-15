@@ -459,27 +459,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             {
 
                 var (columnsCLRType, columnsctor, members) = CreateColumnsType(manifest, EntitySchameName, EntityCollectionSchemaName, entityDefinition.Value as JObject, builder);
-
-
-                //var (nameBuilder, namefield) = CreateProperty(entityTypeBuilder, nameof(IDynamicTable<>.Name), typeof(string), 
-                //    methodAttributes: MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual);
-                //var (schemaBuilder, schemaField) = CreateProperty(entityTypeBuilder, nameof(IDynamicTable<>.Schema), typeof(string),
-                //    methodAttributes: MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual);
-
-                //         ConstructorBuilder entityTypeCtorBuilder =
-                //entityTypeBuilder.DefineConstructor(MethodAttributes.Public,
-                //                   CallingConventions.Standard, Type.EmptyTypes);
-                //         // Generate IL for the method. The constructor stores its argument in the private field.
-                //         ILGenerator entityTypeCtorBuilderIL = entityTypeCtorBuilder.GetILGenerator();
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Ldarg_0);
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Ldstr, entity.Name);
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Stfld, namefield);
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Ldarg_0);
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Ldstr, "dbo");
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Stfld, schemaField);
-
-                //         entityTypeCtorBuilderIL.Emit(OpCodes.Ret);
-
+                 
 
 
 
@@ -715,23 +695,23 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
                             if (test[test.Length - 2].HasAttributeTypeChanged( test[test.Length - 1]) && attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup")
                             {
+                            
                                 UpMethodIL.Emit(OpCodes.Ldarg_1);
                                 var tableName = EntityCollectionSchemaName;
                                 foreach (var arg1 in options.MigrationsBuilderDropForeignKey.GetParameters())
                                 {
                                     var argName = arg1.Name;
-                                    if (argName == "name")
-                                        argName = "columnName";
+                                    
 
                                     switch (argName)
                                     {
                                         case "table" when !string.IsNullOrEmpty(tableName): UpMethodIL.Emit(OpCodes.Ldstr, tableName); break;
                                         case "schema" when !string.IsNullOrEmpty(schema): EmitNullable(UpMethodIL, () => UpMethodIL.Emit(OpCodes.Ldstr, schema), arg1); break;
-                                        case "columnName": UpMethodIL.Emit(OpCodes.Ldstr, attributeDefinition.Value.SelectToken("$.schemaName").ToString()); break;
+                                        case "name": UpMethodIL.Emit(OpCodes.Ldstr, $"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType")}'].pluralName")}_{attributeDefinition.Value.SelectToken("$.schemaName")}".Replace(" ", "")); break;
                                     }
                                 }
 
-
+                               
                                 UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderDropForeignKey);
                                 UpMethodIL.Emit(OpCodes.Pop);
 
