@@ -308,8 +308,20 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                     }
                     else if(prop.Value.Type == JTokenType.Null)
                     {
-                        method.SetValue(entity.Entity, serializer.Deserialize(prop.Value.CreateReader(), method.PropertyType));
-                        entity.Property(method.Name).IsModified=true;
+                        if (method.PropertyType.IsGenericType && method.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                        {
+                            var collectionElementType = method.PropertyType.GetGenericArguments().First();
+                            IList existingCollection = Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType)) as IList;
+
+                            method.SetValue(entity.Entity, existingCollection);
+                            entity.Property(method.Name).IsModified = true;
+                        }
+                        else
+                        {
+
+                            method.SetValue(entity.Entity, serializer.Deserialize(prop.Value.CreateReader(), method.PropertyType));
+                            entity.Property(method.Name).IsModified = true;
+                        }
                     }
                     else
                     {
