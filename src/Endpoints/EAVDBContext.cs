@@ -314,7 +314,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
                             IList existingCollection = Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType)) as IList;
 
                             method.SetValue(entity.Entity, existingCollection);
-                            entity.Property(method.Name).IsModified = true;
+                            //entity.Property(method.Name).IsModified = true;
                         }
                         else
                         {
