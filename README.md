@@ -1,7 +1,11 @@
 
-# DotNetDevOps Extensions for EAV Modelling
+# EAVFrameowrk
 
-This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
+EAVFrameowrk is a framework for dynamic data modelling from sepcification. The specification is a json configuration file that then in memory or by code generation will generalte model classes for EF Core. 
+
+Allowing you to create dynamic data bases at run time or code time from configuration rathan code. 
+
+We typically refer to run time models as Dynamic Models, and statically generalted code for Static Models. We use this for form generators and such where a dynamic data model is needed for SQL server rather than som document store.
 
 
 # EAVFramework.SourceGenerator
