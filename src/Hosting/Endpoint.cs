@@ -183,7 +183,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
     //    }
     //}
 
-    public class Endpoint
+    public class Endpoint<TContext> where TContext : DynamicContext
     {
         public Endpoint(string name, string pattern, IEnumerable<string> methods, Type handlerType)
         {

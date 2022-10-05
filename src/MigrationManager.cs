@@ -211,6 +211,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                     var generator = new CodeGenerator(new CodeGeneratorOptions
                     {
                         DTOAssembly = options.DTOAssembly,
+                      
                         GenerateDTO = fromMigration ? false : true,
                         PartOfMigration = fromMigration,
                         SkipValidateSchemaNameForRemoteTypes= this.options.Value.SkipValidateSchemaNameForRemoteTypes,
@@ -258,7 +259,7 @@ namespace DotNetDevOps.Extensions.EAVFramework
                         // EntityBaseClass = options.DTOBaseClass ?? typeof(DynamicEntity),
                         // BaseClassProperties = (options.DTOBaseClass ?? typeof(DynamicEntity)).GetProperties().Select(p=>p.Name).ToList(),
                         DTOBaseClasses = options.DTOBaseClasses ?? Array.Empty<Type>(),
-
+                        DTOBaseInterfaces = options.DTOBaseInterfaces ?? Array.Empty<Type>(),
 
                         EntityConfigurationInterface = typeof(IEntityTypeConfiguration),
                         EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),

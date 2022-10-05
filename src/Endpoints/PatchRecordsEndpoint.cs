@@ -29,7 +29,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
 
-    internal class PatchRecordsEndpoint<TContext> : IEndpointHandler
+    internal class PatchRecordsEndpoint<TContext> : IEndpointHandler<TContext>
       where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;

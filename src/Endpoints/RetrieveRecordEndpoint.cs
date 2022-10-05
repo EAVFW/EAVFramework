@@ -8,7 +8,7 @@ using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
-    public class RetrieveRecordEndpoint<TContext> : IEndpointHandler
+    public class RetrieveRecordEndpoint<TContext> : IEndpointHandler<TContext>
       where TContext : DynamicContext
     {
         private readonly TContext _context;

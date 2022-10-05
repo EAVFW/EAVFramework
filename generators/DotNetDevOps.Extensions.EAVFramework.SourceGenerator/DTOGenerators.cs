@@ -165,7 +165,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                     // var baseType = typeof(DynamicEntity);
                     var baseTypes = new List<Type>() { typeof(DynamicEntity) };
 
-                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>();
+                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>() { ["DotNetDevOps.Extensions.EAVFramework.DynamicEntity"]=typeof(DotNetDevOps.Extensions.EAVFramework.DynamicEntity) };
 
                     // if (context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.DTOBaseClass", out var DTOBaseClass))
                     {
@@ -396,8 +396,23 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                                     var b = interfaceEntityType.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
                                     .Select((argument, i) =>
                                     {
-                                        argument.SetInterfaceConstraints(@interface.TypeParameters[i].ConstraintTypes.Select(ct => baseTypeInterfaces[ct.GetFullName()]).ToArray());
+                                        argument.SetInterfaceConstraints(@interface.TypeParameters[i].ConstraintTypes.Select(ct =>
+                                        {
+                                            try
+                                            {
+                                            return baseTypeInterfaces[ct.GetFullName()];
+
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                throw new KeyNotFoundException($"Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}", ex);
+                                            }
+
+                                        }).ToArray());
                                         return argument;
+
+                                     
+                                     
                                     }).ToArray();
                                 }
 
@@ -497,7 +512,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                         Namespace = @namespace,
                         migrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}",
                         DTOBaseClasses = baseTypes.ToArray(),
-                        DTOBaseInterfaces = baseTypeInterfaces.Values.ToArray(),
+                        DTOBaseInterfaces = baseTypeInterfaces.Values.Where(c=>c.IsInterface).ToArray(),
                         Schema = @schema,
 
 

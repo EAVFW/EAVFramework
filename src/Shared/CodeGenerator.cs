@@ -1569,59 +1569,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                                                                             | TypeAttributes.BeforeFieldInit);
 
 
-                var interfaces = options.DTOBaseInterfaces
-                .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey ||
-                (attr.EntityKey == "*")))
-                .ToList();
-                // File.AppendAllLines("test1.txt", new[] { $"Interfaces Found {interfaces.Count}|{options.DTOBaseInterfaces.Length} for " +
-                //     $"{type.FullName} : looking for {entityKey} in {string.Join(",",options.DTOBaseInterfaces.SelectMany(c=>c.GetCustomAttributes<EntityInterfaceAttribute>()).Select(c=>c.EntityKey))}]" +
-                //     $"AllProps : {string.Join(",",allProps)}" });
-
-                //                var star_interfaces = options.DTOBaseInterfaces
-                //               .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => 
-                //              attr.EntityKey == "*" ))
-                //             .ToList();
-                //foreach(var star in star_interfaces)
-                //{
-                //    File.AppendAllLines("test1.txt", new[] { $"Star Interface {star.FullName}[ {string.Join(",",star.GetProperties(BindingFlags.Public | BindingFlags.Instance| BindingFlags.NonPublic).Select(p=>p.Name))}] to {string.Join(",",allProps.Select(p=>$"{p}={star.GetProperty(p)==null}"))}]" });
-                //}
-                foreach (var @interface in interfaces)
-                {
-                    //                  File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.FullName}[{@interface.ContainsGenericParameters},{@interface.IsGenericTypeDefinition},{@interface.IsGenericType}]" +
-                    //                     $"<{(@interface.IsGenericTypeDefinition? string.Join(",",@interface.GetGenericArguments().Select(c=>$"{c.Name}:{string.Join(",",c.GetGenericParameterConstraints().Select(ccc=>ccc.FullName))}")):"")}>" +
-                    //                   $"({string.Join(",",@interface.GetCustomAttributes<EntityInterfaceAttribute>(false).Select(c=>c.EntityKey))}) to {type.FullName}]" });
-
-                        //   File.AppendAllLines("test1.txt", new[] { $"{string.Join(",", @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties)}=>{string.Join(",", allPropsWithLookups)}" });
-
-
-                    if (@interface.IsGenericTypeDefinition)
-                    {
-                        //var t = @interface.MakeGenericType(@interface.GetGenericArguments().Select(c =>  c.GetGenericParameterConstraints().Single()).ToArray());
-
-                                  
-                        if (@interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties.All(c => allPropsWithLookups.Contains(c)))
-                        {
-                            var genericArgs = @interface.GetGenericArguments().Select(c => GetTypeBuilderFromConstraint(manifest, c.GetGenericParameterConstraints().Single())).ToArray();
-                         //   File.AppendAllLines("test1.txt", new[] { $"{@interface.GenericTypeArguments.Length} {genericArgs.Length}" });
-
-                            var a = @interface.MakeGenericType(genericArgs);
-
-                            type.AddInterfaceImplementation(a);
-                        }
-
-                        continue;
-                    }
-
-                    if (@interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>().Propeties.All(c => allPropsWithLookups.Contains(c)))
-                    {
-                      //  File.AppendAllLines("test1.txt", new[] { "adding " + @interface.Name + " to " + type.Name});
-                        type.AddInterfaceImplementation(@interface);
-                    }
-
-
-                }
-
-
+                Type parent = null;
                 if (acceptableBasesClass.IsGenericTypeDefinition)
                 {
 
@@ -1636,13 +1584,74 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                     // File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
 
 
-                    type.SetParent(acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]).ToArray()));
+                    type.SetParent(parent=acceptableBasesClass.MakeGenericType(args.Select(t => t.ManifestKey == _ ? type : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]).ToArray()));
                 }
                 else
                 {
-                    type.SetParent(acceptableBasesClass);
+                    type.SetParent(parent=acceptableBasesClass);
                 }
 
+                {
+                    var interfaces = options.DTOBaseInterfaces
+                    .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == entityKey ||
+                    (attr.EntityKey == "*")))
+                    .ToList();
+
+                    foreach (var @interface in interfaces)
+                    {
+                        var properties = @interface.GetCustomAttribute<CodeGenInterfacePropertiesAttribute>()?.Propeties ?? @interface.GetProperties().Select(t => t.Name).ToArray();
+
+
+                        if (@interface.IsGenericTypeDefinition)
+                        {
+
+                            if (properties.All(c => allPropsWithLookups.Contains(c)))
+                            {
+                                var genericArgs = @interface.GetGenericArguments().Select(c => GetTypeBuilderFromConstraint(manifest, c.GetGenericParameterConstraints().Single()) ?? type).ToArray();
+
+                                var a = @interface.MakeGenericType(genericArgs);
+
+                                type.AddInterfaceImplementation(a);
+
+                                //try
+                                //{
+                                //    foreach (var ip in @interface.GetProperties())
+                                //    {
+                                //        var pp = parent;
+                                //        while (!(pp == typeof(object) || pp == null))
+                                //        {
+                                //            if (pp.GetProperties().Any(p => p.Name == ip.Name))
+                                //            {
+                                //                type.DefineMethodOverride(pp.GetProperty(ip.Name).GetMethod, ip.GetMethod);
+                                //            }
+
+                                //            pp = pp.BaseType;
+                                //        }
+
+                                //    }
+                                //}
+                                //catch (NotSupportedException)
+                                //{
+
+                                //}
+
+
+                            }
+
+                            continue;
+                        }
+
+
+                        if (properties.All(c => allPropsWithLookups.Contains(c)))
+                        {
+                            //  File.AppendAllLines("test1.txt", new[] { "adding " + @interface.Name + " to " + type.Name});
+                            type.AddInterfaceImplementation(@interface);
+                        }
+
+
+                    }
+
+                }
 
 
 
@@ -1674,8 +1683,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
             return name;
         }
 
-        private TypeBuilder GetTypeBuilderFromConstraint(JToken manifest, Type @interface)
+        private Type GetTypeBuilderFromConstraint(JToken manifest, Type @interface)
         {
+            if (@interface == typeof(DynamicEntity))
+                return typeof(DynamicEntity);
+
             var entityKey = @interface.GetCustomAttribute<EntityInterfaceAttribute>().EntityKey;
             var schemaName = manifest.SelectToken($"$.entities['{entityKey}'].schemaName").ToString();
             try
@@ -1683,7 +1695,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 return options.EntityDTOsBuilders[schemaName];
             }catch(Exception ex)
             {
-                throw new KeyNotFoundException($"Could not find  {schemaName} in {string.Join(",", options.EntityDTOsBuilders.Keys)}", ex);
+                return null;
+                throw new KeyNotFoundException($"Could not find {schemaName} in {string.Join(",", options.EntityDTOsBuilders.Keys)}", ex);
             }
 
         }
@@ -2174,10 +2187,11 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
         }
 
         public static (PropertyBuilder, FieldBuilder) CreateProperty(TypeBuilder entityTypeBuilder, string name, Type type, PropertyAttributes props = PropertyAttributes.None,
-            MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig)
+            MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Virtual)
         {
             try
             {
+             
                 var proertyBuilder = entityTypeBuilder.DefineProperty(name, props, type, Type.EmptyTypes);
 
                 FieldBuilder customerNameBldr = entityTypeBuilder.DefineField($"_{name}",
@@ -2189,7 +2203,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
 
 
 
-
+                
                 // Define the "get" accessor method for CustomerName.
                 MethodBuilder custNameGetPropMthdBldr =
                     entityTypeBuilder.DefineMethod($"get_{name}",
@@ -2221,6 +2235,24 @@ namespace DotNetDevOps.Extensions.EAVFramework.Shared
                 // their corresponding behaviors, "get" and "set" respectively.
                 proertyBuilder.SetGetMethod(custNameGetPropMthdBldr);
                 proertyBuilder.SetSetMethod(custNameSetPropMthdBldr);
+
+                foreach(var a in entityTypeBuilder.GetInterfaces().Where(n=>n.Name.Contains( "IAuditOwnerFields")))
+                {
+
+                    try
+                    {
+                        var p = a.GetGenericTypeDefinition().GetProperties().FirstOrDefault(k => k.Name == name);
+                        if (p != null)
+                        {
+                            entityTypeBuilder.DefineMethodOverride(custNameGetPropMthdBldr, p.GetMethod);
+                        }
+                    }
+                    catch (NotSupportedException)
+                    {
+
+                    }
+                     
+                }
 
                 return (proertyBuilder, customerNameBldr);
             }catch(Exception ex)

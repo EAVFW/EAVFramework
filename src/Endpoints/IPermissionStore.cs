@@ -3,15 +3,19 @@ using System.Security.Claims;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
-    public interface IPermissionStore
+    public interface IPermissionStore 
     {
         IQueryable<string> GetPermissions(ClaimsPrincipal user, EAVResource resource);
     }
-    public class DefaultPermissionStore : IPermissionStore
+    public interface IPermissionStore<TContext> where TContext : DynamicContext
+    {
+        IQueryable<string> GetPermissions(ClaimsPrincipal user, EAVResource resource);
+    }
+    public class DefaultPermissionStore<TContext> : IPermissionStore<TContext> where TContext : DynamicContext
     {
         public IQueryable<string> GetPermissions(ClaimsPrincipal user, EAVResource resource)
         {
-            throw new System.NotImplementedException();
+            return Enumerable.Empty<string>().AsQueryable();
         }
     }
 }

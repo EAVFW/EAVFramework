@@ -9,15 +9,15 @@ using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
-    internal class QueryEntityPermissionsEndpoint<TContext> : IEndpointHandler
+    internal class QueryEntityPermissionsEndpoint<TContext> : IEndpointHandler<TContext>
      where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;
-        private readonly IPermissionStore permissionStore;
+        private readonly IPermissionStore<TContext> permissionStore;
 
         public QueryEntityPermissionsEndpoint(
              EAVDBContext<TContext> context,
-            IPermissionStore permissionStore)
+            IPermissionStore<TContext> permissionStore)
         {
             this._context = context;
             this.permissionStore = permissionStore ?? throw new ArgumentNullException(nameof(permissionStore));
@@ -26,7 +26,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         {
             var routeValues = context.GetRouteData().Values;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
-            var resource = _context.CreateEAVResource(entityName);
+            var resource = _context.CreateEAVResource(entityName,context);
 
             var permissions = await permissionStore.GetPermissions(context.User, resource).ToListAsync();
 

@@ -11,7 +11,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
     /// <summary>
     /// The endpoint router
     /// </summary>
-    public interface IEndpointRouter
+    public interface IEndpointRouter<TContext> where TContext : DynamicContext
     {
         /// <summary>
         /// Proccesses a matching endpoint.
@@ -19,6 +19,6 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
         /// <param name="context">The HTTP context.</param>
         /// <param name="endpoint">The endpoint to execute</param>
         /// <returns></returns>
-        Task ProcessAsync(HttpContext httpContext, IEndpointHandler endpoint);
+        Task ProcessAsync(HttpContext httpContext, IEndpointHandler<TContext> endpoint);
     }
 }

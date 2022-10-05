@@ -7,17 +7,17 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Validation
 {
-    public class ValidateCreatePermissionPlugin : IPlugin<DynamicContext, DynamicEntity>
+    public class ValidateCreatePermissionPlugin<TContext> : IPlugin<TContext, DynamicEntity> where TContext : DynamicContext
     {
          
         private readonly IAuthorizationService _authorizationService;
 
-        public ValidateCreatePermissionPlugin(IPermissionStore permissionStore, IAuthorizationService authorizationService)
+        public ValidateCreatePermissionPlugin(IPermissionStore<TContext> permissionStore, IAuthorizationService authorizationService)
         {
         
             this._authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
-        public async Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<TContext, DynamicEntity> context)
         {
         
 
@@ -34,17 +34,17 @@ namespace DotNetDevOps.Extensions.EAVFramework.Validation
         }
     }
 
-    public class ValidateUpdatePermissionPlugin : IPlugin<DynamicContext, DynamicEntity>
+    public class ValidateUpdatePermissionPlugin<TContext> : IPlugin<TContext, DynamicEntity> where TContext:DynamicContext
     {
 
         private readonly IAuthorizationService _authorizationService;
 
-        public ValidateUpdatePermissionPlugin(IPermissionStore permissionStore, IAuthorizationService authorizationService)
+        public ValidateUpdatePermissionPlugin(IPermissionStore<TContext> permissionStore, IAuthorizationService authorizationService)
         {
 
             this._authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
-        public async Task Execute(PluginContext<DynamicContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<TContext, DynamicEntity> context)
         {
 
 

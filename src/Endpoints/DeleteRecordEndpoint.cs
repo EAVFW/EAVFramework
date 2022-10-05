@@ -15,7 +15,7 @@ using static DotNetDevOps.Extensions.EAVFramework.Constants;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
-    internal class DeleteRecordEndpoint<TContext> : IEndpointHandler
+    internal class DeleteRecordEndpoint<TContext> : IEndpointHandler<TContext>
         where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;

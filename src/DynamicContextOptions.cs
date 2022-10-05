@@ -18,5 +18,6 @@ namespace DotNetDevOps.Extensions.EAVFramework
         public bool WithODATAEntitySet { get; set; } = true;
         public bool UseOnlyExpliciteExternalDTOClases { get; set; }
         public Type[] DisabledPlugins { get; set; }
+        public Type[] DTOBaseInterfaces { get;  set; }
     }
 }

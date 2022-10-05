@@ -33,10 +33,10 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
     public static class EndpointsMapping
     {
  
-        public static void MapEAVFrameworkRoutes(this IEndpointRouteBuilder config)
+        public static void MapEAVFrameworkRoutes<TContext>(this IEndpointRouteBuilder config, bool addAuth=true) where TContext : DynamicContext
         {
             var options = config.ServiceProvider.GetService<EAVFrameworkOptions>();
-            var endpoints = config.ServiceProvider.GetService<IEnumerable<Endpoint>>();
+            var endpoints = config.ServiceProvider.GetService<IEnumerable<Endpoint<TContext>>>();
 
             //var pipeline = config.CreateApplicationBuilder()
             //   .UseMiddleware<RoutingMiddleware>()
@@ -46,8 +46,8 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
             {
                 var endpointConfig = config.MapMethods($"{options.RoutePrefix}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
                     context =>
-                        context.RequestServices.GetService<IEndpointRouter>()
-                        .ProcessAsync(context, context.RequestServices.GetService(endpoint.Handler) as IEndpointHandler))
+                        context.RequestServices.GetService<IEndpointRouter<TContext>>()
+                        .ProcessAsync(context, context.RequestServices.GetService(endpoint.Handler) as IEndpointHandler<TContext>))
                     .WithDisplayName(endpoint.Name)
                     .WithMetadata(endpoint);
                 
@@ -60,9 +60,12 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
                 //   .WithMetadata(endpoint);
             }
 
-            var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
-            
-            config.AddEasyAuth(authProps ?? new AuthenticationProperties());
+            if (addAuth)
+            {
+                var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
+
+                config.AddEasyAuth(authProps ?? new AuthenticationProperties());
+            }
         }
     }
 

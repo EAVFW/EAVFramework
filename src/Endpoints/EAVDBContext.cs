@@ -23,6 +23,8 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Diagnostics;
 using System.Threading;
+using System.Collections.ObjectModel;
+using System.Linq.Expressions;
 
 namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
 {
@@ -79,7 +81,15 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             throw new NotImplementedException();
         }
     }
-    public class EAVDBContext<TContext> where TContext : DynamicContext
+
+    public abstract class EAVDBContext 
+    {
+        public abstract Task SaveChangesAsync(ClaimsPrincipal user);
+        public abstract ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys);
+        public abstract EntityEntry Add(string entityName, JToken record);
+    }
+    public class EAVDBContext<TContext> : EAVDBContext
+        where TContext : DynamicContext
     {
         public TContext Context { get; }
 
@@ -169,13 +179,14 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             }
         }
 
-        public EAVResource CreateEAVResource(string entityName)
+        public EAVResource CreateEAVResource(string entityName, HttpContext context)
         {
             var type = Context.GetEntityType(entityName);
             return new EAVResource
             {
                 EntityType = type,
-                EntityCollectionSchemaName =  type.GetCustomAttribute<EntityAttribute>().CollectionSchemaName
+                EntityCollectionSchemaName =  type.GetCustomAttribute<EntityAttribute>().CollectionSchemaName,
+                Host =context.Request.Host
             };
         }
 
@@ -183,6 +194,16 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         {
             return this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler, onBeforeCommit);
         }
+        
+        public override async Task SaveChangesAsync(ClaimsPrincipal user)
+        {
+            var a= await this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler);
+
+
+           if(a.Errors.Any())
+            throw new Exception("Failed to save, " + String.Join(",", a.Errors.Select(c => c.Error)));
+        }
+
         static ConcurrentDictionary<string, PropertyInfo> methods = new ConcurrentDictionary<string, PropertyInfo>();
 
         public async ValueTask<EntityEntry> PatchAsync(string entityName, Guid recordId, JToken record)
@@ -487,7 +508,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             }
         }
 
-        public async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
+        public override async ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys)
         {
             var obj = await this.Context.FindAsync(entityName, keys);
             if (obj == null)
@@ -496,7 +517,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             return this.Context.Entry(obj);
         }
 
-        public EntityEntry Add(string entityName, JToken record)
+        public override EntityEntry Add(string entityName, JToken record)
         {
             return this.Context.Add(entityName, record);
         }
@@ -514,6 +535,66 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
         public DbSet<T> Set<T>() where T : DynamicEntity
         {
             return this.Context.Set<T>();
+        }
+
+       
+        public IQueryable Set(string name)
+        {
+            return this.Context.Set(this.Context.GetEntityType(name));
+        }
+        public IQueryable<TInterface> FilteredSet<TEntity,TInterface>( Expression<Func<TInterface,bool>> filter)
+            where TEntity : DynamicEntity 
+        {
+            //this.Context.GetEntityType(name)
+            return this.Context.Set<TEntity>().OfType<TInterface>().Where(filter);
+                 
+        }
+        public IQueryable<TInterface> FilteredSet<TInterface>(string name, Expression<Func<TInterface, bool>> filter)
+            
+        {
+            var type = this.Context.GetEntityType(name);
+            //            var method = this.GetType().GetMethod(nameof(FilteredSet), 2, new[] { typeof(Expression<Func<TInterface, bool>>) });
+            var method = this.GetType().GetMethods().Where(n => n.Name == nameof(FilteredSet) && n.IsGenericMethod && n.GetGenericArguments().Length == 2).FirstOrDefault();
+
+            return method.MakeGenericMethod(type, typeof(TInterface)).Invoke(this, new object[] { filter }) as IQueryable<TInterface>;
+
+
+        }
+
+        public IQueryable<T> Set<T>(string name)
+        {
+
+            return this.Context.Set(this.Context.GetEntityType(name)).Cast<T>();
+        }
+    }
+
+    public static class ExpressionExtensions
+    {
+        // Given an expression for a method that takes in a single parameter (and
+        // returns a bool), this method converts the parameter type of the parameter
+        // from TSource to TTarget.
+        public static Expression<Func<TTarget, bool>> Convert<TSource, TTarget>(
+          this Expression<Func<TSource, bool>> root)
+        {
+            var visitor = new ParameterTypeVisitor<TSource, TTarget>();
+            return (Expression<Func<TTarget, bool>>)visitor.Visit(root);
+        }
+
+        class ParameterTypeVisitor<TSource, TTarget> : ExpressionVisitor
+        {
+            private ReadOnlyCollection<ParameterExpression> _parameters;
+
+            protected override Expression VisitParameter(ParameterExpression node)
+            {
+                return _parameters?.FirstOrDefault(p => p.Name == node.Name)
+                  ?? (node.Type == typeof(TSource) ? Expression.Parameter(typeof(TTarget), node.Name) : node);
+            }
+
+            protected override Expression VisitLambda<T>(Expression<T> node)
+            {
+                _parameters = VisitAndConvert<ParameterExpression>(node.Parameters, "VisitLambda");
+                return Expression.Lambda(Visit(node.Body), _parameters);
+            }
         }
     }
 }

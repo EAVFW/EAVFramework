@@ -6,7 +6,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Hosting
     /// <summary>
     /// Endpoint handler
     /// </summary>
-    public interface IEndpointHandler
+    public interface IEndpointHandler<TContext> where TContext : DynamicContext
     {
         /// <summary>
         /// Processes the request.
