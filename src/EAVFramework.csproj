@@ -10,6 +10,7 @@
       This library adds support for dynamic data modelling and an EAV framework on top of EF Core
     </Description>
     <PackageProjectUrl>https://github.com/EAVFW/EAVFramework</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
