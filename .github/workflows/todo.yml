@@ -1,0 +1,22 @@
+﻿name: "Create issues from todo"
+
+on:
+  push:
+    branches:
+      - 'dev'
+      - 'main'
+      - 'feature/**'
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: "TODO to Issue"
+        uses: "alstr/todo-to-issue-action@v2.4"
+        id: "todo"
+        with:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_MARKER: "//"
+          LABEL: "// TODO"

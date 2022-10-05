@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework.Events
+﻿namespace EAVFramework.Events
 {
     public static class EventIds
     {

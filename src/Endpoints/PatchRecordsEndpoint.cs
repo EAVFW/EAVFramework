@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints.Results;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Hosting;
+using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -17,19 +17,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using EAVFramework.Validation;
+using static EAVFramework.Constants;
 using System.Security.Claims;
 using System.Collections;
 using System.Reflection;
-using DotNetDevOps.Extensions.EAVFramework.Shared;
+using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
 
-    internal class PatchRecordsEndpoint<TContext> : IEndpointHandler
+    internal class PatchRecordsEndpoint<TContext> : IEndpointHandler<TContext>
       where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Plugins
+namespace EAVFramework.Plugins
 {
     public enum EntityPluginExecution
     {

@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Extensions;
+﻿using EAVFramework.Extensions;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     /// <summary>
     /// Options for aspects of the user interface.

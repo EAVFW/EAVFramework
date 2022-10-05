@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     public class DefaultUpdateRecordRequirementHandler :
    AuthorizationHandler<UpdateRecordRequirement>, IAuthorizationRequirement

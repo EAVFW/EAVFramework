@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json.Linq;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     public class NumberValidator : IValidator<int>, IValidator<decimal>
     {

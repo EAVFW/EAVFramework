@@ -11,9 +11,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using EAVFramework.Extensions;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication.Passwordless
+namespace EAVFramework.Authentication.Passwordless
 {
     public class PasswordlessEasyAuthProvider : IEasyAuthProvider
     {

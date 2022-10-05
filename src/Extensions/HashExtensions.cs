@@ -1,9 +1,9 @@
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Extensions
+namespace EAVFramework.Extensions
 {
     public static class HashExtensions
     {

@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework
+﻿namespace EAVFramework
 {
     //public abstract class BaseEntity
     //{

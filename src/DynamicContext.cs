@@ -1,4 +1,4 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Shared;
+﻿using EAVFramework.Shared;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
@@ -34,20 +34,30 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
 
-    public class QueryContext
+    public class QueryContext<TContext> where TContext :  DynamicContext
     {
         public DynamicContext Context { get; set; }
         public Type Type { get; set; }
         public HttpRequest Request { get; set; }
 
-        public Dictionary<IQueryExtender, bool> SkipQueryExtenders { get; set; } = new Dictionary<IQueryExtender, bool>();
+        public Dictionary<IQueryExtender<TContext>, bool> SkipQueryExtenders { get; set; } = new Dictionary<IQueryExtender<TContext>, bool>();
     }
-    public interface IQueryExtender
+
+    //public class QueryContext : QueryContext<DynamicContext>
+    //{
+        
+    //}
+
+    //public interface IQueryExtender
+    //{
+    //    IQueryable ApplyTo(IQueryable metadataQuerySet, QueryContext context);
+    //} 
+    public interface IQueryExtender<TContext>  where TContext : DynamicContext
     {
-        IQueryable ApplyTo(IQueryable metadataQuerySet, QueryContext context);
+        IQueryable ApplyTo(IQueryable metadataQuerySet, QueryContext<TContext> context);
     }
 
     public static class TypeChanger
@@ -368,6 +378,108 @@ namespace DotNetDevOps.Extensions.EAVFramework
         }
     }
 
+    public static class DynamicContextExtensions
+    {
+        private static OdatatConverterFactory _factory = new OdatatConverterFactory();
+
+        private static object ToPoco(object item)
+        {
+            if (item == null)
+                return null;
+
+            var converter = _factory.CreateConverter(item.GetType());
+            return converter.Convert(item);
+
+
+
+        }
+
+
+        public static async Task<PageResult<object>> ExecuteHttpRequest<TContext>(this TContext context, string entityCollectionSchemaName, HttpRequest request) where TContext:DynamicContext
+        {
+            var t1 = typeof(IQueryExtender<>).MakeGenericType(typeof(TContext));
+            var t2 = typeof(IEnumerable<>).MakeGenericType(t1);
+            var queryInspectors = (request.HttpContext.RequestServices.GetService(t2) as IEnumerable).Cast<IQueryExtender<TContext>>()
+                .ToList();
+
+            context.EnsureModelCreated();
+
+            var type = context.Manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
+
+            var metadataQuerySet = context.Set(type);
+
+            var queryContext = new QueryContext<TContext>
+            {
+                Type = type,
+                Request = request,
+                SkipQueryExtenders = queryInspectors.ToDictionary(x => x, v => false),
+                Context = context
+            };
+
+
+            foreach (var queryInspector in queryInspectors.Where(q => !queryContext.SkipQueryExtenders[q]))
+                metadataQuerySet = queryInspector.ApplyTo(metadataQuerySet, queryContext).Cast(type) ?? metadataQuerySet;
+
+
+
+
+            if (request != null)
+            {
+                if (!request.Query.ContainsKey("$select"))
+                {
+                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                }
+                var odataContext = new ODataQueryContext(context.Manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
+                IODataFeature odataFeature = request.HttpContext.ODataFeature();
+                odataFeature.RoutePrefix = "/api/";
+
+                odataContext.DefaultQuerySettings.EnableFilter = true;
+                odataContext.DefaultQuerySettings.EnableExpand = true;
+                odataContext.DefaultQuerySettings.EnableSelect = true;
+                odataContext.DefaultQuerySettings.EnableCount = true;
+                odataContext.DefaultQuerySettings.EnableSkipToken = true;
+
+                var odata = new ODataQueryOptions(odataContext, request);
+
+                metadataQuerySet = odata.ApplyTo(metadataQuerySet);
+
+            }
+
+
+            var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
+            //Console.WriteLine(metadataQuerySet.ToQueryString());
+            //logger.LogTrace(metadataQuerySet.ToQueryString());
+
+
+            //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
+            //annoying that we have to serialize them ourself.
+            var resultList = new List<object>();
+
+            foreach (var item in items)
+            {
+                if (item is DynamicEntity)
+                {
+                    resultList.Add(item);
+                }
+                else
+                {
+                    var converter = _factory.CreateConverter(item.GetType());
+                    resultList.Add(converter.Convert(item));
+                }
+
+
+            }
+            var odatafeature = request.ODataFeature();
+
+            return new PageResult<object>(resultList, null, odatafeature.TotalCount);
+
+
+            // return metadataQuerySet;
+            // var setMethod=typeof(DbContext).GetMethod("Set", new Type[] { });
+            //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
+            //  return Set<Type2>();
+        }
+    }
     public class DynamicContext : DbContext, IDynamicContext
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
@@ -375,7 +487,9 @@ namespace DotNetDevOps.Extensions.EAVFramework
         private readonly ILogger logger;
 
         private const string MigrationDefaultName = "Initial";
-  
+
+        public IMigrationManager Manager  => manager;
+
         protected DynamicContext(DbContextOptions options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger logger)
           : base(options)
 
@@ -572,99 +686,11 @@ namespace DotNetDevOps.Extensions.EAVFramework
             return (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
         }
 
-        public async Task<PageResult<object>> ExecuteHttpRequest(string entityCollectionSchemaName, HttpRequest request)
-        {
-            var queryInspectors = request.HttpContext.RequestServices.GetService<IEnumerable<IQueryExtender>>().ToList();
-             
-            EnsureModelCreated();
+        
 
-            var type = manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
-
-            var metadataQuerySet = Set(type);
-
-            var queryContext = new QueryContext
-            {
-                Type = type,
-                Request = request,
-                SkipQueryExtenders = queryInspectors.ToDictionary(x => x, v => false),
-                Context = this
-            };
-
-
-            foreach (var queryInspector in queryInspectors.Where(q=>!queryContext.SkipQueryExtenders[q]))
-                metadataQuerySet = queryInspector.ApplyTo(metadataQuerySet, queryContext).Cast(type) ?? metadataQuerySet;
-
-
-
-
-            if (request != null)
-            {
-                if (!request.Query.ContainsKey("$select"))
-                {
-                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
-                }
-                var context = new ODataQueryContext(manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
-                IODataFeature odataFeature = request.HttpContext.ODataFeature();
-                odataFeature.RoutePrefix =  "/api/";
-              
-                context.DefaultQuerySettings.EnableFilter = true;
-                context.DefaultQuerySettings.EnableExpand = true;
-                context.DefaultQuerySettings.EnableSelect = true;
-                context.DefaultQuerySettings.EnableCount = true;
-                context.DefaultQuerySettings.EnableSkipToken = true;
-
-                var odata = new ODataQueryOptions(context, request);
-              
-                metadataQuerySet = odata.ApplyTo(metadataQuerySet);
-                
-            }
-
-
-            var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
-            //Console.WriteLine(metadataQuerySet.ToQueryString());
-            //logger.LogTrace(metadataQuerySet.ToQueryString());
-
-
-            //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
-            //annoying that we have to serialize them ourself.
-            var resultList = new List<object>();
-
-            foreach (var item in items)
-            {
-                if (item is DynamicEntity)
-                {
-                    resultList.Add(item);
-                }
-                else
-                {
-                    var converter = _factory.CreateConverter(item.GetType());
-                    resultList.Add(converter.Convert(item));
-                }
-
-
-            }
-            var odatafeature = request.ODataFeature();
-            
-            return new PageResult<object>(resultList, null, odatafeature.TotalCount);
-
-
-            // return metadataQuerySet;
-            // var setMethod=typeof(DbContext).GetMethod("Set", new Type[] { });
-            //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
-            //  return Set<Type2>();
-        }
-        private static OdatatConverterFactory _factory = new OdatatConverterFactory();
-        private static object ToPoco(object item)
-        {
-            if (item == null)
-                return null;
-
-            var converter = _factory.CreateConverter(item.GetType());
-            return converter.Convert(item);
-
-
-
-        }
+        
+       
+      
 
         
         public EntityEntry Add(string entityName, JToken data)

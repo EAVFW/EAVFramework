@@ -1,10 +1,10 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Infrastructure.HealthChecks;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Infrastructure.HealthChecks;
+using EAVFramework.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Reflection;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     public static class IEAVFrameworkBuilderExtensions
     {

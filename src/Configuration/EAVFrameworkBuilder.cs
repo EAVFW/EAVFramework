@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     /// <summary>
     /// IdentityServer helper class for DI configuration

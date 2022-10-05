@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Events
+namespace EAVFramework.Events
 {
     /// <summary>
     /// Event for unhandled exceptions

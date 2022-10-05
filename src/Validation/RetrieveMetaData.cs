@@ -7,7 +7,7 @@ using Microsoft.Azure.Documents.SystemFunctions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
 
     public class RetrieveMetaData<TDynamicContext> : IRetrieveMetaData<TDynamicContext> where TDynamicContext : DynamicContext

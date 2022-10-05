@@ -1,19 +1,18 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
+namespace EAVFramework.UnitTest.ManifestTests
 {
+
+
     [TestClass]
-    public class BinaryTests: BaseManifestTests
+    public class RowVersionTests : BaseManifestTests
     {
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/BinaryShouldGenerateBinaryColumn.sql", "specs")]
-        public async Task BinaryShouldGenerateBinaryColumn()
+        [DeploymentItem(@"ManifestTests/specs/RowVersionShouldGenerateRowversionColumn.sql", "specs")]
+        public async Task RowVersionShouldGenerateRowversionColumn()
         {
             var manifest = JToken.FromObject(new
             {
@@ -41,12 +40,22 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
                                 type = "string",
                                 isPrimaryField = true
                             },
-                            blob = new
+                            rowversion = new
                             {
-                                schemaName = "Data",
-                                logicalName = "Data",
-                                type = "binary",
-                                isPrimaryField = true
+                                schemaName = "RowVersion",
+                                logicalName = "rowversion",
+                                type = new
+                                {
+                                    type = "binary",
+                                    sql = new
+                                    {
+                                        rowVersion = true,
+                                    },
+                                },
+
+                                isPrimaryField = true,
+                                isRowVersion = true,
+                                isRequired = true,
                             }
                         }
                     }
@@ -55,14 +64,13 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
 
 
 
-          var sql=  RunDBWithSchema("manifest_binary", manifest);
+            var sql = RunDBWithSchema("manifest_rowversion", manifest);
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\BinaryShouldGenerateBinaryColumn.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\RowVersionShouldGenerateRowversionColumn.sql");
 
             Assert.AreEqual(expectedSQL, sql);
         }
-
     }
 }

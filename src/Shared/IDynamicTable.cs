@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
     public interface IDynamicTable
     {

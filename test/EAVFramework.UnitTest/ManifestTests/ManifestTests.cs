@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
 
-namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
+namespace EAVFramework.UnitTest.ManifestTests
 {
     [TestClass]
     public class ManifestTests : BaseManifestTests

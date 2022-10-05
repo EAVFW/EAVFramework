@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Logging
+namespace EAVFramework.Logging
 {
     /// <summary>
     /// Helper to JSON serialize object data for logging.

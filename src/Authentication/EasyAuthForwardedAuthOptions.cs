@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication
+namespace EAVFramework.Authentication
 {
     public class EasyAuthForwardedAuthOptions : AuthenticationSchemeOptions
     {

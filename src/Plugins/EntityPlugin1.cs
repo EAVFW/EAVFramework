@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Shared;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Endpoints;
+using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Plugins
+namespace EAVFramework.Plugins
 {
 
     public interface IPluginRegistration

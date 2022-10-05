@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Text.Encodings.Web;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication
+namespace EAVFramework.Authentication
 {
     public interface IEasyAuthProvider
     {

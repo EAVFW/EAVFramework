@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints.Results;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Hosting;
+using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +11,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using static EAVFramework.Constants;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
-    internal class DeleteRecordEndpoint<TContext> : IEndpointHandler
+    internal class DeleteRecordEndpoint<TContext> : IEndpointHandler<TContext>
         where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;

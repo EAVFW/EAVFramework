@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Text.Encodings.Web;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication
+namespace EAVFramework.Authentication
 {
     public class EasyAuthForwardedAuth : AuthenticationHandler<EasyAuthForwardedAuthOptions>
     {

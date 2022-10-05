@@ -1,9 +1,9 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Reflection;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     /// <summary>
     /// IdentityServer builder Interface

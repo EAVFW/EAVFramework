@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     public static class RegisterValidationExtension
     {

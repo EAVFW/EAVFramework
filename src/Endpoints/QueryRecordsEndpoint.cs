@@ -1,5 +1,5 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints.Results;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
+﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
@@ -11,11 +11,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using static EAVFramework.Constants;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
-    public class QueryRecordsEndpoint<TContext> : IEndpointHandler
+    public class QueryRecordsEndpoint<TContext> : IEndpointHandler<TContext>
         where TContext : DynamicContext
     {
         private readonly TContext _context;

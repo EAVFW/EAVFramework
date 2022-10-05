@@ -2,12 +2,12 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Claims;
-using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Shared;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+using EAVFramework.Endpoints;
+using EAVFramework.Shared;
+using EAVFramework.Validation;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Plugins
+namespace EAVFramework.Plugins
 {
     public static class PluginContextFactory
     {

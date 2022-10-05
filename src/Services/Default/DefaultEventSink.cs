@@ -1,5 +1,5 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Events;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Events;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Services.Default
+namespace EAVFramework.Services.Default
 {
     /// <summary>
     /// Default implementation of the event service. Write events raised to the log.

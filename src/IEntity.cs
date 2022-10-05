@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework
+﻿namespace EAVFramework
 {
     public interface IEntity//<T>
     {

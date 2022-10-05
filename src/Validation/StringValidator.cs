@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     public class StringValidator : IValidator<string>
     {

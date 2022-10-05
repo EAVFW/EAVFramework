@@ -1,11 +1,11 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Authentication;
+﻿using EAVFramework.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     /// <summary>
     /// Configures the login and logout views and behavior.

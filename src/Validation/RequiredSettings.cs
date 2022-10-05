@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     /// <summary>
     /// Configuration object used when checking for required attributes. Attributes which shouldn't be included in the

@@ -1,11 +1,11 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Hosting;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Extensions
+namespace EAVFramework.Extensions
 {
     internal static class EndpointOptionsExtensions
     {
-        public static bool IsEndpointEnabled(this EndpointsOptions options, Endpoint endpoint)
+        public static bool IsEndpointEnabled<TContext>(this EndpointsOptions options, Endpoint<TContext> endpoint) where TContext : DynamicContext
         {
             return endpoint?.Name switch
             {

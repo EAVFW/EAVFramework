@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Infrastructure.HealthChecks
+namespace EAVFramework.Infrastructure.HealthChecks
 {
    
 

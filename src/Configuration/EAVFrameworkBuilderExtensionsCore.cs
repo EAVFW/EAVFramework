@@ -1,11 +1,11 @@
-﻿using DotNetDevOps.Extensions.EAVFramework;
-using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
-using DotNetDevOps.Extensions.EAVFramework.Services;
-using DotNetDevOps.Extensions.EAVFramework.Services.Default;
+﻿using EAVFramework;
+using EAVFramework.Configuration;
+using EAVFramework.Endpoints;
+using EAVFramework.Extensions;
+using EAVFramework.Hosting;
+using EAVFramework.Plugins;
+using EAVFramework.Services;
+using EAVFramework.Services.Default;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,10 +13,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using DotNetDevOps.Extensions.EAVFramework.Authentication;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+using EAVFramework.Authentication;
+using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using static EAVFramework.Constants;
 using System.Threading.Tasks;
 using System.Net;
 
@@ -215,7 +215,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
             builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
-            builder.Services.TryAddTransient<IPermissionStore, DefaultPermissionStore>();
+            builder.Services.TryAddTransient(typeof(IPermissionStore<>), typeof(DefaultPermissionStore<>));
             builder.Services.TryAddTransient<IFormContextFeature<DynamicContext>, DefaultFormContextFeature<DynamicContext>>();
             return builder;
         }
@@ -229,15 +229,15 @@ namespace Microsoft.Extensions.DependencyInjection
             where TContext : DynamicContext
         {
 
-            builder.Services.AddTransient<IEndpointRouter, EndpointRouter>();
+            builder.Services.AddTransient<IEndpointRouter<TContext>, EndpointRouter<TContext>>();
          
            
-            builder.AddEndpoint<QueryRecordsEndpoint<TContext>>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
-            builder.AddEndpoint<RetrieveRecordEndpoint<TContext>>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
-            builder.AddEndpoint<CreateRecordsEndpoint<TContext>>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);
-            builder.AddEndpoint<QueryEntityPermissionsEndpoint<TContext>>(EndpointNames.QueryEntityPermissions, RoutePatterns.QueryEntityPermissions.EnsureLeadingSlash(), HttpMethods.Get);
-            builder.AddEndpoint<PatchRecordsEndpoint<TContext>>(EndpointNames.PatchRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Patch);
-            builder.AddEndpoint<DeleteRecordEndpoint<TContext>>(EndpointNames.DeleteRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Delete);
+            builder.AddEndpoint<QueryRecordsEndpoint<TContext>, TContext>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
+            builder.AddEndpoint<RetrieveRecordEndpoint<TContext>, TContext>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
+            builder.AddEndpoint<CreateRecordsEndpoint<TContext>, TContext>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);
+            builder.AddEndpoint<QueryEntityPermissionsEndpoint<TContext>, TContext>(EndpointNames.QueryEntityPermissions, RoutePatterns.QueryEntityPermissions.EnsureLeadingSlash(), HttpMethods.Get);
+            builder.AddEndpoint<PatchRecordsEndpoint<TContext>, TContext>(EndpointNames.PatchRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Patch);
+            builder.AddEndpoint<DeleteRecordEndpoint<TContext>, TContext>(EndpointNames.DeleteRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Delete);
 
             return builder;
         }
@@ -250,11 +250,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="name">The name.</param>
         /// <param name="path">The path.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddEndpoint<T>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
-            where T : class, IEndpointHandler
+        public static IEAVFrameworkBuilder AddEndpoint<T,TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
+            where T : class, IEndpointHandler<TContext>
+            where TContext : DynamicContext
         {
             builder.Services.AddTransient<T>();
-            builder.Services.AddSingleton(new DotNetDevOps.Extensions.EAVFramework.Hosting.Endpoint(name, pattern,methods, typeof(T)));
+            builder.Services.AddSingleton(new EAVFramework.Hosting.Endpoint<TContext>(name, pattern,methods, typeof(T)));
 
             return builder;
         }

@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Hosting
+namespace EAVFramework.Hosting
 {
     /// <summary>
     /// Endpoint handler
     /// </summary>
-    public interface IEndpointHandler
+    public interface IEndpointHandler<TContext> where TContext : DynamicContext
     {
         /// <summary>
         /// Processes the request.

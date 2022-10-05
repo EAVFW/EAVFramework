@@ -1,0 +1,22 @@
+﻿branches:
+  - name: main
+  - name: dev
+    prerelease: dev
+
+plugins:
+  - - "@semantic-release/commit-analyzer"
+    - preset: conventionalcommits
+
+  - - "@semantic-release/release-notes-generator"
+    - preset: conventionalcommits
+
+  - - "@semantic-release/github"
+    - assets:
+        - path: ../../artifacts/*.nupkg
+          label: Framework
+
+  - - "@semantic-release/exec"
+    - publishCmd: "dotnet nuget push ..\\..\\artifacts\\*.nupkg --source https://nuget.pkg.github.com/eavfw/index.json --api-key ${process.env.GITHUB_TOKEN}"
+
+  - - "@semantic-release/exec"
+    - publishCmd: "dotnet nuget push ..\\..\\artifacts\\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${process.env.CI_NUGET_API_KEY}"

@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+﻿namespace EAVFramework.Configuration
 {
     /// <summary>
     /// Configures events

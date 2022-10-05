@@ -1,7 +1,7 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints.Results;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Hosting;
+using EAVFramework.Plugins;
+using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -20,12 +20,12 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using static EAVFramework.Constants;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
 
-    internal class CreateRecordsEndpoint<TContext>: IEndpointHandler
+    internal class CreateRecordsEndpoint<TContext>: IEndpointHandler<TContext>
         where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;
@@ -53,7 +53,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
             var routeValues = context.GetRouteData().Values;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName), new CreateRecordRequirement(entityName));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName,context), new CreateRecordRequirement(entityName));
 
             if (!auth.Succeeded)
             {

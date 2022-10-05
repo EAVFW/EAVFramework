@@ -1,13 +1,13 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+using EAVFramework.Validation;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     //public class Tracker : HashSet<object>
     //{

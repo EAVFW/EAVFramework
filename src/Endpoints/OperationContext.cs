@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Collections.Generic;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+using EAVFramework.Validation;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     public class OperationContext<TContext>
     {

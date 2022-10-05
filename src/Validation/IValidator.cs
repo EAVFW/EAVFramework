@@ -1,7 +1,7 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Plugins;
 using Newtonsoft.Json.Linq;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     public interface IValidator<in T>
     {

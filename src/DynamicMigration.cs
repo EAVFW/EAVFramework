@@ -15,7 +15,7 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using System.Threading;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
 
     //https://stackoverflow.com/questions/27776761/ef-code-first-generic-entity-entitytypeconfiguration

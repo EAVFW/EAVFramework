@@ -1,9 +1,9 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Plugins;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     public class PluginsAccesser<TContext> : IEnumerable<EntityPlugin>
         where TContext: DynamicContext

@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Infrastructure
+namespace EAVFramework.Infrastructure
 {
     public class NavigationCollectionConverter<T> : JsonConverter<ICollection<T>>
     {
