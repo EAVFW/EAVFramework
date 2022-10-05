@@ -1,5 +1,7 @@
-
 # EAVFrameowrk
+
+[![Release](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml/badge.svg)](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml)
+[![Release](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml/badge.svg?branch=dev)](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml)
 
 EAVFrameowrk is a framework for dynamic data modelling from sepcification. The specification is a json configuration file that then in memory or by code generation will generalte model classes for EF Core. 
 
