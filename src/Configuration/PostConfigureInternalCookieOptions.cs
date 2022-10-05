@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     internal class PostConfigureInternalCookieOptions : IPostConfigureOptions<CookieAuthenticationOptions>
     {

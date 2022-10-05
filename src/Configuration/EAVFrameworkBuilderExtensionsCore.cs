@@ -1,11 +1,11 @@
-﻿using DotNetDevOps.Extensions.EAVFramework;
-using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
-using DotNetDevOps.Extensions.EAVFramework.Services;
-using DotNetDevOps.Extensions.EAVFramework.Services.Default;
+﻿using EAVFramework;
+using EAVFramework.Configuration;
+using EAVFramework.Endpoints;
+using EAVFramework.Extensions;
+using EAVFramework.Hosting;
+using EAVFramework.Plugins;
+using EAVFramework.Services;
+using EAVFramework.Services.Default;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,10 +13,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using DotNetDevOps.Extensions.EAVFramework.Authentication;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+using EAVFramework.Authentication;
+using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authentication;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using static EAVFramework.Constants;
 using System.Threading.Tasks;
 using System.Net;
 
@@ -255,7 +255,7 @@ namespace Microsoft.Extensions.DependencyInjection
             where TContext : DynamicContext
         {
             builder.Services.AddTransient<T>();
-            builder.Services.AddSingleton(new DotNetDevOps.Extensions.EAVFramework.Hosting.Endpoint<TContext>(name, pattern,methods, typeof(T)));
+            builder.Services.AddSingleton(new EAVFramework.Hosting.Endpoint<TContext>(name, pattern,methods, typeof(T)));
 
             return builder;
         }

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
     public interface IDynamicContext
     {

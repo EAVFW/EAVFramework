@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework.Validation
+﻿namespace EAVFramework.Validation
 {
     public class ValidationError
     {

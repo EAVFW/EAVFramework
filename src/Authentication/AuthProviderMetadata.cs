@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication
+namespace EAVFramework.Authentication
 {
     public class AuthProviderMetadata<T> where T : IEasyAuthProvider
     {

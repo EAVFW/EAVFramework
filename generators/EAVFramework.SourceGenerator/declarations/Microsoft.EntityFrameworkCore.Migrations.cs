@@ -1,4 +1,4 @@
-﻿using DotNetDevOps.Extensions.EAVFramework;
+﻿using EAVFramework;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Newtonsoft.Json.Linq;

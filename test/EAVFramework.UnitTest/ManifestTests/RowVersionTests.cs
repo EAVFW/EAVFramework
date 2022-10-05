@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
+namespace EAVFramework.UnitTest.ManifestTests
 {
 
 

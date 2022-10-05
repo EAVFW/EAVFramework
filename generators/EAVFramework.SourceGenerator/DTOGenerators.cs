@@ -1,5 +1,5 @@
-﻿using DotNetDevOps.Extensions.EAVFramework;
-using DotNetDevOps.Extensions.EAVFramework.Shared;
+﻿using EAVFramework;
+using EAVFramework.Shared;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -25,9 +25,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-using static DotNetDevOps.Extensions.EAVFramework.Shared.TypeHelper;
+using static EAVFramework.Shared.TypeHelper;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Generators
+namespace EAVFramework.Generators
 {
 
     internal static class SourceGeneratorContextExtensions
@@ -165,7 +165,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.Generators
                     // var baseType = typeof(DynamicEntity);
                     var baseTypes = new List<Type>() { typeof(DynamicEntity) };
 
-                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>() { ["DotNetDevOps.Extensions.EAVFramework.DynamicEntity"]=typeof(DotNetDevOps.Extensions.EAVFramework.DynamicEntity) };
+                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>() { ["EAVFramework.DynamicEntity"]=typeof(EAVFramework.DynamicEntity) };
 
                     // if (context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.DTOBaseClass", out var DTOBaseClass))
                     {

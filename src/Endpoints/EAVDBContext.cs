@@ -1,4 +1,4 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -11,7 +11,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Reflection;
-using DotNetDevOps.Extensions.EAVFramework.Shared;
+using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Linq;
@@ -26,7 +26,7 @@ using System.Threading;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     public class DataUrlHelper
     {

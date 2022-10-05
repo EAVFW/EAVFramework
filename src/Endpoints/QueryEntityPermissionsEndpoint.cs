@@ -1,13 +1,13 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Endpoints.Results;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
+﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
-using static DotNetDevOps.Extensions.EAVFramework.Constants;
+using static EAVFramework.Constants;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     internal class QueryEntityPermissionsEndpoint<TContext> : IEndpointHandler<TContext>
      where TContext : DynamicContext

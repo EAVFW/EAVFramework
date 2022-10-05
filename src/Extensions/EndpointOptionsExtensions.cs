@@ -1,7 +1,7 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Hosting;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Extensions
+namespace EAVFramework.Extensions
 {
     internal static class EndpointOptionsExtensions
     {

@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Endpoints;
+using EAVFramework.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
+namespace EAVFramework.UnitTest
 {
 
     [PluginRegistration( EntityPluginExecution.PostOperation, EntityPluginOperation.Create)]

@@ -1,4 +1,4 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Shared;
+﻿using EAVFramework.Shared;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
@@ -34,7 +34,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
 
     public class QueryContext<TContext> where TContext :  DynamicContext

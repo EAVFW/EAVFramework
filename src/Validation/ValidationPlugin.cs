@@ -5,10 +5,10 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
-using DotNetDevOps.Extensions.EAVFramework.Shared;
+using EAVFramework.Plugins;
+using EAVFramework.Shared;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     public class ValidationPlugin<TDynamicContext> : IPlugin<TDynamicContext, DynamicEntity> where TDynamicContext : DynamicContext
     {

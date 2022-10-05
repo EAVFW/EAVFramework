@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
    
     public class DbSchemaAwareMigrationAssembly : MigrationsAssembly

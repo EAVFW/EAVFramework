@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.UnitTest.ManifestTests
+namespace EAVFramework.UnitTest.ManifestTests
 {
     [TestClass]
     public class BinaryTests: BaseManifestTests

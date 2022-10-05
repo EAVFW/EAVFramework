@@ -11,7 +11,7 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Plugins
+namespace EAVFramework.Plugins
 {
     public class PipelineExecutionStage
     {

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DotNetDevOps.Extensions.EAVFramework.Endpoints;
-using DotNetDevOps.Extensions.EAVFramework.Plugins;
+using EAVFramework.Endpoints;
+using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Authorization;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Validation
+namespace EAVFramework.Validation
 {
     public class ValidateCreatePermissionPlugin<TContext> : IPlugin<TContext, DynamicEntity> where TContext : DynamicContext
     {

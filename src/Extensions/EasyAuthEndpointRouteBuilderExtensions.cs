@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
-using DotNetDevOps.Extensions.EAVFramework.Authentication;
+using EAVFramework.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -12,10 +12,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
-using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using System.Net;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Extensions
+namespace EAVFramework.Extensions
 {
     public static class EasyAuthEndpointRouteBuilderExtensions
     {

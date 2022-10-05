@@ -1,4 +1,4 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Extensions;
+﻿using EAVFramework.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,7 +14,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Shared
+namespace EAVFramework.Shared
 {
 
     public class CodeGenInterfacePropertiesAttribute : Attribute

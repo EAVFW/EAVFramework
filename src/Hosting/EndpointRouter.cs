@@ -1,12 +1,12 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Events;
-using DotNetDevOps.Extensions.EAVFramework.Services;
+﻿using EAVFramework.Events;
+using EAVFramework.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Hosting
+namespace EAVFramework.Hosting
 {
     //public class RoutingMiddleware<TContext> where TContext : DynamicContext
     //{

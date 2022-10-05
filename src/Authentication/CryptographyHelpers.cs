@@ -1,7 +1,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication
+namespace EAVFramework.Authentication
 {
     public static class CryptographyHelpers
     {

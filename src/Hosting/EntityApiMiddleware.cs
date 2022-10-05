@@ -8,17 +8,17 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
-using DotNetDevOps.Extensions.EAVFramework.Hosting;
-using DotNetDevOps.Extensions.EAVFramework.Services;
-using DotNetDevOps.Extensions.EAVFramework.Events;
+using EAVFramework.Extensions;
+using EAVFramework.Hosting;
+using EAVFramework.Services;
+using EAVFramework.Events;
 using System.Collections.Generic;
-using DotNetDevOps.Extensions.EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Builder;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Hosting
+namespace EAVFramework.Hosting
 {
 
     

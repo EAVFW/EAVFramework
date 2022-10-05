@@ -1,10 +1,10 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authentication;
-using DotNetDevOps.Extensions.EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using System;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Authentication
+namespace EAVFramework.Authentication
 {
     public static class IApplicationBuilderExtensions
     {

@@ -8,7 +8,7 @@ using System.Text;
 
 
 
-namespace DotNetDevOps.Extensions.EAVFramework.Generators
+namespace EAVFramework.Generators
 {
     public static class ClassDeclarationSyntaxExtensions
     {

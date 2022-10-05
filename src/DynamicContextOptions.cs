@@ -2,7 +2,7 @@
 using System;
 using System.Reflection;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
     public class DynamicContextOptions{
         public JToken[] Manifests { get; set; }

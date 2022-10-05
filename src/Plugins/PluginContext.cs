@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
-using DotNetDevOps.Extensions.EAVFramework.Validation;
+using EAVFramework.Validation;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Plugins
+namespace EAVFramework.Plugins
 {
     public class PluginContext
     {

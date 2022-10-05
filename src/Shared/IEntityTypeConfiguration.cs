@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace DotNetDevOps.Extensions.EAVFramework
+namespace EAVFramework
 {
     public interface IEntityTypeConfiguration
     {

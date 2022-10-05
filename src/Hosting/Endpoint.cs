@@ -1,6 +1,6 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Events;
-using DotNetDevOps.Extensions.EAVFramework.Services;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Events;
+using EAVFramework.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Hosting
+namespace EAVFramework.Hosting
 {
 
     internal class Decorator<TService>

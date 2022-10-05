@@ -1,7 +1,7 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Validation;
+﻿using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authorization;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+namespace EAVFramework.Endpoints
 {
     public class UpdateRecordRequirement : IAuthorizationRequirement, IAuthorizationRequirementError
     {

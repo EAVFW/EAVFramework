@@ -1,4 +1,4 @@
-using DotNetDevOps.Extensions.EAVFramework.Shared;
+using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
+namespace EAVFramework.UnitTest
 {
     [TestClass]
     public class UnitTest1
@@ -73,7 +73,7 @@ namespace DotNetDevOps.Extensions.EAVFramework.UnitTest
         //    optionsBuilder.EnableDetailedErrors();
 
         //    var ctx = new DynamicContext(optionsBuilder.Options, Options.Create(
-        //         new DotNetDevOps.Extensions.EAVFramework.DynamicContextOptions
+        //         new EAVFramework.DynamicContextOptions
         //        {
         //            Manifests = new[] { model },
         //            PublisherPrefix = "test001", 

@@ -1,4 +1,4 @@
-﻿namespace DotNetDevOps.Extensions.EAVFramework.Endpoints
+﻿namespace EAVFramework.Endpoints
 {
     public struct ReadOptions
     {

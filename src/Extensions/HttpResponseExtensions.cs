@@ -1,10 +1,10 @@
-﻿using DotNetDevOps.Extensions.EAVFramework.Configuration;
-using DotNetDevOps.Extensions.EAVFramework.Infrastructure;
+﻿using EAVFramework.Configuration;
+using EAVFramework.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 
-namespace DotNetDevOps.Extensions.EAVFramework.Extensions
+namespace EAVFramework.Extensions
 {
     public static class HttpResponseExtensions
     {
