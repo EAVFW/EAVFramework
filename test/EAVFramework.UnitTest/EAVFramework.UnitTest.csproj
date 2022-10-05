@@ -21,7 +21,7 @@
 
   <ItemGroup>
     
-    <ProjectReference Include="..\..\src\DotNetDevOps.Extensions.EAVFramework.csproj" />
+    <ProjectReference Include="..\..\src\EAVFramework.csproj" />
   </ItemGroup>
 
   <ItemGroup>
