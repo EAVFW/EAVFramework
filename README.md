@@ -1,4 +1,4 @@
-# EAVFrameowrk
+# EAVFramework
 
 [![Release](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml/badge.svg)](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml)
 [![Release](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml/badge.svg?branch=dev)](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml)
