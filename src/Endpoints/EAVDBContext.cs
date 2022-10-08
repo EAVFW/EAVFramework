@@ -163,7 +163,7 @@ namespace EAVFramework.Endpoints
             logger.LogInformation("Migrating: {SQL}", sqlscript);
            // await migrator.MigrateAsync();
 
-            using var conn = Context.Database.GetDbConnection();
+            var conn = Context.Database.GetDbConnection();
           
             if(conn.State != System.Data.ConnectionState.Open)
                 await conn.OpenAsync();
