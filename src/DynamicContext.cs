@@ -515,12 +515,10 @@ namespace EAVFramework
             this.modelOptions = modelOptions;
             this.manager = migrationManager;
             this.logger = logger;
-
-
-             
-            
+              
         }
 
+       
         
 
         public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
@@ -606,6 +604,12 @@ namespace EAVFramework
 
             var manifest = modelOptions.Value.Manifests.First();
             manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
+        }
+
+        public void AddNewManifest(JToken manifest)
+        {
+            this.modelOptions.Value.Manifests = new[] { manifest }.Concat(this.modelOptions.Value.Manifests).ToArray();
+            ResetMigrationsContext();
         }
 
         public void ResetMigrationsContext()
