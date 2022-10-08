@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.OData.Query.Wrapper;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -480,13 +481,29 @@ namespace EAVFramework
             //  return Set<Type2>();
         }
     }
-    public class DynamicContext : DbContext, IDynamicContext
+    public interface IHasModelCacheKey
+    {
+        public string ModelCacheKey { get; }
+    }
+    public class DynamicContextModelCacheKeyFactory : IModelCacheKeyFactory
+    {
+        public object Create(DbContext context, bool designTime)
+           => context is IHasModelCacheKey dynamicContext
+               ? (context.GetType(), dynamicContext.ModelCacheKey, designTime)
+               : (object)context.GetType();
+
+        public object Create(DbContext context)
+            => Create(context, false);
+    }
+    public class DynamicContext : DbContext, IDynamicContext, IHasModelCacheKey
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
         private const string MigrationDefaultName = "Initial";
+
+        public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
 
         public IMigrationManager Manager  => manager;
 
@@ -532,8 +549,10 @@ namespace EAVFramework
             //    types.Add(name, model.Item1);
             //    factories.Add(model.Item1, model.Item2);
             //}
+            var latestManifest = modelOptions.Value.Manifests.First();
+          //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -584,10 +603,25 @@ namespace EAVFramework
      
         public void EnsureModelCreated()
         {
+
             var manifest = modelOptions.Value.Manifests.First();
             manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
         }
-        
+
+        public void ResetMigrationsContext()
+        {
+            ModelCacheKey = Guid.NewGuid().ToString();
+            if (manager is MigrationManager man)
+            {
+                man.Reset(this.modelOptions.Value);
+            }
+            //var miassemb = Database.GetInfrastructure().GetRequiredService<IMigrationsAssembly>();
+            //if (miassemb is DbSchemaAwareMigrationAssembly mya)
+            //{ 
+            //    mya.Reset(); 
+            //}
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             Console.WriteLine("Test");   
@@ -596,6 +630,9 @@ namespace EAVFramework
             //  EnsureModelCreated();
             if (this.modelOptions.Value.CreateLatestMigration)
             {
+                var latestManifest = modelOptions.Value.Manifests.First();
+             //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
+
                 manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 

@@ -75,6 +75,14 @@ namespace EAVFramework
         private readonly ILogger<MigrationManager> logger;
         private readonly IOptions<MigrationManagerOptions> options;
 
+        public void Reset(DynamicContextOptions options)
+        {
+            Model = null;
+            _modules.Remove(options.Namespace, out var _);
+            _cache.Clear();
+            EntityDTOs.Clear();
+            EntityDTOConfigurations.Clear();
+        }
         public void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
         { 
             if (Model == null)

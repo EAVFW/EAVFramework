@@ -32,7 +32,7 @@ namespace EAVFramework.UnitTest
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddTransient<PluginsAccesser<DynamicContext>>();
 
-            var builder = new EAVFrameworkBuilder(serviceCollection);
+            var builder = new EAVFrameworkBuilder<DynamicContext>(serviceCollection);
 
 
             builder.AddPlugin<TestPlugin>();

@@ -100,8 +100,12 @@ namespace EAVFramework.Endpoints
 
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
-        
-        public async Task<T> ExecuteAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
+
+        public void ResetMigrationsContext()
+        {
+            Context.ResetMigrationsContext();
+        }
+            public async Task<T> ExecuteAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
         {
             
             try
@@ -138,7 +142,11 @@ namespace EAVFramework.Endpoints
 
          
 
-        public EAVDBContext(TContext context, PluginsAccesser<TContext> plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
+        public EAVDBContext(
+            TContext context, 
+            PluginsAccesser<TContext> plugins, 
+            ILogger<EAVDBContext<TContext>> logger, 
+            IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.plugins = plugins;
@@ -147,13 +155,27 @@ namespace EAVFramework.Endpoints
             this.pluginScheduler = pluginScheduler;
             context.EnsureModelCreated();
         }
-        [DebuggerStepThrough]
+        
         public async Task MigrateAsync()
         {
             var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
-            var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
-            logger.LogInformation("Migrating: {SQL}", sql);
-            await migrator.MigrateAsync();
+            var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+            logger.LogInformation("Migrating: {SQL}", sqlscript);
+           // await migrator.MigrateAsync();
+
+            using var conn = Context.Database.GetDbConnection();
+            await conn.OpenAsync();
+
+            foreach (var sql in sqlscript.Split("GO"))
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = sql;
+                //  await context.Context.Database.ExecuteSqlRawAsync(sql);
+
+
+                var r = await cmd.ExecuteNonQueryAsync();
+            }
+
 
         }
         public async ValueTask<JToken> ReadRecordAsync(HttpContext context, ReadOptions options)

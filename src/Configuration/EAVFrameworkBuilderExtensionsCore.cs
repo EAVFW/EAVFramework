@@ -19,7 +19,9 @@ using Microsoft.AspNetCore.Authentication;
 using static EAVFramework.Constants;
 using System.Threading.Tasks;
 using System.Net;
-
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore;
 namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
@@ -32,10 +34,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="services">The services.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddEAVFrameworkBuilder(this IServiceCollection services)
+        public static IEAVFrameworkBuilder AddEAVFrameworkBuilder<TContext>(this IServiceCollection services, string schema, string connectionString)
+            where TContext : DynamicContext
         {
-            services.Configure<EAVFrameworkOptions>(o=> { });
-            return new EAVFrameworkBuilder(services)
+            services.Configure<EAVFrameworkOptions>(o=> {
+                o.Schema = schema;
+                o.ConnectionString = connectionString;
+            });
+            return new EAVFrameworkBuilder<TContext>(services, schema,connectionString)
                   .AddRequiredPlatformServices();
         }
 
@@ -45,19 +51,19 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="services">The services.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddEAVFramework<TContext>(this IServiceCollection services)
+        public static IEAVFrameworkBuilder AddEAVFramework<TContext>(this IServiceCollection services, 
+            string schema="dbo", string connectionString= "Name=ApplicationDB"
+            )
             where TContext : DynamicContext
         {
-            var builder = services.AddEAVFrameworkBuilder();
+            var builder = services.AddEAVFrameworkBuilder<TContext>(schema,connectionString);
 
             builder              
                 .AddDefaultEndpoints< TContext>()                
                   .AddPluggableServices();
 
 
-          //  builder.Services.AddScoped<IPluginScheduler, DefaultPluginScheduler<TContext>>();
-
-
+           
 
             return builder;
         }

@@ -12,13 +12,17 @@ using System.Reflection;
 namespace EAVFramework
 {
    
+  
     public class DbSchemaAwareMigrationAssembly : MigrationsAssembly
     {
         private readonly DbContext _context;
+        
+
         // private readonly IReadOnlyDictionary<TypeInfo, Func<Migration>> _migrations = new Dictionary<TypeInfo, Func<Migration>>();
         // private readonly IReadOnlyDictionary<string, TypeInfo> _migrationsTypes = new Dictionary<string, TypeInfo>();
-        private readonly MigrationsInfo migrations;
-        public DbSchemaAwareMigrationAssembly(ICurrentDbContext currentContext,
+        protected  MigrationsInfo migrations;
+        public DbSchemaAwareMigrationAssembly(
+            ICurrentDbContext currentContext,
               IDbContextOptions options, IMigrationsIdGenerator idGenerator,
               IDiagnosticsLogger<DbLoggerCategory.Migrations> logger)
           : base(currentContext, options, idGenerator, logger)
@@ -35,7 +39,15 @@ namespace EAVFramework
 
             //_migrations["Initial_Migration"] = typeof(DynamicMigration).GetTypeInfo();
             migrations = dynamicContext.GetMigrations();
+            
+        }
 
+        public void Reset()
+        {
+          
+            var dynamicContext = _context as IDynamicContext ?? throw new ArgumentNullException(nameof(_context), "Current Context is not IDynamicContext");
+
+            migrations = dynamicContext.GetMigrations();
         }
 
         public override IReadOnlyDictionary<string, TypeInfo> Migrations => migrations.Types;
