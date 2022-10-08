@@ -164,7 +164,9 @@ namespace EAVFramework.Endpoints
            // await migrator.MigrateAsync();
 
             using var conn = Context.Database.GetDbConnection();
-            await conn.OpenAsync();
+          
+            if(conn.State != System.Data.ConnectionState.Open)
+                await conn.OpenAsync();
 
             foreach (var sql in sqlscript.Split("GO"))
             {
