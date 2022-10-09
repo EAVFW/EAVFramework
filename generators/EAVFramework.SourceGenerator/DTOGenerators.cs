@@ -89,9 +89,9 @@ namespace EAVFramework.Generators
 
                     var types = GetAllTypes(main).Where(t=>t.GetAttributes().Any(n=>n.AttributeClass.Name ==attribute));
 
-                    File.AppendAllLines("test1.txt", new[] { 
-                        "Refrenced Identity: "+  referencedSymbol.Identity.Name,
-                        "Main: " + main?.Name }.Concat(types.Select(c => c.GetFullName()+ "<"+ string.Join(",",c.TypeArguments.Select(cc=>cc.Name)) + ">: "+ string.Join(",",c.GetAttributes().Select(a=>"["+a.AttributeClass.Name+"]")))));
+                    //File.AppendAllLines("test1.txt", new[] { 
+                    //    "Refrenced Identity: "+  referencedSymbol.Identity.Name,
+                    //    "Main: " + main?.Name }.Concat(types.Select(c => c.GetFullName()+ "<"+ string.Join(",",c.TypeArguments.Select(cc=>cc.Name)) + ">: "+ string.Join(",",c.GetAttributes().Select(a=>"["+a.AttributeClass.Name+"]")))));
 
                     list.AddRange(types);
                   
@@ -126,8 +126,8 @@ namespace EAVFramework.Generators
                 
                 try
                 {
-                    File.WriteAllText("test1.txt", context.GetMSBuildProperty("EAVFrameworkSourceGenerator","Empty")+"\n 1.0.1");
-                    File.AppendAllLines("test1.txt", new[] { $"includeEAVFrameworkBaseClass {GeneratePoco}" });
+                    //File.WriteAllText("test1.txt", context.GetMSBuildProperty("EAVFrameworkSourceGenerator","Empty")+"\n 1.0.1");
+                    //File.AppendAllLines("test1.txt", new[] { $"includeEAVFrameworkBaseClass {GeneratePoco}" });
 
                     if (!string.Equals(context.GetMSBuildProperty("EAVFrameworkSourceGenerator"),"true",StringComparison.OrdinalIgnoreCase))
                     {
@@ -183,12 +183,12 @@ namespace EAVFramework.Generators
                         if (baseClass.Length != baseclases.Length)
                             throw new InvalidOperationException("The wrong dll is loaded for analysers: ask PKS");
 
-                        File.AppendAllLines("test1.txt", new[] { 
-                            ( baseclases.First().GetType() == typeof( Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax)).ToString(),
-                         typeof( Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax).Assembly.Location,
-                         baseclases.First().GetType().Assembly.Location
+                        //File.AppendAllLines("test1.txt", new[] { 
+                        //    ( baseclases.First().GetType() == typeof( Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax)).ToString(),
+                        // typeof( Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax).Assembly.Location,
+                        // baseclases.First().GetType().Assembly.Location
 
-                        });
+                       // });
 
                         var a = string.Join(",", baseClass
                          .SelectMany(c => c.AttributeLists.DefaultIfEmpty()??Enumerable.Empty<AttributeListSyntax>())
@@ -202,11 +202,11 @@ namespace EAVFramework.Generators
                       .Any(bb => bb.Name?.NormalizeWhitespace()?.ToFullString() == "BaseEntity"));
 
 
-                        File.AppendAllLines("test1.txt", new[] { string.Join(",", baseclases.GroupBy(n=>n.GetType().Assembly.Location).Select(n => n.Key + n.Count())) });
+                        //File.AppendAllLines("test1.txt", new[] { string.Join(",", baseclases.GroupBy(n=>n.GetType().Assembly.Location).Select(n => n.Key + n.Count())) });
 
-                        File.AppendAllLines("test1.txt", new[] { baseclases.Length.ToString(), string.Join(",", baseClass.Select(n=>n.GetFullName())) });
+                        //File.AppendAllLines("test1.txt", new[] { baseclases.Length.ToString(), string.Join(",", baseClass.Select(n=>n.GetFullName())) });
 
-                        File.AppendAllLines("test1.txt", new[] { a });
+                        //File.AppendAllLines("test1.txt", new[] { a });
 
                         // File.AppendAllLines("test1.txt", withAtt.Select(baseType=> baseType.GetFullName()));
 
@@ -236,7 +236,7 @@ namespace EAVFramework.Generators
 
                             if (basetype.IsGenericType)
                             {
-                                File.AppendAllLines("test1.txt", new[] { $"{basefullname} Generic: {basetype.Name}<{basetype.GetGenericTypeDefinition().GetGenericArguments()[0].Name}>" });
+                               // File.AppendAllLines("test1.txt", new[] { $"{basefullname} Generic: {basetype.Name}<{basetype.GetGenericTypeDefinition().GetGenericArguments()[0].Name}>" });
                               //  basetype = basetype.MakeGenericType(basetype.GetGenericArguments().Select(t => typeof(DynamicEntity)).ToArray());
                             }
 
@@ -249,7 +249,7 @@ namespace EAVFramework.Generators
                            
                             if (myClassSymbol.TypeArguments.Any())
                             {
-                                File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c => c.Name)) });
+                              //  File.AppendAllLines("test1.txt", new[] { "typeargs", string.Join(",", myClassSymbol.TypeArguments.Select(c => c.Name)) });
                                  
                                 var typeParams = entityType.DefineGenericParameters(myClassSymbol.TypeArguments.Select(c => c.Name).ToArray());
 
@@ -269,10 +269,10 @@ namespace EAVFramework.Generators
                                     continue;
                                 }
 
-                                File.AppendAllLines("test1.txt", new[] { property.Identifier.ToString() });
+                               // File.AppendAllLines("test1.txt", new[] { property.Identifier.ToString() });
                                 CodeGenerator.CreateProperty(entityType, property.Identifier.ToString(), typeof(string));
                             }
-                            File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() +" ok" });
+                         //   File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() +" ok" });
                             return entityType.CreateTypeInfo();
                         }
 
@@ -285,7 +285,7 @@ namespace EAVFramework.Generators
 
                             if (parentType.IsGenericType)
                             {
-                                File.AppendAllLines("test1.txt", new[] { "ParentType IS Generic" });
+                           //     File.AppendAllLines("test1.txt", new[] { "ParentType IS Generic" });
 
                             }
 
@@ -302,7 +302,7 @@ namespace EAVFramework.Generators
                             if (baseType.TypeArguments.Any())
                             {
                                 entityType.SetParent(parentType);
-                                File.AppendAllLines("test1.txt", new[] { "CreateTypeForReferencedBaseClass: ", baseType.GetFullName() +"<"+String.Join(",", baseType.TypeArguments.Select(c => c.Name).ToArray()) +"> : "+ parentType?.FullName });
+                               // File.AppendAllLines("test1.txt", new[] { "CreateTypeForReferencedBaseClass: ", baseType.GetFullName() +"<"+String.Join(",", baseType.TypeArguments.Select(c => c.Name).ToArray()) +"> : "+ parentType?.FullName });
                                 var typeParams = entityType.DefineGenericParameters(baseType.TypeArguments.Select(c=>c.Name).ToArray());
 
                                 foreach (var argument in typeParams)
@@ -315,7 +315,7 @@ namespace EAVFramework.Generators
                             {
                                 
                                 entityType.SetParent(parentType.MakeGenericType(entityType));
-                                File.AppendAllLines("test1.txt", new[] { "CreateTypeForReferencedBaseClass: ", baseType.GetFullName() + " : "+ (parentType.FullName) });
+                           //     File.AppendAllLines("test1.txt", new[] { "CreateTypeForReferencedBaseClass: ", baseType.GetFullName() + " : "+ (parentType.FullName) });
 
                             }
 
@@ -353,7 +353,7 @@ namespace EAVFramework.Generators
 
                             foreach (var attr in BaseEntityAttributes)
                             {
-                                File.AppendAllLines("test1.txt", new[] { $"Adding ${baseType.GetFullName()} [BaseEntity(EntityKey = \"{ attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(BaseEntityAttribute.EntityKey)).Value.Value }\")]" });
+                              //  File.AppendAllLines("test1.txt", new[] { $"Adding ${baseType.GetFullName()} [BaseEntity(EntityKey = \"{ attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(BaseEntityAttribute.EntityKey)).Value.Value }\")]" });
 
                                 CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(BaseEntityAttribute).GetConstructor(new Type[] { }),
                                     new object[] { }, new[] {
@@ -391,7 +391,7 @@ namespace EAVFramework.Generators
 
                                 if (@interface.IsGenericType)
                                 {
-                                    File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
+                                  //  File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
                                     //var entityType = interfacebuilders[@interface.GetFullName()];
                                     var b = interfaceEntityType.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
                                     .Select((argument, i) =>
@@ -439,7 +439,7 @@ namespace EAVFramework.Generators
                                 foreach (var attr in BaseEntityAttributes)
                                 {
 
-                                    File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.GetFullName()} [EntityInterfaceAttribute(EntityKey = \"{ attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(EntityInterfaceAttribute.EntityKey)).Value.Value }\")]" });
+                                 //   File.AppendAllLines("test1.txt", new[] { $"Adding {@interface.GetFullName()} [EntityInterfaceAttribute(EntityKey = \"{ attr.NamedArguments.FirstOrDefault(c => c.Key ==nameof(EntityInterfaceAttribute.EntityKey)).Value.Value }\")]" });
 
                                     CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityInterfaceAttribute).GetConstructor(new Type[] { }),
                                       new object[] { }, new[] {
@@ -492,7 +492,7 @@ namespace EAVFramework.Generators
 
                         foreach (var baseType in withAtt)
                         {
-                            File.AppendAllLines("test1.txt", new[] { $"Base type: {baseType.GetFullName()}" });
+                        //    File.AppendAllLines("test1.txt", new[] { $"Base type: {baseType.GetFullName()}" });
                             baseTypes.Add( baseTypesDict.GetOrAdd(baseType.GetFullName(), (fullname)=> CreateTypeForBaseClass(fullname)));
                         }
 
