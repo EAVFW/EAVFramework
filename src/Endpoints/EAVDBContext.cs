@@ -25,6 +25,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Linq.Expressions;
 using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 
 namespace EAVFramework.Endpoints
 {
@@ -97,6 +99,57 @@ namespace EAVFramework.Endpoints
         private readonly ILogger<EAVDBContext<TContext>> logger;
         private readonly IServiceProvider serviceProvider;
         private readonly IPluginScheduler<TContext> pluginScheduler;
+
+
+        public T GetContextService<T>() where T : class
+        {
+            return this.Context.Database.GetService<T>();
+        }
+
+        public IRelationalTransactionManager RelationalTransactionManager => GetContextService<IDbContextTransactionManager>() as IRelationalTransactionManager;
+
+        public async ValueTask<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel,
+            CancellationToken cancellationToken = default)
+        {
+            // Note: transactions that specify an explicit isolation level are only supported by
+            // relational providers and trying to use them with a different provider results in
+            // an invalid operation exception being thrown at runtime. To prevent that, a manual
+            // check is made to ensure the underlying transaction manager is relational.
+
+            try
+            {
+                return await Context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            }
+
+            catch(InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        public virtual EntityEntry Remove(object obj)
+        {
+            return this.Context.Remove(obj);
+        }
+
+        public void ResetEntryTacking(object obj)
+        {
+            Context.Entry(obj).State = EntityState.Unchanged;
+        }
+        public void ResetEntryTacking(IEnumerable<object> objs)
+        {
+            foreach (var obj in objs)
+            {
+                Context.Entry(obj).State = EntityState.Unchanged;
+            }
+        }
+        public EntityEntry Attach(object obj) {
+            return Context.Attach(obj);
+        }
+        public EntityEntry Update(object obj)
+        {
+            return Context.Update(obj);
+        }
 
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
