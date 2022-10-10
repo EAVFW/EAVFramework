@@ -132,11 +132,11 @@ namespace EAVFramework.Endpoints
             return this.Context.Remove(obj);
         }
 
-        public void ResetEntryTacking(object obj)
+        public void ResetEntryTracking(object obj)
         {
             Context.Entry(obj).State = EntityState.Unchanged;
         }
-        public void ResetEntryTacking(IEnumerable<object> objs)
+        public void ResetEntryTracking(IEnumerable<object> objs)
         {
             foreach (var obj in objs)
             {
