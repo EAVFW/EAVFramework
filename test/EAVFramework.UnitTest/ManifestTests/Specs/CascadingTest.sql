@@ -26,32 +26,32 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
-    CREATE TABLE [tests].[MyRepeatingTable] (
+    CREATE TABLE [tests].[Filer] (
+        [FileName] nvarchar(255) NULL,
+        [FileId] uniqueidentifier NULL,
         [Id] uniqueidentifier NOT NULL,
+        [MyRepeatingTableId] uniqueidentifier NULL,
+        CONSTRAINT [PK_Filer] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Filer_Documents_FileId] FOREIGN KEY ([FileId]) REFERENCES [KFST].[Documents] ([Id]),
+        CONSTRAINT [FK_Filer_MyRepeatingTable_MyRepeatingTableId] FOREIGN KEY ([MyRepeatingTableId]) REFERENCES [tests].[MyRepeatingTable] ([Id]) ON DELETE CASCADE
+    );
+    DECLARE @description AS sql_variant;
+    SET @description = N'comment';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Filer';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
+BEGIN
+    CREATE TABLE [tests].[MyRepeatingTable] (
         [FormSubmissionId] uniqueidentifier NULL,
+        [Id] uniqueidentifier NOT NULL,
         CONSTRAINT [PK_MyRepeatingTable] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_MyRepeatingTable_FormSubmissions_FormSubmissionId] FOREIGN KEY ([FormSubmissionId]) REFERENCES [tests].[FormSubmissions] ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
     EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'MyRepeatingTable';
-END;
-GO
-
-IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
-BEGIN
-    CREATE TABLE [tests].[Filer] (
-        [Id] uniqueidentifier NOT NULL,
-        [FileName] nvarchar(255) NULL,
-        [MyRepeatingTableId] uniqueidentifier NULL,
-        [FileId] uniqueidentifier NULL,
-        CONSTRAINT [PK_Filer] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_Filer_MyRepeatingTable_MyRepeatingTableId] FOREIGN KEY ([MyRepeatingTableId]) REFERENCES [tests].[MyRepeatingTable] ([Id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_Filer_Documents_FileId] FOREIGN KEY ([FileId]) REFERENCES [KFST].[Documents] ([Id])
-    );
-    DECLARE @description AS sql_variant;
-    SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Filer';
 END;
 GO
 
