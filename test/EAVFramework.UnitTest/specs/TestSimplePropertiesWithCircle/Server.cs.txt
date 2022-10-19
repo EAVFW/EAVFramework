@@ -1,0 +1,30 @@
+﻿using EAVFramework;
+using System;
+using EAVFramework.Shared;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+using MC.Models;
+namespace MC.Models
+{
+	[Serializable()]
+	[EntityDTO(LogicalName="server",Schema="dbo")]
+	[Entity(LogicalName="server",SchemaName="Server",CollectionSchemaName="Servers",IsBaseClass=false)]
+	public partial class Server : DynamicEntity
+	{
+		public Server()
+		{
+		}
+
+		[DataMember(Name="createdby")]
+		[JsonProperty("createdby")]
+		[JsonPropertyName("createdby")]
+		public Identity CreatedBy {get;set;}
+
+		[DataMember(Name="id")]
+		[JsonProperty("id")]
+		[JsonPropertyName("id")]
+		public Guid Id {get;set;}
+
+	}
+}

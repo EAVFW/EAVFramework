@@ -1,63 +1,77 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageId>EAVFramework.SourceGenerator</PackageId>
-    <Authors>Poul Kjeldager</Authors>
-    <Company>EAVFW</Company>
-    <PackageTags>EAVFW;EntityFramework</PackageTags>
-    
-    <Description>
-      This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
-    </Description>
-    <PackageProjectUrl>https://github.com/EAVFW/EAVFramework</PackageProjectUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <PackBuildOutput>true</PackBuildOutput>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
-    <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
-    
-    
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<PackageId>EAVFramework.SourceGenerator</PackageId>
+		<Authors>Poul Kjeldager</Authors>
+		<Company>EAVFW</Company>
+		<PackageTags>EAVFW;EntityFramework</PackageTags>
 
-  <ItemGroup>
-    <Compile Include="..\..\src\Constants.cs" Link="Constants.cs" />
-    <Compile Include="..\..\src\Extensions\HashExtensions.cs" Link="HashExtensions.cs" />
-    <Compile Include="..\..\src\Extensions\StringExtensions.cs" Link="StringExtensions.cs" />
-    <Compile Include="..\..\src\Shared\CodeGenerator.cs" Link="CodeGenerator.cs" />
-    <Compile Include="..\..\src\Shared\IDynamicTable.cs" Link="IDynamicTable.cs" />
-    <Compile Include="..\..\src\Shared\IEntityTypeConfiguration.cs" Link="IEntityTypeConfiguration.cs" />
-  </ItemGroup>
+		<Description>
+			This library adds supprot for dynamic data modelling and a EAV framework on top of EF Core
+		</Description>
+		<PackageProjectUrl>https://github.com/EAVFW/EAVFramework</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<PackBuildOutput>true</PackBuildOutput>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
+		<GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
 
-  <ItemGroup>
-    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
-    <None Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
-    <None Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
-    <None Include="$(PKGMicrosoft_CodeAnalysis_CSharp)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />   
-  </ItemGroup>
 
-  <ItemGroup>
- 
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0" GeneratePathProperty="true" PrivateAssets="all" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" GeneratePathProperty="true" PrivateAssets="all" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" GeneratePathProperty="true" PrivateAssets="all" />
-    <PackageReference Include="System.Text.Json" Version="5.0.2" GeneratePathProperty="true" PrivateAssets="all" />
-  </ItemGroup>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
-  </PropertyGroup>
+	<ItemGroup>
+		<Compile Include="..\..\src\Constants.cs" Link="Constants.cs" />
+		<Compile Include="..\..\src\Extensions\HashExtensions.cs" Link="HashExtensions.cs" />
+		<Compile Include="..\..\src\Extensions\StringExtensions.cs" Link="StringExtensions.cs" />
+		<Compile Include="..\..\src\Shared\CodeGenerator.cs" Link="CodeGenerator.cs" />
+		<Compile Include="..\..\src\Shared\IDynamicTable.cs" Link="IDynamicTable.cs" />
+		<Compile Include="..\..\src\Shared\IEntityTypeConfiguration.cs" Link="IEntityTypeConfiguration.cs" />
+		<Compile Include="..\..\src\Shared\V2\CodeGenerationOptions.cs" Link="V2\CodeGenerationOptions.cs" />
+		<Compile Include="..\..\src\Shared\V2\DynamicTableBuilder.cs" Link="V2\DynamicTableBuilder.cs" />
 
-  <Target Name="GetDependencyTargetPaths">
-    <ItemGroup>
-      <TargetPathWithTargetPlatformMoniker Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
-      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
-      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
-      <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_CodeAnalysis_CSharp)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
-      
-    </ItemGroup>
-  </Target>
-  
+		<Compile Include="..\..\src\Shared\V2\DefaultEmitPropertyService.cs" Link="V2\DefaultEmitPropertyService.cs" />
+		<Compile Include="..\..\src\Shared\V2\DynamicAssemblyBuilder.cs" Link="V2\DynamicAssemblyBuilder.cs" />
+		<Compile Include="..\..\src\Shared\V2\DynamicCodeService.cs" Link="V2\DynamicCodeService.cs" />
+		<Compile Include="..\..\src\Shared\V2\DynamicPropertyBuilder.cs" Link="V2\DynamicPropertyBuilder.cs" />
+		<Compile Include="..\..\src\Shared\V2\IDynamicModelBuilder.cs" Link="V2\IDynamicModelBuilder.cs" />
+		<Compile Include="..\..\src\Shared\V2\IDynamicPropertyBuilder.cs" Link="V2\IDynamicPropertyBuilder.cs" />
+		<Compile Include="..\..\src\Shared\V2\IDynamicTableBuilder.cs" Link="V2\IDynamicTableBuilder.cs" />
+		<Compile Include="..\..\src\Shared\V2\IEmitPropertyService.cs" Link="V2\IEmitPropertyService.cs" />
+		<Compile Include="..\..\src\Shared\V2\InverseLookupProp.cs" Link="V2\InverseLookupProp.cs" />
+		<Compile Include="..\..\src\Shared\V2\ManifestService.cs" Link="V2\ManifestService.cs" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="$(PKGMicrosoft_CodeAnalysis_CSharp)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0" GeneratePathProperty="true" PrivateAssets="all" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" GeneratePathProperty="true" PrivateAssets="all" />
+		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" GeneratePathProperty="true" PrivateAssets="all" />
+		<PackageReference Include="System.Text.Json" Version="5.0.2" GeneratePathProperty="true" PrivateAssets="all" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+	</PropertyGroup>
+
+	<Target Name="GetDependencyTargetPaths">
+		<ItemGroup>
+			<TargetPathWithTargetPlatformMoniker Include="$(PKGNewtonsoft_Json)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Reflection_Emit)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+			<TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_CodeAnalysis_CSharp)\lib\netstandard2.0\*.dll" IncludeRuntimeDependency="false" />
+
+		</ItemGroup>
+	</Target>
+
 </Project>

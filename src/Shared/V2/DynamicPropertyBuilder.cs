@@ -1,0 +1,205 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+
+namespace EAVFramework.Shared.V2
+{
+    public class ForeignKeyInfo
+    {
+
+    }
+    public class DynamicPropertyBuilder : IDynamicPropertyBuilder
+    {
+
+        public string AttributeKey { get; }
+        public string LogicalName { get; }
+        public string SchemaName { get; }
+
+        private readonly DynamicCodeService dynamicCodeService;
+        private DynamicTableBuilder dynamicTableBuilder;
+      
+        public Type PropertyType { get; }
+        public string Type { get; }
+
+       // public PropertyBuilder Builder { get; }
+        public DynamicPropertyBuilder(DynamicCodeService dynamicCodeService, 
+            DynamicTableBuilder dynamicTableBuilder, 
+            string attributeKey, string propertyName, string logicalName, string type)
+            : this(dynamicCodeService,dynamicTableBuilder,attributeKey,propertyName,logicalName, dynamicCodeService.TypeMapper.GetCLRType(type))
+        {
+            Type = type.ToLower();
+          
+        }
+        public DynamicPropertyBuilder(DynamicCodeService dynamicCodeService, DynamicTableBuilder dynamicTableBuilder, string attributeKey, string propertyName, string logicalName, Type type)
+        {
+            this.dynamicCodeService = dynamicCodeService;
+            this.dynamicTableBuilder = dynamicTableBuilder;
+            SchemaName = propertyName;
+            PropertyType = type;
+            AttributeKey = attributeKey;
+            LogicalName = logicalName;
+
+        }
+        private List<string> InverseProperties =new List<string>();
+        public bool IsLookup { get; private set; }
+        public DynamicTableBuilder ReferenceType { get; private set; }
+      //  public ForeignKeyInfo ForeignKey { get; private set; }
+        public object OnDeleteCascade { get; private set; }
+        public object OnUpdateCascade { get; private set; }
+        public DynamicPropertyBuilder LookupTo(DynamicTableBuilder related,   object onDelete=null, object onUpdate=null)
+        {
+            IsLookup = true;
+            ReferenceType = related;
+            OnDeleteCascade = onDelete;
+            OnUpdateCascade = onUpdate;
+         //   ForeignKey = foreignKey;
+            var FKLogicalName = LogicalName;
+
+            if (FKLogicalName.EndsWith("id", StringComparison.OrdinalIgnoreCase))
+                FKLogicalName = FKLogicalName.Substring(0, FKLogicalName.Length - 2);
+
+            var FKSchemaName = SchemaName;
+            if (FKSchemaName.EndsWith("id", StringComparison.OrdinalIgnoreCase))
+                FKSchemaName = FKSchemaName.Substring(0, FKSchemaName.Length - 2);
+
+            related.AddInverseLookup(AttributeKey, FKSchemaName, dynamicTableBuilder);
+
+            //var foreigh = manifest.SelectToken($"$.entities['{attributeDefinition.Value.SelectToken("$.type.referenceType").ToString()}']") as JObject;
+            //  name= foreigh.SelectToken("$.pluralName")?.ToString()
+            var foreighSchemaName = related.SchemaName;// foreigh.SelectToken("$.schemaName")?.ToString();
+
+            //  var foreighEntityCollectionSchemaName = (foreigh.SelectToken("$.pluralName")?.ToString() ?? (foreigh.Parent as JProperty).Name).Replace(" ", "");
+
+
+
+            dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo());
+
+            //var (attFKProp, attFKField) = CreateProperty(entityType, (FKSchemaName ??
+            //    (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ?
+            //        entityType.Builder :
+            //        GetRemoteTypeIfExist(foreigh) ??
+            //        GetOrCreateEntityBuilder(myModule, foreighSchemaName, manifest, foreigh, (foreigh.Parent as JProperty).Name, false, nameof(CreateDTO) + "2").Builder as Type);
+
+
+            //CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(options.ForeignKeyAttributeCtor, new object[] { attProp.Name });
+
+            //attFKProp.SetCustomAttribute(ForeignKeyAttributeBuilder);
+
+            //CreateJsonSerializationAttribute(attributeDefinition, attFKProp, FKLogicalName);
+            //CreateDataMemberAttribute(attFKProp, FKLogicalName);
+
+
+            return this;
+        }
+
+        public void Build()
+        {
+            var (prop, field) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, PropertyType);
+
+            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(prop, LogicalName);
+
+            dynamicCodeService.EmitPropertyService.CreateJsonSerializationAttribute(prop, LogicalName);
+
+            foreach(var inverse in InverseProperties)
+            {
+                CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(dynamicCodeService.Options.InverseAttributeCtor, new object[] { inverse });
+
+                prop.SetCustomAttribute(ForeignKeyAttributeBuilder);
+            }
+        //    Builder = prop;
+        }
+        public TypeBuilder TypeBuilder => this.dynamicTableBuilder.Builder;
+
+        public bool IsPrimaryKey { get; private set; }
+        public bool IsRequired { get; private set; }
+        public bool IsRowVersion { get; private set; }
+
+        public DynamicPropertyBuilder PrimaryKey()
+        {
+            IsPrimaryKey = true;return this;
+        }
+        public DynamicPropertyBuilder Required(bool required=true)
+        {
+            IsRequired = required; 
+            
+            return this;
+        }
+
+
+        public DynamicPropertyBuilder RowVersion(bool rowversion = true)
+        {
+            IsRowVersion = rowversion; return this;
+        }
+
+        public bool HasScaleInfo { get; private set; }
+        public int Precision { get; private set; } = 18;
+        public int Scale { get; private set; } = 4;
+        public string ExternalHash { get; private set; }
+        public string ExternalTypeHash { get; private set; }
+        public string Description { get; private set; }
+        public IColumnPropertyResolver ColumnPropertyResolver { get; private set; }
+        public int? MaxLength { get; private set; }
+        public IndexInfo IndexInfo { get; internal set; }
+
+        public DynamicPropertyBuilder WithPrecision(int precision, int scale)
+        {
+            Precision = precision;
+            Scale = scale;
+            HasScaleInfo = true;
+            return this;
+        }
+
+        public DynamicPropertyBuilder AddProperty(string attributekey, string propertyName, string logicalName, string type)
+        {
+            return this.dynamicTableBuilder.AddProperty(attributekey, propertyName, logicalName, type);
+        }
+
+        internal void AddInverseAttribute(string propertySchemaName)
+        {
+           InverseProperties.Add(propertySchemaName); 
+        }
+
+        internal DynamicPropertyBuilder WithExternalHash(string v)
+        {
+            this.ExternalHash = v;
+            return this;
+
+        }
+
+        internal DynamicPropertyBuilder WithExternalTypeHash(string v)
+        {
+            this.ExternalTypeHash = v;
+            return this;
+        }
+
+        internal DynamicPropertyBuilder WithDescription(string v)
+        {
+            this.Description = v;
+            return this;
+        }
+        
+        internal DynamicPropertyBuilder WithMigrationColumnProvider(IColumnPropertyResolver columnPropertyResolver)
+        {
+            this.ColumnPropertyResolver = columnPropertyResolver;
+            return this;
+        }
+
+        internal object GetColumnParam(string argName)
+        {
+            return ColumnPropertyResolver.GetValue(argName);
+        }
+
+        internal DynamicPropertyBuilder WithMaxLength(int? v)
+        {
+            this.MaxLength = v;
+            return this;
+        }
+
+        internal DynamicPropertyBuilder WithIndex(IndexInfo indexInfo)
+        {
+            IndexInfo = IndexInfo;
+            return this;
+        }
+    }
+}
