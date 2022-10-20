@@ -29,7 +29,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_binary].[__MigrationsHistory] WHERE [MigrationId] = N'tests_Initial')
 BEGIN
     INSERT INTO [manifest_binary].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_Initial', N'5.0.15');
+    VALUES (N'tests_Initial', N'{{VERSION}}');
 END;
 GO
 

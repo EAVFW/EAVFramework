@@ -21,6 +21,9 @@ jobs:
       - name: Cleaning
         run: dotnet clean
 
+      - name: Build solution
+        run: dotnet test
+
       - name: Restore NuGet packages
         run: dotnet restore EAVFramework.sln -p:TargetFramework=net6.0
 

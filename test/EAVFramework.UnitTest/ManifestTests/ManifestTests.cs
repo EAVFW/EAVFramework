@@ -10,9 +10,24 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
+using System.Reflection;
 
 namespace EAVFramework.UnitTest.ManifestTests
 {
+    public static class MigrationAssert
+    {
+
+
+        public static void AreEqual(string expected, string actual)
+        {
+            var version = typeof(DbContext).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
+            expected = expected.Replace("{{VERSION}}", version);
+
+            Assert.AreEqual(expected, actual);
+
+        }
+    }
     [TestClass]
     public class ManifestTests : BaseManifestTests
     {
@@ -35,7 +50,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CascadingTest.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
 
         }
 
@@ -67,7 +82,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
 
         }
 
@@ -103,7 +118,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddEntity.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
 
@@ -160,7 +175,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_ChangePropertyTextLength.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
@@ -240,7 +255,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
@@ -285,7 +300,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
@@ -358,7 +373,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup_WithCascade.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
@@ -402,10 +417,10 @@ namespace EAVFramework.UnitTest.ManifestTests
             });
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
-
+           
             string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddAttribute.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
       

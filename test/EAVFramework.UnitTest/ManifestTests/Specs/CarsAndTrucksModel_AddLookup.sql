@@ -41,7 +41,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_0', N'5.0.15');
+    VALUES (N'tests_1_0_0', N'{{VERSION}}');
 END;
 GO
 
@@ -66,7 +66,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_1', N'5.0.15');
+    VALUES (N'tests_1_0_1', N'{{VERSION}}');
 END;
 GO
 

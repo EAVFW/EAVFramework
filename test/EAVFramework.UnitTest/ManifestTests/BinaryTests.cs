@@ -60,7 +60,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             string expectedSQL = System.IO.File.ReadAllText(@"specs\BinaryShouldGenerateBinaryColumn.sql");
 
-            Assert.AreEqual(expectedSQL, sql);
+            MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
     }
