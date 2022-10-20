@@ -27,9 +27,9 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     CREATE TABLE [tests].[Filer] (
+        [Id] uniqueidentifier NOT NULL,
         [FileName] nvarchar(255) NULL,
         [FileId] uniqueidentifier NULL,
-        [Id] uniqueidentifier NOT NULL,
         [MyRepeatingTableId] uniqueidentifier NULL,
         CONSTRAINT [PK_Filer] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_Filer_Documents_FileId] FOREIGN KEY ([FileId]) REFERENCES [KFST].[Documents] ([Id]),
@@ -44,8 +44,8 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     CREATE TABLE [tests].[MyRepeatingTable] (
-        [FormSubmissionId] uniqueidentifier NULL,
         [Id] uniqueidentifier NOT NULL,
+        [FormSubmissionId] uniqueidentifier NULL,
         CONSTRAINT [PK_MyRepeatingTable] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_MyRepeatingTable_FormSubmissions_FormSubmissionId] FOREIGN KEY ([FormSubmissionId]) REFERENCES [tests].[FormSubmissions] ([Id])
     );

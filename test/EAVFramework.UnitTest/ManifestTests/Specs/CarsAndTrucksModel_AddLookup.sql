@@ -59,7 +59,7 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
-    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([id]);
+    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([Id]);
 END;
 GO
 

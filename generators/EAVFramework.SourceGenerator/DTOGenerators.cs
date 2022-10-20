@@ -720,7 +720,7 @@ namespace EAVFramework.Generators
                     }
 
 
-                    var manifestservice = new ManifestService();
+                    var manifestservice = new ManifestService(new ManifestServiceOptions { Namespace= @namespace, MigrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}", });
                     options.DTOBaseClasses = baseTypes.ToArray();
                     options.DTOInterfaces = baseTypeInterfaces.Values.Where(c => c.IsInterface).ToArray();
 
@@ -731,7 +731,7 @@ namespace EAVFramework.Generators
 
                    // var tables = generator.GetTables(json, myModule);
 
-                    var (migrationType, tables) = manifestservice.BuildDynamicModel(new DynamicCodeService(options), @namespace, $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}", json);
+                    var (migrationType, tables) = manifestservice.BuildDynamicModel(new DynamicCodeService(options), json);
 
                     //I think its here we should generate some openapi spec, looping over the entities in our model.
                     //However i would like the augment the DTO types in the code generator with some attributes that controls it,

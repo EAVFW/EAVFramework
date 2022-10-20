@@ -17,6 +17,9 @@ namespace EAVFramework.Shared.V2
         public ILookupBuilder LookupPropertyBuilder { get; }
         public IChoiceEnumBuilder ChoiceEnumBuilder { get; }
         public IManifestTypeMapper TypeMapper { get; }
+
+        public IEnumerable<Type> GetTypes() => Assemblies.Values.SelectMany(v => v.GetTypes());
+
         public DynamicCodeService(CodeGenerationOptions options, 
             IEmitPropertyService emitPropertyService = null,
              ILookupBuilder lookupPropertyBuilder = null,
@@ -38,9 +41,9 @@ namespace EAVFramework.Shared.V2
 
         }
 
-        public DynamicAssemblyBuilder CreateAssemblyBuilder(string @namespace)
+        public DynamicAssemblyBuilder CreateAssemblyBuilder(string moduleName, string @namespace)
         {
-            return Assemblies.GetOrAdd(@namespace, _ =>
+            return Assemblies.GetOrAdd(moduleName, _ =>
             {
                 AppDomain myDomain = AppDomain.CurrentDomain;
                 AssemblyName myAsmName = new AssemblyName(@namespace);
@@ -51,7 +54,7 @@ namespace EAVFramework.Shared.V2
 
 
                 ModuleBuilder myModule =
-                  builder.DefineDynamicModule(@namespace + ".dll");
+                  builder.DefineDynamicModule(moduleName + ".dll");
 
                 return new DynamicAssemblyBuilder(this, myModule, @namespace);
             });

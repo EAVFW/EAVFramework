@@ -21,6 +21,7 @@ namespace MC.Models
 		[DataMember(Name="id")]
 		[JsonProperty("id")]
 		[JsonPropertyName("id")]
+		[PrimaryKey()]
 		public Guid Id {get;set;}
 
 		[DataMember(Name="primaryserver")]

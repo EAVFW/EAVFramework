@@ -14,7 +14,7 @@ namespace EAVFramework.Shared.V2
     {
         protected ConcurrentDictionary<string, DynamicPropertyBuilder> properties = new ConcurrentDictionary<string, DynamicPropertyBuilder>();
 
-        public IReadOnlyCollection<DynamicPropertyBuilder> Properties => properties.Values.ToArray();
+        public IReadOnlyCollection<DynamicPropertyBuilder> Properties => properties.Values.Where(p => !p.HasParentProperty).Where(p => p.IsManifestType).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName).ToArray();
 
         private DynamicCodeService dynamicCodeService;
         private ModuleBuilder myModule;
@@ -30,10 +30,10 @@ namespace EAVFramework.Shared.V2
         public string LogicalName { get; }
         public bool IsBaseEntity { get; }
         public string Schema { get; }
-
+        
         public string EntityKey { get; }
 
-        public bool IsExternal { get; }
+        public bool IsExternal { get; private set; }
 
         public DynamicTableBuilder(
             DynamicCodeService dynamicCodeService,
@@ -131,21 +131,36 @@ namespace EAVFramework.Shared.V2
       
         public DynamicPropertyBuilder AddProperty(string attributeKey, string propertyName, string logicalName, string type)
         {
-            if (ContainsProperty(propertyName))
-                return null;
+            if (string.IsNullOrWhiteSpace(type))
+            {
+                throw new ArgumentException($"'{nameof(type)}' cannot be null or whitespace for property {attributeKey}", nameof(type));
+
+            }
+           // if (ContainsProperty(propertyName))
+            //    return null;
+            
+            
 
             return properties.GetOrAdd(propertyName, (_) => new DynamicPropertyBuilder(dynamicCodeService, this, attributeKey, propertyName, logicalName, type));
         }
         public DynamicPropertyBuilder AddProperty(string attributeKey, string propertyName, string logicalName, Type type)
         {
-            if (ContainsProperty(propertyName))
-                return null;
+            //if (ContainsProperty(propertyName))
+            //    return null;
 
             return properties.GetOrAdd(propertyName, (_) => new DynamicPropertyBuilder(dynamicCodeService, this, attributeKey, propertyName, logicalName, type));
         }
+        public bool ContainsParentProperty(string propertyName)
+        {
+            if ((Parent?.ContainsProperty(propertyName)??false))
+            {
+                return true;
+            }
+            return false;
+        }
         public bool ContainsProperty(string propertyName)
         {
-            if (properties.ContainsKey(propertyName) || (Parent?.ContainsProperty(propertyName)??false))
+            if (properties.ContainsKey(propertyName) || (Parent?.ContainsProperty(propertyName) ?? false))
             {
                 return true;
             }
@@ -164,13 +179,17 @@ namespace EAVFramework.Shared.V2
             return Builder.GetTypeInfo();
         }
 
-        
+       public bool IsBuilded { get; private set; }
         public void BuildType()
         {
+            if (IsBuilded)
+                return;
+            IsBuilded = true;
+
             BuildParent();
             BuildInverseProperties();
 
-            foreach (var prop in Properties)
+            foreach (var prop in properties.Values.Where(p=>!p.HasParentProperty).OrderByDescending(c=>c.IsPrimaryKey).ThenByDescending(c=>c.IsPrimaryField).ThenBy(c=>c.LogicalName))
             {
                 prop.Build();
             }
@@ -183,7 +202,7 @@ namespace EAVFramework.Shared.V2
         }
 
 
-        public Type CreateMigrationType (string migrationName)
+        public Type CreateMigrationType (string migrationName, bool partOfMigration)
         {
             var MigrationBuilder = myModule.DefineType($"{DynamicAssemblyBuilder.Namespace}.{CollectionSchemaName}Builder_{migrationName.Replace(".", "_")}", TypeAttributes.Public);
             CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { LogicalName });
@@ -194,7 +213,7 @@ namespace EAVFramework.Shared.V2
             var entityTypeBuilder = MigrationBuilder;
 
             var upSql = string.Join("\n", SQLUpStatements);
-          //  if (options.PartOfMigration)
+            if (partOfMigration)
             {
 
 
@@ -205,7 +224,7 @@ namespace EAVFramework.Shared.V2
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.LogicalName)),
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.MigrationName)) ,
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.RawUpMigration))
-                    },
+                    },  
 
 
                     new[] { LogicalName, migrationName, upSql });
@@ -233,7 +252,7 @@ namespace EAVFramework.Shared.V2
 
             {
 
-                var (columnsCLRType, columnsctor, members) = CreateColumnsType(migrationName);
+                var (columnsCLRType, columnsctor, members) = CreateColumnsType(migrationName, partOfMigration);
 
                 var columsMethod = entityTypeBuilder.DefineMethod("Columns", MethodAttributes.Public, columnsCLRType, new[] { options.ColumnsBuilderType });
 
@@ -251,14 +270,14 @@ namespace EAVFramework.Shared.V2
                 // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
                 //.Select(attribute => members[attribute.Value.SelectToken("$.logicalName")?.ToString()].GetMethod)
                 //.ToArray();
-                var primaryKeys = Properties.Where(p => p.IsPrimaryKey)
+                var primaryKeys = properties.Values.Where(p => p.IsPrimaryKey)
                     .Where(p=>members.ContainsKey(p.LogicalName))
                     .Select(p => members[p.LogicalName].GetMethod)
                     .ToArray();
 
 
 
-                var fKeys = Properties.Where(p=>p.IsLookup) // entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
+                var fKeys = properties.Values.Where(p=>p.IsLookup) // entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                                                             //  .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
                                                             // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
                       .Where(attribute => members.ContainsKey(attribute.LogicalName))
@@ -346,7 +365,7 @@ namespace EAVFramework.Shared.V2
 
                 var UpMethodIL = UpMethod.GetILGenerator();
 
-                var hasPriorEntity = builder.GetTypes().FirstOrDefault(t => !t.IsPendingTypeBuilder() && t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == LogicalName);
+                var hasPriorEntity = dynamicCodeService.GetTypes().FirstOrDefault(t => !t.IsPendingTypeBuilder() && t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == LogicalName);
 
 
                 if (hasPriorEntity == null)
@@ -405,7 +424,7 @@ namespace EAVFramework.Shared.V2
                 }
                 else if (members.Any())
                 {
-                    var hasPriorEntityColumnBuilders = builder.GetTypes().Where(t => !t.IsPendingTypeBuilder()
+                    var hasPriorEntityColumnBuilders = dynamicCodeService.GetTypes().Where(t => !t.IsPendingTypeBuilder()
                        && t.GetCustomAttributes<EntityMigrationColumnsAttribute>()
                        .Any(migrationAttribute => migrationAttribute.LogicalName == LogicalName)).ToArray();
 
@@ -511,7 +530,7 @@ namespace EAVFramework.Shared.V2
                 //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
                 if (!string.IsNullOrEmpty(upSql))
                 {
-                    var alreadyExists = builder.GetTypes().FirstOrDefault(t =>
+                    var alreadyExists = dynamicCodeService.GetTypes().FirstOrDefault(t =>
                           !t.IsPendingTypeBuilder() &&
                           t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute &&
                           migrationAttribute.LogicalName == LogicalName && migrationAttribute.RawUpMigration == upSql);
@@ -549,7 +568,7 @@ namespace EAVFramework.Shared.V2
             return MigrationBuilder.CreateTypeInfo();
         }
 
-        private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType( string migrationName)
+        private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType( string migrationName, bool partOfMigration)
         {
             var builder = DynamicAssemblyBuilder.Module;
             var options = dynamicCodeService.Options;
@@ -608,7 +627,7 @@ namespace EAVFramework.Shared.V2
                 entityCtorBuilderIL.Emit(OpCodes.Call, attProp.SetMethod);
 
 
-                if (options.PartOfMigration)
+                if (partOfMigration)
                 {
                     var attributeProperties = columparams.Keys.Concat(new[] {
                             typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.LogicalName)),
@@ -870,7 +889,7 @@ namespace EAVFramework.Shared.V2
 
                         case "type" when propertyInfo.Type == "text" && !propertyInfo.MaxLength.HasValue:
                         case "type" when propertyInfo.Type == "string" && !propertyInfo.MaxLength.HasValue:
-                            dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((propertyInfo.IsPrimaryKey) ? 255 : 100)})"), arg1);
+                            dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((propertyInfo.IsPrimaryField) ? 255 : 100)})"), arg1);
                             break;
                         case "rowVersion" when propertyInfo.IsRowVersion:
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
@@ -1063,6 +1082,7 @@ namespace EAVFramework.Shared.V2
 
             if (Parent?.Builder != null)
             {
+                Parent.BuildType();
                 this.Builder.SetParent(Parent?.Builder);
                 
                 return;
@@ -1129,6 +1149,12 @@ namespace EAVFramework.Shared.V2
         internal void AddKeys(string name, string[] props)
         {
             this.Keys.Add(name, props);
+        }
+
+        internal DynamicTableBuilder External(bool v)
+        {
+            IsExternal = v;
+            return this;
         }
     }
 }

@@ -207,7 +207,13 @@ namespace EAVFramework
                 try
                 {
                     //var asmb = dynamicCodeService.CreateAssemblyBuilder(options.Namespace);
-                    var manfiestservice = new ManifestService();
+                    var manfiestservice = new ManifestService(new ManifestServiceOptions
+                    {
+                        Namespace = options.Namespace,
+                        MigrationName = migrationName,
+                        GenerateDTO = fromMigration ? false : true,
+                        PartOfMigration = fromMigration
+                    });
 
 
                     //var myModule = _modules.GetOrAdd(options.Namespace, (name) =>
@@ -318,7 +324,7 @@ namespace EAVFramework
                     //var migrationType = generator.CreateDynamicMigration(manifest);
                     // var tables = generator.GetTables(manifest, myModule);
 
-                    var (migrationType,tables)= manfiestservice.BuildDynamicModel(dynamicCodeService, options.Namespace, migrationName, manifest);
+                    var (migrationType,tables)= manfiestservice.BuildDynamicModel(dynamicCodeService, manifest);
 
                     return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
                 }catch(Exception ex)

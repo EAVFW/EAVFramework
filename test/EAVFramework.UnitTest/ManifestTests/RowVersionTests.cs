@@ -53,7 +53,6 @@ namespace EAVFramework.UnitTest.ManifestTests
                                     },
                                 },
 
-                                isPrimaryField = true,
                                 isRowVersion = true,
                                 isRequired = true,
                             }

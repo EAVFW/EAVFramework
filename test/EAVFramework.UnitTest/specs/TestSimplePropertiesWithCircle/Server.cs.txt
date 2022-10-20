@@ -15,16 +15,19 @@ namespace MC.Models
 		public Server()
 		{
 		}
+		
+		[DataMember(Name="id")]
+		[JsonProperty("id")]
+		[JsonPropertyName("id")]
+		[PrimaryKey()]
+		public Guid Id {get;set;}
 
 		[DataMember(Name="createdby")]
 		[JsonProperty("createdby")]
 		[JsonPropertyName("createdby")]
 		public Identity CreatedBy {get;set;}
 
-		[DataMember(Name="id")]
-		[JsonProperty("id")]
-		[JsonPropertyName("id")]
-		public Guid Id {get;set;}
+		
 
 	}
 }

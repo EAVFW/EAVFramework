@@ -18,6 +18,12 @@ namespace MC.Models
 		{
 		}
 
+		[DataMember(Name="id")]
+		[JsonProperty("id")]
+		[JsonPropertyName("id")]
+		[PrimaryKey()]
+		public Guid Id {get;set;}
+
 		[DataMember(Name="createdby")]
 		[JsonProperty("createdby")]
 		[JsonPropertyName("createdby")]
@@ -26,12 +32,7 @@ namespace MC.Models
 		[DataMember(Name="createdbyid")]
 		[JsonProperty("createdbyid")]
 		[JsonPropertyName("createdbyid")]
-		public Guid? CreatedById {get;set;}
-
-		[DataMember(Name="id")]
-		[JsonProperty("id")]
-		[JsonPropertyName("id")]
-		public Guid Id {get;set;}
+		public Guid? CreatedById {get;set;}	
 
 		[DataMember(Name="primaryserveridentities")]
 		[JsonProperty("primaryserveridentities")]

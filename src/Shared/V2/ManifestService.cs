@@ -26,6 +26,9 @@ namespace EAVFramework.Shared.V2
         public object GetValue(string argName)
         {
             var a = value.SelectToken($"$.type.sql.{argName}");
+            if (a == null)
+                return null;
+
 
             switch (a.Type)
             {
@@ -37,28 +40,39 @@ namespace EAVFramework.Shared.V2
                     return a.ToObject<double>();
                    
             }
+            
             return null;
         }
     }
+    public class ManifestServiceOptions
+    {
+        public string Namespace { get; set; }
+        public string MigrationName { get; set; }
+
+        public bool GenerateDTO { get; set; } = true;
+        public bool PartOfMigration { get;  set; }
+
+        public string ModuleName => $"{Namespace}_{MigrationName}";
+    }
     public class ManifestService
     {
-     
+        private readonly ManifestServiceOptions options;
 
-        public ManifestService( )
+        public ManifestService(ManifestServiceOptions options)
         {
-           
+            this.options = options;
         }
-        internal Type CreateDynamicMigration(DynamicCodeService dynamicCodeService, string @namespace, string migrationName, JToken manifest)
+        internal Type CreateDynamicMigration(DynamicCodeService dynamicCodeService, JToken manifest)
         {
-            var asmb = dynamicCodeService.CreateAssemblyBuilder(@namespace);
+            var asmb = dynamicCodeService.CreateAssemblyBuilder(options.ModuleName , options.Namespace);
 
 
             TypeBuilder migrationType =
-                                         asmb.Module.DefineType($"{@namespace}.Migration{migrationName}", TypeAttributes.Public, typeof(DynamicMigration));
+                                         asmb.Module.DefineType($"{options.Namespace}.Migration{this.options.MigrationName}", TypeAttributes.Public, typeof(DynamicMigration));
 
             ;
 
-            var attributeBuilder = new CustomAttributeBuilder(Resolve(() => typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }), "MigrationAttributeCtor"), new object[] { migrationName });
+            var attributeBuilder = new CustomAttributeBuilder(Resolve(() => typeof(MigrationAttribute).GetConstructor(new Type[] { typeof(string) }), "MigrationAttributeCtor"), new object[] { this.options.MigrationName });
             migrationType.SetCustomAttribute(attributeBuilder);
 
 
@@ -82,9 +96,9 @@ namespace EAVFramework.Shared.V2
             var type = migrationType.CreateTypeInfo();
             return type;
         }
-        public (Type, IDynamicTable[]) BuildDynamicModel(DynamicCodeService dynamicCodeService, string @namespace,string migrationName, JToken manifest)
+        public (Type, IDynamicTable[]) BuildDynamicModel(DynamicCodeService dynamicCodeService,   JToken manifest)
         {
-            var builder = dynamicCodeService.CreateAssemblyBuilder(@namespace);
+            var builder = dynamicCodeService.CreateAssemblyBuilder(this.options.ModuleName,this.options.Namespace);
             var options = dynamicCodeService.Options;
 
             var tables = new Dictionary<string, DynamicTableBuilder>();
@@ -96,103 +110,121 @@ namespace EAVFramework.Shared.V2
                     tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
                      entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
                      entity.Value.SelectToken("$.abstract") != null
-                    );
+                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>()??false);
 
                 tables.Add(entity.Name, table);
             }
 
-            foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
+          //  if (this.options.GenerateDTO)
             {
 
-                var table = tables[entityDefinition.Name];
-
-                var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString();
-                if (!string.IsNullOrEmpty(parentName))
+                foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
                 {
-                    table.WithBaseEntity(tables[parentName]);
 
-                }
+                    var table = tables[entityDefinition.Name];
 
-
-                var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
-                if (keys != null)
-                {
-                    foreach (var key in keys.OfType<JProperty>())
+                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString();
+                    if (!string.IsNullOrEmpty(parentName))
                     {
-                        var props = key.Value.ToObject<string[]>();
+                        table.WithBaseEntity(tables[parentName]);
 
-                        table.AddKeys(key.Name,props);
-                    }
-                }
-
-
-                        foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
-                {
-                    var typeObj = attributeDefinition.Value.SelectToken("$.type");
-                    var type = attributeDefinition.Value.SelectToken("$.type.type")?.ToString();
-                    var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
-                    var attributeKey = attributeDefinition.Name;
-                    var schemaName = attributeDefinition.Value.SelectToken("$.schemaName").ToString();
-                    var logicalName = attributeDefinition.Value.SelectToken("$.logicalName").ToString();
-
-                    var propertyInfo = table
-                        .AddProperty(attributeKey, schemaName, logicalName, type)
-                        .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))
-                        .WithExternalTypeHash(HashExtensions.Sha256(attributeDefinition.Value.SelectToken("$.type")?.ToString()))
-                        .WithDescription(attributeDefinition.Value.SelectToken("$.type.description")?.ToString() ?? attributeDefinition.Value.SelectToken("$.description")?.ToString() )
-                        .WithMigrationColumnProvider(new ManifestColumnMigrationColumnResolver(attributeDefinition.Value) as IColumnPropertyResolver)
-                        .WithMaxLength((typeObj?.SelectToken("$.sql.maxLength") ?? typeObj?.SelectToken("$.maxLength"))?.ToObject<int>())
-                        .Required(attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? attributeDefinition.Value.SelectToken("$.required")?.ToObject<bool>()??false)
-                        .RowVersion((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false));
-                   
-                                
-                    if (isprimaryKey)
-                    {
-
-                        propertyInfo.PrimaryKey();
-                        
-                    }
-
-                    if(type == "lookup")
-                    {
-                        propertyInfo
-                            .LookupTo(
-                                tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
-                                //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
-                                attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType),
-                                attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType))
-                            .WithIndex(attributeDefinition.Value.SelectToken("$.type.index") != null ?
-                                attributeDefinition.Value.SelectToken("$.type.index")?.ToObject<IndexInfo>() ?? new IndexInfo { Unique = true }:null);
-
-                   
-                       
                     }
 
 
-                   
+                    var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
+                    if (keys != null)
+                    {
+                        foreach (var key in keys.OfType<JProperty>())
+                        {
+                            var props = key.Value.ToObject<string[]>();
 
+                            table.AddKeys(key.Name, props);
+                        }
+                    }
+
+
+
+                    foreach (var attributeDefinition in entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>())
+                    {
+                        try
+                        {
+                            var typeObj = attributeDefinition.Value.SelectToken("$.type");
+                            var type = attributeDefinition.Value.SelectToken("$.type.type")?.ToString() ?? attributeDefinition.Value.SelectToken("$.type")?.ToString();
+                            var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
+                            var isPrimaryField = attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false;
+                            var attributeKey = attributeDefinition.Name;
+                            var schemaName = attributeDefinition.Value.SelectToken("$.schemaName").ToString();
+                            var logicalName = attributeDefinition.Value.SelectToken("$.logicalName").ToString();
+
+                            var propertyInfo = table
+                                .AddProperty(attributeKey, schemaName, logicalName, type)
+                                .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))
+                                .WithExternalTypeHash(HashExtensions.Sha256(attributeDefinition.Value.SelectToken("$.type")?.ToString()))
+                                .WithDescription(attributeDefinition.Value.SelectToken("$.type.description")?.ToString() ?? attributeDefinition.Value.SelectToken("$.description")?.ToString())
+                                .WithMigrationColumnProvider(new ManifestColumnMigrationColumnResolver(attributeDefinition.Value))
+                                .WithMaxLength((typeObj?.SelectToken("$.sql.maxLength") ?? typeObj?.SelectToken("$.maxLength"))?.ToObject<int>())
+                                .Required(attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? attributeDefinition.Value.SelectToken("$.required")?.ToObject<bool>() ?? false)
+                                .RowVersion((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false));
+
+
+                            if (isprimaryKey)
+                            {
+
+                                propertyInfo.PrimaryKey();
+
+                            }
+
+                            if (isPrimaryField)
+                            {
+
+                                propertyInfo.PrimaryField();
+
+                            }
+
+                            if (type == "lookup")
+                            {
+                                propertyInfo
+                                    .LookupTo(
+                                        tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
+                                        //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
+                                        attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType),
+                                        attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType))
+                                    .WithIndex(attributeDefinition.Value.SelectToken("$.type.index") != null ?
+                                        attributeDefinition.Value.SelectToken("$.type.index")?.ToObject<IndexInfo>() ?? new IndexInfo { Unique = true } : null);
+
+
+
+                            }
+
+
+
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException($"Failed to generate field {attributeDefinition.Name}", ex);
+                        }
+                    }
                 }
+
+                foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
+                {
+
+                    var table = tables[entity.Name];
+                    table.BuildType();
+                }
+
+                foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
+                {
+
+                    var table = tables[entity.Name];
+                    table.CreateConfigurationTypeInfo();
+                    table.CreateTypeInfo();
+                }
+
             }
 
-            foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
-            {
-
-                var table = tables[entity.Name];
-                table.BuildType();
-            }
-
-            foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
-            {
-
-                var table = tables[entity.Name];
-                table.CreateConfigurationTypeInfo();
-                table.CreateTypeInfo();
-            }
-
-
-
-            return (CreateDynamicMigration(dynamicCodeService, @namespace, migrationName, manifest),
-                tables.Values.Select(entity => entity.CreateMigrationType(migrationName)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
+            return (CreateDynamicMigration(dynamicCodeService, manifest),
+                tables.Values.Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
 
 
 

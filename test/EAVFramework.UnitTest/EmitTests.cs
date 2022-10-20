@@ -40,16 +40,16 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions();
 
-            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models");
+            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models","MC.Models");
 
             var identity = assembly.WithTable("Identity", "Identity", "identity", "Identities", "dbo", true);
             var server = assembly.WithTable("Server", "Server", "server", "Servers", "dbo");
 
 
-            identity.AddProperty("Id", "Id", "id", "guid");
+            identity.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             identity.AddProperty("Primary Server", "PrimaryServer", "primaryserver", server.GetTypeInfo());
 
-            server.AddProperty("Id", "Id", "id", "guid");
+            server.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             server.AddProperty("Created By", "CreatedBy", "createdby", identity.GetTypeInfo());
 
             server.BuildType();
@@ -73,17 +73,17 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions();
 
-            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models");
+            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
 
             var identity = assembly.WithTable("Identity", "Identity", "identity", "Identities", "dbo", true);
             var server = assembly.WithTable("Server", "Server", "server", "Servers", "dbo");
 
 
-            identity.AddProperty("Id", "Id", "id", "guid");
+            identity.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             identity.AddProperty("Primary Server", "PrimaryServerId", "primaryserverid", "guid").LookupTo(server);
 
 
-            server.AddProperty("Id", "Id", "id", "guid");
+            server.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             server.AddProperty("Created By", "CreatedById", "createdbyid", "guid").LookupTo(identity);
 
             server.BuildType();
@@ -117,7 +117,7 @@ namespace EAVFramework.UnitTest
                 o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
             });
 
-            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models");
+            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
 
             var identity = assembly.WithTable("Identity","Identity", "identity", "Identities", "dbo",true);
             var securityGroup = assembly.WithTable("SecurityGroup","SecurityGroup", "securitygroup", "SecurityGroups", "dbo");
@@ -125,10 +125,10 @@ namespace EAVFramework.UnitTest
 
             securityGroup.WithBaseEntity(identity);
 
-            identity.AddProperty("Id","Id", "id", "guid");
-            identity.AddProperty("Name", "Name", "name", "guid");
+            identity.AddProperty("Id","Id", "id", "guid").PrimaryKey();
+            identity.AddProperty("Name", "Name", "name", "string").PrimaryField();
 
-            securityGroup.AddProperty("Id", "Id", "id", "guid");
+            securityGroup.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
 
             securityGroup.BuildType();
             identity.BuildType();
@@ -156,9 +156,9 @@ namespace EAVFramework.UnitTest
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
             });
-                 
 
-            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models");
+
+            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
 
             var OpenIdConnectIdentityResource = assembly.WithTable("OpenId Connect Identity Resource", "OpenIdConnectIdentityResource", "openidconnectidentityresource", "OpenIdConnectIdentityResources", "dbo", false);
             var OpenIdConnectScope = assembly.WithTable("OpenId Connect Scope", "OpenIdConnectScope", "openidconnectscope", "OpenIdConnectScopes", "dbo", false);
@@ -191,6 +191,7 @@ namespace EAVFramework.UnitTest
             AssertFiles(code, nameof(TestBigCircleReference));
 
         }
+        [Ignore]
         [TestMethod]
         public void TestRaw()
         {
@@ -201,7 +202,7 @@ namespace EAVFramework.UnitTest
 
             });
 
-            var module = codeMigratorV2.CreateAssemblyBuilder("MC.Models");
+            var module = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
 
                 var moduleBuilder = module.Module;
 
@@ -233,15 +234,15 @@ namespace EAVFramework.UnitTest
                 
             });
 
-            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models");
+            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
 
             var identity = assembly.WithTable("Identity", "Identity", "identity", "Identities", "dbo", true);
             var securityGroup = assembly.WithTable("SecurityGroup", "SecurityGroup", "securitygroup", "SecurityGroups", "dbo");
              
             securityGroup.WithBaseEntity(identity);
 
-            identity.AddProperty("Id", "Id", "id", "guid");
-            identity.AddProperty("Name", "Name", "name", "text");
+            identity.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
+            identity.AddProperty("Name", "Name", "name", "text").PrimaryField();
 
             identity.AddProperty("Awesome User", "AwesomeUserId", "awesomeuserid", "guid").LookupTo(identity);
              

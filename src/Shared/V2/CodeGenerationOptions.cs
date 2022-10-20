@@ -51,7 +51,7 @@ namespace EAVFramework.Shared.V2
         public MethodInfo HasPrecisionMethod { get; set; }
        // public string MigrationName { get; set; }
 
-        public bool PartOfMigration { get; set; }
+         
         public Type DynamicTableType { get;  set; }
         public Type DynamicTableArrayType { get; set; }
         public Type ColumnsBuilderType { get; set; }

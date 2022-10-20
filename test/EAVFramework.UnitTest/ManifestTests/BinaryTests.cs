@@ -45,8 +45,7 @@ namespace EAVFramework.UnitTest.ManifestTests
                             {
                                 schemaName = "Data",
                                 logicalName = "Data",
-                                type = "binary",
-                                isPrimaryField = true
+                                type = "binary"
                             }
                         }
                     }

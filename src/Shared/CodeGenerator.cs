@@ -26,6 +26,10 @@ namespace EAVFramework.Shared
     {
 
     }
+    public class PrimaryKeyAttribute : Attribute
+    {
+
+    }
     public class EntityMigrationAttribute : Attribute
     {
         public string LogicalName { get; set; }
@@ -347,6 +351,11 @@ namespace EAVFramework.Shared
     {
         public Type GetCLRType(string manifestType)
         {
+            if (string.IsNullOrWhiteSpace(manifestType))
+            {
+                throw new ArgumentException($"'{nameof(manifestType)}' cannot be null or whitespace.", nameof(manifestType));
+            }
+
             switch (manifestType.ToLower())
             {
                 case "text":
@@ -2661,7 +2670,9 @@ namespace EAVFramework.Shared
                         }
                         foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public
         | System.Reflection.BindingFlags.Instance
-        | System.Reflection.BindingFlags.DeclaredOnly).OrderByDescending(x => x.GetCustomAttribute(options.InverseAttributeCtor.DeclaringType) == null).ThenBy(c => c.Name))
+        | System.Reflection.BindingFlags.DeclaredOnly)
+                            .OrderByDescending(x=>x.GetCustomAttribute(typeof(PrimaryKeyAttribute)) != null).ThenByDescending(x => x.GetCustomAttribute(typeof(PrimaryFieldAttribute)) != null)
+                            .ThenByDescending(x => x.GetCustomAttribute(options.InverseAttributeCtor.DeclaringType) == null).ThenBy(c => c.Name))
                         {
 
                             GeneratePropertySource(sb, "\t\t", namespaces, prop);

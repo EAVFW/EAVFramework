@@ -19,11 +19,13 @@ namespace MC.Models
 		[DataMember(Name="id")]
 		[JsonProperty("id")]
 		[JsonPropertyName("id")]
+		[PrimaryKey()]
 		public Guid Id {get;set;}
 
 		[DataMember(Name="name")]
 		[JsonProperty("name")]
 		[JsonPropertyName("name")]
+		[PrimaryField()]
 		public String Name {get;set;}
 
 	}

@@ -30,6 +30,7 @@ namespace EAVFramework.UnitTest
         public async Task TestAutoRegistration()
         {
             var serviceCollection = new ServiceCollection();
+            serviceCollection.AddOptions<DynamicContextOptions>();
             serviceCollection.AddTransient<PluginsAccesser<DynamicContext>>();
 
             var builder = new EAVFrameworkBuilder<DynamicContext>(serviceCollection);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
@@ -9,8 +10,10 @@ namespace EAVFramework.Shared.V2
     {
 
     }
+  
     public class DynamicPropertyBuilder : IDynamicPropertyBuilder
     {
+        public bool HasParentProperty => this.dynamicTableBuilder.ContainsParentProperty(this.SchemaName);
 
         public string AttributeKey { get; }
         public string LogicalName { get; }
@@ -19,7 +22,7 @@ namespace EAVFramework.Shared.V2
         private readonly DynamicCodeService dynamicCodeService;
         private DynamicTableBuilder dynamicTableBuilder;
       
-        public Type PropertyType { get; }
+        public Type PropertyType { get; private set; }
         public string Type { get; }
 
        // public PropertyBuilder Builder { get; }
@@ -42,6 +45,8 @@ namespace EAVFramework.Shared.V2
 
         }
         private List<string> InverseProperties =new List<string>();
+       
+
         public bool IsLookup { get; private set; }
         public DynamicTableBuilder ReferenceType { get; private set; }
       //  public ForeignKeyInfo ForeignKey { get; private set; }
@@ -107,17 +112,51 @@ namespace EAVFramework.Shared.V2
 
                 prop.SetCustomAttribute(ForeignKeyAttributeBuilder);
             }
-        //    Builder = prop;
+
+            if (IsPrimaryField)
+            {
+                CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(typeof(PrimaryFieldAttribute).GetConstructor(new Type[] { }), new object[] {  });
+
+                prop.SetCustomAttribute(PrimaryFieldAttributeBuilder);
+
+                
+            }
+
+            if (IsPrimaryKey)
+            {
+                CustomAttributeBuilder PrimaryKeyAttributeBuilder = new CustomAttributeBuilder(typeof(PrimaryKeyAttribute).GetConstructor(new Type[] { }), new object[] { });
+
+                prop.SetCustomAttribute(PrimaryKeyAttributeBuilder);
+
+
+            }
+
+            if(Description != null)
+            {
+                CustomAttributeBuilder DescriptionAttributeBuilder = new CustomAttributeBuilder(typeof(DescriptionAttribute).GetConstructor(new Type[] { typeof(string)}), new object[] { Description });
+
+                prop.SetCustomAttribute(DescriptionAttributeBuilder);
+
+                 
+            }
+            //    Builder = prop;
         }
         public TypeBuilder TypeBuilder => this.dynamicTableBuilder.Builder;
 
         public bool IsPrimaryKey { get; private set; }
+        public bool IsPrimaryField { get; private set; }
         public bool IsRequired { get; private set; }
         public bool IsRowVersion { get; private set; }
 
         public DynamicPropertyBuilder PrimaryKey()
         {
-            IsPrimaryKey = true;return this;
+            this.PropertyType = Nullable.GetUnderlyingType(this.PropertyType) ?? this.PropertyType;
+            IsPrimaryKey = true;
+            return this;
+        }
+        public DynamicPropertyBuilder PrimaryField()
+        {
+            IsPrimaryField = true; return this;
         }
         public DynamicPropertyBuilder Required(bool required=true)
         {
@@ -141,6 +180,7 @@ namespace EAVFramework.Shared.V2
         public IColumnPropertyResolver ColumnPropertyResolver { get; private set; }
         public int? MaxLength { get; private set; }
         public IndexInfo IndexInfo { get; internal set; }
+        public bool IsManifestType => AttributeKey != null;
 
         public DynamicPropertyBuilder WithPrecision(int precision, int scale)
         {

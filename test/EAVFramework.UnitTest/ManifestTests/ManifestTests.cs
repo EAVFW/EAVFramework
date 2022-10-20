@@ -39,27 +39,8 @@ namespace EAVFramework.UnitTest.ManifestTests
 
         }
 
-        [Ignore]
-        [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/MinimapSpec.json", "specs")]
-        public async Task TestMinimalSpec()
-        {
-            //Arrange
-            var manifest =JToken.Parse( File.ReadAllText(@"specs\MinimapSpec.json"));
-
-
-            //Act
-            var sql = RunDBWithSchema("manifest_migrations", manifest);
-
-
-            //Assure
-
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel.sql");
-
-            Assert.AreEqual(expectedSQL, sql);
-
-        }
-
+       
+       
 
 
         [TestMethod]
