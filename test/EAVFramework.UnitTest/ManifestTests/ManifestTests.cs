@@ -32,13 +32,13 @@ namespace EAVFramework.UnitTest.ManifestTests
     public class ManifestTests : BaseManifestTests
     {
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/manifest.oidc.json", "specs")]
-        [DeploymentItem(@"ManifestTests/specs/manifest.oidc.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/manifest.oidc.json", "Specs")]
+        [DeploymentItem(@"ManifestTests/Specs/manifest.oidc.sql", "Specs")]
 
         public async Task TestLargeManfiest()
         {
             //Arrange
-            var manifest = JToken.Parse(File.ReadAllText(@"specs/manifest.oidc.json"));
+            var manifest = JToken.Parse(File.ReadAllText(@"Specs/manifest.oidc.json"));
 
 
             //Act
@@ -47,7 +47,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/manifest.oidc.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/manifest.oidc.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
@@ -58,12 +58,12 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CascadingTest.manifest.json", "specs")]
-        [DeploymentItem(@"ManifestTests/specs/CascadingTest.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CascadingTest.manifest.json", "Specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CascadingTest.sql", "Specs")]
         public async Task TestCascading()
         {
             //Arrange
-            var manifest = JToken.Parse(File.ReadAllText(@"specs/CascadingTest.manifest.json"));
+            var manifest = JToken.Parse(File.ReadAllText(@"Specs/CascadingTest.manifest.json"));
 
 
             //Act
@@ -72,7 +72,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CascadingTest.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CascadingTest.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
@@ -83,7 +83,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel.sql","specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel.sql","Specs")]
         public async Task CarsAndTrucksModelTest()
         {
             //Arrange
@@ -104,7 +104,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
@@ -113,7 +113,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddEntity.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_AddEntity.sql", "Specs")]
         public async Task CarsAndTrucksModel_AddEntityTest()
         {
             var manifestA = JToken.FromObject(new
@@ -140,14 +140,14 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddEntity.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddEntity.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_ChangePropertyTextLength.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_ChangePropertyTextLength.sql", "Specs")]
         public async Task CarsAndTrucksModel_ChangePropertyTextLength()
         {
             var manifestA = JToken.FromObject(new
@@ -197,13 +197,13 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_ChangePropertyTextLength.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_ChangePropertyTextLength.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql", "Specs")]
         public async Task CarsAndTrucksModel_ChangePropertyTextLengthTwice()
         {
             var manifestA = JToken.FromObject(new
@@ -277,13 +277,13 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddLookup.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_AddLookup.sql", "Specs")]
         public async Task CarsAndTrucksModel_AddLookup()
         {
             var manifestA = JToken.FromObject(new
@@ -322,13 +322,13 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddLookup.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddLookup.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddLookup_WithCascade.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_AddLookup_WithCascade.sql", "Specs")]
         public async Task CarsAndTrucksModel_AddLookupWithCascade()
         {
             var manifestA = JToken.FromObject(new
@@ -395,13 +395,13 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC,manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddLookup_WithCascade.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddLookup_WithCascade.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/CarsAndTrucksModel_AddAttribute.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_AddAttribute.sql", "Specs")]
         public async Task CarsAndTrucksModel_AddAttributeTest()
         {
             var manifestA = JToken.FromObject(new
@@ -442,7 +442,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
            
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddAttribute.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddAttribute.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }

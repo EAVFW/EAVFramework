@@ -11,7 +11,7 @@ namespace EAVFramework.UnitTest.ManifestTests
     {
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/RowVersionShouldGenerateRowversionColumn.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/RowVersionShouldGenerateRowversionColumn.sql", "Specs")]
         public async Task RowVersionShouldGenerateRowversionColumn()
         {
             var manifest = JToken.FromObject(new
@@ -67,7 +67,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/RowVersionShouldGenerateRowversionColumn.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/RowVersionShouldGenerateRowversionColumn.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }

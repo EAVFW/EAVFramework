@@ -27,58 +27,58 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ManifestTests\specs/*.sql">
+    <None Update="ManifestTests/Specs/*.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ManifestTests\specs/CascadingTest.sql">
+    <None Update="ManifestTests/Specs/CascadingTest.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="ManifestTests\specs/CascadingTest.manifest.json">
+    <None Update="ManifestTests/Specs/CascadingTest.manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="ManifestTests\specs/manifest.oidc.json">
+    <None Update="ManifestTests/Specs/manifest.oidc.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/oidcclient.json">
+    <None Update="Specs\oidcclient.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestBigCircleReference\OpenIdConnectIdentityResource.cs.txt">
+    <None Update="Specs\TestBigCircleReference\OpenIdConnectIdentityResource.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestBigCircleReference\OpenIdConnectResource.cs.txt">
+    <None Update="Specs\TestBigCircleReference\OpenIdConnectResource.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestBigCircleReference\OpenIdConnectScope.cs.txt">
+    <None Update="Specs\TestBigCircleReference\OpenIdConnectScope.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestBigCircleReference\OpenIdConnectScopeResource.cs.txt">
+    <None Update="Specs\TestBigCircleReference\OpenIdConnectScopeResource.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestExternalBaseClass\Identity.cs.txt">
+    <None Update="Specs\TestExternalBaseClass\Identity.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestExternalBaseClass\SecurityGroup.cs.txt">
+    <None Update="Specs\TestExternalBaseClass\SecurityGroup.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestInherience\Identity.cs.txt">
+    <None Update="Specs\TestInherience\Identity.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestInherience\SecurityGroup.cs.txt">
+    <None Update="Specs\TestInherience\SecurityGroup.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestLookupsWithCircle\Identity.cs.txt">
+    <None Update="Specs\TestLookupsWithCircle\Identity.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestLookupsWithCircle\Server.cs.txt">
+    <None Update="Specs\TestLookupsWithCircle\Server.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestSimplePropertiesWithCircle\Identity.cs.txt">
+    <None Update="Specs\TestSimplePropertiesWithCircle\Identity.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="specs/TestSimplePropertiesWithCircle\Server.cs.txt">
+    <None Update="Specs\TestSimplePropertiesWithCircle\Server.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

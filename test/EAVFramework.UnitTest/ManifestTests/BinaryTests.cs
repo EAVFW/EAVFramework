@@ -12,7 +12,7 @@ namespace EAVFramework.UnitTest.ManifestTests
     {
 
         [TestMethod]
-        [DeploymentItem(@"ManifestTests/specs/BinaryShouldGenerateBinaryColumn.sql", "specs")]
+        [DeploymentItem(@"ManifestTests/Specs/BinaryShouldGenerateBinaryColumn.sql", "Specs")]
         public async Task BinaryShouldGenerateBinaryColumn()
         {
             var manifest = JToken.FromObject(new
@@ -58,7 +58,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs/BinaryShouldGenerateBinaryColumn.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/BinaryShouldGenerateBinaryColumn.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
