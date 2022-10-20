@@ -38,8 +38,8 @@ namespace EAVFramework.UnitTest
                 .ToArray());
         }
 
-        [TestMethod]        
-        [DeploymentItem(@"Specs/TestSimplePropertiesWithCircle/")]
+        [TestMethod]
+        [DeploymentItem(@"Specs/TestSimplePropertiesWithCircle/", "Specs/TestSimplePropertiesWithCircle")]
         public void TestSimplePropertiesWithCircle()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions();
@@ -73,7 +73,7 @@ namespace EAVFramework.UnitTest
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/TestLookupsWithCircle/")]
+        [DeploymentItem(@"Specs/TestLookupsWithCircle/", "Specs/TestLookupsWithCircle")]
         public void TestLookupsWithCircle()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions();
@@ -117,7 +117,7 @@ namespace EAVFramework.UnitTest
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/TestInherience/")]
+        [DeploymentItem(@"Specs/TestInherience/", "Specs/TestInherience")]
         public void TestInherience()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
@@ -201,7 +201,7 @@ namespace EAVFramework.UnitTest
         }
         [TestMethod]
 
-        [DeploymentItem(@"Specs/TestBigCircleReference/")]
+        [DeploymentItem(@"Specs/TestBigCircleReference/", "Specs/TestBigCircleReference")]
         public void TestBigCircleReference()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
