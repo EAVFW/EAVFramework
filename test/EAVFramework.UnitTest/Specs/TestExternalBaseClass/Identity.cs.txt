@@ -24,11 +24,11 @@ namespace MC.Models
 		[PrimaryField()]
 		public String Name {get;set;}
 
-		[DataMember(Name="awesomeuseridentities")]
-		[JsonProperty("awesomeuseridentities")]
-		[JsonPropertyName("awesomeuseridentities")]
+		[DataMember(Name="identities")]
+		[JsonProperty("identities")]
+		[JsonPropertyName("identities")]
 		[InverseProperty("AwesomeUser")]
-		public ICollection<Identity> AwesomeUserIdentities {get;set;}
+		public ICollection<Identity> Identities {get;set;}
 
 	}
 }

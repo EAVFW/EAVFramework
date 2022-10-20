@@ -34,11 +34,11 @@ namespace MC.Models
 		[JsonPropertyName("primaryserverid")]
 		public Guid? PrimaryServerId {get;set;}
 
-		[DataMember(Name="createdbyservers")]
-		[JsonProperty("createdbyservers")]
-		[JsonPropertyName("createdbyservers")]
+		[DataMember(Name="servers")]
+		[JsonProperty("servers")]
+		[JsonPropertyName("servers")]
 		[InverseProperty("CreatedBy")]
-		public ICollection<Server> CreatedByServers {get;set;}
+		public ICollection<Server> Servers {get;set;}
 
 	}
 }

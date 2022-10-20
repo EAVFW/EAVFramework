@@ -73,5 +73,12 @@ namespace EAVFramework.Shared.V2
         public Type ReferentialActionType { get; set; }
         public int ReferentialActionNoAction { get; set; }
         public MethodInfo LambdaBase { get; set; }
+        public InversePropertyCollectionNamePattern InversePropertyCollectionName { get; set; } = InversePropertyCollectionNamePattern.ConcatWhenMultipleLookups;
+    }
+    public enum InversePropertyCollectionNamePattern
+    {
+        ConcatFieldNameAndLookupName,
+        ConcatWhenMultipleLookups
+
     }
 }

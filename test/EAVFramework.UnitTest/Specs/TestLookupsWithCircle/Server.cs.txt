@@ -34,11 +34,11 @@ namespace MC.Models
 		[JsonPropertyName("createdbyid")]
 		public Guid? CreatedById {get;set;}	
 
-		[DataMember(Name="primaryserveridentities")]
-		[JsonProperty("primaryserveridentities")]
-		[JsonPropertyName("primaryserveridentities")]
+		[DataMember(Name="identities")]
+		[JsonProperty("identities")]
+		[JsonPropertyName("identities")]
 		[InverseProperty("PrimaryServer")]
-		public ICollection<Identity> PrimaryServerIdentities {get;set;}
+		public ICollection<Identity> Identities {get;set;}
 
 	}
 }
