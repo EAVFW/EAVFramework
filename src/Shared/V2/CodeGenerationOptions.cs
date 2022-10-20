@@ -5,6 +5,7 @@ namespace EAVFramework.Shared.V2
 {
     public class CodeGenerationOptions
     {
+        
         /// <summary>
         /// The constructor used for the Newtonsoft JsonPropertyAttribute when setting DTO Property Attributes.
         /// </summary>
