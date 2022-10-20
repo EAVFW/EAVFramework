@@ -494,7 +494,6 @@
 					"logicalName": "myrepeatingtableid"
 				},
 				"File": {
-					"isPrimaryField": true,
 					"type": {
 						"type": "lookup",
 						"referenceType": "Document",

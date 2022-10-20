@@ -14,22 +14,22 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_binary].[__MigrationsHistory] WHERE [MigrationId] = N'tests_Initial')
 BEGIN
-    CREATE TABLE [tests].[customentities] (
+    CREATE TABLE [tests].[CustomEntities] (
         [Id] uniqueidentifier NOT NULL,
         [Name] nvarchar(255) NULL,
         [Data] varbinary(max) NULL,
-        CONSTRAINT [PK_customentities] PRIMARY KEY ([Id])
+        CONSTRAINT [PK_CustomEntities] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'customentities';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'CustomEntities';
 END;
 GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_binary].[__MigrationsHistory] WHERE [MigrationId] = N'tests_Initial')
 BEGIN
     INSERT INTO [manifest_binary].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_Initial', N'5.0.14');
+    VALUES (N'tests_Initial', N'{{VERSION}}');
 END;
 GO
 

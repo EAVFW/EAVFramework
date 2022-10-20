@@ -9,7 +9,7 @@ on:
 jobs:
   release:
     name: Releasing
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2

@@ -26,6 +26,23 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
+    CREATE TABLE [tests].[Filer] (
+        [Id] uniqueidentifier NOT NULL,
+        [FileName] nvarchar(255) NULL,
+        [FileId] uniqueidentifier NULL,
+        [MyRepeatingTableId] uniqueidentifier NULL,
+        CONSTRAINT [PK_Filer] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Filer_Documents_FileId] FOREIGN KEY ([FileId]) REFERENCES [KFST].[Documents] ([Id]),
+        CONSTRAINT [FK_Filer_MyRepeatingTable_MyRepeatingTableId] FOREIGN KEY ([MyRepeatingTableId]) REFERENCES [tests].[MyRepeatingTable] ([Id]) ON DELETE CASCADE
+    );
+    DECLARE @description AS sql_variant;
+    SET @description = N'comment';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Filer';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
+BEGIN
     CREATE TABLE [tests].[MyRepeatingTable] (
         [Id] uniqueidentifier NOT NULL,
         [FormSubmissionId] uniqueidentifier NULL,
@@ -40,25 +57,8 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
-    CREATE TABLE [tests].[Filer] (
-        [Id] uniqueidentifier NOT NULL,
-        [FileName] nvarchar(255) NULL,
-        [MyRepeatingTableId] uniqueidentifier NULL,
-        [FileId] uniqueidentifier NULL,
-        CONSTRAINT [PK_Filer] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_Filer_MyRepeatingTable_MyRepeatingTableId] FOREIGN KEY ([MyRepeatingTableId]) REFERENCES [tests].[MyRepeatingTable] ([Id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_Filer_Documents_FileId] FOREIGN KEY ([FileId]) REFERENCES [KFST].[Documents] ([Id])
-    );
-    DECLARE @description AS sql_variant;
-    SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Filer';
-END;
-GO
-
-IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
-BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_0', N'5.0.15');
+    VALUES (N'tests_1_0_0', N'{{VERSION}}');
 END;
 GO
 

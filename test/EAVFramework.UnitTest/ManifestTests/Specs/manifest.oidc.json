@@ -1,0 +1,4454 @@
+{
+	"entities": {
+		"Server": {
+			"pluralName": "Servers",
+			"locale": {
+				"1030": {
+					"pluralName": "Servers",
+					"displayName": "Server"
+				},
+				"1033": {
+					"displayName": "Server",
+					"pluralName": "Servers"
+				}
+			},
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Heartbeat": {
+					"type": {
+						"type": "DateTime"
+					},
+					"displayName": "Heartbeat",
+					"schemaName": "Heartbeat",
+					"logicalName": "heartbeat",
+					"locale": {
+						"1033": {
+							"displayName": "Heartbeat"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Server",
+			"schemaName": "Server",
+			"logicalName": "server",
+			"collectionSchemaName": "Servers"
+		},
+		"Environment Variable": {
+			"pluralName": "Environment Variables",
+			"locale": {
+				"1030": {
+					"pluralName": "Miljø Variabler",
+					"displayName": "Miljø Variable"
+				},
+				"1033": {
+					"displayName": "Environment Variable",
+					"pluralName": "Environment Variables"
+				}
+			},
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Server": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Server",
+						"foreignKey": {
+							"principalTable": "server",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "server"
+						}
+					},
+					"displayName": "Server",
+					"schemaName": "ServerId",
+					"logicalName": "serverid",
+					"locale": {
+						"1033": {
+							"displayName": "Server"
+						}
+					}
+				},
+				"Application Name": {
+					"type": {
+						"type": "string"
+					},
+					"displayName": "Application Name",
+					"schemaName": "ApplicationName",
+					"logicalName": "applicationname",
+					"locale": {
+						"1033": {
+							"displayName": "Application Name"
+						}
+					}
+				},
+				"Value": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"displayName": "Value",
+					"schemaName": "Value",
+					"logicalName": "value",
+					"locale": {
+						"1033": {
+							"displayName": "Value"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Environment Variable",
+			"schemaName": "EnvironmentVariable",
+			"logicalName": "environmentvariable",
+			"collectionSchemaName": "EnvironmentVariables"
+		},
+		"Identity": {
+			"pluralName": "Identities",
+			"abstract": true,
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Identity",
+			"schemaName": "Identity",
+			"logicalName": "identity",
+			"collectionSchemaName": "Identities",
+			"locale": {
+				"1033": {
+					"displayName": "Identity",
+					"pluralName": "Identities"
+				}
+			}
+		},
+		"OpenId Connect Client": {
+			"pluralName": "OpenId Connect Clients",
+			"description": "Models an OpenId Connect or OAuth2 client",
+			"TPT": "Identity",
+			"sitemap": {
+				"title": "Clients",
+				"app": "Kjeldager CRM",
+				"area": "OpenId Connect",
+				"group": "OpenId Connect"
+			},
+			"keys": {
+				"Client Id": [
+					"Client Id"
+				]
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {},
+											"SECTION_Logins": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {},
+											"SECTION_Logout": {},
+											"SECTION_Lifetimes": {},
+											"SECTION_Tokens": {}
+										}
+									}
+								}
+							},
+							"TAB_Miscellaneous": {
+								"title": "Miscellaneous",
+								"locale": {
+									"1030": {
+										"title": "Andet"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_Miscellaneous": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": {
+								"title": "Administrative",
+								"locale": {
+									"1030": {
+										"title": "Administrative"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_Secrets": {
+								"title": "Secrets",
+								"locale": {
+									"1030": {
+										"title": "Nøgler"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_SecurityGroups": {
+								"title": "Security Groups",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsgrupper"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Client Id": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Type": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Description": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "RichTextEditorControl"
+						},
+						"Client Uri": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Logo Uri": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Protocol Type": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Require Client Secret": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Require Consent": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Allow Remember Consent": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Allowed Grant Types": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Require PKCE": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Allow Plain Text PKCE": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Post Logout Redirect URIs": {
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "MC_postlogoutredirecturis",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Post Logout Redirect URIs",
+										"x-description": "Specifies allowed URIs to redirect to after logout",
+										"x-add-label": "Add URI",
+										"items": {
+											"type": "string",
+											"format": "uri",
+											"x-aria-label": "Redirect URI",
+											"x-label": "Redirect URI",
+											"x-placeholder": "Redirect URI",
+											"x-help-text": "Specifies allowed URIs to return tokens or authorization codes to"
+										}
+									}
+								}
+							},
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logout"
+						},
+						"Front Channel Logout URI": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logout"
+						},
+						"Front Channel Logout Session Required": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logout"
+						},
+						"Back Channel Logout URI": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logout"
+						},
+						"Back Channel Logout Session Required": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logout"
+						},
+						"Identity Token Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Access Token Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Authorization Code Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Absolute Refresh Token Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Sliding Refresh Token Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Consent Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"User SSO Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Device Code Lifetime": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "Section_General",
+							"control": "@eavfw/TimespanControl"
+						},
+						"Refresh Token Expiration": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Lifetimes"
+						},
+						"Allow Access Tokens Via Browser": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Refresh Token Usage": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Access Token Type": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Include JWT Id": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Always Include User Claims In Id Token": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Claims": {
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "MC_claims",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Claims",
+										"x-description": "Specifies claims that is included in the access token for the client",
+										"x-add-label": "Add claim",
+										"items": {
+											"type": "object",
+											"properties": {
+												"type": {
+													"type": "string",
+													"x-label": "Claim Type",
+													"x-aria-label": "Claim Type",
+													"x-placeholder": "Claim type"
+												},
+												"value": {
+													"type": "string",
+													"x-label": "Claim Value",
+													"x-aria-label": "Claim Value",
+													"x-placeholder": "Claim value"
+												}
+											},
+											"x-aria-label": "Claims",
+											"x-label": "Claims",
+											"x-help-text": "Specifies claims that is included in the access token for the client"
+										}
+									}
+								}
+							},
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Always Send Client Claims": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Client CLaims Prefix": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Update Access Token Claims On Refresh": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Tokens"
+						},
+						"Enable Local Login": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logins"
+						},
+						"Identity Provider Restrictions": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logins"
+						},
+						"Pair Wise Subject Salt": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logins"
+						},
+						"Allow Offline Access": {
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logins"
+						},
+						"Redirect Uris": {
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "MC_redirecturis",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Redirect URIs",
+										"x-description": "The URIs we will accept as destinations when returning authentication responses (tokens) after successfully authenticating users. Also referred to as reply URLs.",
+										"x-add-label": "Add URI",
+										"items": {
+											"type": "string",
+											"format": "uri",
+											"x-aria-label": "Redirect URI",
+											"x-label": "Redirect URI",
+											"x-placeholder": "Redirect URI",
+											"x-help-text": "Specifies allowed URIs to return tokens or authorization codes to"
+										}
+									}
+								}
+							},
+							"tab": "TAB_General",
+							"column": "COLUMN_Second",
+							"section": "Section_Logins"
+						},
+						"User Code Type": {
+							"tab": "TAB_Miscellaneous",
+							"column": "COLUMN_First",
+							"section": "Section_Miscellaneous"
+						},
+						"Allowed CORS Origins": {
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "MC_allowedcorsorigins",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Allowed CORS Origins",
+										"x-description": "Specifies the allowed CORS origins for JavaScript clients",
+										"x-add-label": "Add Origin",
+										"items": {
+											"type": "string",
+											"format": "uri",
+											"x-aria-label": "Origin",
+											"x-label": "Origin",
+											"x-placeholder": "Origin",
+											"x-help-text": "Specifies the allowed CORS origins for JavaScript clients"
+										}
+									}
+								}
+							},
+							"tab": "TAB_Miscellaneous",
+							"column": "COLUMN_First",
+							"section": "Section_Miscellaneous"
+						},
+						"Properties": {
+							"tab": "TAB_Miscellaneous",
+							"column": "COLUMN_First",
+							"section": "Section_Miscellaneous",
+							"showCellLabel": false
+						},
+						"Allowed Scopes": {
+							"tab": "TAB_Miscellaneous",
+							"column": "COLUMN_First",
+							"section": "Section_Miscellaneous"
+						},
+						"Require Request Object": {
+							"tab": "TAB_Miscellaneous",
+							"column": "COLUMN_First",
+							"section": "Section_Miscellaneous"
+						},
+						"Created On": {
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created By": {
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified On": {
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified By": {
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Owner": {
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"views": {
+				"Active OpenId Connect Clients": {
+					"columns": {
+						"Client Id": {},
+						"Name": {},
+						"Client Uri": {},
+						"Status Reason": {},
+						"Require Consent": {}
+					}
+				}
+			},
+			"attributes": {
+				"Description": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "The description of the client",
+					"displayName": "Description",
+					"schemaName": "Description",
+					"logicalName": "description",
+					"locale": {
+						"1033": {
+							"displayName": "Description"
+						}
+					}
+				},
+				"Client Uri": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "URI to further information about the client (used on consent screen)",
+					"displayName": "Client Uri",
+					"schemaName": "ClientUri",
+					"logicalName": "clienturi",
+					"locale": {
+						"1033": {
+							"displayName": "Client Uri"
+						}
+					}
+				},
+				"Logo Uri": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "URI to client logo (used on consent screen)",
+					"displayName": "Logo Uri",
+					"schemaName": "LogoUri",
+					"logicalName": "logouri",
+					"locale": {
+						"1033": {
+							"displayName": "Logo Uri"
+						}
+					}
+				},
+				"Require Consent": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies whether a consent screen is required",
+					"displayName": "Require Consent",
+					"schemaName": "RequireConsent",
+					"logicalName": "requireconsent",
+					"locale": {
+						"1033": {
+							"displayName": "Require Consent"
+						}
+					}
+				},
+				"Allow Remember Consent": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies whether user can choose to store consent decisions",
+					"default": true,
+					"displayName": "Allow Remember Consent",
+					"schemaName": "AllowRememberConsent",
+					"logicalName": "allowrememberconsent",
+					"locale": {
+						"1033": {
+							"displayName": "Allow Remember Consent"
+						}
+					}
+				},
+				"Enable Local Login": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies if local login is enabled for this client",
+					"default": true,
+					"displayName": "Enable Local Login",
+					"schemaName": "EnableLocalLogin",
+					"logicalName": "enablelocallogin",
+					"locale": {
+						"1033": {
+							"displayName": "Enable Local Login"
+						}
+					}
+				},
+				"Allowed Grant Types": {
+					"description": "Specifies the allowed grant types (legal combinations of AuthorizationCode, Implicit, Hybrid, ResourceOWner, ClientCredentials)",
+					"type": {
+						"name": "Allowed Grant Type",
+						"pluralName": "Allowed Grant Types",
+						"type": "Choices",
+						"options": {
+							"Authorization Code": 1,
+							"Implicit": 2,
+							"Resource Owner": 3,
+							"Client Credentials": 4,
+							"Hybrid": 5,
+							"Device Flow": 6,
+							"Refresh Token": 7
+						},
+						"logicalName": "allowedgranttype",
+						"schemaName": "AllowedGrantType",
+						"collectionSchemaName": "AllowedGrantTypes",
+						"principalColumn": "openidconnectclientid"
+					},
+					"displayName": "Allowed Grant Types",
+					"schemaName": "AllowedGrantTypes",
+					"logicalName": "allowedgranttypes",
+					"locale": {
+						"1033": {
+							"displayName": "Allowed Grant Types"
+						}
+					}
+				},
+				"Identity Provider Restrictions": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies which external IdPs can be used with this client",
+					"displayName": "Identity Provider Restrictions",
+					"schemaName": "IdentityProviderRestrictions",
+					"logicalName": "identityproviderrestrictions",
+					"locale": {
+						"1033": {
+							"displayName": "Identity Provider Restrictions"
+						}
+					}
+				},
+				"Allow Offline Access": {
+					"type": {
+						"type": "boolean"
+					},
+					"displayName": "Allow Offline Access",
+					"schemaName": "AllowOfflineAccess",
+					"logicalName": "allowofflineaccess",
+					"locale": {
+						"1033": {
+							"displayName": "Allow Offline Access"
+						}
+					}
+				},
+				"Pair Wise Subject Salt": {
+					"type": {
+						"type": "Text"
+					},
+					"description": "Specifies a salt value used in pair-wise subjectId generation for users of this client",
+					"displayName": "Pair Wise Subject Salt",
+					"schemaName": "PairWiseSubjectSalt",
+					"logicalName": "pairwisesubjectsalt",
+					"locale": {
+						"1033": {
+							"displayName": "Pair Wise Subject Salt"
+						}
+					}
+				},
+				"Require PKCE": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies whether a proof key is required for authorization code based token requests",
+					"default": true,
+					"displayName": "Require PKCE",
+					"schemaName": "RequirePKCE",
+					"logicalName": "requirepkce",
+					"locale": {
+						"1033": {
+							"displayName": "Require PKCE"
+						}
+					}
+				},
+				"Allow Plain Text PKCE": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies whether a proof key can be sent using plain method (not recommended)",
+					"displayName": "Allow Plain Text PKCE",
+					"schemaName": "AllowPlainTextPKCE",
+					"logicalName": "allowplaintextpkce",
+					"locale": {
+						"1033": {
+							"displayName": "Allow Plain Text PKCE"
+						}
+					}
+				},
+				"Require Request Object": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies whether the client must use a request object on authorization requests",
+					"displayName": "Require Request Object",
+					"schemaName": "RequireRequestObject",
+					"logicalName": "requirerequestobject",
+					"locale": {
+						"1033": {
+							"displayName": "Require Request Object"
+						}
+					}
+				},
+				"Allow Access Tokens Via Browser": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Controls whether accesss tokens are transmitted via the browser for this client. This can prevent accidential leakage of access tokens when multiple resposne types are allowed.",
+					"displayName": "Allow Access Tokens Via Browser",
+					"schemaName": "AllowAccessTokensViaBrowser",
+					"logicalName": "allowaccesstokensviabrowser",
+					"locale": {
+						"1033": {
+							"displayName": "Allow Access Tokens Via Browser"
+						}
+					}
+				},
+				"Status": {
+					"description": "Specifies if the client is enabled",
+					"default": 2,
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Client Status",
+						"options": {
+							"Inactive": 0,
+							"Enabled": 1,
+							"Draft": 2
+						}
+					},
+					"displayName": "Status",
+					"schemaName": "Status",
+					"logicalName": "status",
+					"locale": {
+						"1033": {
+							"displayName": "Status"
+						}
+					}
+				},
+				"Protocol Type": {
+					"description": "The protocol type",
+					"default": 0,
+					"type": {
+						"type": "Choice",
+						"name": "Protocol Types",
+						"options": {
+							"OpenIdConnect": 0
+						}
+					},
+					"displayName": "Protocol Type",
+					"schemaName": "ProtocolType",
+					"logicalName": "protocoltype",
+					"locale": {
+						"1033": {
+							"displayName": "Protocol Type"
+						}
+					}
+				},
+				"Require Client Secret": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "If set to false, no client secret is needed to request tokens at the token endpoint",
+					"default": true,
+					"displayName": "Require Client Secret",
+					"schemaName": "RequireClientSecret",
+					"logicalName": "requireclientsecret",
+					"locale": {
+						"1033": {
+							"displayName": "Require Client Secret"
+						}
+					}
+				},
+				"Client Id": {
+					"type": {
+						"type": "Text"
+					},
+					"description": "Unique ID of the client",
+					"required": true,
+					"displayName": "Client Id",
+					"schemaName": "ClientId",
+					"logicalName": "clientid",
+					"locale": {
+						"1033": {
+							"displayName": "Client Id"
+						}
+					}
+				},
+				"Client Secret": {
+					"type": {
+						"type": "Text"
+					},
+					"description": "Unique ID of the client",
+					"required": true,
+					"displayName": "Client Secret",
+					"schemaName": "ClientSecret",
+					"logicalName": "clientsecret",
+					"locale": {
+						"1033": {
+							"displayName": "Client Secret"
+						}
+					}
+				},
+				"Consent Type": {
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Client Consent Types",
+						"options": {
+							"Explicit ": 0,
+							"External": 1,
+							"Implicit": 2,
+							"Systematic": 3
+						}
+					},
+					"displayName": "Consent Type",
+					"schemaName": "ConsentType",
+					"logicalName": "consenttype",
+					"locale": {
+						"1033": {
+							"displayName": "Consent Type"
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "Choice",
+						"required": true,
+						"name": "OpenId Connect Client Types",
+						"options": {
+							"Confidential": 0,
+							"Public": 1
+						}
+					},
+					"displayName": "Type",
+					"schemaName": "Type",
+					"logicalName": "type",
+					"locale": {
+						"1033": {
+							"displayName": "Type"
+						}
+					}
+				},
+				"Redirect Uris": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies allowed URIs to return tokens or authorization codes to",
+					"displayName": "Redirect Uris",
+					"schemaName": "RedirectUris",
+					"logicalName": "redirecturis",
+					"locale": {
+						"1033": {
+							"displayName": "Redirect Uris"
+						}
+					}
+				},
+				"Post Logout Redirect URIs": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies allowed URIs to redirect to after logout",
+					"displayName": "Post Logout Redirect URIs",
+					"schemaName": "PostLogoutRedirectURIs",
+					"logicalName": "postlogoutredirecturis",
+					"locale": {
+						"1033": {
+							"displayName": "Post Logout Redirect URIs"
+						}
+					}
+				},
+				"Front Channel Logout URI": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "Specifies logout URI at client for HTTP front-channel based logout",
+					"displayName": "Front Channel Logout URI",
+					"schemaName": "FrontChannelLogoutURI",
+					"logicalName": "frontchannellogouturi",
+					"locale": {
+						"1033": {
+							"displayName": "Front Channel Logout URI"
+						}
+					}
+				},
+				"Include JWT Id": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies if JWT access token should include an identifier",
+					"default": true,
+					"displayName": "Include JWT Id",
+					"schemaName": "IncludeJWTId",
+					"logicalName": "includejwtid",
+					"locale": {
+						"1033": {
+							"displayName": "Include JWT Id"
+						}
+					}
+				},
+				"Claims": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies claims that is included in the access token for the client",
+					"displayName": "Claims",
+					"schemaName": "Claims",
+					"logicalName": "claims",
+					"locale": {
+						"1033": {
+							"displayName": "Claims"
+						}
+					}
+				},
+				"Always Send Client Claims": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies if Client Claims always should be included in accesss token, or only for client credentials flow",
+					"displayName": "Always Send Client Claims",
+					"schemaName": "AlwaysSendClientClaims",
+					"logicalName": "alwayssendclientclaims",
+					"locale": {
+						"1033": {
+							"displayName": "Always Send Client Claims"
+						}
+					}
+				},
+				"Client CLaims Prefix": {
+					"type": {
+						"type": "Text"
+					},
+					"default": "client_",
+					"description": "Specifies a value to prefix client claim types",
+					"displayName": "Client CLaims Prefix",
+					"schemaName": "ClientCLaimsPrefix",
+					"logicalName": "clientclaimsprefix",
+					"locale": {
+						"1033": {
+							"displayName": "Client CLaims Prefix"
+						}
+					}
+				},
+				"User SSO Lifetime": {
+					"description": "The maximum duration (in seconds) since the last time the user authenticated (defaults no expiration)",
+					"type": {
+						"type": "integer"
+					},
+					"displayName": "User SSO Lifetime",
+					"schemaName": "UserSSOLifetime",
+					"logicalName": "userssolifetime",
+					"locale": {
+						"1033": {
+							"displayName": "User SSO Lifetime"
+						}
+					}
+				},
+				"User Code Type": {
+					"type": {
+						"type": "Text"
+					},
+					"description": "Specifies the type of device flow user code",
+					"displayName": "User Code Type",
+					"schemaName": "UserCodeType",
+					"logicalName": "usercodetype",
+					"locale": {
+						"1033": {
+							"displayName": "User Code Type"
+						}
+					}
+				},
+				"Device Code Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"description": "The device code lifetime",
+					"default": 300,
+					"displayName": "Device Code Lifetime",
+					"schemaName": "DeviceCodeLifetime",
+					"logicalName": "devicecodelifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Device Code Lifetime"
+						}
+					}
+				},
+				"Allowed CORS Origins": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies the allowed CORS origins for JavaScript clients",
+					"displayName": "Allowed CORS Origins",
+					"schemaName": "AllowedCORSOrigins",
+					"logicalName": "allowedcorsorigins",
+					"locale": {
+						"1033": {
+							"displayName": "Allowed CORS Origins"
+						}
+					}
+				},
+				"Front Channel Logout Session Required": {
+					"type": {
+						"type": "boolean"
+					},
+					"default": true,
+					"description": "Specifies if the users sessions id should be sent to FrontChannelLogoutUri",
+					"displayName": "Front Channel Logout Session Required",
+					"schemaName": "FrontChannelLogoutSessionRequired",
+					"logicalName": "frontchannellogoutsessionrequired",
+					"locale": {
+						"1033": {
+							"displayName": "Front Channel Logout Session Required"
+						}
+					}
+				},
+				"Back Channel Logout URI": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "Specifies logout URI at client for HTTP back-channel based logout.",
+					"displayName": "Back Channel Logout URI",
+					"schemaName": "BackChannelLogoutURI",
+					"logicalName": "backchannellogouturi",
+					"locale": {
+						"1033": {
+							"displayName": "Back Channel Logout URI"
+						}
+					}
+				},
+				"Back Channel Logout Session Required": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies if the users sessions id should be sent to BackChannelLogoutUri",
+					"default": true,
+					"displayName": "Back Channel Logout Session Required",
+					"schemaName": "BackChannelLogoutSessionRequired",
+					"logicalName": "backchannellogoutsessionrequired",
+					"locale": {
+						"1033": {
+							"displayName": "Back Channel Logout Session Required"
+						}
+					}
+				},
+				"Allowed Scopes": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies the API scopes that the client is allowed to request, if empty, the client cant access any scopes",
+					"displayName": "Allowed Scopes",
+					"schemaName": "AllowedScopes",
+					"logicalName": "allowedscopes",
+					"locale": {
+						"1033": {
+							"displayName": "Allowed Scopes"
+						}
+					}
+				},
+				"Always Include User Claims In Id Token": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "When requesting both an id token and access token, should the user claims always be added to the id token instead of requiring the client to use the userinfo endpoint",
+					"displayName": "Always Include User Claims In Id Token",
+					"schemaName": "AlwaysIncludeUserClaimsInIdToken",
+					"logicalName": "alwaysincludeuserclaimsinidtoken",
+					"locale": {
+						"1033": {
+							"displayName": "Always Include User Claims In Id Token"
+						}
+					}
+				},
+				"Identity Token Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"description": "Lifetime of the identity token in seconds",
+					"default": 300,
+					"displayName": "Identity Token Lifetime",
+					"schemaName": "IdentityTokenLifetime",
+					"logicalName": "identitytokenlifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Identity Token Lifetime"
+						}
+					}
+				},
+				"Allowed Identity Token Signing Algorithms": {
+					"type": {
+						"type": "Choices",
+						"name": "Allowed Identity Token Signing Algorithm",
+						"pluralName": "Allowed Identity Token Signing Algorithm",
+						"options": {
+							"ES256": 1
+						},
+						"logicalName": "allowedidentitytokensigningalgorithm",
+						"schemaName": "AllowedIdentityTokenSigningAlgorithm",
+						"collectionSchemaName": "AllowedIdentityTokenSigningAlgorithm",
+						"principalColumn": "openidconnectclientid"
+					},
+					"displayName": "Allowed Identity Token Signing Algorithms",
+					"schemaName": "AllowedIdentityTokenSigningAlgorithms",
+					"logicalName": "allowedidentitytokensigningalgorithms",
+					"locale": {
+						"1033": {
+							"displayName": "Allowed Identity Token Signing Algorithms"
+						}
+					}
+				},
+				"Access Token Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"default": 3600,
+					"description": "Lifetime of access token in seconds",
+					"displayName": "Access Token Lifetime",
+					"schemaName": "AccessTokenLifetime",
+					"logicalName": "accesstokenlifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Access Token Lifetime"
+						}
+					}
+				},
+				"Authorization Code Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"description": "Lifetime of authorization code in secords",
+					"default": 300,
+					"displayName": "Authorization Code Lifetime",
+					"schemaName": "AuthorizationCodeLifetime",
+					"logicalName": "authorizationcodelifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Authorization Code Lifetime"
+						}
+					}
+				},
+				"Absolute Refresh Token Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"description": "Maximum lifetime of a refresh token in secords",
+					"default": 2419200,
+					"displayName": "Absolute Refresh Token Lifetime",
+					"schemaName": "AbsoluteRefreshTokenLifetime",
+					"logicalName": "absoluterefreshtokenlifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Absolute Refresh Token Lifetime"
+						}
+					}
+				},
+				"Sliding Refresh Token Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"description": "Sliding lifetime of a refresh token in secords",
+					"default": 1209600,
+					"displayName": "Sliding Refresh Token Lifetime",
+					"schemaName": "SlidingRefreshTokenLifetime",
+					"logicalName": "slidingrefreshtokenlifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Sliding Refresh Token Lifetime"
+						}
+					}
+				},
+				"Consent Lifetime": {
+					"type": {
+						"type": "integer"
+					},
+					"description": "Lifetime of a user consent in seconds (defaults no expiration)",
+					"displayName": "Consent Lifetime",
+					"schemaName": "ConsentLifetime",
+					"logicalName": "consentlifetime",
+					"locale": {
+						"1033": {
+							"displayName": "Consent Lifetime"
+						}
+					}
+				},
+				"Refresh Token Usage": {
+					"type": {
+						"name": "Refresh Token Usage Types",
+						"type": "Choice",
+						"options": {
+							"Re Use": 0,
+							"One Time": 1
+						}
+					},
+					"default": 0,
+					"description": "Specify if the refresh handle will be updated when refreshing tokens",
+					"displayName": "Refresh Token Usage",
+					"schemaName": "RefreshTokenUsage",
+					"logicalName": "refreshtokenusage",
+					"locale": {
+						"1033": {
+							"displayName": "Refresh Token Usage"
+						}
+					}
+				},
+				"Update Access Token Claims On Refresh": {
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Specifies if access token and claims should be updated on a refresh token request",
+					"displayName": "Update Access Token Claims On Refresh",
+					"schemaName": "UpdateAccessTokenClaimsOnRefresh",
+					"logicalName": "updateaccesstokenclaimsonrefresh",
+					"locale": {
+						"1033": {
+							"displayName": "Update Access Token Claims On Refresh"
+						}
+					}
+				},
+				"Refresh Token Expiration": {
+					"type": {
+						"type": "Choice",
+						"name": "Refresh Token Expiration Types",
+						"options": {
+							"Absolute": 1,
+							"Sliding": 0
+						}
+					},
+					"description": "Specifies if using absolute expiration or sliding expiration",
+					"default": 1,
+					"displayName": "Refresh Token Expiration",
+					"schemaName": "RefreshTokenExpiration",
+					"logicalName": "refreshtokenexpiration",
+					"locale": {
+						"1033": {
+							"displayName": "Refresh Token Expiration"
+						}
+					}
+				},
+				"Access Token Type": {
+					"type": {
+						"name": "Access Token Types",
+						"type": "Choice",
+						"options": {
+							"JWT": 0,
+							"Reference": 1
+						}
+					},
+					"description": "Specifies wheter the access token is a reference token or a self contained JWT token",
+					"default": 0,
+					"displayName": "Access Token Type",
+					"schemaName": "AccessTokenType",
+					"logicalName": "accesstokentype",
+					"locale": {
+						"1033": {
+							"displayName": "Access Token Type"
+						}
+					}
+				},
+				"Properties": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Specifies custom properties for the client",
+					"displayName": "Properties",
+					"schemaName": "Properties",
+					"logicalName": "properties",
+					"locale": {
+						"1033": {
+							"displayName": "Properties"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				}
+			},
+			"displayName": "OpenId Connect Client",
+			"schemaName": "OpenIdConnectClient",
+			"logicalName": "openidconnectclient",
+			"collectionSchemaName": "OpenIdConnectClients",
+			"locale": {
+				"1033": {
+					"displayName": "OpenId Connect Client",
+					"pluralName": "OpenId Connect Clients"
+				}
+			}
+		},
+		"System User": {
+			"TPT": "Identity",
+			"pluralName": "System Users",
+			"attributes": {
+				"Email": {
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					},
+					"displayName": "Email",
+					"schemaName": "Email",
+					"logicalName": "email",
+					"locale": {
+						"1033": {
+							"displayName": "Email"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				}
+			},
+			"displayName": "System User",
+			"schemaName": "SystemUser",
+			"logicalName": "systemuser",
+			"collectionSchemaName": "SystemUsers",
+			"locale": {
+				"1033": {
+					"displayName": "System User",
+					"pluralName": "System Users"
+				}
+			}
+		},
+		"Security Group": {
+			"TPT": "Identity",
+			"pluralName": "Security Groups",
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppe",
+					"displayName": "Sikkerhedsgrupper"
+				},
+				"1033": {
+					"displayName": "Security Group",
+					"pluralName": "Security Groups"
+				}
+			},
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"keys": {
+				"ExternalId": [
+					"External Id"
+				]
+			},
+			"attributes": {
+				"External Id": {
+					"type": {
+						"type": "string"
+					},
+					"displayName": "External Id",
+					"schemaName": "ExternalId",
+					"logicalName": "externalid",
+					"locale": {
+						"1033": {
+							"displayName": "External Id"
+						}
+					}
+				},
+				"Is Business Unit": {
+					"type": {
+						"type": "boolean"
+					},
+					"displayName": "Is Business Unit",
+					"schemaName": "IsBusinessUnit",
+					"logicalName": "isbusinessunit",
+					"locale": {
+						"1033": {
+							"displayName": "Is Business Unit"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				}
+			},
+			"displayName": "Security Group",
+			"schemaName": "SecurityGroup",
+			"logicalName": "securitygroup",
+			"collectionSchemaName": "SecurityGroups"
+		},
+		"Document": {
+			"pluralName": "Documents",
+			"locale": {
+				"1030": {
+					"pluralName": "Dokumenter",
+					"displayName": "Dokument"
+				},
+				"1033": {
+					"displayName": "Document",
+					"pluralName": "Documents"
+				}
+			},
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Size": {
+					"type": {
+						"type": "integer"
+					},
+					"displayName": "Size",
+					"schemaName": "Size",
+					"logicalName": "size",
+					"locale": {
+						"1033": {
+							"displayName": "Size"
+						}
+					}
+				},
+				"Container": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					},
+					"displayName": "Container",
+					"schemaName": "Container",
+					"logicalName": "container",
+					"locale": {
+						"1033": {
+							"displayName": "Container"
+						}
+					}
+				},
+				"Path": {
+					"type": {
+						"type": "Text",
+						"maxLength": 512
+					},
+					"displayName": "Path",
+					"schemaName": "Path",
+					"logicalName": "path",
+					"locale": {
+						"1033": {
+							"displayName": "Path"
+						}
+					}
+				},
+				"ContentType": {
+					"type": {
+						"type": "Text"
+					},
+					"displayName": "ContentType",
+					"schemaName": "ContentType",
+					"logicalName": "contenttype",
+					"locale": {
+						"1033": {
+							"displayName": "ContentType"
+						}
+					}
+				},
+				"Compressed": {
+					"type": {
+						"type": "boolean"
+					},
+					"displayName": "Compressed",
+					"schemaName": "Compressed",
+					"logicalName": "compressed",
+					"locale": {
+						"1033": {
+							"displayName": "Compressed"
+						}
+					}
+				},
+				"Data": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					},
+					"displayName": "Data",
+					"schemaName": "Data",
+					"logicalName": "data",
+					"locale": {
+						"1033": {
+							"displayName": "Data"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Document",
+			"schemaName": "Document",
+			"logicalName": "document",
+			"collectionSchemaName": "Documents"
+		},
+		"Permission": {
+			"pluralName": "Permissions",
+			"keys": {
+				"IX_Name": [
+					"Name"
+				]
+			},
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Tilladelse",
+					"displayName": "Tilladelser"
+				},
+				"1033": {
+					"displayName": "Permission",
+					"pluralName": "Permissions"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Description": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Beskrivelse"
+						},
+						"1033": {
+							"displayName": "Description"
+						}
+					},
+					"displayName": "Description",
+					"schemaName": "Description",
+					"logicalName": "description"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Description": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Permission",
+			"schemaName": "Permission",
+			"logicalName": "permission",
+			"collectionSchemaName": "Permissions"
+		},
+		"Security Role": {
+			"pluralName": "Security Roles",
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle",
+					"displayName": "Sikkerhedsroller"
+				},
+				"1033": {
+					"displayName": "Security Role",
+					"pluralName": "Security Roles"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Description": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Beskrivelse"
+						},
+						"1033": {
+							"displayName": "Description"
+						}
+					},
+					"displayName": "Description",
+					"schemaName": "Description",
+					"logicalName": "description"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Permissions": {
+								"title": "Permissions",
+								"locale": {
+									"1030": {
+										"title": "Permissions"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Description": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Security Role",
+			"schemaName": "SecurityRole",
+			"logicalName": "securityrole",
+			"collectionSchemaName": "SecurityRoles"
+		},
+		"Security Role Permission": {
+			"pluralName": "Security Role Permissions",
+			"description": "The Many to Many relationship between security roles and permissions",
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"keys": {
+				"IX_RolePermission": [
+					"Security Role",
+					"Permission"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tilladelse",
+					"displayName": "Sikkerhedsrolle tilladelser"
+				},
+				"1033": {
+					"displayName": "Security Role Permission",
+					"pluralName": "Security Role Permissions"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Permission",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "permission",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "permission"
+						}
+					},
+					"displayName": "Permission",
+					"schemaName": "PermissionId",
+					"logicalName": "permissionid",
+					"locale": {
+						"1033": {
+							"displayName": "Permission"
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true,
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Permissions",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "securityrole",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "securityrole"
+						}
+					},
+					"displayName": "Security Role",
+					"schemaName": "SecurityRoleId",
+					"logicalName": "securityroleid",
+					"locale": {
+						"1033": {
+							"displayName": "Security Role"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Security Role Permission",
+			"schemaName": "SecurityRolePermission",
+			"logicalName": "securityrolepermission",
+			"collectionSchemaName": "SecurityRolePermissions"
+		},
+		"Security Role Assignment": {
+			"pluralName": "Security Role Assignments",
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"keys": {
+				"IX_IdentityRole": [
+					"Security Role",
+					"Identity"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tildeling",
+					"displayName": "Sikkerhedsrolle tildelinger"
+				},
+				"1033": {
+					"displayName": "Security Role Assignment",
+					"pluralName": "Security Role Assignments"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "identity"
+						}
+					},
+					"displayName": "Identity",
+					"schemaName": "IdentityId",
+					"logicalName": "identityid",
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "securityrole",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "securityrole"
+						}
+					},
+					"displayName": "Security Role",
+					"schemaName": "SecurityRoleId",
+					"logicalName": "securityroleid",
+					"locale": {
+						"1033": {
+							"displayName": "Security Role"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Security Role Assignment",
+			"schemaName": "SecurityRoleAssignment",
+			"logicalName": "securityroleassignment",
+			"collectionSchemaName": "SecurityRoleAssignments"
+		},
+		"Security Group Member": {
+			"pluralName": "Security Group Members",
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppemedlem",
+					"displayName": "Sikkerhedsgruppemedlemmer"
+				},
+				"1033": {
+					"displayName": "Security Group Member",
+					"pluralName": "Security Group Members"
+				}
+			},
+			"keys": {
+				"IX_SecurityGroupIdentity": [
+					"Security Group",
+					"Identity"
+				]
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityGroups",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "identity"
+						}
+					},
+					"displayName": "Identity",
+					"schemaName": "IdentityId",
+					"logicalName": "identityid",
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"Security Group": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Group",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "securitygroup",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "securitygroup"
+						}
+					},
+					"displayName": "Security Group",
+					"schemaName": "SecurityGroupId",
+					"logicalName": "securitygroupid",
+					"locale": {
+						"1033": {
+							"displayName": "Security Group"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Security Group Member",
+			"schemaName": "SecurityGroupMember",
+			"logicalName": "securitygroupmember",
+			"collectionSchemaName": "SecurityGroupMembers"
+		},
+		"Record Share": {
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"pluralName": "Record Shares",
+			"locale": {
+				"1030": {
+					"pluralName": "Række Deling",
+					"displayName": "Række Delinger"
+				},
+				"1033": {
+					"displayName": "Record Share",
+					"pluralName": "Record Shares"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"isPrimaryField": true,
+					"displayName": "Identity",
+					"schemaName": "Identity",
+					"logicalName": "identity",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"EntityName": {
+					"type": {
+						"type": "Text",
+						"required": true
+					},
+					"displayName": "EntityName",
+					"schemaName": "EntityName",
+					"logicalName": "entityname",
+					"locale": {
+						"1033": {
+							"displayName": "EntityName"
+						}
+					}
+				},
+				"RecordId": {
+					"type": {
+						"type": "guid",
+						"required": true
+					},
+					"displayName": "RecordId",
+					"schemaName": "RecordId",
+					"logicalName": "recordid",
+					"locale": {
+						"1033": {
+							"displayName": "RecordId"
+						}
+					}
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"index": {
+							"unique": false
+						},
+						"referenceType": "Permission",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "permission",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "permission"
+						}
+					},
+					"displayName": "Permission",
+					"schemaName": "PermissionId",
+					"logicalName": "permissionid",
+					"locale": {
+						"1033": {
+							"displayName": "Permission"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Record Share",
+			"schemaName": "RecordShare",
+			"logicalName": "recordshare",
+			"collectionSchemaName": "RecordShares"
+		},
+		"Signin": {
+			"pluralName": "Signins",
+			"attributes": {
+				"Identity": {
+					"readonly": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Signins",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "identity"
+						}
+					},
+					"displayName": "Identity",
+					"schemaName": "IdentityId",
+					"logicalName": "identityid",
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Signin Status",
+						"options": {
+							"Approved": {
+								"value": 0,
+								"locale": {
+									"1030": {
+										"displayName": "Godkendt"
+									}
+								}
+							},
+							"Rejected": {
+								"value": 1,
+								"locale": {
+									"1030": {
+										"displayName": "Afvist"
+									}
+								}
+							},
+							"Used": {
+								"value": 2,
+								"locale": {
+									"1030": {
+										"displayName": "Brugt"
+									}
+								}
+							}
+						}
+					},
+					"displayName": "Status",
+					"schemaName": "Status",
+					"logicalName": "status",
+					"locale": {
+						"1033": {
+							"displayName": "Status"
+						}
+					}
+				},
+				"Properties": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"readonly": true,
+					"displayName": "Properties",
+					"schemaName": "Properties",
+					"logicalName": "properties",
+					"locale": {
+						"1033": {
+							"displayName": "Properties"
+						}
+					}
+				},
+				"Claims": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"readonly": true,
+					"displayName": "Claims",
+					"schemaName": "Claims",
+					"logicalName": "claims",
+					"locale": {
+						"1033": {
+							"displayName": "Claims"
+						}
+					}
+				},
+				"SessionId": {
+					"type": {
+						"type": "Text",
+						"maxLength": 64
+					},
+					"displayName": "SessionId",
+					"schemaName": "SessionId",
+					"logicalName": "sessionid",
+					"locale": {
+						"1033": {
+							"displayName": "SessionId"
+						}
+					}
+				},
+				"Provider": {
+					"type": {
+						"type": "Text"
+					},
+					"displayName": "Provider",
+					"schemaName": "Provider",
+					"logicalName": "provider",
+					"locale": {
+						"1033": {
+							"displayName": "Provider"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Signin",
+			"schemaName": "Signin",
+			"logicalName": "signin",
+			"collectionSchemaName": "Signins",
+			"locale": {
+				"1033": {
+					"displayName": "Signin",
+					"pluralName": "Signins"
+				}
+			}
+		},
+		"Workflow Run": {
+			"pluralName": "Workflow Runs",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces kørsler",
+					"displayName": "Arbejdsproces kørsel"
+				},
+				"1033": {
+					"displayName": "Workflow Run",
+					"pluralName": "Workflow Runs"
+				}
+			},
+			"sitemap": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"State": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					},
+					"displayName": "State",
+					"schemaName": "State",
+					"logicalName": "state",
+					"locale": {
+						"1033": {
+							"displayName": "State"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Workflow Run",
+			"schemaName": "WorkflowRun",
+			"logicalName": "workflowrun",
+			"collectionSchemaName": "WorkflowRuns"
+		},
+		"Allowed Grant Type": {
+			"pluralName": "Allowed Grant Types",
+			"displayName": "Allowed Grant Type",
+			"logicalName": "allowedgranttype",
+			"schemaName": "AllowedGrantType",
+			"collectionSchemaName": "AllowedGrantTypes",
+			"keys": {
+				"IX_OpenId Connect ClientValue": [
+					"OpenId Connect Client",
+					"Allowed Grant Type Value"
+				]
+			},
+			"attributes": {
+				"Id": {
+					"displayName": "Id",
+					"logicalName": "id",
+					"schemaName": "Id",
+					"type": {
+						"type": "guid"
+					},
+					"isPrimaryKey": true
+				},
+				"OpenId Connect Client": {
+					"displayName": "OpenId Connect Client",
+					"logicalName": "openidconnectclientid",
+					"schemaName": "OpenIdConnectClientId",
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Client"
+					}
+				},
+				"Allowed Grant Type Value": {
+					"displayName": "Allowed Grant Type Value",
+					"logicalName": "allowedgranttype",
+					"schemaName": "AllowedGrantTypeValue",
+					"type": {
+						"type": "choice",
+						"name": "AllowedGrantTypeValue",
+						"options": {
+							"Authorization Code": 1,
+							"Implicit": 2,
+							"Resource Owner": 3,
+							"Client Credentials": 4,
+							"Hybrid": 5,
+							"Device Flow": 6,
+							"Refresh Token": 7
+						}
+					}
+				}
+			}
+		},
+		"Allowed Identity Token Signing Algorithm": {
+			"pluralName": "Allowed Identity Token Signing Algorithm",
+			"displayName": "Allowed Identity Token Signing Algorithm",
+			"logicalName": "allowedidentitytokensigningalgorithm",
+			"schemaName": "AllowedIdentityTokenSigningAlgorithm",
+			"collectionSchemaName": "AllowedIdentityTokenSigningAlgorithm",
+			"keys": {
+				"IX_OpenId Connect ClientValue": [
+					"OpenId Connect Client",
+					"Allowed Identity Token Signing Algorithm Value"
+				]
+			},
+			"attributes": {
+				"Id": {
+					"displayName": "Id",
+					"logicalName": "id",
+					"schemaName": "Id",
+					"type": {
+						"type": "guid"
+					},
+					"isPrimaryKey": true
+				},
+				"OpenId Connect Client": {
+					"displayName": "OpenId Connect Client",
+					"logicalName": "openidconnectclientid",
+					"schemaName": "OpenIdConnectClientId",
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Client"
+					}
+				},
+				"Allowed Identity Token Signing Algorithm Value": {
+					"displayName": "Allowed Identity Token Signing Algorithm Value",
+					"logicalName": "allowedidentitytokensigningalgorithm",
+					"schemaName": "AllowedIdentityTokenSigningAlgorithmValue",
+					"type": {
+						"type": "choice",
+						"name": "AllowedIdentityTokenSigningAlgorithmValue",
+						"options": {
+							"ES256": 1
+						}
+					}
+				}
+			}
+		}
+	},
+	"variables": {
+		"layouts": {
+			"OneColumnTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			},
+			"TwoColumnsTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				},
+				"COLUMN_Second": {
+					"sections": {
+						"SECTION_Additional": {}
+					}
+				}
+			}
+		},
+		"PrimaryInformation": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"TAB_General": {
+			"title": "General Information",
+			"locale": {
+				"1030": {
+					"title": "General Information"
+				}
+			},
+			"columns": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				},
+				"COLUMN_Second": {
+					"sections": {
+						"SECTION_Additional": {}
+					}
+				}
+			}
+		},
+		"TAB_Administrative": {
+			"title": "Administrative",
+			"locale": {
+				"1030": {
+					"title": "Administrative"
+				}
+			},
+			"columns": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			}
+		},
+		"TAB_Administrative_Columns": {
+			"Created On": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Created By": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Modified On": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Modified By": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Owner": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			}
+		},
+		"Administrative": {
+			"tab": "TAB_Administrative",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"audit": {
+			"Modified On": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Created On": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Owner": {
+				"locale": {
+					"1030": {
+						"displayName": "Ejer"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Modified By": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Created By": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Row Version": {
+				"type": {
+					"type": "binary"
+				},
+				"isRowVersion": true
+			}
+		},
+		"translations": {
+			"Name": {
+				"1030": {
+					"displayName": "Navn"
+				}
+			},
+			"Description": {
+				"1030": {
+					"displayName": "Beskrivelse"
+				}
+			}
+		},
+		"sitemaps": {
+			"Administration": {
+				"app": "Kjeldager CRM",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"OpenIdConnect": {
+				"app": "Kjeldager CRM",
+				"area": "OpenId Connect",
+				"group": "OpenId Connect"
+			}
+		},
+		"LogoutSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Logout"
+		},
+		"TokenSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Tokens"
+		},
+		"LoginSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Logins"
+		},
+		"Miscellaneous": {
+			"tab": "TAB_Miscellaneous",
+			"column": "COLUMN_First",
+			"section": "Section_Miscellaneous"
+		},
+		"PrimaryInformation_Description": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "Section_General",
+			"control": "RichTextEditorControl"
+		},
+		"LifetimeSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Lifetimes"
+		},
+		"LifetimeSection_TimespanControl": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "Section_General",
+			"control": "@eavfw/TimespanControl"
+		},
+		"Miscellaneous_Properties": {
+			"tab": "TAB_Miscellaneous",
+			"column": "COLUMN_First",
+			"section": "Section_Miscellaneous",
+			"showCellLabel": false
+		}
+	},
+	"version": "1.0.8",
+	"config": {
+		"SVG_LOGO_PATH": "/logo.svg"
+	},
+	"apps": {
+		"Kjeldager CRM": {}
+	},
+	"errorMessages": {}
+}

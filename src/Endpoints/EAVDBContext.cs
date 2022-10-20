@@ -131,6 +131,11 @@ namespace EAVFramework.Endpoints
         {
             return this.Context.Remove(obj);
         }
+        public virtual EntityEntry Add(object obj)
+        {
+            return this.Context.Add(obj);
+        }
+         
         public virtual EntityEntry RemoveWithoutCascading(object obj)
         {
             var entry = this.Context.Entry(obj);
