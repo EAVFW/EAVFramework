@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -10,11 +11,14 @@ using System.Reflection.Emit;
 
 namespace EAVFramework.Shared.V2
 {
+    [DebuggerDisplay("TableBuilder = {SchemaName}")]
     public class DynamicTableBuilder : IDynamicTableBuilder
     {
         protected ConcurrentDictionary<string, DynamicPropertyBuilder> properties = new ConcurrentDictionary<string, DynamicPropertyBuilder>();
 
         public IReadOnlyCollection<DynamicPropertyBuilder> Properties => properties.Values.Where(p => !p.HasParentProperty).Where(p => p.IsManifestType).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName).ToArray();
+
+        public IReadOnlyCollection<DynamicPropertyBuilder> AllProperties => Properties.Concat( Parent?.AllProperties ?? Enumerable.Empty<DynamicPropertyBuilder>()).ToArray();
 
         private DynamicCodeService dynamicCodeService;
         private ModuleBuilder myModule;
@@ -283,13 +287,14 @@ namespace EAVFramework.Shared.V2
                       .Where(attribute => members.ContainsKey(attribute.LogicalName))
                    .Select(attribute => new
                    {
+                       Name = $"FK_{CollectionSchemaName}_{attribute.ReferenceType.CollectionSchemaName}_{attribute.SchemaName}".Replace(" ", ""),
                        AttributeSchemaName = attribute.SchemaName,  //attribute.Value.SelectToken("$.schemaName").ToString(),
                        PropertyGetMethod = members[attribute.LogicalName].GetMethod,
                        ReferenceType = attribute.ReferenceType,
                        OnDeleteCascade = attribute.OnDeleteCascade ?? options.ReferentialActionNoAction,
                        OnUpdateCascade = attribute.OnUpdateCascade ?? options.ReferentialActionNoAction,
                       // ForeignKey = attribute.ForeignKey
-                   })
+                   }).OrderBy(n=>n.Name)
                    .ToArray();
 
                 if (primaryKeys.Any() || fKeys.Any())
@@ -320,7 +325,7 @@ namespace EAVFramework.Shared.V2
                         //CreateTableBuilder
                       //  var entityName = fk.EntityName;
                         ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
-                        ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"FK_{CollectionSchemaName}_{fk.ReferenceType.CollectionSchemaName}_{fk.AttributeSchemaName}".Replace(" ", ""));
+                        ConstraintsMethodIL.Emit(OpCodes.Ldstr, fk.Name);
 
                         // Console.WriteLine($"FK_{EntityCollectionSchemaName}_{manifest.SelectToken($"$.entities['{entityName}'].pluralName")}_{fk.AttributeSchemaName}".Replace(" ", ""));
 
@@ -338,7 +343,12 @@ namespace EAVFramework.Shared.V2
 
                         var principalSchema = fk.ReferenceType.Schema ?? options.Schema ?? "dbo";
                         var principalTable = fk.ReferenceType.CollectionSchemaName;
-                        var principalColumn = fk.ReferenceType.Properties.Single(p => p.IsPrimaryKey).SchemaName;  
+                        var principalColumn = fk.ReferenceType.AllProperties.SingleOrDefault(p => p.IsPrimaryKey)?.SchemaName;
+
+                        if (string.IsNullOrEmpty(principalColumn))
+                        {
+                            throw new InvalidOperationException($"No reference type primary key defined for foreignkey {fk.ReferenceType.SchemaName} on {SchemaName}");
+                        }
 
                         ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalTable);
                         ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalColumn);

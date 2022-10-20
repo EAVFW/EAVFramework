@@ -100,6 +100,10 @@ namespace EAVFramework.Shared.V2
 
         public void Build()
         {
+            if(PropertyType == null)
+            {
+                return;
+            }
             var (prop, field) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, PropertyType);
 
             dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(prop, LogicalName);

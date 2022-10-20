@@ -52,8 +52,8 @@ BEGIN
         CONSTRAINT [PK_EnvironmentVariables] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_EnvironmentVariables_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_EnvironmentVariables_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_EnvironmentVariables_Servers_ServerId] FOREIGN KEY ([ServerId]) REFERENCES [tests].[Servers] ([Id]),
-        CONSTRAINT [FK_EnvironmentVariables_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
+        CONSTRAINT [FK_EnvironmentVariables_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_EnvironmentVariables_Servers_ServerId] FOREIGN KEY ([ServerId]) REFERENCES [tests].[Servers] ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -358,9 +358,9 @@ BEGIN
         [SecurityRoleId] uniqueidentifier NOT NULL,
         CONSTRAINT [PK_SecurityRolePermissions] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_SecurityRolePermissions_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_SecurityRolePermissions_Permissions_PermissionId] FOREIGN KEY ([PermissionId]) REFERENCES [tests].[Permissions] ([Id]),
         CONSTRAINT [FK_SecurityRolePermissions_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_SecurityRolePermissions_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_SecurityRolePermissions_Permissions_PermissionId] FOREIGN KEY ([PermissionId]) REFERENCES [tests].[Permissions] ([Id]),
         CONSTRAINT [FK_SecurityRolePermissions_SecurityRoles_SecurityRoleId] FOREIGN KEY ([SecurityRoleId]) REFERENCES [tests].[SecurityRoles] ([Id])
     );
     DECLARE @description AS sql_variant;
@@ -389,8 +389,8 @@ BEGIN
         [SecurityRoleId] uniqueidentifier NOT NULL,
         CONSTRAINT [PK_SecurityRoleAssignments] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_SecurityRoleAssignments_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_SecurityRoleAssignments_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_SecurityRoleAssignments_Identities_IdentityId] FOREIGN KEY ([IdentityId]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_SecurityRoleAssignments_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_SecurityRoleAssignments_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_SecurityRoleAssignments_SecurityRoles_SecurityRoleId] FOREIGN KEY ([SecurityRoleId]) REFERENCES [tests].[SecurityRoles] ([Id])
     );
@@ -419,11 +419,11 @@ BEGIN
         [RowVersion] rowversion NOT NULL,
         [SecurityGroupId] uniqueidentifier NOT NULL,
         CONSTRAINT [PK_SecurityGroupMembers] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_SecurityGroupMembers_SecurityGroups_SecurityGroupId] FOREIGN KEY ([SecurityGroupId]) REFERENCES [tests].[SecurityGroups] ([Id]),
         CONSTRAINT [FK_SecurityGroupMembers_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_SecurityGroupMembers_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_SecurityGroupMembers_Identities_IdentityId] FOREIGN KEY ([IdentityId]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_SecurityGroupMembers_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
+        CONSTRAINT [FK_SecurityGroupMembers_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_SecurityGroupMembers_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_SecurityGroupMembers_SecurityGroups_SecurityGroupId] FOREIGN KEY ([SecurityGroupId]) REFERENCES [tests].[SecurityGroups] ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -453,9 +453,9 @@ BEGIN
         [RowVersion] rowversion NOT NULL,
         CONSTRAINT [PK_RecordShares] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_RecordShares_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_RecordShares_Permissions_PermissionId] FOREIGN KEY ([PermissionId]) REFERENCES [tests].[Permissions] ([Id]),
         CONSTRAINT [FK_RecordShares_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_RecordShares_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
+        CONSTRAINT [FK_RecordShares_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_RecordShares_Permissions_PermissionId] FOREIGN KEY ([PermissionId]) REFERENCES [tests].[Permissions] ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -481,8 +481,8 @@ BEGIN
         [Status] int NULL,
         CONSTRAINT [PK_Signins] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_Signins_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_Signins_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_Signins_Identities_IdentityId] FOREIGN KEY ([IdentityId]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_Signins_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
         CONSTRAINT [FK_Signins_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
     );
     DECLARE @description AS sql_variant;
