@@ -39,8 +39,7 @@ namespace EAVFramework.UnitTest
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/TestSimplePropertiesWithCircle/Identity.cs.txt", "Specs/TestSimplePropertiesWithCircle/Identity.cs.txt")]
-        [DeploymentItem(@"Specs/TestSimplePropertiesWithCircle/Server.cs.txt", "Specs/TestSimplePropertiesWithCircle/Server.cs.txt")]
+        [DeploymentItem(@"Specs/TestSimplePropertiesWithCircle", "Specs/TestSimplePropertiesWithCircle")]
         public void TestSimplePropertiesWithCircle()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions();
@@ -74,8 +73,7 @@ namespace EAVFramework.UnitTest
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/TestLookupsWithCircle/Identity.cs.txt", "Specs/TestLookupsWithCircle/Identity.cs.txt")]
-        [DeploymentItem(@"Specs/TestLookupsWithCircle/Server.cs.txt", "Specs/TestLookupsWithCircle/Server.cs.txt")]
+        [DeploymentItem(@"Specs/TestLookupsWithCircle", "Specs/TestLookupsWithCircle")]
         public void TestLookupsWithCircle()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions();
@@ -119,8 +117,7 @@ namespace EAVFramework.UnitTest
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/TestInherience/Identity.cs.txt", "Specs/TestInherience/Identity.cs.txt")]
-        [DeploymentItem(@"Specs/TestInherience/SecurityGroup.cs.txt", "Specs/TestInherience/SecurityGroup.cs.txt")]
+        [DeploymentItem(@"Specs/TestInherience", "Specs/TestInherience")]
         public void TestInherience()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
@@ -204,10 +201,7 @@ namespace EAVFramework.UnitTest
         }
         [TestMethod]
 
-        [DeploymentItem(@"Specs/TestBigCircleReference/OpenIdConnectIdentityResource.cs.txt", "Specs/TestBigCircleReference/OpenIdConnectIdentityResource.cs.txt")]
-        [DeploymentItem(@"Specs/TestBigCircleReference/OpenIdConnectResource.cs.txt", "Specs/TestBigCircleReference/OpenIdConnectResource.cs.txt")]
-        [DeploymentItem(@"Specs/TestBigCircleReference/OpenIdConnectScope.cs.txt", "Specs/TestBigCircleReference/OpenIdConnectScope.cs.txt")]
-        [DeploymentItem(@"Specs/TestBigCircleReference/OpenIdConnectScopeResource.cs.txt", "Specs/TestBigCircleReference/OpenIdConnectScopeResource.cs.txt")]
+        [DeploymentItem(@"Specs/TestBigCircleReference", "Specs/TestBigCircleReference")]
         public void TestBigCircleReference()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
@@ -288,8 +282,7 @@ namespace EAVFramework.UnitTest
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/TestExternalBaseClass/Identity.cs.txt", "Specs/TestExternalBaseClass/Identity.cs.txt")]
-        [DeploymentItem(@"Specs/TestExternalBaseClass/SecurityGroup.cs.txt", "Specs/TestExternalBaseClass/SecurityGroup.cs.txt")]
+        [DeploymentItem(@"Specs/TestExternalBaseClass", "Specs/TestExternalBaseClass")]
         public void TestExternalBaseClass()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>

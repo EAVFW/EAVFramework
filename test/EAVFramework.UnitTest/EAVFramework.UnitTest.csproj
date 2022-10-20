@@ -81,6 +81,9 @@
     <None Update="Specs/TestSimplePropertiesWithCircle/Server.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Specs\TestSimplePropertiesWithCircle\Identity.cs.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
