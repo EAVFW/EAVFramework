@@ -24,13 +24,37 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             expected = expected.Replace("{{VERSION}}", version);
 
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected.Trim(), actual.Trim());
 
         }
     }
     [TestClass]
     public class ManifestTests : BaseManifestTests
     {
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/specs/manifest.oidc.json", "specs")]
+        [DeploymentItem(@"ManifestTests/specs/manifest.oidc.sql", "specs")]
+
+        public async Task TestLargeManfiest()
+        {
+            //Arrange
+            var manifest = JToken.Parse(File.ReadAllText(@"specs\manifest.oidc.json"));
+
+
+            //Act
+            var sql = RunDBWithSchema("oidc", manifest);
+
+
+            //Assure
+
+            string expectedSQL = System.IO.File.ReadAllText(@"specs\manifest.oidc.sql");
+
+            MigrationAssert.AreEqual(expectedSQL, sql);
+
+        }
+
+
+
 
 
         [TestMethod]
