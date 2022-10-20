@@ -15,6 +15,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -199,7 +200,11 @@ namespace EAVFramework.Generators
 
                 try
                 {
-                     
+                    if (!string.Equals(context.GetMSBuildProperty("EAVFrameworkSourceGenerator"), "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+
                     var options = new CodeGenerationOptions
                     {
                    
@@ -286,10 +291,7 @@ namespace EAVFramework.Generators
                     //File.WriteAllText("test1.txt", context.GetMSBuildProperty("EAVFrameworkSourceGenerator","Empty")+"\n 1.0.1");
                     //File.AppendAllLines("test1.txt", new[] { $"includeEAVFrameworkBaseClass {GeneratePoco}" });
 
-                    if (!string.Equals(context.GetMSBuildProperty("EAVFrameworkSourceGenerator"), "true", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return;
-                    }
+
 
                     var referencedBaseTypes = FindReferencedBaseTypes(context, "BaseEntityAttribute").ToArray();
                     var interfaces = FindReferencedBaseTypes(context, "EntityInterfaceAttribute", "ConstraintMappingAttribute").Select(BaseInterfaceType.Create)
@@ -324,10 +326,11 @@ namespace EAVFramework.Generators
                     ModuleBuilder myModule =
                       builder.DefineDynamicModule(@namespace + ".dll");
 
+                    var dynamicEntityBaseType = typeof(DynamicEntity);
                     // var baseType = typeof(DynamicEntity);
-                    var baseTypes = new List<Type>() { typeof(DynamicEntity) };
+                    var baseTypes = new List<Type>() { dynamicEntityBaseType };
 
-                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>() { ["EAVFramework.DynamicEntity"] = typeof(EAVFramework.DynamicEntity) };
+                    var baseTypeInterfaces = new ConcurrentDictionary<string, Type>() { ["EAVFramework.DynamicEntity"] = dynamicEntityBaseType };
 
                     // if (context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.DTOBaseClass", out var DTOBaseClass))
                     {
@@ -381,7 +384,7 @@ namespace EAVFramework.Generators
 
                         var baseTypesDict = new ConcurrentDictionary<string, Type>()
                         {
-                            [typeof(DynamicEntity).FullName] = typeof(DynamicEntity)
+                            [dynamicEntityBaseType.FullName] = dynamicEntityBaseType
                         };
 
                         Type CreateTypeForBaseClass(string basefullname)
@@ -393,7 +396,7 @@ namespace EAVFramework.Generators
                             var baseTypeName = $"{myClassSymbol.BaseType.ContainingNamespace.ToString()}.{myClassSymbol.BaseType.Name}";
 
 
-                            File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() + " : " + baseTypeName });
+    //                        File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() + " : " + baseTypeName });
 
                             var basetype = baseTypesDict.GetOrAdd(baseTypeName, (fullname) => CreateTypeForBaseClass(fullname));
 
@@ -418,7 +421,7 @@ namespace EAVFramework.Generators
 
                                 foreach (var argument in typeParams)
                                 {
-                                    argument.SetBaseTypeConstraint(typeof(DynamicEntity));
+                                    argument.SetBaseTypeConstraint(dynamicEntityBaseType);
                                 }
 
                             }
@@ -445,7 +448,7 @@ namespace EAVFramework.Generators
                         {
 
                             var parentTypeSymbol = referencedBaseTypes.FirstOrDefault(t => t.Name == baseType.BaseType.Name);
-                            var parentType = parentTypeSymbol == null ? typeof(DynamicEntity) : baseTypesDict.GetOrAdd(parentTypeSymbol.GetFullName(), (fullname) => CreateTypeForReferencedBaseClass(parentTypeSymbol));
+                            var parentType = parentTypeSymbol == null ? dynamicEntityBaseType : baseTypesDict.GetOrAdd(parentTypeSymbol.GetFullName(), (fullname) => CreateTypeForReferencedBaseClass(parentTypeSymbol));
 
                             if (parentType.IsGenericType)
                             {
@@ -471,7 +474,7 @@ namespace EAVFramework.Generators
 
                                 foreach (var argument in typeParams)
                                 {
-                                    argument.SetBaseTypeConstraint(typeof(DynamicEntity));
+                                    argument.SetBaseTypeConstraint(dynamicEntityBaseType);
                                 }
 
                             }
@@ -490,7 +493,7 @@ namespace EAVFramework.Generators
                             foreach (var property in baseType.GetMembers().OfType<IPropertySymbol>())
                             {
 
-                                if (property.GetAttributes().Any(attr => attr.AttributeClass.Name == "ForeignKeyAttribute")) { continue; }
+                              //  if (property.GetAttributes().Any(attr => attr.AttributeClass.Name == "ForeignKeyAttribute")) { continue; }
 
                                 // File.AppendAllLines("test1.txt", new[] { property.Identifier.ToString() });
                                 propertyEmitter.CreateProperty(entityType, property.Name, typeof(string));
@@ -539,8 +542,8 @@ namespace EAVFramework.Generators
                             return entityType.CreateTypeInfo();
                         }
                         var interfacebuilders = new ConcurrentDictionary<string, TypeBuilder>();
-                        File.AppendAllLines("test1.txt", new[] { $"All Interfaces Found: {string.Join("\n", interfaces.Values)}" });
-                        File.AppendAllLines("test1.txt", new[] { $"All Interfaces Found: {string.Join("\n", interfaces.Values.TSort(x => x.Dependencies().Where(c => interfaces.ContainsKey(c)).Select(c => interfaces[c])).Select(c => c.Name))}" });
+                        //File.AppendAllLines("test1.txt", new[] { $"All Interfaces Found: {string.Join("\n", interfaces.Values)}" });
+                        //File.AppendAllLines("test1.txt", new[] { $"All Interfaces Found: {string.Join("\n", interfaces.Values.TSort(x => x.Dependencies().Where(c => interfaces.ContainsKey(c)).Select(c => interfaces[c])).Select(c => c.Name))}" });
                         var baseTypeInterfacesbuilders = new ConcurrentDictionary<string, TypeBuilder>();
 
                         foreach (var @interfaceWrap in interfaces.Values.TSort(x => x.Dependencies().Where(c => interfaces.ContainsKey(c)).Select(c => interfaces[c])))
@@ -557,6 +560,9 @@ namespace EAVFramework.Generators
                                                               | TypeAttributes.AnsiClass
                                                               | TypeAttributes.Serializable
                                                               | TypeAttributes.BeforeFieldInit);
+
+                               // AddEntityKeyAttributes(@interface as INamedTypeSymbol, interfaceEntityType);
+
                                 return interfaceEntityType;
                             });
                         }
@@ -581,7 +587,7 @@ namespace EAVFramework.Generators
 
                                 if (@interface.IsGenericType)
                                 {
-                                    File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
+                               //     File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
                                     //var entityType = interfacebuilders[@interface.GetFullName()];
                                     var b = interfaceEntityType.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
                                     .Select((argument, i) =>
@@ -590,9 +596,13 @@ namespace EAVFramework.Generators
                                         {
                                             try
                                             {
+                                             //   File.AppendAllLines("test1.txt", new[] { $"Looking for : {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}" });
+
                                                 if (!baseTypeInterfaces.ContainsKey(ct.GetFullName()))
                                                 {
-                                                    if (baseTypeInterfacesbuilders.ContainsKey(ct.GetFullName()))
+                                               //     File.AppendAllLines("test1.txt", new[] { $"Looking for : {ct.GetFullName()} in {string.Join(",", baseTypeInterfacesbuilders.Keys)}" });
+                                                   
+                                                    if (!baseTypeInterfacesbuilders.ContainsKey(ct.GetFullName()))
                                                     {
                                                         
                                                         TypeBuilder interfaceEntityTypeShadow = myModule.DefineType(ct.GetFullName() + @interface.Name, TypeAttributes.Public
@@ -610,18 +620,23 @@ namespace EAVFramework.Generators
 
 
                                                         AddEntityKeyAttributes(ct as INamedTypeSymbol, interfaceEntityTypeShadow);
-                                                        return interfaceEntityTypeShadow.CreateTypeInfo();
+                                                    //    File.AppendAllLines("test1.txt", new[] { $"Added shadow type: {interfaceEntityTypeShadow.Name}" });
+                                                        var t= interfaceEntityTypeShadow.CreateTypeInfo();
+                                                        baseTypeInterfacesbuilders[ct.GetFullName()] = interfaceEntityTypeShadow;
+                                                        return t;
                                                     }
+                                                    
+                                                    return baseTypeInterfacesbuilders[ct.GetFullName()];
                                                 }
-                                                //    return baseTypeInterfacesbuilders[ct.GetFullName()];
+
 
                                                 return baseTypeInterfaces[ct.GetFullName()];
 
                                             }
                                             catch (Exception ex)
                                             {
-                                                File.AppendAllLines("test1.txt", new[] { $"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex.ToString()});
-                                                return typeof(IDummy);
+                                        //        File.AppendAllLines("test1.txt", new[] { $"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex.ToString()});
+                                               
                                                 throw new KeyNotFoundException($"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex);
                                             }
 
@@ -665,16 +680,16 @@ namespace EAVFramework.Generators
 
                         }
 
-                        File.AppendAllLines("test1.txt", new[] { $"All Builders Created: {string.Join("\n", baseTypeInterfacesbuilders.Select(c => c.Value.FullName))}" });
+                  //      File.AppendAllLines("test1.txt", new[] { $"All Builders Created: {string.Join("\n", baseTypeInterfacesbuilders.Select(c => c.Value.FullName))}" });
 
                         foreach (var @interfaceWrap in interfaces.Values.TSort(x => x.Dependencies().Where(c => interfaces.ContainsKey(c)).Select(c => interfaces[c])))
                         {
-
+                    //        File.AppendAllLines("test1.txt", new[] { $"Creating {@interfaceWrap}" });
                             var @interface = @interfaceWrap.Symbol;
 
                             baseTypeInterfaces.GetOrAdd(@interface.GetFullName(), (fullname) => baseTypeInterfacesbuilders[@interface.GetFullName()].CreateTypeInfo());
                         }
-                        File.AppendAllLines("test1.txt", new[] { $"All Interfaces Created: {string.Join("\n", baseTypeInterfaces.Select(c => c.Key))}" });
+                 //       File.AppendAllLines("test1.txt", new[] { $"All Interfaces Created: {string.Join("\n", baseTypeInterfaces.Select(c => c.Key))}" });
                         //foreach (var @interface in interfaces)
                         //{
 
@@ -702,14 +717,14 @@ namespace EAVFramework.Generators
 
 
                             baseTypes.Add(baseTypesDict.GetOrAdd(baseType.GetFullName(), (fullname) => CreateTypeForReferencedBaseClass(baseType)));
-                            //File.AppendAllLines("test1.txt", new[] { baseType.GetFullName() +" ok" });
+                           // File.AppendAllLines("test1.txt", new[] { $"Base type: {baseType.GetFullName()} ok" });
                             //return entityType.CreateTypeInfo();
 
                         }
 
                         foreach (var baseType in withAtt)
                         {
-                            //    File.AppendAllLines("test1.txt", new[] { $"Base type: {baseType.GetFullName()}" });
+                           
                             baseTypes.Add(baseTypesDict.GetOrAdd(baseType.GetFullName(), (fullname) => CreateTypeForBaseClass(fullname)));
                         }
 
@@ -719,19 +734,32 @@ namespace EAVFramework.Generators
 
                     }
 
+                    foreach(var basetypes in baseTypes.ToArray())
+                    {
+                        ;
 
+                  //      File.AppendAllLines("test1.txt", new[] { $"Base type: {basetypes.Name}<{string.Join(",", basetypes.GetProperties().Select(c=>c.Name))}>" });
+                    }
+                 //   File.AppendAllLines("test1.txt", new[] { $"Generating Code from manifest" });
                     var manifestservice = new ManifestService(new ManifestServiceOptions { Namespace= @namespace, MigrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}", });
                     options.DTOBaseClasses = baseTypes.ToArray();
                     options.DTOInterfaces = baseTypeInterfaces.Values.Where(c => c.IsInterface).ToArray();
 
-                  //  var generator = new CodeGenerator();
+                    //  var generator = new CodeGenerator();
 
 
-                   // var migrationType = generator.CreateDynamicMigration(json);
+                    // var migrationType = generator.CreateDynamicMigration(json);
 
-                   // var tables = generator.GetTables(json, myModule);
+                    // var tables = generator.GetTables(json, myModule);
+                    var codeservice = new DynamicCodeService(options);
+                    var (migrationType, tables) = manifestservice.BuildDynamicModel(codeservice, json);
 
-                    var (migrationType, tables) = manifestservice.BuildDynamicModel(new DynamicCodeService(options), json);
+                    var code = codeservice.GenerateCodeFiles();
+
+                    foreach(var file in code)
+                    {
+                        context.AddSource(file.Key,file.Value);
+                    }
 
                     //I think its here we should generate some openapi spec, looping over the entities in our model.
                     //However i would like the augment the DTO types in the code generator with some attributes that controls it,
@@ -740,27 +768,27 @@ namespace EAVFramework.Generators
                     //Remember, dont make it perfect the first time, just get it work and we can add features.
 
                     //)
-                    var enums = new HashSet<Type>();
-                    foreach (var type in myModule.GetTypes().Where(t => { try { return t.GetCustomAttribute<EntityDTOAttribute>() != null; } catch (Exception) { } return false; }))
-                    {
+                    //var enums = new HashSet<Type>();
+                    //foreach (var type in myModule.GetTypes().Where(t => { try { return t.GetCustomAttribute<EntityDTOAttribute>() != null; } catch (Exception) { } return false; }))
+                    //{
 
-                        context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
+                    //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
 
-                        context.AddSource($"{type.Name}.cs", GenerateSourceCode(type, GeneratePoco == "true"));
+                    //    context.AddSource($"{type.Name}.cs", GenerateSourceCode(type, GeneratePoco == "true"));
 
-                        foreach (var prop in type.GetProperties().Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType).IsEnum))
-                        {
-                            enums.Add(Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
-                        }
+                    //    foreach (var prop in type.GetProperties().Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType).IsEnum))
+                    //    {
+                    //        enums.Add(Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                    //    }
 
 
 
-                    }
-                    foreach (var enumtype in enums)
-                    {
+                    //}
+                    //foreach (var enumtype in enums)
+                    //{
 
-                        context.AddSource($"{enumtype.Name}.cs", GenerateSourceCode(enumtype, GeneratePoco == "true"));
-                    }
+                    //    context.AddSource($"{enumtype.Name}.cs", GenerateSourceCode(enumtype, GeneratePoco == "true"));
+                    //}
 
                 }
                 catch (Exception ex)
@@ -820,6 +848,8 @@ namespace EAVFramework.Generators
 
             foreach (var attr in @interface.GetAttributes().Where(n => n.AttributeClass.Name == "ConstraintMappingAttribute"))
             {
+              //  File.AppendAllLines("test1.txt", new[] { $"Adding ConstraintMappingAttribute: {string.Join(",", attr.NamedArguments.Select(c=>$"{c.Key}={c.Value.Value}"))} " });
+
                 CustomAttributeBuilder ConstraintMappingAttributeBuilder = new CustomAttributeBuilder(typeof(ConstraintMappingAttribute).GetConstructor(new Type[] { }),
                    new object[] { }, new[] {
                                                                                         typeof(ConstraintMappingAttribute).GetProperty(nameof(ConstraintMappingAttribute.AttributeKey)),

@@ -57,10 +57,12 @@ namespace EAVFramework.Shared.V2
     public class ManifestService
     {
         private readonly ManifestServiceOptions options;
+        private readonly IChoiceEnumBuilder choiceEnumBuilder;
 
-        public ManifestService(ManifestServiceOptions options)
+        public ManifestService(ManifestServiceOptions options, IChoiceEnumBuilder choiceEnumBuilder = null)
         {
             this.options = options;
+            this.choiceEnumBuilder = choiceEnumBuilder ?? new DefaultChoiceEnumBuilder();
         }
         internal Type CreateDynamicMigration(DynamicCodeService dynamicCodeService, JToken manifest)
         {
@@ -149,12 +151,15 @@ namespace EAVFramework.Shared.V2
                         try
                         {
                             var typeObj = attributeDefinition.Value.SelectToken("$.type");
-                            var type = attributeDefinition.Value.SelectToken("$.type.type")?.ToString() ?? attributeDefinition.Value.SelectToken("$.type")?.ToString();
+                            var type =( attributeDefinition.Value.SelectToken("$.type.type")?.ToString() ?? attributeDefinition.Value.SelectToken("$.type")?.ToString())?.ToLower();
                             var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
                             var isPrimaryField = attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false;
                             var attributeKey = attributeDefinition.Name;
                             var schemaName = attributeDefinition.Value.SelectToken("$.schemaName").ToString();
                             var logicalName = attributeDefinition.Value.SelectToken("$.logicalName").ToString();
+
+                            if (isprimaryKey && !string.IsNullOrEmpty(parentName))
+                                continue;
 
                             var propertyInfo = table
                                 .AddProperty(attributeKey, schemaName, logicalName, type)
@@ -194,6 +199,13 @@ namespace EAVFramework.Shared.V2
 
 
 
+                            }
+
+                            if(type == "choice")
+                            {
+                                var choices = attributeDefinition.Value.SelectToken("$.type.options").OfType<JProperty>().ToDictionary(optionPro => choiceEnumBuilder.GetLiteralName(optionPro.Name), optionPro => (optionPro.Value.Type == JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
+                                propertyInfo.AddChoiceOptions(choiceEnumBuilder.GetEnumName(attributeDefinition.Value,this.options.Namespace), choices);
+                               // propertyInfo.prop
                             }
 
 

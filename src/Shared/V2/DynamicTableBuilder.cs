@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -16,25 +17,25 @@ namespace EAVFramework.Shared.V2
     {
         protected ConcurrentDictionary<string, DynamicPropertyBuilder> properties = new ConcurrentDictionary<string, DynamicPropertyBuilder>();
 
-        public IReadOnlyCollection<DynamicPropertyBuilder> Properties => properties.Values.Where(p => !p.HasParentProperty).Where(p => p.IsManifestType).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName).ToArray();
+        public IReadOnlyCollection<DynamicPropertyBuilder> Properties => properties.Values.Where(p => p.IsManifestType).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName).ToArray();
 
-        public IReadOnlyCollection<DynamicPropertyBuilder> AllProperties => Properties.Concat( Parent?.AllProperties ?? Enumerable.Empty<DynamicPropertyBuilder>()).ToArray();
+        public IReadOnlyCollection<DynamicPropertyBuilder> AllProperties => Properties.Concat(Parent?.AllProperties ?? Enumerable.Empty<DynamicPropertyBuilder>()).ToArray();
 
         private DynamicCodeService dynamicCodeService;
         private ModuleBuilder myModule;
         public DynamicAssemblyBuilder DynamicAssemblyBuilder { get; }
-        
+
         public string SchemaName { get; }
         public TypeBuilder Builder { get; }
         public TypeBuilder ConfigurationBuilder { get; }
 
-      //  public TypeBuilder MigrationBuilder { get; }
+        //  public TypeBuilder MigrationBuilder { get; }
 
         public string CollectionSchemaName { get; }
         public string LogicalName { get; }
         public bool IsBaseEntity { get; }
         public string Schema { get; }
-        
+
         public string EntityKey { get; }
 
         public bool IsExternal { get; private set; }
@@ -56,21 +57,21 @@ namespace EAVFramework.Shared.V2
             this.myModule = myModule;
             this.DynamicAssemblyBuilder = dynamicAssemblyBuilder;
 
-            
+
             Builder = myModule.DefineType($"{dynamicAssemblyBuilder.Namespace}.{SchemaName}", TypeAttributes.Public
                                                                         | (isAbstract ? TypeAttributes.Class : TypeAttributes.Class)
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
                                                                         | TypeAttributes.Serializable
                                                                         | TypeAttributes.BeforeFieldInit);
-            ConfigurationBuilder= myModule.DefineType($"{DynamicAssemblyBuilder.Namespace}.{SchemaName}Configuration", TypeAttributes.Public
+            ConfigurationBuilder = myModule.DefineType($"{DynamicAssemblyBuilder.Namespace}.{SchemaName}Configuration", TypeAttributes.Public
                                                          | TypeAttributes.Class
                                                          | TypeAttributes.AutoClass
                                                          | TypeAttributes.AnsiClass
                                                          | TypeAttributes.Serializable
                                                          | TypeAttributes.BeforeFieldInit, null, new Type[] { dynamicCodeService.Options.EntityConfigurationInterface });
 
-            
+
 
             SetEntityDTOAttribute();
             SetEntityAttribute();
@@ -87,7 +88,7 @@ namespace EAVFramework.Shared.V2
 
         protected virtual void AddInterfaces()
         {
-            this.dynamicCodeService.EmitPropertyService.AddInterfaces(this); 
+            this.dynamicCodeService.EmitPropertyService.AddInterfaces(this);
 
 
         }
@@ -106,7 +107,7 @@ namespace EAVFramework.Shared.V2
                    IsBaseEntity
                     }));
 
-           
+
         }
 
         public List<string> SQLUpStatements { get; } = new List<string>();
@@ -132,7 +133,7 @@ namespace EAVFramework.Shared.V2
             this.Parent = identity;
         }
 
-      
+
         public DynamicPropertyBuilder AddProperty(string attributeKey, string propertyName, string logicalName, string type)
         {
             if (string.IsNullOrWhiteSpace(type))
@@ -140,10 +141,10 @@ namespace EAVFramework.Shared.V2
                 throw new ArgumentException($"'{nameof(type)}' cannot be null or whitespace for property {attributeKey}", nameof(type));
 
             }
-           // if (ContainsProperty(propertyName))
+            // if (ContainsProperty(propertyName))
             //    return null;
-            
-            
+
+
 
             return properties.GetOrAdd(propertyName, (_) => new DynamicPropertyBuilder(dynamicCodeService, this, attributeKey, propertyName, logicalName, type));
         }
@@ -156,24 +157,55 @@ namespace EAVFramework.Shared.V2
         }
         public bool ContainsParentProperty(string propertyName)
         {
-            if ((Parent?.ContainsProperty(propertyName)??false))
+            if ((Parent?.ContainsProperty(propertyName) ?? false))
             {
                 return true;
             }
+
+            if (ClrParentType != null)
+            {
+                if (ClrParentType is TypeBuilder)
+                    throw new InvalidOperationException("BaseType cannot be typebuilder");
+                try
+                {
+                    if (ClrParentType.GetProperties().Any(p => p.Name == propertyName))
+                    {
+                        return true;
+                    }
+                } catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"BaseType cannot be typebuilder: {ClrParentType.Name}", ex);
+                }
+            }
+
             return false;
         }
         public bool ContainsProperty(string propertyName)
         {
+
+
             if (properties.ContainsKey(propertyName) || (Parent?.ContainsProperty(propertyName) ?? false))
             {
                 return true;
             }
+
+            if (ClrParentType != null)
+            {
+
+                if (ClrParentType.GetProperties().Any(p => p.Name == propertyName))
+                {
+                    return true;
+                }
+            }
+
+
+
             return false;
         }
 
         public DynamicTableBuilder WithTable(string entityKey, string tableSchemaName, string tableLogicalName, string tableCollectionSchemaName, string schema, bool isBaseClass)
         {
-            return this.DynamicAssemblyBuilder.WithTable(entityKey,tableSchemaName, tableLogicalName, tableCollectionSchemaName, schema, isBaseClass);
+            return this.DynamicAssemblyBuilder.WithTable(entityKey, tableSchemaName, tableLogicalName, tableCollectionSchemaName, schema, isBaseClass);
         }
         public DynamicTableBuilder Parent { get; private set; }
 
@@ -183,30 +215,51 @@ namespace EAVFramework.Shared.V2
             return Builder.GetTypeInfo();
         }
 
-       public bool IsBuilded { get; private set; }
+        public bool IsBuilded { get; private set; }
         public void BuildType()
         {
             if (IsBuilded)
                 return;
             IsBuilded = true;
-
+#if DEBUG
+    //        File.AppendAllLines("test1.txt", new[] { $"Building {SchemaName}" });
+#endif
             BuildParent();
+
+
             BuildInverseProperties();
 
-            foreach (var prop in properties.Values.Where(p=>!p.HasParentProperty).OrderByDescending(c=>c.IsPrimaryKey).ThenByDescending(c=>c.IsPrimaryField).ThenBy(c=>c.LogicalName))
+            foreach (var prop in properties.Values.Where(p => !p.HasParentProperty).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName))
             {
+#if DEBUG
+         //       File.AppendAllLines("test1.txt", new[] { $"Building Prop {prop.SchemaName} {PrintTypeName( prop.PropertyType)} {PrintTypeName(prop.DTOPropertyType)}" });
+#endif   
                 prop.Build();
             }
-              
+
             AddInterfaces();
 
             BuildDTOConfiguration();
-
-           // BuildMigration();
+#if DEBUG
+       //     File.AppendAllLines("test1.txt", new[] { $"Build Complated {SchemaName}" });
+#endif
+            // BuildMigration();
         }
 
+        private string PrintTypeName(Type propertyType)
+        {
+            if (propertyType == null)
+                return "";
 
-        public Type CreateMigrationType (string migrationName, bool partOfMigration)
+            var underlaying = Nullable.GetUnderlyingType(propertyType)?? propertyType;
+            if (underlaying == propertyType)
+                return propertyType.Name;
+            return underlaying.Name + "?";
+
+           
+        }
+
+        public Type CreateMigrationType(string migrationName, bool partOfMigration)
         {
             var MigrationBuilder = myModule.DefineType($"{DynamicAssemblyBuilder.Namespace}.{CollectionSchemaName}Builder_{migrationName.Replace(".", "_")}", TypeAttributes.Public);
             CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { LogicalName });
@@ -228,7 +281,7 @@ namespace EAVFramework.Shared.V2
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.LogicalName)),
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.MigrationName)) ,
                         typeof(EntityMigrationAttribute).GetProperty(nameof(EntityMigrationAttribute.RawUpMigration))
-                    },  
+                    },
 
 
                     new[] { LogicalName, migrationName, upSql });
@@ -275,15 +328,15 @@ namespace EAVFramework.Shared.V2
                 //.Select(attribute => members[attribute.Value.SelectToken("$.logicalName")?.ToString()].GetMethod)
                 //.ToArray();
                 var primaryKeys = properties.Values.Where(p => p.IsPrimaryKey)
-                    .Where(p=>members.ContainsKey(p.LogicalName))
+                    .Where(p => members.ContainsKey(p.LogicalName))
                     .Select(p => members[p.LogicalName].GetMethod)
                     .ToArray();
 
 
 
-                var fKeys = properties.Values.Where(p=>p.IsLookup) // entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
-                                                            //  .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
-                                                            // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
+                var fKeys = properties.Values.Where(p => p.IsLookup) // entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
+                                                                     //  .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
+                                                                     // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
                       .Where(attribute => members.ContainsKey(attribute.LogicalName))
                    .Select(attribute => new
                    {
@@ -293,8 +346,8 @@ namespace EAVFramework.Shared.V2
                        ReferenceType = attribute.ReferenceType,
                        OnDeleteCascade = attribute.OnDeleteCascade ?? options.ReferentialActionNoAction,
                        OnUpdateCascade = attribute.OnUpdateCascade ?? options.ReferentialActionNoAction,
-                      // ForeignKey = attribute.ForeignKey
-                   }).OrderBy(n=>n.Name)
+                       // ForeignKey = attribute.ForeignKey
+                   }).OrderBy(n => n.Name)
                    .ToArray();
 
                 if (primaryKeys.Any() || fKeys.Any())
@@ -323,7 +376,7 @@ namespace EAVFramework.Shared.V2
                     {
 
                         //CreateTableBuilder
-                      //  var entityName = fk.EntityName;
+                        //  var entityName = fk.EntityName;
                         ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
                         ConstraintsMethodIL.Emit(OpCodes.Ldstr, fk.Name);
 
@@ -370,7 +423,7 @@ namespace EAVFramework.Shared.V2
 
                 ConstraintsMethodIL.Emit(OpCodes.Ret);
 
-                
+
                 var UpMethod = entityTypeBuilder.DefineMethod("Up", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderCreateTable.DeclaringType });
 
                 var UpMethodIL = UpMethod.GetILGenerator();
@@ -380,12 +433,12 @@ namespace EAVFramework.Shared.V2
 
                 if (hasPriorEntity == null)
                 {
-                   dynamicCodeService.EmitPropertyService.CreateTableImpl(CollectionSchemaName, Schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
+                    dynamicCodeService.EmitPropertyService.CreateTableImpl(CollectionSchemaName, Schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
 
                     //Create Indexes
                     //alternativ keys //TODO create dropindex
-                   
-                   
+
+
                     {
                         foreach (var key in Keys)
                         {
@@ -429,7 +482,7 @@ namespace EAVFramework.Shared.V2
 
                     //Create indexes from lookup fields.
 
-                    dynamicCodeService.LookupPropertyBuilder.CreateLookupIndexes( UpMethodIL,this);
+                    dynamicCodeService.LookupPropertyBuilder.CreateLookupIndexes(UpMethodIL, this);
 
                 }
                 else if (members.Any())
@@ -448,7 +501,7 @@ namespace EAVFramework.Shared.V2
                         var attributeDefinition = Properties//  entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                                .FirstOrDefault(attribute => attribute.LogicalName == newMember.Key);
 
-                    //    var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
+                        //    var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
 
 
                         if (!test.Any(c => c.MigrationName != migrationName))
@@ -459,8 +512,8 @@ namespace EAVFramework.Shared.V2
                                 continue;
 
 
-                            var method = options.MigrationsBuilderAddColumn.MakeGenericMethod(attributeDefinition.PropertyType); 
-                           
+                            var method = options.MigrationsBuilderAddColumn.MakeGenericMethod(attributeDefinition.PropertyType);
+
 
                             UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                                                               //MigrationsBuilderAddColumn
@@ -473,10 +526,10 @@ namespace EAVFramework.Shared.V2
 
                             if (attributeDefinition.IsLookup)
                             {
-                               dynamicCodeService.EmitPropertyService.AddForeignKey(CollectionSchemaName, Schema, UpMethodIL, attributeDefinition);
+                                dynamicCodeService.EmitPropertyService.AddForeignKey(CollectionSchemaName, Schema, UpMethodIL, attributeDefinition);
 
-                                if(attributeDefinition.IndexInfo!=null)
-                                    dynamicCodeService.LookupPropertyBuilder.CreateLoopupIndex(UpMethodIL,CollectionSchemaName,Schema,attributeDefinition.SchemaName,attributeDefinition.IndexInfo); //.CreateLoopupIndex(options, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
+                                if (attributeDefinition.IndexInfo != null)
+                                    dynamicCodeService.LookupPropertyBuilder.CreateLoopupIndex(UpMethodIL, CollectionSchemaName, Schema, attributeDefinition.SchemaName, attributeDefinition.IndexInfo); //.CreateLoopupIndex(options, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
                             }
                         }
 
@@ -490,7 +543,7 @@ namespace EAVFramework.Shared.V2
                                     continue;
 
                                 var method = options.MigrationsBuilderAlterColumn.MakeGenericMethod(attributeDefinition.PropertyType);
-                               
+
 
                                 UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                                                                   //MigrationsBuilderAddColumn
@@ -529,7 +582,7 @@ namespace EAVFramework.Shared.V2
                                 UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderDropForeignKey);
                                 UpMethodIL.Emit(OpCodes.Pop);
 
-                                dynamicCodeService.EmitPropertyService.AddForeignKey( CollectionSchemaName, Schema, UpMethodIL, attributeDefinition);
+                                dynamicCodeService.EmitPropertyService.AddForeignKey(CollectionSchemaName, Schema, UpMethodIL, attributeDefinition);
 
                             }
 
@@ -578,7 +631,7 @@ namespace EAVFramework.Shared.V2
             return MigrationBuilder.CreateTypeInfo();
         }
 
-        private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType( string migrationName, bool partOfMigration)
+        private (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(string migrationName, bool partOfMigration)
         {
             var builder = DynamicAssemblyBuilder.Module;
             var options = dynamicCodeService.Options;
@@ -586,7 +639,7 @@ namespace EAVFramework.Shared.V2
             var logicalName = LogicalName;// entityDefinition.SelectToken("$.logicalName").ToString();
 
             var members = new Dictionary<string, PropertyBuilder>();
-            
+
             var columnsType = builder.DefineType($"{DynamicAssemblyBuilder.Namespace}.{SchemaName}Columns_{migrationName.Replace(".", "_")}", TypeAttributes.Public);
 
 
@@ -612,8 +665,8 @@ namespace EAVFramework.Shared.V2
 
 
 
-           // foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
-            foreach(var propertyInfo in Properties)
+            // foreach (var attributeDefinition in entityDefinition.SelectToken("$.attributes").OfType<JProperty>())
+            foreach (var propertyInfo in Properties)
             {
                 var attributeLogicalName = propertyInfo.LogicalName;// attributeDefinition.Value.SelectToken("$.logicalName")?.ToString();
                 var attributeSchemaName = propertyInfo.SchemaName;// attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
@@ -622,7 +675,7 @@ namespace EAVFramework.Shared.V2
                     continue;
 
                 var method = options.ColumnsBuilderColumnMethod.MakeGenericMethod(propertyInfo.PropertyType);
-                 
+
 
                 entityCtorBuilderIL.Emit(OpCodes.Ldarg_0);
                 entityCtorBuilderIL.Emit(OpCodes.Ldarg_1);
@@ -827,24 +880,24 @@ namespace EAVFramework.Shared.V2
                 {
                     case "comment" when !string.IsNullOrEmpty(propertyInfo.Description):
 
-                      dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, propertyInfo.Description), arg1);
+                        dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, propertyInfo.Description), arg1);
 
                         continue;
                 }
 
 
                 var value = propertyInfo.GetColumnParam(argName);
-                if(value != null)
+                if (value != null)
                 {
                     switch (value)
                     {
                         case string stringvalue:
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, stringvalue), arg1);
-                            
+
                             break;
                         case int intvalue:
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, intvalue), arg1);
-                            
+
                             break;
 
                         case bool boolvalue:
@@ -856,7 +909,7 @@ namespace EAVFramework.Shared.V2
                             {
                                 entityCtorBuilderIL.Emit(OpCodes.Ldloca_S, locals[arg1.ParameterType].LocalIndex);
                                 entityCtorBuilderIL.Emit(OpCodes.Initobj, arg1.ParameterType);
-                                entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[arg1.ParameterType]); 
+                                entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[arg1.ParameterType]);
                             }
                             else
                             {
@@ -864,12 +917,12 @@ namespace EAVFramework.Shared.V2
                             }
                             break;
                     }
-                     
-                  
-                } 
+
+
+                }
                 else
                 {
-                  //  var hasMaxLength = propertyInfo.MaxLength.HasValue;
+                    //  var hasMaxLength = propertyInfo.MaxLength.HasValue;
 
                     switch (argName)
                     {
@@ -1010,7 +1063,7 @@ namespace EAVFramework.Shared.V2
                     ConfigureMethod2IL.Emit(OpCodes.Ldc_I4_1);
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRequiredMethod);
                 }
-                 
+
                 if (propertyInfo.IsRowVersion)
                 {
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.IsRowVersionMethod);
@@ -1030,7 +1083,7 @@ namespace EAVFramework.Shared.V2
                     //ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, attributeDefinition.Value.SelectToken("$.type.type.sql.precision")?.ToObject<int>() ?? 18);
                     //ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, attributeDefinition.Value.SelectToken("$.type.type.sql.scale")?.ToObject<int>() ?? 4);
                     ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, propertyInfo.Precision);
-                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4,propertyInfo.Scale);
+                    ConfigureMethod2IL.Emit(OpCodes.Ldc_I4, propertyInfo.Scale);
                     ConfigureMethod2IL.Emit(OpCodes.Callvirt, options.HasPrecisionMethod);
                 }
 
@@ -1070,14 +1123,45 @@ namespace EAVFramework.Shared.V2
 
             ConfigureMethod2IL.Emit(OpCodes.Ret);
 
-         //   options.EntityDTOConfigurations[entityCollectionSchemaName] = entityTypeConfiguration.CreateTypeInfo();
+            //   options.EntityDTOConfigurations[entityCollectionSchemaName] = entityTypeConfiguration.CreateTypeInfo();
 
         }
-
+        public bool IsCreated { get; private set; }
         public TypeInfo CreateTypeInfo()
-        {   
-            Parent?.CreateTypeInfo();
-            return Builder.CreateTypeInfo();
+        {
+          
+            if (IsCreated)
+                return Builder.GetTypeInfo();
+            
+            IsCreated = true;
+#if DEBUG
+           // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
+#endif
+            try
+            {
+                Parent?.CreateTypeInfo();
+
+                foreach (var dp in Dependencies)
+                {
+                    dp.CreateTypeInfo();
+                }
+
+                return Builder.CreateTypeInfo();
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+              //  File.AppendAllLines("test1.txt", new[] { $"Failed {SchemaName}" });
+
+#endif
+                throw new InvalidOperationException($"Could not build {SchemaName}: {string.Join(",",Builder.GetInterfaces().Select(c=>$"{c.Name}<{string.Join(",",c.GetGenericArguments().Select(t=>$"{t.Name}<{t.BaseType.Name},{string.Join(",",t.GetInterfaces().Select(i=>i.Name))}>"))}>"))}", ex);
+            }
+            finally
+            {
+#if DEBUG
+             //   File.AppendAllLines("test1.txt", new[] { $"Created {SchemaName}" });
+#endif
+            }
         }
 
         public TypeInfo CreateConfigurationTypeInfo()
@@ -1085,7 +1169,7 @@ namespace EAVFramework.Shared.V2
             CreateTypeInfo();
             return ConfigurationBuilder.CreateTypeInfo();
         }
-
+        public Type ClrParentType { get; private set; }
         private void BuildParent()
         {
 
@@ -1099,8 +1183,8 @@ namespace EAVFramework.Shared.V2
             }
 
              
-            var staticParents = dynamicCodeService.FindParentClasses(this.EntityKey, Properties.Select(c=>c.SchemaName).ToArray());
-
+            var staticParents = dynamicCodeService.FindParentClasses(this.EntityKey, properties.Values.Where(c=>c.PropertyType!=null).Select(c=>c.SchemaName).ToArray());
+            ClrParentType = staticParents;
 
             if (staticParents.IsGenericTypeDefinition)
             {
@@ -1118,8 +1202,8 @@ namespace EAVFramework.Shared.V2
                 // File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
 
                 
-               
-                Builder.SetParent(staticParents.MakeGenericType(args.Select(t => t.ManifestKey == SchemaName ? Builder : DynamicAssemblyBuilder.Tables.FirstOrDefault(tt => tt.Value.EntityKey == t.ManifestKey).Value.Builder).ToArray()));
+                 
+                Builder.SetParent(staticParents.MakeGenericType(args.Select(t => t.ManifestKey == SchemaName ? Builder : AddAsDependency( DynamicAssemblyBuilder.Tables.FirstOrDefault(tt => tt.Value.EntityKey == t.ManifestKey).Value).Builder).ToArray()));
                 return;
             }
 
@@ -1128,7 +1212,14 @@ namespace EAVFramework.Shared.V2
 
         }
 
-       
+        public List<DynamicTableBuilder> Dependencies { get; } = new List<DynamicTableBuilder>();
+        public DynamicTableBuilder AddAsDependency(DynamicTableBuilder value)
+        {
+            Dependencies.Add(value);
+
+            return value;
+        }
+
         private ConcurrentBag<InverseLookupProp> InverseLookups { get; } = new ConcurrentBag<InverseLookupProp>();
       
 

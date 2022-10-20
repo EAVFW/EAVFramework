@@ -152,7 +152,7 @@ namespace EAVFramework.Shared
         {
              
 
-            File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo start : {string.Join(",",Dependencies.Select(c=>c.EntitySchameName))}" });
+         //   File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo start : {string.Join(",",Dependencies.Select(c=>c.EntitySchameName))}" });
             var deps = Dependencies.ToArray();
             Dependencies.Clear();
 
@@ -163,16 +163,16 @@ namespace EAVFramework.Shared
                 {
                     if (!dep.Builder.IsCreated())
                     {
-                        File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling dependency: {dep.EntitySchameName}" });
+                      //  File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling dependency: {dep.EntitySchameName}" });
                         dep.CreateTypeInfo(builder);
                     }
                 }
-                File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling parent: {Parent?.EntitySchameName}" });
+         //       File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling parent: {Parent?.EntitySchameName}" });
                 Parent?.CreateTypeInfo(builder);
 
                 var type = Builder.CreateTypeInfo();
 
-                File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo done {Builder.Name} {Builder.IsCreated()}: {type?.Name}" });
+       //         File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo done {Builder.Name} {Builder.IsCreated()}: {type?.Name}" });
                 return type;
             }
             catch(TypeLoadException loaderex)
@@ -181,7 +181,7 @@ namespace EAVFramework.Shared
                 
                var a = (t as TypeBuilder)?.CreateTypeInfo();
                 var b = (t as TypeBuilder)?.CreateTypeInfo();
-                File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] Failed to load: {loaderex.TypeName}, trying that {t?.Name} TypeBuilder={t is TypeBuilder} {a?.Name} {b?.Name}" });
+   //             File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] Failed to load: {loaderex.TypeName}, trying that {t?.Name} TypeBuilder={t is TypeBuilder} {a?.Name} {b?.Name}" });
 
                 return CreateTypeInfo(builder);
 
@@ -332,7 +332,7 @@ namespace EAVFramework.Shared
 
             return $"{@namespace}.{optionSetDefinedName ?? schemaName+"Options"}".Replace(" ", "");
         }
-
+ 
         public string GetLiteralName(string name)
         {
           

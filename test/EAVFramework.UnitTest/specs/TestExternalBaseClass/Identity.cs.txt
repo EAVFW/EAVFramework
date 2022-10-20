@@ -17,29 +17,12 @@ namespace MC.Models
 		public Identity()
 		{
 		}
-		
-		[DataMember(Name="id")]
-		[JsonProperty("id")]
-		[JsonPropertyName("id")]
-		[PrimaryKey()]
-		public Guid Id {get;set;}
 
 		[DataMember(Name="name")]
 		[JsonProperty("name")]
 		[JsonPropertyName("name")]
 		[PrimaryField()]
 		public String Name {get;set;}
-
-
-		[DataMember(Name="awesomeuser")]
-		[JsonProperty("awesomeuser")]
-		[JsonPropertyName("awesomeuser")]
-		public Identity AwesomeUser {get;set;}
-
-		[DataMember(Name="awesomeuserid")]
-		[JsonProperty("awesomeuserid")]
-		[JsonPropertyName("awesomeuserid")]
-		public Guid? AwesomeUserId {get;set;}
 
 		[DataMember(Name="awesomeuseridentities")]
 		[JsonProperty("awesomeuseridentities")]

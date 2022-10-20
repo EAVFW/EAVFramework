@@ -1,11 +1,13 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using System.Security.AccessControl;
 
 namespace EAVFramework.Shared.V2
 {
@@ -308,7 +310,7 @@ namespace EAVFramework.Shared.V2
                         
                         var genericArgs = @interface.GetGenericArguments().Select((c, i) => GetTypeBuilderFromConstraint(c,dynamicTableBuilder)).ToArray();
 
-                         
+                     //   File.AppendAllLines("test1.txt", new[] { $"Generating Generic Interface: {@interface.Name}<{string.Join(",", genericArgs.Select(c=>c?.Name))}>", });
                         var a = @interface.MakeGenericType(genericArgs);
 
                         dynamicTableBuilder.AddInterface(a);
@@ -355,60 +357,99 @@ namespace EAVFramework.Shared.V2
 
         private Type GetTypeBuilderFromConstraint( Type constraint, DynamicTableBuilder dynamicTableBuilder)
         {
-          
-            var geneatedClass = constraint.GetGenericParameterConstraints().Where(t => !string.IsNullOrEmpty(t.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey)).ToArray();
-            if (geneatedClass.Any())
+            try
             {
-               
-                 var type = GetTypeFromManifest(dynamicTableBuilder.DynamicAssemblyBuilder, geneatedClass.Single());
-                
-                return type?.Builder;
-            }
+                var geneatedClass = constraint.GetGenericParameterConstraints().Where(t => !string.IsNullOrEmpty(t.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey)).ToArray();
+                if (geneatedClass.Any())
+                {
 
-            if (!constraint.GetGenericParameterConstraints().Any())
-            {
+                    var type = dynamicTableBuilder.AddAsDependency(GetTypeFromManifest(dynamicTableBuilder.DynamicAssemblyBuilder, geneatedClass.Single()));
+
+                    return type?.Builder;
+                }
+
                 var found = constraint.DeclaringType.GetCustomAttributes<ConstraintMappingAttribute>().FirstOrDefault(at => at.ConstraintName == constraint.Name);
                 if (found != null)
                 {
                     var entitykey = found.EntityKey ?? constraint.DeclaringType.GetCustomAttribute<EntityInterfaceAttribute>().EntityKey;
+                    if (string.IsNullOrEmpty(found.AttributeKey))
+                    {
+                        return dynamicTableBuilder.AddAsDependency( dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == entitykey)).Builder;
+                    }
 
                     var prop = dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == entitykey).Properties
                         .FirstOrDefault(c => c.AttributeKey == found.AttributeKey);
 
+                    if (prop == null || prop.PropertyType == null)
+                    {
+                        throw new InvalidOperationException($"Type was not found for Entitykey={entitykey} and AttributeKey={found.AttributeKey} for {found.ConstraintName}");
+                    }
 
+                    return Nullable.GetUnderlyingType(prop.DTOPropertyType ?? prop.PropertyType) ?? prop.DTOPropertyType ?? prop.PropertyType;
 
-                    //var attributeDefinition = manifest.SelectToken($"$.entities['{entitykey}'].attributes['{found.AttributeKey}']");
-
-                    //if (attributeDefinition == null)
-                    //{
-                    //    throw new KeyNotFoundException($"Could not find {found.EntityKey}/{entitykey}/{found.AttributeKey} in manifes ");
-
-                    //}
-
-                    return prop.PropertyType;
-
-
-                    //var enumName = choiceEnumBuilder.GetEnumName(options, attributeDefinition);
-
-                    //try
-                    //{
-                    //    var t0 = CreateEnumType(myModule, attributeDefinition, enumName);
-                    //    return Nullable.GetUnderlyingType(t0) ?? t0;
-                    //    // return options.ChoiceBuilders[enumName];
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    File.AppendAllLines("test1.txt", new[] { $"GetTypeBuilderFromConstraint: {constraint.DeclaringType.FullName} Failed={enumName}", ex.ToString() });
-
-                    //    throw new KeyNotFoundException($"Could not find {enumName} in {string.Join(",", options.ChoiceBuilders.Keys)}", ex);
-                    //}
                 }
-                else
-                {
-                    throw new KeyNotFoundException($"Missing ConstraintMappingAttribute for {constraint.Name} on {constraint.DeclaringType.FullName}");
-                }
+            }catch(Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
+                    $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
             }
-          //  File.AppendAllLines("test1.txt", new[] { $"Inteface type: {constraint.DeclaringType.FullName} is Generic<{string.Join(",", constraint.GetGenericParameterConstraints().Select(p => p.Name))}>" });
+
+                
+            //if (!constraint.GetGenericParameterConstraints().Any())
+            //{
+               
+            //    if (found != null)
+            //    {
+            //        var entitykey = found.EntityKey ?? constraint.DeclaringType.GetCustomAttribute<EntityInterfaceAttribute>().EntityKey;
+
+            //        var prop = dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == entitykey).Properties
+            //            .FirstOrDefault(c => c.AttributeKey == found.AttributeKey);
+
+            //        if(prop==null || prop.PropertyType == null)
+            //        {
+            //            throw new InvalidOperationException($"Type was not found for Entitykey={entitykey} and AttributeKey={found.AttributeKey} for {found.ConstraintName}");
+            //        }
+            //        //if(prop.Type == "choices")
+            //        //{
+            //        //    prop = dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == found.AttributeKey).Properties
+            //        //   .FirstOrDefault(c => c.Type =="choice");
+            //        //}
+
+            //        //var attributeDefinition = manifest.SelectToken($"$.entities['{entitykey}'].attributes['{found.AttributeKey}']");
+
+            //        //if (attributeDefinition == null)
+            //        //{
+            //        //    throw new KeyNotFoundException($"Could not find {found.EntityKey}/{entitykey}/{found.AttributeKey} in manifes ");
+
+            //        //}
+
+            //        return Nullable.GetUnderlyingType( prop.PropertyType)?? prop.PropertyType;
+
+
+            //        //var enumName = choiceEnumBuilder.GetEnumName(options, attributeDefinition);
+
+            //        //try
+            //        //{
+            //        //    var t0 = CreateEnumType(myModule, attributeDefinition, enumName);
+            //        //    return Nullable.GetUnderlyingType(t0) ?? t0;
+            //        //    // return options.ChoiceBuilders[enumName];
+            //        //}
+            //        //catch (Exception ex)
+            //        //{
+            //        //    File.AppendAllLines("test1.txt", new[] { $"GetTypeBuilderFromConstraint: {constraint.DeclaringType.FullName} Failed={enumName}", ex.ToString() });
+
+            //        //    throw new KeyNotFoundException($"Could not find {enumName} in {string.Join(",", options.ChoiceBuilders.Keys)}", ex);
+            //        //}
+            //    }
+            //    else
+            //    {
+            //        throw new KeyNotFoundException($"Missing ConstraintMappingAttribute for {constraint.Name} on {constraint.DeclaringType.FullName}");
+            //    }
+            //}
+            //  File.AppendAllLines("test1.txt", new[] { $"Inteface type: {constraint.DeclaringType.FullName} is Generic<{string.Join(",", constraint.GetGenericParameterConstraints().Select(p => p.Name))}>" });
+            var constraints = constraint.GetGenericParameterConstraints().ToArray();
+
+
             var @interface = constraint.GetGenericParameterConstraints().Single();
 
             if (@interface == typeof(DynamicEntity))

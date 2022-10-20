@@ -42,6 +42,9 @@
     <None Update="ManifestTests\Specs\manifest.oidc.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="specs\oidcclient.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="specs\TestBigCircleReference\OpenIdConnectIdentityResource.cs.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

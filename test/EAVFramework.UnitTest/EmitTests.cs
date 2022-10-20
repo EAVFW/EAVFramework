@@ -1,12 +1,15 @@
 ﻿using EAVFramework.Shared;
 using EAVFramework.Shared.V2;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -88,9 +91,11 @@ namespace EAVFramework.UnitTest
 
             server.BuildType();
             identity.BuildType();
-
-            var identitType = identity.CreateTypeInfo();
+            
+            
             var serverType = server.CreateTypeInfo();
+            var identitType = identity.CreateTypeInfo();
+       
 
             Assert.AreEqual("Identity", identitType.Name);
             Assert.AreEqual("Server", serverType.Name);
@@ -145,6 +150,55 @@ namespace EAVFramework.UnitTest
        
         }
         [TestMethod]
+        public void TestCoices()
+        {
+            DynamicCodeService codeMigratorV2 = CreateOptions(o =>
+            {
+                o.Schema = "dbo";
+                o.DTOBaseClasses = new[] { typeof(FullBaseOwnerEntity<>), typeof(FullBaseIdEntity<>) };
+                o.DTOInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
+                    typeof(IOpenIdConnectScope<>),
+                    typeof(IOpenIdConnectResource<>),
+                    typeof(IOpenIdConnectClient<,,,>),
+                    typeof(IAllowedGrantType<>),
+                    typeof(IOpenIdConnectScopeResource<,>)
+                };
+            });
+
+            //var manifest = new ManifestService(new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+
+            //var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("specs/oidcclient.json")));
+            //var code = codeMigratorV2.GenerateCodeFiles();
+
+
+
+            var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
+            var OpenIdConnectClient = assembly.WithTable("OpenId Connect Client", "OpenIdConnectClient", "openidconnectclient", "OpenIdConnectClients", "dbo", false);
+
+            OpenIdConnectClient.AddProperty("Type", "Type", "type", "choice").AddChoiceOptions("ClientType",new Dictionary<string, int> { ["Test"] = 0, ["Public"] = 1 });
+            OpenIdConnectClient.AddProperty("Consent Type", "ConsentType", "consenttype", "choice").AddChoiceOptions("ConsentType", new Dictionary<string, int> { ["Test"] = 0, ["Public"] = 1 });
+
+
+            var AllowedGrantType = assembly.WithTable("Allowed Grant Type", "AllowedGrantType", "allowedgranttype", "AllowedGrantTypes", "dbo", false);
+            AllowedGrantType.AddProperty("Allowed Grant Type Value", "AllowedGrantTypeValue", "allowedgranttypevalue", "choice").AddChoiceOptions("AllowedGrantTypeValues", new Dictionary<string, int> { ["Test"] = 0, ["Public"] = 1 });
+
+            AllowedGrantType.AddProperty("OpenId Connect Client", "OpenIdConnectClientId", "openidconnectclientid", "guid").LookupTo(OpenIdConnectClient);
+
+            OpenIdConnectClient.BuildType();
+            AllowedGrantType.BuildType();
+         
+            var OpenIdConnectClientType = OpenIdConnectClient.CreateTypeInfo();
+
+            var AllowedGrantTypeType = AllowedGrantType.CreateTypeInfo();
+
+
+
+
+            var code1 = codeMigratorV2.GenerateCodeFiles();
+        }
+        [TestMethod]
+       
+        
         public void TestBigCircleReference()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
@@ -152,23 +206,25 @@ namespace EAVFramework.UnitTest
                 o.DTOInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
-
+                    
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
             });
 
+          
+
+
 
             var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
-
+         
             var OpenIdConnectIdentityResource = assembly.WithTable("OpenId Connect Identity Resource", "OpenIdConnectIdentityResource", "openidconnectidentityresource", "OpenIdConnectIdentityResources", "dbo", false);
             var OpenIdConnectScope = assembly.WithTable("OpenId Connect Scope", "OpenIdConnectScope", "openidconnectscope", "OpenIdConnectScopes", "dbo", false);
             var OpenIdConnectResource = assembly.WithTable("OpenId Connect Resource", "OpenIdConnectResource", "openidconnectresource", "OpenIdConnectResources","dbo",true);
             var OpenIdConnectScopeResource = assembly.WithTable("OpenId Connect Scope Resource", "OpenIdConnectScopeResource", "openidconnectscoperesource", "OpenIdConnectScopeResources");
-
-
+            
             OpenIdConnectIdentityResource.WithBaseEntity(OpenIdConnectResource);
             OpenIdConnectScope.WithBaseEntity(OpenIdConnectResource);
-
+ 
             OpenIdConnectResource.BuildType();
             OpenIdConnectIdentityResource.BuildType();
             OpenIdConnectScope.BuildType();
@@ -180,15 +236,13 @@ namespace EAVFramework.UnitTest
            
            
             var OpenIdConnectScopeType = OpenIdConnectScope.CreateTypeInfo();
-            
-            
-
+           
 
             Assert.AreEqual("OpenIdConnectIdentityResource", OpenIdConnectIdentityResourceType.Name);
             
 
-            var code = codeMigratorV2.GenerateCodeFiles();
-            AssertFiles(code, nameof(TestBigCircleReference));
+            var code1 = codeMigratorV2.GenerateCodeFiles();
+            AssertFiles(code1, nameof(TestBigCircleReference));
 
         }
         [Ignore]
@@ -345,6 +399,71 @@ namespace EAVFramework.UnitTest
     [BaseEntity]
     [Serializable]
     [GenericTypeArgument(ArgumentName = "TIdentity", ManifestKey = "Identity")]
+    public class FullBaseIdEntity<TIdentity> : DynamicEntity where TIdentity : DynamicEntity
+    {
+
+        [DataMember(Name = "id")]
+        [JsonProperty("id")]
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; }
+
+        [DataMember(Name = "modifiedbyid")]
+        [JsonProperty("modifiedbyid")]
+        [JsonPropertyName("modifiedbyid")]
+        public Guid? ModifiedById { get; set; }
+
+        [ForeignKey("ModifiedById")]
+        [JsonProperty("modifiedby")]
+        [JsonPropertyName("modifiedby")]
+        [DataMember(Name = "modifiedby")]
+        public TIdentity ModifiedBy { get; set; }
+
+        [DataMember(Name = "createdbyid")]
+        [JsonProperty("createdbyid")]
+        [JsonPropertyName("createdbyid")]
+        public Guid? CreatedById { get; set; }
+
+        [ForeignKey("CreatedById")]
+        [JsonProperty("createdby")]
+        [JsonPropertyName("createdby")]
+        [DataMember(Name = "createdby")]
+        public TIdentity CreatedBy { get; set; }
+
+        [DataMember(Name = "modifiedon")]
+        [JsonProperty("modifiedon")]
+        [JsonPropertyName("modifiedon")]
+        public DateTime? ModifiedOn { get; set; }
+
+        [DataMember(Name = "createdon")]
+        [JsonProperty("createdon")]
+        [JsonPropertyName("createdon")]
+        public DateTime? CreatedOn { get; set; }
+
+        [DataMember(Name = "rowversion")]
+        [JsonProperty("rowversion")]
+        [JsonPropertyName("rowversion")]
+        public byte[] RowVersion { get; set; }
+
+    }
+    [BaseEntity]
+    [Serializable]
+    [GenericTypeArgument(ArgumentName = "TIdentity", ManifestKey = "Identity")]
+    public class FullBaseOwnerEntity<TIdentity> : FullBaseIdEntity<TIdentity> where TIdentity : DynamicEntity
+    {
+        [DataMember(Name = "ownerid")]
+        [JsonProperty("ownerid")]
+        [JsonPropertyName("ownerid")]
+        public Guid? OwnerId { get; set; }
+
+        [ForeignKey("OwnerId")]
+        [DataMember(Name = "owner")]
+        [JsonProperty("owner")]
+        [JsonPropertyName("owner")]
+        public TIdentity Owner { get; set; }
+    }
+    [BaseEntity]
+    [Serializable]
+    [GenericTypeArgument(ArgumentName = "TIdentity", ManifestKey = "Identity")]
     public class BaseIdEntity<TIdentity> : DynamicEntity where TIdentity : DynamicEntity
     {
 
@@ -382,7 +501,33 @@ namespace EAVFramework.UnitTest
         [JsonPropertyName("owner")]
         public TIdentity Owner { get; set; }
     }
+   
+    [EntityInterface(EntityKey = "Allowed Grant Type")]
+    [ConstraintMapping(AttributeKey = "Allowed Grant Type Value", ConstraintName = nameof(TAllowedGrantTypeValue))]
+    public interface IAllowedGrantType<TAllowedGrantTypeValue>
+        where TAllowedGrantTypeValue : struct, IConvertible
+    {
+        public TAllowedGrantTypeValue? AllowedGrantTypeValue { get; set; }
+    }
 
+    [EntityInterface(EntityKey = "OpenId Connect Client")]
+    [ConstraintMapping(EntityKey = "Allowed Grant Type", AttributeKey = "Allowed Grant Type Value", ConstraintName = "TAllowedGrantTypeValue")]
+    [ConstraintMapping(AttributeKey = "Consent Type", ConstraintName = "TOpenIdConnectClientConsentTypes")]
+    [ConstraintMapping(AttributeKey = "Type", ConstraintName = "TOpenIdConnectClientTypes")]
+
+    public interface IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue>
+    where TOpenIdConnectClientTypes : struct, IConvertible
+    where TOpenIdConnectClientConsentTypes : struct, IConvertible
+    where TAllowedGrantTypeValue : struct, IConvertible
+    where TAllowedGrantType : DynamicEntity, IAllowedGrantType<TAllowedGrantTypeValue>
+    {
+        public TOpenIdConnectClientTypes? Type { get; set; }
+
+        public TOpenIdConnectClientConsentTypes? ConsentType { get; set; }
+
+        public ICollection<TAllowedGrantType> OpenIdConnectClientAllowedGrantTypes { get; set; }
+    }
+       
     [EntityInterface(EntityKey = "OpenId Connect Identity Resource")]
     public interface IOpenIdConnectIdentityResource
 
@@ -451,4 +596,6 @@ namespace EAVFramework.UnitTest
     {
         public ICollection<OIDCScopeResource> OpenIdConnectScopeResources { get; set; }
     }
+
+
 }

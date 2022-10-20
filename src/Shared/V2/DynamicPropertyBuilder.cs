@@ -1,6 +1,8 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
@@ -23,6 +25,7 @@ namespace EAVFramework.Shared.V2
         private DynamicTableBuilder dynamicTableBuilder;
       
         public Type PropertyType { get; private set; }
+        public Type DTOPropertyType { get; private set; }
         public string Type { get; }
 
        // public PropertyBuilder Builder { get; }
@@ -100,11 +103,13 @@ namespace EAVFramework.Shared.V2
 
         public void Build()
         {
-            if(PropertyType == null)
+            if(PropertyType == null || dynamicTableBuilder.ContainsParentProperty(SchemaName))
             {
                 return;
             }
-            var (prop, field) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, PropertyType);
+
+
+            var (prop, field) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, DTOPropertyType ?? PropertyType);
 
             dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(prop, LogicalName);
 
@@ -142,6 +147,17 @@ namespace EAVFramework.Shared.V2
                 prop.SetCustomAttribute(DescriptionAttributeBuilder);
 
                  
+            }
+
+            if(enumbuilder != null)
+            {
+                foreach(var values in Choices)
+                    enumbuilder.DefineLiteral(values.Key, values.Value);    
+
+                DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder.CreateTypeInfo()); ;
+                //                }
+
+                //                return ;
             }
             //    Builder = prop;
         }
@@ -243,6 +259,17 @@ namespace EAVFramework.Shared.V2
         internal DynamicPropertyBuilder WithIndex(IndexInfo indexInfo)
         {
             IndexInfo = IndexInfo;
+            return this;
+        }
+        public EnumBuilder enumbuilder { get; private set; }
+        public Dictionary<string, int> Choices { get; private set; }
+        public DynamicPropertyBuilder AddChoiceOptions(string enumName, Dictionary<string, int> choices)
+        {
+             
+            enumbuilder=  dynamicTableBuilder.DynamicAssemblyBuilder.Module.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
+            DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder);// ; enumbuilder;
+            Choices = choices;
+
             return this;
         }
     }
