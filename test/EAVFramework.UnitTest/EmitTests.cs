@@ -162,18 +162,18 @@ namespace EAVFramework.UnitTest
                 o.DTOInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
-                    typeof(IOpenIdConnectClient<,,,>),
+                    typeof(IOpenIdConnectClient<,,>),
                     typeof(IAllowedGrantType<>),
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
             });
 
-            //var manifest = new ManifestService(new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+            var manifest = new ManifestService(new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
 
-            //var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/oidcclient.json")));
-            //var code = codeMigratorV2.GenerateCodeFiles();
+            var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/oidcclient.json")));
+            var code = codeMigratorV2.GenerateCodeFiles();
 
-
+            return;
 
             var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
             var OpenIdConnectClient = assembly.WithTable("OpenId Connect Client", "OpenIdConnectClient", "openidconnectclient", "OpenIdConnectClients", "dbo", false);
@@ -206,7 +206,8 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
+                o.DTOInterfaces = new[] {  
+                    typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
                     
@@ -505,7 +506,7 @@ namespace EAVFramework.UnitTest
         [JsonPropertyName("owner")]
         public TIdentity Owner { get; set; }
     }
-   
+
     [EntityInterface(EntityKey = "Allowed Grant Type")]
     [ConstraintMapping(AttributeKey = "Allowed Grant Type Value", ConstraintName = nameof(TAllowedGrantTypeValue))]
     public interface IAllowedGrantType<TAllowedGrantTypeValue>
@@ -515,21 +516,20 @@ namespace EAVFramework.UnitTest
     }
 
     [EntityInterface(EntityKey = "OpenId Connect Client")]
-    [ConstraintMapping(EntityKey = "Allowed Grant Type", AttributeKey = "Allowed Grant Type Value", ConstraintName = "TAllowedGrantTypeValue")]
     [ConstraintMapping(AttributeKey = "Consent Type", ConstraintName = "TOpenIdConnectClientConsentTypes")]
     [ConstraintMapping(AttributeKey = "Type", ConstraintName = "TOpenIdConnectClientTypes")]
+    [ConstraintMapping(EntityKey = "Allowed Grant Type", ConstraintName = nameof(TAllowedGrantType))]
 
-    public interface IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue>
-    where TOpenIdConnectClientTypes : struct, IConvertible
-    where TOpenIdConnectClientConsentTypes : struct, IConvertible
-    where TAllowedGrantTypeValue : struct, IConvertible
-    where TAllowedGrantType : DynamicEntity, IAllowedGrantType<TAllowedGrantTypeValue>
+    public interface IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes>
+        where TOpenIdConnectClientTypes : struct, IConvertible
+        where TOpenIdConnectClientConsentTypes : struct, IConvertible
+        where TAllowedGrantType : DynamicEntity //, IAllowedGrantType<TAllowedGrantTypeValue>
     {
         public TOpenIdConnectClientTypes? Type { get; set; }
 
         public TOpenIdConnectClientConsentTypes? ConsentType { get; set; }
 
-        public ICollection<TAllowedGrantType> OpenIdConnectClientAllowedGrantTypes { get; set; }
+        public ICollection<TAllowedGrantType> AllowedGrantTypes { get; set; }
     }
        
     [EntityInterface(EntityKey = "OpenId Connect Identity Resource")]
@@ -540,33 +540,34 @@ namespace EAVFramework.UnitTest
     }
 
     [EntityInterface(EntityKey = "OpenId Connect Scope Resource")]
+    [ConstraintMapping(EntityKey = "OpenId Connect Resource", ConstraintName = nameof(TOpenIdConnectResource))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Identity Resource", ConstraintName = nameof(TOpenIdConnectIdentityResource))]
     public interface IOpenIdConnectScopeResource<TOpenIdConnectResource, TOpenIdConnectIdentityResource>
         where TOpenIdConnectResource : DynamicEntity
-        where TOpenIdConnectIdentityResource : DynamicEntity
+         where TOpenIdConnectIdentityResource : DynamicEntity
 
     {
 
-       // public TOpenIdConnectResource Resource { get; set; }
-      //  public TOpenIdConnectIdentityResource Scope { get; set; }
+        // public TOpenIdConnectResource Resource { get; set; }
+        //  public TOpenIdConnectIdentityResource Scope { get; set; }
     }
 
 
+
     [EntityInterface(EntityKey = "OpenId Connect Resource")]
-    public interface IOpenIdConnectResource<TOpenIdConnectScopeResource>
-        where TOpenIdConnectScopeResource:DynamicEntity
+    public interface IOpenIdConnectResource<TOpenIdConnectScopeResource> where TOpenIdConnectScopeResource : DynamicEntity
     {
 
-         
-      //  public ICollection<TOpenIdConnectScopeResource> OpenIdConnectScopeResources { get; set; }
+        //  public ICollection<TOpenIdConnectScopeResource> OpenIdConnectScopeResources { get; set; }
     }
 
 
     [EntityInterface(EntityKey = "OpenId Connect Scope")]
     public interface IOpenIdConnectScope<TOpenIdConnectScopeResource>
-        where TOpenIdConnectScopeResource : DynamicEntity
+         where TOpenIdConnectScopeResource : DynamicEntity
     {
-        
-       // public ICollection<TOpenIdConnectScopeResource> OpenIdConnectScopeResources { get; set; }
+
+        // public ICollection<TOpenIdConnectScopeResource> OpenIdConnectScopeResources { get; set; }
     }
     public interface IReference<T1,T2>
     {

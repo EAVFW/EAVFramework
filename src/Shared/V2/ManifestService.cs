@@ -161,6 +161,9 @@ namespace EAVFramework.Shared.V2
                             if (isprimaryKey && !string.IsNullOrEmpty(parentName))
                                 continue;
 
+                            if (type == "choices")
+                                continue;
+
                             var propertyInfo = table
                                 .AddProperty(attributeKey, schemaName, logicalName, type)
                                 .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))

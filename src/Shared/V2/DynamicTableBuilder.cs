@@ -1238,7 +1238,7 @@ namespace EAVFramework.Shared.V2
                     //  var propName = inverse.PropertySchemaName + inverse.Table.CollectionSchemaName;
                     var propName = inverseg.Count() > 1 || this.dynamicCodeService.Options.InversePropertyCollectionName ==  InversePropertyCollectionNamePattern.ConcatFieldNameAndLookupName ? inverse.PropertySchemaName + inverse.Table.CollectionSchemaName : inverse.Table.CollectionSchemaName;
                     var propBuilder = AddProperty(null, propName, propName.ToLower(), typeof(ICollection<>).MakeGenericType(inverse.Table.Builder));  // CreateProperty(entityType, (attributes.Length > 1 ? attribute.Name.Replace(" ", "") : "") + entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related.Builder));
-                                                                                                                                                      // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
+                                                                                                                               // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
 
                     propBuilder.AddInverseAttribute(inverse.PropertySchemaName);
 

@@ -1,5 +1,6 @@
 ﻿using EAVFramework;
 using EAVFramework.UnitTest;
+using MC.Models;
 using System;
 using EAVFramework.Shared;
 namespace MC.Models
@@ -7,7 +8,7 @@ namespace MC.Models
 	[Serializable()]
 	[EntityDTO(LogicalName="openidconnectscoperesource",Schema="dbo")]
 	[Entity(LogicalName="openidconnectscoperesource",SchemaName="OpenIdConnectScopeResource",CollectionSchemaName="OpenIdConnectScopeResources",IsBaseClass=false)]
-	public partial class OpenIdConnectScopeResource : DynamicEntity, IOpenIdConnectScopeResource<DynamicEntity,DynamicEntity>
+	public partial class OpenIdConnectScopeResource : DynamicEntity, IOpenIdConnectScopeResource<OpenIdConnectResource,OpenIdConnectIdentityResource>
 	{
 		public OpenIdConnectScopeResource()
 		{
