@@ -7,8 +7,8 @@ on:
       - 'feature/**'
 
 jobs:
-  build:
-    runs-on: windows-latest
+  test-net60:
+    runs-on: ubuntu-latest
     name: Building
     steps:
       - name: Checkout code base
@@ -22,7 +22,42 @@ jobs:
         run: dotnet clean
 
       - name: Build solution
-        run: dotnet test
+        run: dotnet test -f net6.0
+
+  test-net31:
+    runs-on: ubuntu-latest
+    name: Building
+    steps:
+      - name: Checkout code base
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+
+      - name: Cleaning
+        run: dotnet clean
+
+      - name: Build solution
+        run: dotnet test -f netcoreapp3.1
+
+  build:
+    runs-on: ubuntu-latest
+    name: Building
+    needs: [test-net31, test-net60 ]
+    steps:
+      - name: Checkout code base
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Cleaning
+        run: dotnet clean
+
+      - name: Build solution
+        run: dotnet test -f net6.0
 
       - name: Restore NuGet packages
         run: dotnet restore EAVFramework.sln -p:TargetFramework=net6.0
