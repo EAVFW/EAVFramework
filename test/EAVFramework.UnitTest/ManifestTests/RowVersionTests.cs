@@ -67,7 +67,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\RowVersionShouldGenerateRowversionColumn.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/RowVersionShouldGenerateRowversionColumn.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }

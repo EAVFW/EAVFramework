@@ -38,7 +38,7 @@ namespace EAVFramework.UnitTest.ManifestTests
         public async Task TestLargeManfiest()
         {
             //Arrange
-            var manifest = JToken.Parse(File.ReadAllText(@"specs\manifest.oidc.json"));
+            var manifest = JToken.Parse(File.ReadAllText(@"specs/manifest.oidc.json"));
 
 
             //Act
@@ -47,7 +47,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\manifest.oidc.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/manifest.oidc.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
@@ -63,7 +63,7 @@ namespace EAVFramework.UnitTest.ManifestTests
         public async Task TestCascading()
         {
             //Arrange
-            var manifest = JToken.Parse(File.ReadAllText(@"specs\CascadingTest.manifest.json"));
+            var manifest = JToken.Parse(File.ReadAllText(@"specs/CascadingTest.manifest.json"));
 
 
             //Act
@@ -72,7 +72,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CascadingTest.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CascadingTest.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
@@ -104,7 +104,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
@@ -140,7 +140,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddEntity.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddEntity.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
@@ -197,7 +197,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_ChangePropertyTextLength.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_ChangePropertyTextLength.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
@@ -277,7 +277,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
@@ -322,7 +322,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddLookup.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
@@ -395,7 +395,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC,manifestB, manifestA);
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddLookup_WithCascade.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddLookup_WithCascade.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
@@ -442,7 +442,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
            
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\CarsAndTrucksModel_AddAttribute.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/CarsAndTrucksModel_AddAttribute.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }

@@ -58,7 +58,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             //Assure
 
-            string expectedSQL = System.IO.File.ReadAllText(@"specs\BinaryShouldGenerateBinaryColumn.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"specs/BinaryShouldGenerateBinaryColumn.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
         }
