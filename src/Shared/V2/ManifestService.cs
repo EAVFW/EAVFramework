@@ -53,11 +53,18 @@ namespace EAVFramework.Shared.V2
         public bool PartOfMigration { get;  set; }
 
         public string ModuleName => $"{Namespace}_{MigrationName}";
+
+        public Dictionary<string, Type> EntityDTOs { get; set; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, Type> EntityDTOConfigurations { get; set; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        public Assembly DTOAssembly { get;  set; }
+        public bool SkipValidateSchemaNameForRemoteTypes { get; internal set; }
     }
     public class ManifestService
     {
         private readonly ManifestServiceOptions options;
         private readonly IChoiceEnumBuilder choiceEnumBuilder;
+
+     
 
         public ManifestService(ManifestServiceOptions options, IChoiceEnumBuilder choiceEnumBuilder = null)
         {
@@ -171,7 +178,7 @@ namespace EAVFramework.Shared.V2
                                 .WithDescription(attributeDefinition.Value.SelectToken("$.type.description")?.ToString() ?? attributeDefinition.Value.SelectToken("$.description")?.ToString())
                                 .WithMigrationColumnProvider(new ManifestColumnMigrationColumnResolver(attributeDefinition.Value))
                                 .WithMaxLength((typeObj?.SelectToken("$.sql.maxLength") ?? typeObj?.SelectToken("$.maxLength"))?.ToObject<int>())
-                                .Required(attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? attributeDefinition.Value.SelectToken("$.required")?.ToObject<bool>() ?? false)
+                                .Required(attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)
                                 .RowVersion((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false));
 
 
@@ -232,8 +239,10 @@ namespace EAVFramework.Shared.V2
                 {
 
                     var table = tables[entity.Name];
-                    table.CreateConfigurationTypeInfo();
-                    table.CreateTypeInfo();
+                   this.options.EntityDTOConfigurations[table.CollectionSchemaName]=  table.CreateConfigurationTypeInfo();
+                    var schema = entity.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                    var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+                    this.options.EntityDTOs[table.CollectionSchemaName] = result?? table.CreateTypeInfo();
                 }
 
             }

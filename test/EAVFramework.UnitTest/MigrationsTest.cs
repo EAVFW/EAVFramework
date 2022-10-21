@@ -145,7 +145,7 @@ namespace EAVFramework.UnitTest
 
             }
         }
-        [Ignore]
+        
         [TestMethod]
         public async Task Test()
         {

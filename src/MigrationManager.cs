@@ -38,14 +38,14 @@ namespace EAVFramework
     }
     public interface IMigrationManager
     {
-         IEdmModel Model { get; }
-        Dictionary<string, Type> EntityDTOs { get; }
-        Dictionary<string, Type> EntityDTOConfigurations { get; }
+        //  IEdmModel Model { get; }
+        // Dictionary<string, Type> EntityDTOs { get; }
+        //  Dictionary<string, Type> EntityDTOConfigurations { get; }
         //public MigrationsInfo BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
-        
-        void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options);
-        (TypeInfo, Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options);
-        (TypeInfo, Func<Migration>) CreateMigration(string migrationName,JToken afterManifest, JToken beforeManifest, DynamicContextOptions options);
+
+        ModelDefinition EnusureBuilded(string name, JToken manifest, DynamicContextOptions options);
+        ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options);
+        ModelDefinition CreateMigration(string migrationName,JToken afterManifest, JToken beforeManifest, DynamicContextOptions options);
     } 
   
     public class MigrationManagerOptions
@@ -53,26 +53,35 @@ namespace EAVFramework
         public bool SkipValidateSchemaNameForRemoteTypes { get; set; } = true;
         public bool RequiredSupport { get; set; } = true;
     }
+    public class ModelDefinition
+    {
+         public IEdmModel Model { get; set; }
+        public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+
+        public TypeInfo Type { get; set; }
+        public Func<Migration> MigrationFactory { get; set; }
+    }
     public class MigrationManager: IMigrationManager
     {
      
 
 
-        public  IEdmModel Model { get; set; }
+       // public  IEdmModel Model { get; set; }
         public MigrationManager(ILogger<MigrationManager> logger, IOptions<MigrationManagerOptions> options, DynamicCodeService dynamicCodeService)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.options=options??throw new ArgumentNullException(nameof(options));
             this.dynamicCodeService = dynamicCodeService;
         }
-        public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
-        public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-        public MethodInfo EntityTypeBuilderHasKey { get; private set; }
-        public ConstructorInfo JsonPropertyAttributeCtor { get; private set; }
+        //public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
+        //public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+      //  public MethodInfo EntityTypeBuilderHasKey { get; private set; }
+     //   public ConstructorInfo JsonPropertyAttributeCtor { get; private set; }
        
 
         //   public Assembly Assembly { get; set; }
-        private ConcurrentDictionary<string, Migration> _migrations = new ConcurrentDictionary<string, Migration>();
+      //  private ConcurrentDictionary<string, Migration> _migrations = new ConcurrentDictionary<string, Migration>();
         //private ConcurrentDictionary<string, ModuleBuilder> _modules = new ConcurrentDictionary<string, ModuleBuilder>();
 
        
@@ -82,85 +91,29 @@ namespace EAVFramework
 
         public void Reset(DynamicContextOptions options)
         {
-            Model = null;
+           // Model = null;
          //   _modules.Remove(options.Namespace, out var _);
             dynamicCodeService.RemoveNamespace(options.Namespace);
             _cache.Clear();
-            EntityDTOs.Clear();
-            EntityDTOConfigurations.Clear();
+           // EntityDTOs.Clear();
+           // EntityDTOConfigurations.Clear();
         }
-        public void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
-        { 
-            if (Model == null)
+        public ConcurrentDictionary<string, ModelDefinition> Models { get; } = new ConcurrentDictionary<string, ModelDefinition>();
+        public ModelDefinition EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
+        {
+            return Models.GetOrAdd(name, (_) =>
             {
+               var model = CreateModel(name, manifest, options);
 
-                CreateModel(name, manifest, options);
+               
 
-                var builder = new ODataConventionModelBuilder();
+                return model;
+                 
+            });
              
-               // var v = new ODataModelBuilder();
-                builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
-
-                //   builder.EntitySet<Movie>("Movies");
-                //   builder.EntitySet<Review>("Reviews");
-
-                foreach (var entity in EntityDTOs)
-                {
-                   
-                    var config = builder.AddEntityType(entity.Value);
-                    if (options.WithODATAEntitySet)
-                    {
-                        builder.AddEntitySet(entity.Key, config);
-                    }
-  
-                    //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
-                    //{
-                    //    config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
-                    //    logger.LogWarning("Creating Nav for {entity}.{nav}", entity.Key,nav.Name);
-                    //}
-
-                    foreach (var nav in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null))
-                    {
-                        if (nav.GetCustomAttribute<ForeignKeyAttribute>() is ForeignKeyAttribute navigation)
-                        {
-                            var prop = config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
-                            prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-
-                            // prop.DisableAutoExpandWhenSelectIsPresent = true;
-                            logger.LogDebug("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
-                        }
-                        else
-                        {
-                            if ((Nullable.GetUnderlyingType(nav.PropertyType) ?? nav.PropertyType).IsEnum)
-                            {
-                                var prop = config.AddEnumProperty(nav);
-                                prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-                            }
-                            else
-                            {
-
-                                var prop = config.AddProperty(nav);
-                                prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
-                            //    logger.LogWarning("Creating Prop for {entity}.{nav}", entity.Key, nav.Name);
-                            }
-                        }
-                    }
-                    //foreach(var col in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<InversePropertyAttribute>() != null &&
-                    //    p.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)))
-                    //{
-
-                    //    config.AddCollectionProperty(col);
-                    //}
-
-                   
-
-                }
-                Model = builder.GetEdmModel();
-
-            }
 
         }
-        private  ConcurrentDictionary<string, Lazy<(TypeInfo, Func<Migration>)>> _cache = new ConcurrentDictionary<string, Lazy<(TypeInfo, Func<Migration>)>>();
+        private  ConcurrentDictionary<string, Lazy<ModelDefinition>> _cache = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
 
         /// <summary>
         /// Use this to loop over all manifests starting with beforeManifest being {}
@@ -169,7 +122,7 @@ namespace EAVFramework
         /// <param name="afterManifest"></param>
         /// <param name="beforeManifest"></param>
         /// <param name="options"></param>
-        public (TypeInfo, Func<Migration>) CreateMigration(string migrationName, JToken afterManifest, JToken beforeManifest, DynamicContextOptions options)
+        public ModelDefinition CreateMigration(string migrationName, JToken afterManifest, JToken beforeManifest, DynamicContextOptions options)
         {
             var afterEntities = GetEntities(afterManifest).Select(c => (c.Name, logicalName: c.Value.SelectToken("$.logicalName").ToString(), attributes : GetAttributes(c.Value))).ToArray();
             var beforeEntities = GetEntities(beforeManifest).Select(c => (c.Name, logicalName: c.Value.SelectToken("$.logicalName").ToString(), attributes: GetAttributes(c.Value))).ToArray();
@@ -199,20 +152,25 @@ namespace EAVFramework
         }
        // public ConcurrentDictionary<string, TypeBuilder> EntityDTOsBuilders { get; internal set; } = new ConcurrentDictionary<string, TypeBuilder>();
 
-        private (TypeInfo, Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options, bool fromMigration)
+        private ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options, bool fromMigration)
         {
-            return _cache.GetOrAdd(migrationName,   (migrationName) => new Lazy<(TypeInfo, Func<Migration>)>(()=>
+            return _cache.GetOrAdd(migrationName,   (migrationName) => new Lazy<ModelDefinition>(()=>
             {
 
                 try
                 {
+                    var modelDefinition = new ModelDefinition();
                     //var asmb = dynamicCodeService.CreateAssemblyBuilder(options.Namespace);
                     var manfiestservice = new ManifestService(new ManifestServiceOptions
                     {
                         Namespace = options.Namespace,
                         MigrationName = migrationName,
                         GenerateDTO = fromMigration ? false : true,
-                        PartOfMigration = fromMigration
+                        PartOfMigration = fromMigration,
+                        EntityDTOs = modelDefinition.EntityDTOs,
+                        EntityDTOConfigurations = modelDefinition.EntityDTOConfigurations,
+                        DTOAssembly = options.DTOAssembly,
+                        SkipValidateSchemaNameForRemoteTypes  = this.options.Value.SkipValidateSchemaNameForRemoteTypes
                     });
 
 
@@ -326,8 +284,79 @@ namespace EAVFramework
 
                     var (migrationType,tables)= manfiestservice.BuildDynamicModel(dynamicCodeService, manifest);
 
-                    return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
-                }catch(Exception ex)
+                    
+
+                    modelDefinition.Type = migrationType.GetTypeInfo();
+                    modelDefinition.MigrationFactory = () => Activator.CreateInstance(migrationType, manifest, tables) as Migration;
+
+
+
+
+                    var builder = new ODataConventionModelBuilder();
+
+                    // var v = new ODataModelBuilder();
+                    builder.EnableLowerCamelCase(NameResolverOptions.ProcessDataMemberAttributePropertyNames);
+
+                    //   builder.EntitySet<Movie>("Movies");
+                    //   builder.EntitySet<Review>("Reviews");
+
+                    foreach (var entity in modelDefinition.EntityDTOs)
+                    {
+
+                        var config = builder.AddEntityType(entity.Value);
+                        if (options.WithODATAEntitySet)
+                        {
+                            builder.AddEntitySet(entity.Key, config);
+                        }
+
+                        //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
+                        //{
+                        //    config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
+                        //    logger.LogWarning("Creating Nav for {entity}.{nav}", entity.Key,nav.Name);
+                        //}
+
+                        foreach (var nav in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null))
+                        {
+                            if (nav.GetCustomAttribute<ForeignKeyAttribute>() is ForeignKeyAttribute navigation)
+                            {
+                                var prop = config.AddNavigationProperty(nav, Microsoft.OData.Edm.EdmMultiplicity.ZeroOrOne);
+                                prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+
+                                // prop.DisableAutoExpandWhenSelectIsPresent = true;
+                                logger.LogDebug("Creating Nav for {entity}.{nav} {prop}", entity.Key, nav.Name, prop.Name);
+                            }
+                            else
+                            {
+                                if ((Nullable.GetUnderlyingType(nav.PropertyType) ?? nav.PropertyType).IsEnum)
+                                {
+                                    var prop = config.AddEnumProperty(nav);
+                                    prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+                                }
+                                else
+                                {
+
+                                    var prop = config.AddProperty(nav);
+                                    prop.Name = nav.GetCustomAttribute<DataMemberAttribute>().Name;
+                                    //    logger.LogWarning("Creating Prop for {entity}.{nav}", entity.Key, nav.Name);
+                                }
+                            }
+                        }
+                        //foreach(var col in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<InversePropertyAttribute>() != null &&
+                        //    p.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)))
+                        //{
+
+                        //    config.AddCollectionProperty(col);
+                        //}
+
+
+
+                    }
+                    modelDefinition.Model = builder.GetEdmModel();
+
+                    return modelDefinition;
+
+                }
+                catch(Exception ex)
                 {
                     dynamicCodeService.RemoveNamespace(options.Namespace);
                   //  _modules.Remove(options.Namespace, out var _);
@@ -338,7 +367,7 @@ namespace EAVFramework
 
          
 
-        public (TypeInfo,Func<Migration>) CreateModel(string migrationName, JToken manifest, DynamicContextOptions options)
+        public ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options)
         {
             return this.CreateModel(migrationName, manifest, options, false);
         }

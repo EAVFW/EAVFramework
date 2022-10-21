@@ -403,9 +403,9 @@ namespace EAVFramework
             var queryInspectors = (request.HttpContext.RequestServices.GetService(t2) as IEnumerable).Cast<IQueryExtender<TContext>>()
                 .ToList();
 
-            context.EnsureModelCreated();
+            var model = context.EnsureModelCreated();
 
-            var type = context.Manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
+            var type = model.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
 
             var metadataQuerySet = context.Set(type);
 
@@ -428,9 +428,9 @@ namespace EAVFramework
             {
                 if (!request.Query.ContainsKey("$select"))
                 {
-                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
-                var odataContext = new ODataQueryContext(context.Manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
+                var odataContext = new ODataQueryContext(model.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 IODataFeature odataFeature = request.HttpContext.ODataFeature();
                 odataFeature.RoutePrefix = "/api/";
 
@@ -565,8 +565,8 @@ namespace EAVFramework
                    
                     var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
 
-                    types.Add($"{++i:D16}{name}", model.Item1);
-                    factories.Add(model.Item1, model.Item2);
+                    types.Add($"{++i:D16}{name}", model.Type);
+                    factories.Add(model.Type, model.MigrationFactory);
                 }
             }
             return new MigrationsInfo {  Factories = factories, Types = types};
@@ -586,6 +586,9 @@ namespace EAVFramework
 
 
             }
+
+            DynamicModel = EnsureModelCreated();
+
             base.OnConfiguring(optionsBuilder);
         }
         protected virtual void ConfigureMigrationAsesmbly(DbContextOptionsBuilder optionsBuilder)
@@ -599,11 +602,11 @@ namespace EAVFramework
         }
 
      
-        public void EnsureModelCreated()
+        public ModelDefinition EnsureModelCreated()
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
+           return  manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
         }
 
         public void AddNewManifest(JToken manifest)
@@ -625,27 +628,28 @@ namespace EAVFramework
             //    mya.Reset(); 
             //}
         }
-
+        public ModelDefinition DynamicModel { get; private set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             Console.WriteLine("Test");   
             var sw = Stopwatch.StartNew();
-    
+
+            DynamicModel = EnsureModelCreated();
             //  EnsureModelCreated();
-            if (this.modelOptions.Value.CreateLatestMigration)
-            {
-                var latestManifest = modelOptions.Value.Manifests.First();
-             //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
+            //if (this.modelOptions.Value.CreateLatestMigration)
+            //{
+            //    var latestManifest = modelOptions.Value.Manifests.First();
+            //    //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-                manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
-            }
-
-            foreach (var en in manager.EntityDTOs)
+            //    model= manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            //}
+        
+            foreach (var en in DynamicModel.EntityDTOs)
             {
                 try
                 {
                     var a = modelBuilder.Entity(en.Value);
-                    var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
+                    var config = Activator.CreateInstance(DynamicModel.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                     config.Configure(a);
                     foreach(var prop in a.Metadata.GetProperties().Where(c=>(Nullable.GetUnderlyingType( c.ClrType) ?? c.ClrType) == typeof(DateTime)))
                     {
@@ -736,7 +740,7 @@ namespace EAVFramework
         
         public EntityEntry Add(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = DynamicModel.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
             var a= this.Attach(record);
@@ -747,7 +751,7 @@ namespace EAVFramework
 
         public async Task<EntityEntry> AddOrReplace(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = DynamicModel.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
             var keys = this.Model.FindEntityType(type).FindPrimaryKey().Properties.Select(c => (data as JObject).GetValue(c.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name,StringComparison.OrdinalIgnoreCase)?.ToObject(c.PropertyInfo.PropertyType)).ToArray();
@@ -771,7 +775,7 @@ namespace EAVFramework
 
         public EntityEntry Remove(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = DynamicModel.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
             return this.Remove(record);
@@ -779,7 +783,7 @@ namespace EAVFramework
         }
         public void Replace(string entityName, object entry, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = DynamicModel.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
             Entry(entry).CurrentValues.SetValues(record);
@@ -794,12 +798,12 @@ namespace EAVFramework
         public ValueTask<object> FindAsync(string entityName, params object[] keyValues)
         {
 
-            if (!manager.EntityDTOs.ContainsKey(entityName))
+            if (!DynamicModel.EntityDTOs.ContainsKey(entityName))
             {
-              throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", manager.EntityDTOs.Keys)}");
+              throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", DynamicModel.EntityDTOs.Keys)}");
             }
 
-            var type = manager.EntityDTOs[entityName];
+            var type = DynamicModel.EntityDTOs[entityName];
             //  var record = data.ToObject(type);
             return this.FindAsync(type, keyValues);
             //  logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
@@ -808,12 +812,12 @@ namespace EAVFramework
         }
         public Type GetEntityType(string entityName)
         {
-             var type = manager.EntityDTOs[entityName];
+             var type = DynamicModel.EntityDTOs[entityName];
             return type;
         }
         public EntityEntry Update(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = DynamicModel.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
 

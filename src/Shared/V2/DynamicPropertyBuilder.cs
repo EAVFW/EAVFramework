@@ -81,7 +81,8 @@ namespace EAVFramework.Shared.V2
 
 
 
-            dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo());
+             dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo())
+                .AddForeignKey(SchemaName);
 
             //var (attFKProp, attFKField) = CreateProperty(entityType, (FKSchemaName ??
             //    (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ?
@@ -100,7 +101,13 @@ namespace EAVFramework.Shared.V2
 
             return this;
         }
-
+        public string ForeignKey { get; private set; }
+        public DynamicPropertyBuilder AddForeignKey(string schemaName)
+        {
+            ForeignKey = schemaName;
+            return this;
+        }
+       
         public void Build()
         {
             if(PropertyType == null || dynamicTableBuilder.ContainsParentProperty(SchemaName))
@@ -160,6 +167,13 @@ namespace EAVFramework.Shared.V2
                 //                return ;
             }
             //    Builder = prop;
+
+            if (!string.IsNullOrEmpty(ForeignKey))
+            {
+                CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(this.dynamicCodeService.Options.ForeignKeyAttributeCtor, new object[] { ForeignKey });
+
+                prop.SetCustomAttribute(ForeignKeyAttributeBuilder);
+            }
         }
         public TypeBuilder TypeBuilder => this.dynamicTableBuilder.Builder;
 
