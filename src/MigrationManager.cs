@@ -95,6 +95,7 @@ namespace EAVFramework
          //   _modules.Remove(options.Namespace, out var _);
             dynamicCodeService.RemoveNamespace(options.Namespace);
             _cache.Clear();
+            Models.Clear();
            // EntityDTOs.Clear();
            // EntityDTOConfigurations.Clear();
         }
