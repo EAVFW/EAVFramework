@@ -38,9 +38,9 @@ namespace EAVFramework.Shared.V2
                     return a.ToObject<int>();
                 case JTokenType.Float:
                     return a.ToObject<double>();
-                   
+
             }
-            
+
             return null;
         }
     }
@@ -50,14 +50,21 @@ namespace EAVFramework.Shared.V2
         public string MigrationName { get; set; }
 
         public bool GenerateDTO { get; set; } = true;
-        public bool PartOfMigration { get;  set; }
+        public bool PartOfMigration { get; set; }
 
         public string ModuleName => $"{Namespace}_{MigrationName}";
+
+        public Dictionary<string, Type> EntityDTOs { get; set; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, Type> EntityDTOConfigurations { get; set; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        public Assembly DTOAssembly { get; set; }
+        public bool SkipValidateSchemaNameForRemoteTypes { get; internal set; }
     }
     public class ManifestService
     {
         private readonly ManifestServiceOptions options;
         private readonly IChoiceEnumBuilder choiceEnumBuilder;
+
+
 
         public ManifestService(ManifestServiceOptions options, IChoiceEnumBuilder choiceEnumBuilder = null)
         {
@@ -66,7 +73,7 @@ namespace EAVFramework.Shared.V2
         }
         internal Type CreateDynamicMigration(DynamicCodeService dynamicCodeService, JToken manifest)
         {
-            var asmb = dynamicCodeService.CreateAssemblyBuilder(options.ModuleName , options.Namespace);
+            var asmb = dynamicCodeService.CreateAssemblyBuilder(options.ModuleName, options.Namespace);
 
 
             TypeBuilder migrationType =
@@ -98,9 +105,9 @@ namespace EAVFramework.Shared.V2
             var type = migrationType.CreateTypeInfo();
             return type;
         }
-        public (Type, IDynamicTable[]) BuildDynamicModel(DynamicCodeService dynamicCodeService,   JToken manifest)
+        public (Type, IDynamicTable[]) BuildDynamicModel(DynamicCodeService dynamicCodeService, JToken manifest)
         {
-            var builder = dynamicCodeService.CreateAssemblyBuilder(this.options.ModuleName,this.options.Namespace);
+            var builder = dynamicCodeService.CreateAssemblyBuilder(this.options.ModuleName, this.options.Namespace);
             var options = dynamicCodeService.Options;
 
             var tables = new Dictionary<string, DynamicTableBuilder>();
@@ -112,12 +119,12 @@ namespace EAVFramework.Shared.V2
                     tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
                      entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
                      entity.Value.SelectToken("$.abstract") != null
-                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>()??false);
+                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false);
 
                 tables.Add(entity.Name, table);
             }
 
-          //  if (this.options.GenerateDTO)
+            //  if (this.options.GenerateDTO)
             {
 
                 foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
@@ -151,7 +158,7 @@ namespace EAVFramework.Shared.V2
                         try
                         {
                             var typeObj = attributeDefinition.Value.SelectToken("$.type");
-                            var type =( attributeDefinition.Value.SelectToken("$.type.type")?.ToString() ?? attributeDefinition.Value.SelectToken("$.type")?.ToString())?.ToLower();
+                            var type = (attributeDefinition.Value.SelectToken("$.type.type")?.ToString() ?? attributeDefinition.Value.SelectToken("$.type")?.ToString())?.ToLower();
                             var isprimaryKey = attributeDefinition.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false;
                             var isPrimaryField = attributeDefinition.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false;
                             var attributeKey = attributeDefinition.Name;
@@ -171,7 +178,7 @@ namespace EAVFramework.Shared.V2
                                 .WithDescription(attributeDefinition.Value.SelectToken("$.type.description")?.ToString() ?? attributeDefinition.Value.SelectToken("$.description")?.ToString())
                                 .WithMigrationColumnProvider(new ManifestColumnMigrationColumnResolver(attributeDefinition.Value))
                                 .WithMaxLength((typeObj?.SelectToken("$.sql.maxLength") ?? typeObj?.SelectToken("$.maxLength"))?.ToObject<int>())
-                                .Required(attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? attributeDefinition.Value.SelectToken("$.required")?.ToObject<bool>() ?? false)
+                                .Required(attributeDefinition.Value.SelectToken("$.type.required")?.ToObject<bool>() ?? attributeDefinition.Value.SelectToken("$.isRequired")?.ToObject<bool>() ?? false)
                                 .RowVersion((attributeDefinition.Value.SelectToken("$.isRowVersion")?.ToObject<bool>() ?? false));
 
 
@@ -204,11 +211,11 @@ namespace EAVFramework.Shared.V2
 
                             }
 
-                            if(type == "choice")
+                            if (type == "choice")
                             {
                                 var choices = attributeDefinition.Value.SelectToken("$.type.options").OfType<JProperty>().ToDictionary(optionPro => choiceEnumBuilder.GetLiteralName(optionPro.Name), optionPro => (optionPro.Value.Type == JTokenType.Object ? optionPro.Value["value"] : optionPro.Value).ToObject<int>());
-                                propertyInfo.AddChoiceOptions(choiceEnumBuilder.GetEnumName(attributeDefinition.Value,this.options.Namespace), choices);
-                               // propertyInfo.prop
+                                propertyInfo.AddChoiceOptions(choiceEnumBuilder.GetEnumName(attributeDefinition.Value, this.options.Namespace), choices);
+                                // propertyInfo.prop
                             }
 
 
@@ -232,8 +239,10 @@ namespace EAVFramework.Shared.V2
                 {
 
                     var table = tables[entity.Name];
-                    table.CreateConfigurationTypeInfo();
-                    table.CreateTypeInfo();
+                    this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
+                    var schema = entity.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                    var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+                    this.options.EntityDTOs[table.CollectionSchemaName] = result ?? table.CreateTypeInfo();
                 }
 
             }

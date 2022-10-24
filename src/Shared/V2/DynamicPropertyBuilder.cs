@@ -12,7 +12,7 @@ namespace EAVFramework.Shared.V2
     {
 
     }
-  
+
     public class DynamicPropertyBuilder : IDynamicPropertyBuilder
     {
         public bool HasParentProperty => this.dynamicTableBuilder.ContainsParentProperty(this.SchemaName);
@@ -23,19 +23,19 @@ namespace EAVFramework.Shared.V2
 
         private readonly DynamicCodeService dynamicCodeService;
         private DynamicTableBuilder dynamicTableBuilder;
-      
+
         public Type PropertyType { get; private set; }
         public Type DTOPropertyType { get; private set; }
         public string Type { get; }
 
-       // public PropertyBuilder Builder { get; }
-        public DynamicPropertyBuilder(DynamicCodeService dynamicCodeService, 
-            DynamicTableBuilder dynamicTableBuilder, 
+        // public PropertyBuilder Builder { get; }
+        public DynamicPropertyBuilder(DynamicCodeService dynamicCodeService,
+            DynamicTableBuilder dynamicTableBuilder,
             string attributeKey, string propertyName, string logicalName, string type)
-            : this(dynamicCodeService,dynamicTableBuilder,attributeKey,propertyName,logicalName, dynamicCodeService.TypeMapper.GetCLRType(type))
+            : this(dynamicCodeService, dynamicTableBuilder, attributeKey, propertyName, logicalName, dynamicCodeService.TypeMapper.GetCLRType(type))
         {
             Type = type.ToLower();
-          
+
         }
         public DynamicPropertyBuilder(DynamicCodeService dynamicCodeService, DynamicTableBuilder dynamicTableBuilder, string attributeKey, string propertyName, string logicalName, Type type)
         {
@@ -47,21 +47,21 @@ namespace EAVFramework.Shared.V2
             LogicalName = logicalName;
 
         }
-        private List<string> InverseProperties =new List<string>();
-       
+        private List<string> InverseProperties = new List<string>();
+
 
         public bool IsLookup { get; private set; }
         public DynamicTableBuilder ReferenceType { get; private set; }
-      //  public ForeignKeyInfo ForeignKey { get; private set; }
+        //  public ForeignKeyInfo ForeignKey { get; private set; }
         public object OnDeleteCascade { get; private set; }
         public object OnUpdateCascade { get; private set; }
-        public DynamicPropertyBuilder LookupTo(DynamicTableBuilder related,   object onDelete=null, object onUpdate=null)
+        public DynamicPropertyBuilder LookupTo(DynamicTableBuilder related, object onDelete = null, object onUpdate = null)
         {
             IsLookup = true;
             ReferenceType = related;
             OnDeleteCascade = onDelete;
             OnUpdateCascade = onUpdate;
-         //   ForeignKey = foreignKey;
+            //   ForeignKey = foreignKey;
             var FKLogicalName = LogicalName;
 
             if (FKLogicalName.EndsWith("id", StringComparison.OrdinalIgnoreCase))
@@ -81,7 +81,8 @@ namespace EAVFramework.Shared.V2
 
 
 
-            dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo());
+            dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo())
+               .AddForeignKey(SchemaName);
 
             //var (attFKProp, attFKField) = CreateProperty(entityType, (FKSchemaName ??
             //    (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ?
@@ -100,10 +101,16 @@ namespace EAVFramework.Shared.V2
 
             return this;
         }
+        public string ForeignKey { get; private set; }
+        public DynamicPropertyBuilder AddForeignKey(string schemaName)
+        {
+            ForeignKey = schemaName;
+            return this;
+        }
 
         public void Build()
         {
-            if(PropertyType == null || dynamicTableBuilder.ContainsParentProperty(SchemaName))
+            if (PropertyType == null || dynamicTableBuilder.ContainsParentProperty(SchemaName))
             {
                 return;
             }
@@ -115,7 +122,7 @@ namespace EAVFramework.Shared.V2
 
             dynamicCodeService.EmitPropertyService.CreateJsonSerializationAttribute(prop, LogicalName);
 
-            foreach(var inverse in InverseProperties)
+            foreach (var inverse in InverseProperties)
             {
                 CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(dynamicCodeService.Options.InverseAttributeCtor, new object[] { inverse });
 
@@ -124,11 +131,11 @@ namespace EAVFramework.Shared.V2
 
             if (IsPrimaryField)
             {
-                CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(typeof(PrimaryFieldAttribute).GetConstructor(new Type[] { }), new object[] {  });
+                CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(typeof(PrimaryFieldAttribute).GetConstructor(new Type[] { }), new object[] { });
 
                 prop.SetCustomAttribute(PrimaryFieldAttributeBuilder);
 
-                
+
             }
 
             if (IsPrimaryKey)
@@ -140,19 +147,19 @@ namespace EAVFramework.Shared.V2
 
             }
 
-            if(Description != null)
+            if (Description != null)
             {
-                CustomAttributeBuilder DescriptionAttributeBuilder = new CustomAttributeBuilder(typeof(DescriptionAttribute).GetConstructor(new Type[] { typeof(string)}), new object[] { Description });
+                CustomAttributeBuilder DescriptionAttributeBuilder = new CustomAttributeBuilder(typeof(DescriptionAttribute).GetConstructor(new Type[] { typeof(string) }), new object[] { Description });
 
                 prop.SetCustomAttribute(DescriptionAttributeBuilder);
 
-                 
+
             }
 
-            if(enumbuilder != null)
+            if (enumbuilder != null)
             {
-                foreach(var values in Choices)
-                    enumbuilder.DefineLiteral(values.Key, values.Value);    
+                foreach (var values in Choices)
+                    enumbuilder.DefineLiteral(values.Key, values.Value);
 
                 DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder.CreateTypeInfo()); ;
                 //                }
@@ -160,6 +167,13 @@ namespace EAVFramework.Shared.V2
                 //                return ;
             }
             //    Builder = prop;
+
+            if (!string.IsNullOrEmpty(ForeignKey))
+            {
+                CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(this.dynamicCodeService.Options.ForeignKeyAttributeCtor, new object[] { ForeignKey });
+
+                prop.SetCustomAttribute(ForeignKeyAttributeBuilder);
+            }
         }
         public TypeBuilder TypeBuilder => this.dynamicTableBuilder.Builder;
 
@@ -178,10 +192,10 @@ namespace EAVFramework.Shared.V2
         {
             IsPrimaryField = true; return this;
         }
-        public DynamicPropertyBuilder Required(bool required=true)
+        public DynamicPropertyBuilder Required(bool required = true)
         {
-            IsRequired = required; 
-            
+            IsRequired = required;
+
             return this;
         }
 
@@ -217,7 +231,7 @@ namespace EAVFramework.Shared.V2
 
         internal void AddInverseAttribute(string propertySchemaName)
         {
-           InverseProperties.Add(propertySchemaName); 
+            InverseProperties.Add(propertySchemaName);
         }
 
         internal DynamicPropertyBuilder WithExternalHash(string v)
@@ -238,7 +252,7 @@ namespace EAVFramework.Shared.V2
             this.Description = v;
             return this;
         }
-        
+
         internal DynamicPropertyBuilder WithMigrationColumnProvider(IColumnPropertyResolver columnPropertyResolver)
         {
             this.ColumnPropertyResolver = columnPropertyResolver;
@@ -265,8 +279,8 @@ namespace EAVFramework.Shared.V2
         public Dictionary<string, int> Choices { get; private set; }
         public DynamicPropertyBuilder AddChoiceOptions(string enumName, Dictionary<string, int> choices)
         {
-             
-            enumbuilder=  dynamicTableBuilder.DynamicAssemblyBuilder.Module.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
+
+            enumbuilder = dynamicTableBuilder.DynamicAssemblyBuilder.Module.DefineEnum(enumName, TypeAttributes.Public, typeof(int));
             DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder);// ; enumbuilder;
             Choices = choices;
 

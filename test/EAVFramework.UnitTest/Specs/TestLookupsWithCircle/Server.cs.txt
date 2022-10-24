@@ -4,8 +4,8 @@ using EAVFramework.Shared;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
-using MC.Models;
 using System.ComponentModel.DataAnnotations.Schema;
+using MC.Models;
 using System.Collections.Generic;
 namespace MC.Models
 {
@@ -27,12 +27,13 @@ namespace MC.Models
 		[DataMember(Name="createdby")]
 		[JsonProperty("createdby")]
 		[JsonPropertyName("createdby")]
+		[ForeignKey("CreatedById")]
 		public Identity CreatedBy {get;set;}
 
 		[DataMember(Name="createdbyid")]
 		[JsonProperty("createdbyid")]
 		[JsonPropertyName("createdbyid")]
-		public Guid? CreatedById {get;set;}	
+		public Guid? CreatedById {get;set;}
 
 		[DataMember(Name="identities")]
 		[JsonProperty("identities")]

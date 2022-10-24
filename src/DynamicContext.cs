@@ -565,8 +565,8 @@ namespace EAVFramework
                    
                     var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
 
-                    types.Add($"{++i:D16}{name}", model.Item1);
-                    factories.Add(model.Item1, model.Item2);
+                    types.Add($"{++i:D16}{name}", model.Type);
+                    factories.Add(model.Type, model.MigrationFactory);
                 }
             }
             return new MigrationsInfo {  Factories = factories, Types = types};

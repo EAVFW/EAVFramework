@@ -4,8 +4,8 @@ using EAVFramework.Shared;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
-using MC.Models;
 using System.ComponentModel.DataAnnotations.Schema;
+using MC.Models;
 using System.Collections.Generic;
 namespace MC.Models
 {
@@ -27,6 +27,7 @@ namespace MC.Models
 		[DataMember(Name="primaryserver")]
 		[JsonProperty("primaryserver")]
 		[JsonPropertyName("primaryserver")]
+		[ForeignKey("PrimaryServerId")]
 		public Server PrimaryServer {get;set;}
 
 		[DataMember(Name="primaryserverid")]
