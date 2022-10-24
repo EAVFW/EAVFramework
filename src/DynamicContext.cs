@@ -636,13 +636,14 @@ namespace EAVFramework
 
             DynamicModel = EnsureModelCreated();
             //  EnsureModelCreated();
-            //if (this.modelOptions.Value.CreateLatestMigration)
-            //{
-            //    var latestManifest = modelOptions.Value.Manifests.First();
-            //    //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
+            if (this.modelOptions.Value.CreateLatestMigration)
+            {
+                    var latestManifest = modelOptions.Value.Manifests.First();
+                //    //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-            //    model= manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
-            //}
+                //    model= manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                DynamicModel= manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", latestManifest, this.modelOptions.Value);
+            }
         
             foreach (var en in DynamicModel.EntityDTOs)
             {
