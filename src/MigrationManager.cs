@@ -39,11 +39,11 @@ namespace EAVFramework
     public interface IMigrationManager
     {
          IEdmModel Model { get; }
-        Dictionary<string, Type> EntityDTOs { get; }
-        Dictionary<string, Type> EntityDTOConfigurations { get; }
+        //   Dictionary<string, Type> EntityDTOs { get; }
+        //  Dictionary<string, Type> EntityDTOConfigurations { get; }
         //public MigrationsInfo BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
-        
-        void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options);
+        ModelDefinition ModelDefinition { get; }
+        ModelDefinition EnusureBuilded(string name, JToken manifest, DynamicContextOptions options);
         ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options);
         ModelDefinition CreateMigration(string migrationName,JToken afterManifest, JToken beforeManifest, DynamicContextOptions options);
     }
@@ -102,9 +102,9 @@ namespace EAVFramework
         public ConcurrentDictionary<string, ModelDefinition> Models { get; } = new ConcurrentDictionary<string, ModelDefinition>();
         public IEdmModel Model => ModelDefinition.Model;
         public ModelDefinition ModelDefinition => Models.FirstOrDefault(k => k.Key.Contains("latest")).Value;
-        public void EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
+        public ModelDefinition EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
         {
-            Models.GetOrAdd(name, _ =>
+            return Models.GetOrAdd(name, _ =>
             {
               
 
@@ -222,13 +222,16 @@ namespace EAVFramework
 
                 try
                 {
+                    var m = new ModelDefinition();
                     //var asmb = dynamicCodeService.CreateAssemblyBuilder(options.Namespace);
                     var manfiestservice = new ManifestService(new ManifestServiceOptions
                     {
                         Namespace = options.Namespace,
                         MigrationName = migrationName,
                         GenerateDTO = fromMigration ? false : true,
-                        PartOfMigration = fromMigration
+                        PartOfMigration = fromMigration,
+                        EntityDTOConfigurations=m.EntityDTOConfigurations,
+                        EntityDTOs = m.EntityDTOs
                     });
 
 
@@ -342,9 +345,10 @@ namespace EAVFramework
 
                     var (migrationType,tables)= manfiestservice.BuildDynamicModel(dynamicCodeService, manifest);
 
-                 //   return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
-
-                    return new ModelDefinition { Type = migrationType.GetTypeInfo(), MigrationFactory = () => Activator.CreateInstance(migrationType, manifest, tables) as Migration };
+                    //   return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
+                    m.Type = migrationType.GetTypeInfo();
+                    m.MigrationFactory = () => Activator.CreateInstance(migrationType, manifest, tables) as Migration;
+                    return m;
                 }
                 catch(Exception ex)
                 {
