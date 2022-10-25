@@ -611,7 +611,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [tests].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     INSERT INTO [tests].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_0',N'{{VERSION}}');
+    VALUES (N'tests_1_0_0', N'{{VERSION}}');
 END;
 GO
 
