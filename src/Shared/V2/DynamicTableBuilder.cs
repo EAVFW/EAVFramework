@@ -398,7 +398,7 @@ namespace EAVFramework.Shared.V2
 
                         var principalSchema = fk.ReferenceType.Schema ?? options.Schema ?? "dbo";
                         var principalTable = fk.ReferenceType.CollectionSchemaName;
-                        var principalColumn = fk.ReferenceType.AllProperties.SingleOrDefault(p => p.IsPrimaryKey)?.SchemaName;
+                        var principalColumn = fk.ReferenceType.Properties.SingleOrDefault(p => p.IsPrimaryKey)?.SchemaName;
 
                         if (string.IsNullOrEmpty(principalColumn))
                         {

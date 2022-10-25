@@ -165,8 +165,8 @@ namespace EAVFramework.Shared.V2
                             var schemaName = attributeDefinition.Value.SelectToken("$.schemaName").ToString();
                             var logicalName = attributeDefinition.Value.SelectToken("$.logicalName").ToString();
 
-                            if (isprimaryKey && !string.IsNullOrEmpty(parentName))
-                                continue;
+                            //if (isprimaryKey && !string.IsNullOrEmpty(parentName))
+                            //    continue;
 
                             if (type == "choices")
                                 continue;

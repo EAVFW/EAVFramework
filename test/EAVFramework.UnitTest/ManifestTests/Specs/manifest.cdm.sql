@@ -234,12 +234,14 @@ GO
 IF NOT EXISTS(SELECT * FROM [tests].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     CREATE TABLE [tests].[Contacts] (
+        [Id] uniqueidentifier NOT NULL,
         [AllowNotifications] bit NULL,
         [Email] nvarchar(100) NULL,
         [FieldMetadata] nvarchar(max) NULL,
         [NemLoginRID] nvarchar(100) NULL,
         [Phone] nvarchar(100) NULL,
-        [Status] int NULL
+        [Status] int NULL,
+        CONSTRAINT [PK_Contacts] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -357,7 +359,9 @@ GO
 IF NOT EXISTS(SELECT * FROM [tests].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     CREATE TABLE [tests].[SystemUsers] (
-        [Email] nvarchar(100) NULL
+        [Id] uniqueidentifier NOT NULL,
+        [Email] nvarchar(100) NULL,
+        CONSTRAINT [PK_SystemUsers] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -368,8 +372,10 @@ GO
 IF NOT EXISTS(SELECT * FROM [tests].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     CREATE TABLE [tests].[SecurityGroups] (
+        [Id] uniqueidentifier NOT NULL,
         [ExternalId] nvarchar(100) NULL,
-        [IsBusinessUnit] bit NULL
+        [IsBusinessUnit] bit NULL,
+        CONSTRAINT [PK_SecurityGroups] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
