@@ -256,7 +256,7 @@ namespace EAVFramework.Shared.V2
             }
 
             return (CreateDynamicMigration(dynamicCodeService, manifest),
-                tables.Values.Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
+                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
 
 
 

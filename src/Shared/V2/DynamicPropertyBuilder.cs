@@ -61,6 +61,10 @@ namespace EAVFramework.Shared.V2
             ReferenceType = related;
             OnDeleteCascade = onDelete;
             OnUpdateCascade = onUpdate;
+
+            this.dynamicTableBuilder.AddAsDependency(related);
+
+
             //   ForeignKey = foreignKey;
             var FKLogicalName = LogicalName;
 

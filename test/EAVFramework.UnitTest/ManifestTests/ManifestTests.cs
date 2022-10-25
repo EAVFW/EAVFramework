@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
 using System.Reflection;
+using EAVFW.Extensions.Manifest.SDK;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EAVFramework.UnitTest.ManifestTests
 {
@@ -48,6 +50,29 @@ namespace EAVFramework.UnitTest.ManifestTests
             //Assure
 
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/manifest.oidc.sql");
+
+            MigrationAssert.AreEqual(expectedSQL, sql);
+
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/Specs/manifest.cdm.json", "Specs")]
+        [DeploymentItem(@"ManifestTests/Specs/manifest.cdm.sql", "Specs")]
+
+        public async Task TestCDMModel()
+        {
+           
+            //Arrange
+           
+
+
+            //Act
+            var sql = RunDBWithSchema("tests",async (_serviceProvider) => new[] { JToken.Parse((await _serviceProvider.GetRequiredService<IManifestEnricher>().LoadJsonDocumentAsync(JToken.Parse(File.ReadAllText(@"Specs/manifest.cdm.json")), "", NullLogger.Instance)).RootElement.ToString()) });
+
+
+            //Assure
+
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/manifest.cdm.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 

@@ -26,6 +26,20 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
+    CREATE TABLE [tests].[MyRepeatingTable] (
+        [Id] uniqueidentifier NOT NULL,
+        [FormSubmissionId] uniqueidentifier NULL,
+        CONSTRAINT [PK_MyRepeatingTable] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_MyRepeatingTable_FormSubmissions_FormSubmissionId] FOREIGN KEY ([FormSubmissionId]) REFERENCES [tests].[FormSubmissions] ([Id])
+    );
+    DECLARE @description AS sql_variant;
+    SET @description = N'comment';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'MyRepeatingTable';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
+BEGIN
     CREATE TABLE [tests].[Filer] (
         [Id] uniqueidentifier NOT NULL,
         [FileName] nvarchar(255) NULL,
@@ -43,22 +57,8 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
-    CREATE TABLE [tests].[MyRepeatingTable] (
-        [Id] uniqueidentifier NOT NULL,
-        [FormSubmissionId] uniqueidentifier NULL,
-        CONSTRAINT [PK_MyRepeatingTable] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_MyRepeatingTable_FormSubmissions_FormSubmissionId] FOREIGN KEY ([FormSubmissionId]) REFERENCES [tests].[FormSubmissions] ([Id])
-    );
-    DECLARE @description AS sql_variant;
-    SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'MyRepeatingTable';
-END;
-GO
-
-IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
-BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_0', N'{{VERSION}}');
+    VALUES (N'tests_1_0_0', N'5.0.15');
 END;
 GO
 

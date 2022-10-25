@@ -1,0 +1,1633 @@
+{
+	"variables": {
+		"sitemaps": {
+			"CRM": {
+				"order": 0,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "CRM"
+			},
+			"CRMAdmin": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"Administration": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			}
+		},
+		"layouts": {
+			"OneColumnTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			},
+			"TwoColumnsTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				},
+				"COLUMN_Second": {
+					"sections": {
+						"SECTION_Additional": {}
+					}
+				}
+			}
+		},
+		"PrimaryInformation": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"TAB_General": {
+			"title": "General Information",
+			"locale": {
+				"1030": {
+					"title": "General Information"
+				}
+			},
+			"columns": "[variables('layouts').TwoColumnsTemplate]"
+		},
+		"TAB_Administrative": {
+			"title": "Administrative",
+			"locale": {
+				"1030": {
+					"title": "Administrative"
+				}
+			},
+			"columns": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			}
+		},
+		"TAB_Administrative_Columns": {
+			"Created On": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Created By": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Modified On": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Modified By": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Owner": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			}
+		},
+		"Administrative": {
+			"tab": "TAB_Administrative",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"audit": {
+			"Modified On": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Created On": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Owner": {
+				"locale": {
+					"1030": {
+						"displayName": "Ejer"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Modified By": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Created By": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Row Version": {
+				"type": {
+					"type": "binary"
+				},
+				"isRowVersion": true
+			}
+		},
+		"translations": {
+			"Name": {
+				"1030": {
+					"displayName": "Navn"
+				}
+			},
+			"Description": {
+				"1030": {
+					"displayName": "Beskrivelse"
+				}
+			}
+		}
+	},
+	"entities": {
+		"Contact": {
+			"TPT": "Identity",
+			"pluralName": "Contacts",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRM]"
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"ribbon": {
+						"EAVFW_IMPERSONATE": {
+							"roles": {
+								"allowed": [
+									"System Administrator"
+								]
+							}
+						}
+					},
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Accounts": {
+								"title": "Accounts",
+								"locale": {
+									"1030": {
+										"title": "Selskaber"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_SecurityGroups": {
+								"title": "Security Groups",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsgrupper"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Status": "[variables('PrimaryInformation')]",
+						"Email": "[variables('PrimaryInformation')]",
+						"Phone": "[variables('PrimaryInformation')]",
+						"Allow Notifications": "[variables('PrimaryInformation')]",
+						"NemLogin RID": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Kontaktpersoner",
+					"displayName": "Kontaktperson"
+				}
+			},
+			"attributes": {
+				"Phone": {
+					"x-public": true,
+					"type": {
+						"type": "Text",
+						"format": "Phone"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Telefonnummer"
+						}
+					}
+				},
+				"Email": {
+					"x-public": true,
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Email"
+						}
+					}
+				},
+				"Allow Notifications": {
+					"x-public": true,
+					"type": "boolean",
+					"locale": {
+						"1030": {
+							"displayName": "Tillad Notification"
+						}
+					}
+				},
+				"NemLogin RID": {
+					"type": "Text",
+					"locale": {
+						"1030": {
+							"displayName": "Nemlog-in RID"
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Contact Status",
+						"options": {
+							"Active": 1,
+							"Validation data on next login": 2,
+							"Inactive": 0,
+							"New": 3
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Status"
+						}
+					}
+				},
+				"Field Metadata": {
+					"type": "MultilineText",
+					"description": "Metadata field for the info about which fields are locked"
+				}
+			},
+			"views": {
+				"All Contacts": {
+					"ribbon": {
+						"EAVFW_IMPERSONATE": {
+							"roles": {
+								"allowed": [
+									"System Administrator"
+								]
+							}
+						}
+					},
+					"columns": {
+						"Name": {},
+						"Status": {},
+						"Email": {},
+						"Phone": {},
+						"Allow Notifications": {},
+						"NemLogin RID": {}
+					}
+				}
+			}
+		},
+		"Country": {
+			"pluralName": "Countries",
+			"description": "List of countries",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"displayName": "Land",
+					"pluralName": "Lande"
+				}
+			},
+			"views": {
+				"All Countries": {
+					"columns": {
+						"Name": {},
+						"Name (ISO3166)": {},
+						"Alpha2 Code": {},
+						"Alpha3 Code": {},
+						"Numeric Code": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"description": "Display Name",
+					"isPrimaryField": true,
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Name (ISO3166)": {
+					"description": "The ISO 3166 name",
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"locale": {
+						"1030": {
+							"displayName": "ISO3166 Navn"
+						}
+					}
+				},
+				"Alpha2 Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 2
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Alpha2 kode"
+						}
+					}
+				},
+				"Alpha3 Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 3
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Alpha3 kode"
+						}
+					}
+				},
+				"Numeric Code": {
+					"type": "integer",
+					"locale": {
+						"1030": {
+							"displayName": "Lande kode"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Addresses": {
+								"title": "Addresses",
+								"locale": {
+									"1030": {
+										"title": "Adresser"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Name (ISO3166)": "[variables('PrimaryInformation')]",
+						"Alpha2 Code": "[variables('PrimaryInformation')]",
+						"Alpha3 Code": "[variables('PrimaryInformation')]",
+						"Numeric Code": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			}
+		},
+		"Address": {
+			"pluralName": "Addresses",
+			"locale": {
+				"1030": {
+					"displayName": "Adresse",
+					"pluralName": "Adresser"
+				}
+			},
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"views": {
+				"All Countries": {
+					"columns": {
+						"Address Line": {},
+						"City": {},
+						"ZipCode": {},
+						"Country": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Address Line": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Adresse"
+						}
+					},
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"x-public": true
+				},
+				"Address Line 2": {
+					"locale": {
+						"1030": {
+							"displayName": "Adresselinje 2"
+						}
+					},
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"x-public": true
+				},
+				"City": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					},
+					"locale": {
+						"1030": {
+							"displayName": "By"
+						}
+					},
+					"x-public": true
+				},
+				"ZipCode": {
+					"type": "integer",
+					"locale": {
+						"1030": {
+							"displayName": "Postnummer"
+						}
+					},
+					"x-public": true
+				},
+				"Country": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Country",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Addresses",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('All ', entity().pluralName)]"
+							}
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Accounts": {
+								"title": "Accounts",
+								"locale": {
+									"1030": {
+										"title": "Selskaber"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Address Line": "[variables('PrimaryInformation')]",
+						"Address Line 2": "[variables('PrimaryInformation')]",
+						"City": "[variables('PrimaryInformation')]",
+						"Zip Code": "[variables('PrimaryInformation')]",
+						"Country": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			}
+		},
+		"Account Type": {
+			"description": "Munipacility and Water Company",
+			"pluralName": "Account Types",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabstyper",
+					"displayName": "Selskabstype"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"x-public": true,
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				}
+			}
+		},
+		"Account": {
+			"pluralName": "Accounts",
+			"sitemap": {
+				"Accounts": {
+					"[merge()]": "[variables('sitemaps').CRM]",
+					"locale": {
+						"1030": {
+							"displayName": "Selskab",
+							"pluralName": "Selskaber"
+						}
+					},
+					"viewName": "All Accounts"
+				}
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Firmaer",
+					"displayName": "Firma"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"x-public": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Phone": {
+					"type": {
+						"type": "Text",
+						"format": "Phone"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Telefonnummer"
+						}
+					},
+					"x-public": true
+				},
+				"Email": {
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Email"
+						}
+					},
+					"x-public": true
+				},
+				"Account Type": {
+					"x-public": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account Type"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Type"
+						}
+					}
+				},
+				"Address": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Address",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_WaterCompanies",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('All ', entity().pluralName)]"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Adresse"
+						}
+					},
+					"x-public": true
+				},
+				"Billing Address": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Address",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_WaterCompanies",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('All ', entity().pluralName)]"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Faktureringsadresse"
+						}
+					},
+					"x-public": true
+				},
+				"EAN Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 15
+					},
+					"locale": {
+						"1030": {
+							"displayName": "EAN Nummer"
+						}
+					},
+					"x-public": true
+				},
+				"Primary Company Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 8
+					},
+					"locale": {
+						"1030": {
+							"displayName": "CVR nr."
+						}
+					},
+					"x-public": true
+				},
+				"Homepage": {
+					"type": {
+						"type": "Text",
+						"maxLength": 255,
+						"format": "Url"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Hjemmeside"
+						}
+					},
+					"x-public": true
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Account Statuses",
+						"options": {
+							"Active": 1,
+							"CVR Validation Missing": 2,
+							"Validation data on next login": 3,
+							"Inactive": 0
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Status"
+						}
+					}
+				},
+				"Allow External Signin": {
+					"type": "boolean",
+					"locale": {
+						"1030": {
+							"displayName": "Tillad adgang"
+						}
+					}
+				},
+				"Field Metadata": {
+					"type": "MultilineText",
+					"description": "Metadata field for the info about which fields are locked"
+				},
+				"Company form": {
+					"locale": {
+						"1033": {
+							"displayName": "Virksomhedsform"
+						}
+					},
+					"type": "string"
+				},
+				"Ownership Type": {
+					"x-public": true,
+					"type": {
+						"type": "Choice",
+						"name": "Ownership Type",
+						"options": {
+							"Municipally Owned": {
+								"value": 1,
+								"locale": {
+									"1030": {
+										"displayName": "Selskabet er kommunalt ejet"
+									}
+								}
+							},
+							"Consumer Owned": {
+								"value": 2,
+								"locale": {
+									"1030": {
+										"displayName": "Selskabet er forbrugerejet"
+									}
+								}
+							},
+							"Privately owned": {
+								"value": 3,
+								"locale": {
+									"1030": {
+										"displayName": "Selskabet er privatejet"
+									}
+								}
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Ejerstruktur"
+						}
+					}
+				},
+				"Main industry": {
+					"locale": {
+						"1033": {
+							"displayName": "Hovedbranche"
+						}
+					},
+					"type": "string"
+				},
+				"External Id": {
+					"type": "string"
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Persons": {
+								"title": "Persons",
+								"locale": {
+									"1030": {
+										"title": "Personer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_AccountCodes": {
+								"title": "Valid Account Codes",
+								"locale": {
+									"1030": {
+										"title": "Tilladte CVR Numre"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Primary Company Code": "[variables('PrimaryInformation')]",
+						"Allow External Signin": "[variables('PrimaryInformation')]",
+						"Account Type": "[variables('PrimaryInformation')]",
+						"Phone": "[variables('PrimaryInformation')]",
+						"Email": "[variables('PrimaryInformation')]",
+						"Address": "[variables('PrimaryInformation')]",
+						"BillingAddress": "[variables('PrimaryInformation')]",
+						"EAN Code": "[variables('PrimaryInformation')]",
+						"Homepage": "[variables('PrimaryInformation')]",
+						"Status": "[variables('PrimaryInformation')]",
+						"Ownership Type": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"views": {
+				"All Accounts": {
+					"ribbon": {
+						"CUSTOM_IMPORT": {},
+						"CUSTOM_EXPORT": {}
+					},
+					"columns": {
+						"Name": {},
+						"Internal Account Code": {},
+						"Primary Company Code": {},
+						"Allow External Signin": {},
+						"Account Type": {},
+						"Phone": {},
+						"Email": {},
+						"Status": {}
+					}
+				}
+			}
+		},
+		"Account Code": {
+			"pluralName": "Account Codes",
+			"description": "A CVR number which can be associated with an Account",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "CVR Nummre",
+					"displayName": "CVR Nummer"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Code": {
+					"isPrimaryField": true,
+					"type": {
+						"type": "Text",
+						"maxLength": 8
+					},
+					"locale": {
+						"1030": {
+							"displayName": "CVR Nummer"
+						}
+					}
+				},
+				"Account": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_AccountCodes",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Selskab"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Code": "[variables('PrimaryInformation')]",
+						"Account": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			}
+		},
+		"Account Role": {
+			"pluralName": "Account Roles",
+			"description": "The roles a person can have with the account. (Billing, Primary, Aministrator) ",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabsroller",
+					"displayName": "Selskabsrolle"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Localized Name (1030)": {
+					"type": "string",
+					"locale": {
+						"1030": {
+							"displayName": "Dansk Navn"
+						}
+					}
+				},
+				"Is Public": {
+					"locale": {
+						"1030": {
+							"displayName": "Offentlig"
+						}
+					},
+					"type": "boolean",
+					"description": "Controls if external users may use / assign this role"
+				},
+				"External Role": {
+					"type": "string",
+					"locale": {
+						"1030": {
+							"displayName": "Ekstern Rolle"
+						}
+					}
+				},
+				"Auto Provision Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role"
+					}
+				}
+			}
+		},
+		"Account Role Assignment": {
+			"pluralName": "Account Role Assignments",
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabsrolle Tildelinger",
+					"displayName": "Selskabrolle Tildeling"
+				}
+			},
+			"views": {
+				"Associated Contacts": {
+					"columns": {
+						"Role": {},
+						"Contact": {}
+					}
+				},
+				"Associated Accounts": {
+					"columns": {
+						"Role": {},
+						"Account": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account Role"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Rolle"
+						}
+					}
+				},
+				"Contact": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Accounts",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "Associated Accounts"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Bruger"
+						}
+					}
+				},
+				"Account": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Persons",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "Associated Contacts"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Selskab"
+						}
+					}
+				}
+			}
+		},
+		"Server": {
+			"pluralName": "Servers",
+			"locale": {
+				"1030": {
+					"pluralName": "Servers",
+					"displayName": "Server"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Heartbeat": {
+					"type": "DateTime"
+				}
+			}
+		},
+		"Environment Variable": {
+			"pluralName": "Environment Variables",
+			"locale": {
+				"1030": {
+					"pluralName": "Miljø Variabler",
+					"displayName": "Miljø Variable"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Server": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Server"
+					}
+				},
+				"Application Name": {
+					"type": "string"
+				},
+				"Value": {
+					"type": "MultilineText"
+				}
+			}
+		},
+		"Document": {
+			"pluralName": "Documents",
+			"locale": {
+				"1030": {
+					"pluralName": "Dokumenter",
+					"displayName": "Dokument"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Size": {
+					"type": "integer"
+				},
+				"Container": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					}
+				},
+				"Path": {
+					"type": {
+						"type": "Text",
+						"maxLength": 512
+					}
+				},
+				"ContentType": {
+					"type": "Text"
+				},
+				"Compressed": {
+					"type": "boolean"
+				},
+				"Data": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					}
+				}
+			}
+		},
+		"Identity": {
+			"pluralName": "Identities",
+			"abstract": true,
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Permission": {
+			"pluralName": "Permissions",
+			"keys": {
+				"IX_Name": [
+					"Name"
+				]
+			},
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').Administration]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Tilladelse",
+					"displayName": "Tilladelser"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Description": {
+					"type": "MultilineText",
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							}
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Description": "[variables('PrimaryInformation')]"
+					}
+				}
+			}
+		},
+		"Security Role": {
+			"pluralName": "Security Roles",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').Administration]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle",
+					"displayName": "Sikkerhedsroller"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Description": {
+					"type": "MultilineText",
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"[merge()]": "[variables('audit')]"
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Permissions": {
+								"title": "Permissions",
+								"locale": {
+									"1030": {
+										"title": "Permissions"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							}
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Description": "[variables('PrimaryInformation')]"
+					}
+				}
+			}
+		},
+		"Security Role Permission": {
+			"pluralName": "Security Role Permissions",
+			"description": "The Many to Many relationship between security roles and permissions",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').Administration]"
+			},
+			"keys": {
+				"IX_RolePermission": [
+					"Security Role",
+					"Permission"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tilladelse",
+					"displayName": "Sikkerhedsrolle tilladelser"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Permission",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true,
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Permissions",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Security Role Assignment": {
+			"pluralName": "Security Role Assignments",
+			"sitemap": "[variables('sitemaps').Administration]",
+			"keys": {
+				"IX_IdentityRole": [
+					"Security Role",
+					"Identity"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tildeling",
+					"displayName": "Sikkerhedsrolle tildelinger"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Security Group": {
+			"TPT": "Identity",
+			"pluralName": "Security Groups",
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppe",
+					"displayName": "Sikkerhedsgrupper"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"keys": {
+				"ExternalId": [
+					"External Id"
+				]
+			},
+			"attributes": {
+				"External Id": {
+					"type": "string"
+				},
+				"Is Business Unit": {
+					"type": "boolean"
+				}
+			}
+		},
+		"Security Group Member": {
+			"pluralName": "Security Group Members",
+			"sitemap": "[variables('sitemaps').Administration]",
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppemedlem",
+					"displayName": "Sikkerhedsgruppemedlemmer"
+				}
+			},
+			"keys": {
+				"IX_SecurityGroupIdentity": [
+					"Security Group",
+					"Identity"
+				]
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityGroups",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Security Group": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Group",
+						"required": true
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Record Share": {
+			"sitemap": "[variables('sitemaps').Administration]",
+			"pluralName": "Record Shares",
+			"locale": {
+				"1030": {
+					"pluralName": "Række Deling",
+					"displayName": "Række Delinger"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"isPrimaryField": true
+				},
+				"EntityName": {
+					"type": {
+						"type": "Text",
+						"required": true
+					}
+				},
+				"RecordId": {
+					"type": {
+						"type": "guid",
+						"required": true
+					}
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"index": {
+							"unique": false
+						},
+						"referenceType": "Permission",
+						"required": true
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Signin": {
+			"pluralName": "Signins",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Identity": {
+					"readonly": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Signins",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Signin Status",
+						"options": {
+							"Approved": {
+								"value": 0,
+								"locale": {
+									"1030": {
+										"displayName": "Godkendt"
+									}
+								}
+							},
+							"Rejected": {
+								"value": 1,
+								"locale": {
+									"1030": {
+										"displayName": "Afvist"
+									}
+								}
+							},
+							"Used": {
+								"value": 2,
+								"locale": {
+									"1030": {
+										"displayName": "Brugt"
+									}
+								}
+							}
+						}
+					}
+				},
+				"Properties": {
+					"type": "MultilineText",
+					"readonly": true
+				},
+				"Claims": {
+					"type": "MultilineText",
+					"readonly": true
+				},
+				"SessionId": {
+					"type": {
+						"type": "Text",
+						"maxLength": 64
+					}
+				},
+				"Provider": {
+					"type": {
+						"type": "Text"
+					}
+				}
+			}
+		},
+		"System User": {
+			"TPT": "Identity",
+			"pluralName": "System Users",
+			"attributes": {
+				"Email": {
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					}
+				}
+			}
+		},
+		"Workflow": {
+			"pluralName": "Workflows",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces",
+					"displayName": "Arbejdsproces"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Manifest": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Document"
+					}
+				},
+				"Version": {
+					"type": "Text"
+				}
+			}
+		},
+		"Workflow Run": {
+			"pluralName": "Workflow Runs",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces k�rsler",
+					"displayName": "Arbejdsproces k�rsel"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"State": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					}
+				}
+			}
+		}
+	},
+	"config": {
+		"SVG_LOGO_PATH": "/logo.svg"
+	},
+	"apps": {
+		"DefaultApp": {
+			"title": "MC"
+		}
+	},
+	"errorMessages": {},
+	"version": "1.0.0"
+}

@@ -14,6 +14,28 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
+    CREATE TABLE [tests].[Identities] (
+        [Id] uniqueidentifier NOT NULL,
+        [Name] nvarchar(255) NULL,
+        [CreatedById] uniqueidentifier NOT NULL,
+        [CreatedOn] datetime2 NOT NULL,
+        [ModifiedById] uniqueidentifier NOT NULL,
+        [ModifiedOn] datetime2 NOT NULL,
+        [OwnerId] uniqueidentifier NOT NULL,
+        [RowVersion] rowversion NOT NULL,
+        CONSTRAINT [PK_Identities] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Identities_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_Identities_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_Identities_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
+    );
+    DECLARE @description AS sql_variant;
+    SET @description = N'comment';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Identities';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
     CREATE TABLE [tests].[Servers] (
         [Id] uniqueidentifier NOT NULL,
         [Name] nvarchar(255) NULL,
@@ -58,28 +80,6 @@ BEGIN
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
     EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'EnvironmentVariables';
-END;
-GO
-
-IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
-BEGIN
-    CREATE TABLE [tests].[Identities] (
-        [Id] uniqueidentifier NOT NULL,
-        [Name] nvarchar(255) NULL,
-        [CreatedById] uniqueidentifier NOT NULL,
-        [CreatedOn] datetime2 NOT NULL,
-        [ModifiedById] uniqueidentifier NOT NULL,
-        [ModifiedOn] datetime2 NOT NULL,
-        [OwnerId] uniqueidentifier NOT NULL,
-        [RowVersion] rowversion NOT NULL,
-        CONSTRAINT [PK_Identities] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_Identities_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_Identities_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_Identities_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
-    );
-    DECLARE @description AS sql_variant;
-    SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Identities';
 END;
 GO
 
@@ -559,7 +559,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
     INSERT INTO [oidc].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_8', N'{{VERSION}}');
+    VALUES (N'tests_1_0_8', N'5.0.15');
 END;
 GO
 

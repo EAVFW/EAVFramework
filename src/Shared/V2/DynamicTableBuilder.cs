@@ -1134,7 +1134,7 @@ namespace EAVFramework.Shared.V2
 
             if (IsCreated)
                 return Builder.CreateTypeInfo();
-
+           
             IsCreated = true;
 #if DEBUG
             // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
@@ -1154,7 +1154,7 @@ namespace EAVFramework.Shared.V2
             {
 #if DEBUG
                 //  File.AppendAllLines("test1.txt", new[] { $"Failed {SchemaName}" });
-
+                IsCreated = false;
 #endif
                 throw new InvalidOperationException($"Could not build {SchemaName}: {string.Join(",", Builder.GetInterfaces().Select(c => $"{c.Name}<{string.Join(",", c.GetGenericArguments().Select(t => $"{t.Name}<{t.BaseType.Name},{string.Join(",", t.GetInterfaces().Select(i => i.Name))}>"))}>"))}", ex);
             }
@@ -1214,7 +1214,7 @@ namespace EAVFramework.Shared.V2
 
         }
 
-        public List<DynamicTableBuilder> Dependencies { get; } = new List<DynamicTableBuilder>();
+        public HashSet<DynamicTableBuilder> Dependencies { get; } = new HashSet<DynamicTableBuilder>();
         public DynamicTableBuilder AddAsDependency(DynamicTableBuilder value)
         {
             Dependencies.Add(value);
