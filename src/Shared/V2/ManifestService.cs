@@ -51,7 +51,6 @@ namespace EAVFramework.Shared.V2
 
         public bool GenerateDTO { get; set; } = true;
         public bool PartOfMigration { get; set; }
-        public bool RequiredSupport { get; set; } = true;
         public string ModuleName => $"{Namespace}_{MigrationName}";
 
         public Dictionary<string, Type> EntityDTOs { get; set; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
