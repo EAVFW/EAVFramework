@@ -428,7 +428,7 @@ namespace EAVFramework
             {
                 if (!request.Query.ContainsKey("$select"))
                 {
-                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                    request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
                 var odataContext = new ODataQueryContext(context.Manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
                 IODataFeature odataFeature = request.HttpContext.ODataFeature();

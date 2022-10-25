@@ -73,8 +73,8 @@ namespace EAVFramework
             this.options=options??throw new ArgumentNullException(nameof(options));
             this.dynamicCodeService = dynamicCodeService;
         }
-        public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
-        public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        //public Dictionary<string, Type> EntityDTOs { get; } = new Dictionary<string,Type>(StringComparer.OrdinalIgnoreCase);
+        //public Dictionary<string, Type> EntityDTOConfigurations { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
         public MethodInfo EntityTypeBuilderHasKey { get; private set; }
         public ConstructorInfo JsonPropertyAttributeCtor { get; private set; }
        
@@ -94,8 +94,8 @@ namespace EAVFramework
          //   _modules.Remove(options.Namespace, out var _);
             dynamicCodeService.RemoveNamespace(options.Namespace);
             _cache.Clear();
-            EntityDTOs.Clear();
-            EntityDTOConfigurations.Clear();
+            //EntityDTOs.Clear();
+            //EntityDTOConfigurations.Clear();
             Models.Clear();
         }
 
@@ -118,7 +118,7 @@ namespace EAVFramework
                     //   builder.EntitySet<Movie>("Movies");
                     //   builder.EntitySet<Review>("Reviews");
 
-                    foreach (var entity in EntityDTOs)
+                    foreach (var entity in m.EntityDTOs)
                     {
 
                         var config = builder.AddEntityType(entity.Value);
@@ -133,7 +133,7 @@ namespace EAVFramework
                         //    logger.LogWarning("Creating Nav for {entity}.{nav}", entity.Key,nav.Name);
                         //}
 
-                        foreach (var nav in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null))
+                        foreach (var nav in entity.Value.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null))
                         {
                             if (nav.GetCustomAttribute<ForeignKeyAttribute>() is ForeignKeyAttribute navigation)
                             {
@@ -231,7 +231,10 @@ namespace EAVFramework
                         GenerateDTO = fromMigration ? false : true,
                         PartOfMigration = fromMigration,
                         EntityDTOConfigurations=m.EntityDTOConfigurations,
-                        EntityDTOs = m.EntityDTOs
+                        EntityDTOs = m.EntityDTOs,
+                        DTOAssembly = options.DTOAssembly,
+                        SkipValidateSchemaNameForRemoteTypes = this.options.Value.SkipValidateSchemaNameForRemoteTypes,
+                        
                     });
 
 
