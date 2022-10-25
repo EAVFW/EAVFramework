@@ -26,7 +26,7 @@ namespace EAVFramework.Shared.V2
              IChoiceEnumBuilder choiceEnumBuilder = null,
         IManifestTypeMapper typeMapper = null)
         {
-            Options = options;
+            Options = options ?? throw new ArgumentNullException(nameof(options));
             EmitPropertyService = emitPropertyService ?? new DefaultEmitPropertyService(options);
             LookupPropertyBuilder = lookupPropertyBuilder ?? new DefaultLookupBuilder(options.MigrationBuilderCreateIndex);
             ChoiceEnumBuilder = choiceEnumBuilder ?? new DefaultChoiceEnumBuilder();

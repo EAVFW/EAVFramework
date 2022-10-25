@@ -122,7 +122,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
             });
 
             var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
@@ -159,7 +159,7 @@ namespace EAVFramework.UnitTest
             {
                 o.Schema = "dbo";
                 o.DTOBaseClasses = new[] { typeof(FullBaseOwnerEntity<>), typeof(FullBaseIdEntity<>) };
-                o.DTOInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
+                o.DTOBaseInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
                     typeof(IOpenIdConnectClient<,>),
@@ -206,7 +206,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] {  
+                o.DTOBaseInterfaces = new[] {  
                     typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
@@ -255,7 +255,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
                 o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) };
 
             });
@@ -288,7 +288,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
                 o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) }; 
                 
             });

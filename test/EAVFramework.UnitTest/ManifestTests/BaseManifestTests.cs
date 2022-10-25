@@ -72,7 +72,7 @@ namespace EAVFramework.UnitTest.ManifestTests
             services.AddLogging();
 
 
-            services.AddSingleton<IMigrationManager, MigrationManager>();
+            services.AddCodeServices();
             services.AddEAVFramework<DynamicContext>();
 
 
@@ -84,7 +84,7 @@ namespace EAVFramework.UnitTest.ManifestTests
                 {
                   manifest(sp)
                 };
-                o.PublisherPrefix = "dbo";
+                o.Schema = "dbo";
 
                 o.EnableDynamicMigrations = true;
                 o.Namespace = "DummyNamespace";
@@ -180,70 +180,15 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             var services = new ServiceCollection();
-            services.AddLogging();
-            services.AddSingleton<IMigrationManager, MigrationManager>();
-            services.AddSingleton(new CodeGenerationOptions
-            {
-                //  MigrationName="Initial",
-                Schema = "tests",
-                JsonPropertyAttributeCtor = typeof(JsonPropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
-                JsonPropertyNameAttributeCtor = typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute).GetConstructor(new Type[] { typeof(string) }),
-                InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
-                ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
+            services.AddLogging();        
+            services.AddCodeServices();
 
-                EntityConfigurationInterface = typeof(IEntityTypeConfiguration),
-                EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),
-                EntityTypeBuilderType = typeof(EntityTypeBuilder),
-                EntityTypeBuilderToTable = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }), "EntityTypeBuilderToTable"),
-                EntityTypeBuilderHasKey = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasKey"),
-                EntityTypeBuilderPropertyMethod = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }), "EntityTypeBuilderPropertyMethod"),
-
-                IsRequiredMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                                   .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)), "IsRequiredMethod"),
-                IsRowVersionMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                                     .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)), "IsRowVersionMethod"),
-                HasConversionMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                              .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion), 1, new Type[] { }), "HasConversionMethod"),
-                HasPrecisionMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                                   .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasPrecision), new Type[] { typeof(int), typeof(int) }), "HasPrecisionMethod"),
-
-
-
-                DynamicTableType = typeof(IDynamicTable),
-                DynamicTableArrayType = typeof(IDynamicTable[]),
-
-
-                ColumnsBuilderType = typeof(ColumnsBuilder),
-                CreateTableBuilderType = typeof(CreateTableBuilder<>),
-                CreateTableBuilderPrimaryKeyName = nameof(CreateTableBuilder<object>.PrimaryKey),
-                CreateTableBuilderForeignKeyName = nameof(CreateTableBuilder<object>.ForeignKey),
-                ColumnsBuilderColumnMethod = Resolve(() => typeof(ColumnsBuilder).GetMethod(nameof(ColumnsBuilder.Column), BindingFlags.Public | BindingFlags.Instance), "ColumnsBuilderColumnMethod"),
-                OperationBuilderAddColumnOptionType = typeof(OperationBuilder<AddColumnOperation>),
-
-
-                MigrationBuilderDropTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)), "MigrationBuilderDropTable"),
-                MigrationBuilderCreateTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)), "MigrationBuilderCreateTable"),
-                MigrationBuilderSQL = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.Sql)), "MigrationBuilderSQL"),
-                MigrationBuilderCreateIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }), "MigrationBuilderCreateIndex"),
-                MigrationBuilderDropIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
-                MigrationsBuilderAddColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)), "MigrationsBuilderAddColumn"),
-                MigrationsBuilderAddForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey), new Type[] { typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(ReferentialAction), typeof(ReferentialAction) }), "MigrationsBuilderAddForeignKey"),
-                MigrationsBuilderAlterColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AlterColumn)), "MigrationsBuilderAlterColumn"),
-                MigrationsBuilderDropForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropForeignKey)), "MigrationsBuilderDropForeignKey"),
-
-                ReferentialActionType = typeof(ReferentialAction),
-                ReferentialActionNoAction = (int)ReferentialAction.NoAction,
-
-
-                LambdaBase = Resolve(() => typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null), "LambdaBase"),
-
-            });
             services.AddManifestSDK<SQLClientParameterGenerator>();
-            services.AddSingleton<DynamicCodeService>();
+           
             services.AddOptions<DynamicContextOptions>().Configure<IServiceProvider>((o,sp) =>
             {
                 o.Manifests = manifestProvider(sp).Result;
-                o.PublisherPrefix = "tests";
+                o.Schema = "tests";
                 o.EnableDynamicMigrations = true;
                 o.Namespace = "DummyNamespace";
 

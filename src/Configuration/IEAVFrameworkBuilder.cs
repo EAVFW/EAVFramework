@@ -17,8 +17,7 @@ namespace EAVFramework.Configuration
         /// The services.
         /// </value>
         IServiceCollection Services { get; }
-
-
+      
         void WithDBContext();
     }
 }

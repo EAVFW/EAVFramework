@@ -25,7 +25,7 @@ namespace EAVFramework.Shared.V2
         /// <summary>
         /// All the interfaces that DTO classes can implement.
         /// </summary>
-        public Type[] DTOInterfaces { get; set; } = Array.Empty<Type>();
+        public Type[] DTOBaseInterfaces { get; set; } = Array.Empty<Type>();
 
         public Type[] DTOBaseClasses { get; set; } = Array.Empty<Type>();
         public ConstructorInfo ForeignKeyAttributeCtor { get;  set; }

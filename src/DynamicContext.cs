@@ -550,7 +550,7 @@ namespace EAVFramework
             var latestManifest = modelOptions.Value.Manifests.First();
           //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", latestManifest, this.modelOptions.Value);
+            manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -561,7 +561,7 @@ namespace EAVFramework
                     .Reverse())
                 {
                     
-                    var name = $"{modelOptions.Value.PublisherPrefix}_{migration.target.SelectToken("$.version")?.ToString().Replace(".","_") ?? MigrationDefaultName}";
+                    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".","_") ?? MigrationDefaultName}";
                    
                     var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
 
@@ -603,7 +603,7 @@ namespace EAVFramework
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            return manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
+            return manager.EnusureBuilded($"{modelOptions.Value.Schema}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
         }
 
         public void AddNewManifest(JToken manifest)
@@ -637,7 +637,7 @@ namespace EAVFramework
                 var latestManifest = modelOptions.Value.Manifests.First();
              //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-                manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
             foreach (var en in manager.ModelDefinition.EntityDTOs)

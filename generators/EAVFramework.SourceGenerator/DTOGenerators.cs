@@ -743,7 +743,7 @@ namespace EAVFramework.Generators
                  //   File.AppendAllLines("test1.txt", new[] { $"Generating Code from manifest" });
                     var manifestservice = new ManifestService(new ManifestServiceOptions { Namespace= @namespace, MigrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}", });
                     options.DTOBaseClasses = baseTypes.ToArray();
-                    options.DTOInterfaces = baseTypeInterfaces.Values.Where(c => c.IsInterface).ToArray();
+                    options.DTOBaseInterfaces = baseTypeInterfaces.Values.Where(c => c.IsInterface).ToArray();
 
                     //  var generator = new CodeGenerator();
 

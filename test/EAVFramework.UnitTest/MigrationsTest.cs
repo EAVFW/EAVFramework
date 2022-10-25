@@ -42,7 +42,7 @@ namespace EAVFramework.UnitTest
             services.AddLogging();
 
 
-            services.AddSingleton<IMigrationManager, MigrationManager>();
+            services.AddCodeServices();
             services.AddEAVFramework<DynamicContext>();
                 
 
@@ -61,7 +61,7 @@ namespace EAVFramework.UnitTest
                        }
                    })
                 };
-                o.PublisherPrefix = "dbo";
+                o.Schema = "dbo";
 
                 o.EnableDynamicMigrations = true;
                 o.Namespace = "DummyNamespace";
