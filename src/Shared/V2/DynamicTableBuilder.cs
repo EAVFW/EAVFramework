@@ -75,6 +75,7 @@ namespace EAVFramework.Shared.V2
 
             SetEntityDTOAttribute();
             SetEntityAttribute();
+          
         }
 
 
@@ -172,7 +173,8 @@ namespace EAVFramework.Shared.V2
                     {
                         return true;
                     }
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     throw new InvalidOperationException($"BaseType cannot be typebuilder: {ClrParentType.Name}", ex);
                 }
@@ -222,7 +224,7 @@ namespace EAVFramework.Shared.V2
                 return;
             IsBuilded = true;
 #if DEBUG
-    //        File.AppendAllLines("test1.txt", new[] { $"Building {SchemaName}" });
+            //        File.AppendAllLines("test1.txt", new[] { $"Building {SchemaName}" });
 #endif
             BuildParent();
 
@@ -232,8 +234,8 @@ namespace EAVFramework.Shared.V2
             foreach (var prop in properties.Values.Where(p => !p.HasParentProperty).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName))
             {
 #if DEBUG
-         //       File.AppendAllLines("test1.txt", new[] { $"Building Prop {prop.SchemaName} {PrintTypeName( prop.PropertyType)} {PrintTypeName(prop.DTOPropertyType)}" });
-#endif   
+                //       File.AppendAllLines("test1.txt", new[] { $"Building Prop {prop.SchemaName} {PrintTypeName( prop.PropertyType)} {PrintTypeName(prop.DTOPropertyType)}" });
+#endif
                 prop.Build();
             }
 
@@ -241,7 +243,7 @@ namespace EAVFramework.Shared.V2
 
             BuildDTOConfiguration();
 #if DEBUG
-       //     File.AppendAllLines("test1.txt", new[] { $"Build Complated {SchemaName}" });
+            //     File.AppendAllLines("test1.txt", new[] { $"Build Complated {SchemaName}" });
 #endif
             // BuildMigration();
         }
@@ -251,12 +253,12 @@ namespace EAVFramework.Shared.V2
             if (propertyType == null)
                 return "";
 
-            var underlaying = Nullable.GetUnderlyingType(propertyType)?? propertyType;
+            var underlaying = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
             if (underlaying == propertyType)
                 return propertyType.Name;
             return underlaying.Name + "?";
 
-           
+
         }
 
         public Type CreateMigrationType(string migrationName, bool partOfMigration)
@@ -1129,13 +1131,13 @@ namespace EAVFramework.Shared.V2
         public bool IsCreated { get; private set; }
         public TypeInfo CreateTypeInfo()
         {
-          
+
             if (IsCreated)
-                return Builder.GetTypeInfo();
-            
+                return Builder.CreateTypeInfo();
+
             IsCreated = true;
 #if DEBUG
-           // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
+            // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
 #endif
             try
             {
@@ -1151,15 +1153,15 @@ namespace EAVFramework.Shared.V2
             catch (Exception ex)
             {
 #if DEBUG
-              //  File.AppendAllLines("test1.txt", new[] { $"Failed {SchemaName}" });
+                //  File.AppendAllLines("test1.txt", new[] { $"Failed {SchemaName}" });
 
 #endif
-                throw new InvalidOperationException($"Could not build {SchemaName}: {string.Join(",",Builder.GetInterfaces().Select(c=>$"{c.Name}<{string.Join(",",c.GetGenericArguments().Select(t=>$"{t.Name}<{t.BaseType.Name},{string.Join(",",t.GetInterfaces().Select(i=>i.Name))}>"))}>"))}", ex);
+                throw new InvalidOperationException($"Could not build {SchemaName}: {string.Join(",", Builder.GetInterfaces().Select(c => $"{c.Name}<{string.Join(",", c.GetGenericArguments().Select(t => $"{t.Name}<{t.BaseType.Name},{string.Join(",", t.GetInterfaces().Select(i => i.Name))}>"))}>"))}", ex);
             }
             finally
             {
 #if DEBUG
-             //   File.AppendAllLines("test1.txt", new[] { $"Created {SchemaName}" });
+                //   File.AppendAllLines("test1.txt", new[] { $"Created {SchemaName}" });
 #endif
             }
         }
@@ -1178,12 +1180,12 @@ namespace EAVFramework.Shared.V2
             {
                 Parent.BuildType();
                 this.Builder.SetParent(Parent?.Builder);
-                
+
                 return;
             }
 
-             
-            var staticParents = dynamicCodeService.FindParentClasses(this.EntityKey, properties.Values.Where(c=>c.PropertyType!=null).Select(c=>c.SchemaName).ToArray());
+
+            var staticParents = dynamicCodeService.FindParentClasses(this.EntityKey, properties.Values.Where(c => c.PropertyType != null).Select(c => c.SchemaName).ToArray());
             ClrParentType = staticParents;
 
             if (staticParents.IsGenericTypeDefinition)
@@ -1201,9 +1203,9 @@ namespace EAVFramework.Shared.V2
 
                 // File.AppendAllLines("test1.txt", new[] { $"{acceptableBasesClass.FullName}<{string.Join(",", args.Select(t => t.ManifestKey == _ ? type.Name : options.EntityDTOsBuilders[manifest.SelectToken($"$.entities['{t.ManifestKey}'].schemaName").ToString()]?.Name).ToArray())}>" });
 
-                
-                 
-                Builder.SetParent(staticParents.MakeGenericType(args.Select(t => t.ManifestKey == SchemaName ? Builder : AddAsDependency( DynamicAssemblyBuilder.Tables.FirstOrDefault(tt => tt.Value.EntityKey == t.ManifestKey).Value).Builder).ToArray()));
+
+
+                Builder.SetParent(staticParents.MakeGenericType(args.Select(t => t.ManifestKey == SchemaName ? Builder : AddAsDependency(DynamicAssemblyBuilder.Tables.FirstOrDefault(tt => tt.Value.EntityKey == t.ManifestKey).Value).Builder).ToArray()));
                 return;
             }
 
@@ -1221,24 +1223,24 @@ namespace EAVFramework.Shared.V2
         }
 
         private ConcurrentBag<InverseLookupProp> InverseLookups { get; } = new ConcurrentBag<InverseLookupProp>();
-      
+
 
         public void AddInverseLookup(string attributeKey, string propertySchemaName, DynamicTableBuilder dynamicTableBuilder)
         {
-            InverseLookups.Add(new InverseLookupProp { AttributeKey = attributeKey,  PropertySchemaName = propertySchemaName, Table = dynamicTableBuilder });
+            InverseLookups.Add(new InverseLookupProp { AttributeKey = attributeKey, PropertySchemaName = propertySchemaName, Table = dynamicTableBuilder });
 
         }
 
         private void BuildInverseProperties()
         {
-            foreach (var inverseg in InverseLookups.GroupBy(p=>p.Table.CollectionSchemaName))
+            foreach (var inverseg in InverseLookups.GroupBy(p => p.Table.CollectionSchemaName))
             {
                 foreach (var inverse in inverseg)
                 {
                     //  var propName = inverse.PropertySchemaName + inverse.Table.CollectionSchemaName;
-                    var propName = inverseg.Count() > 1 || this.dynamicCodeService.Options.InversePropertyCollectionName ==  InversePropertyCollectionNamePattern.ConcatFieldNameAndLookupName ? inverse.PropertySchemaName + inverse.Table.CollectionSchemaName : inverse.Table.CollectionSchemaName;
+                    var propName = inverseg.Count() > 1 || this.dynamicCodeService.Options.InversePropertyCollectionName == InversePropertyCollectionNamePattern.ConcatFieldNameAndLookupName ? inverse.PropertySchemaName + inverse.Table.CollectionSchemaName : inverse.Table.CollectionSchemaName;
                     var propBuilder = AddProperty(null, propName, propName.ToLower(), typeof(ICollection<>).MakeGenericType(inverse.Table.Builder));  // CreateProperty(entityType, (attributes.Length > 1 ? attribute.Name.Replace(" ", "") : "") + entity.Value.SelectToken("$.collectionSchemaName")?.ToString(), typeof(ICollection<>).MakeGenericType(related.Builder));
-                                                                                                                               // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
+                                                                                                                                                      // methodAttributes: MethodAttributes.Virtual| MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig);
 
                     propBuilder.AddInverseAttribute(inverse.PropertySchemaName);
 

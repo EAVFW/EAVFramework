@@ -151,17 +151,32 @@ namespace EAVFramework.UnitTest
         {
             var (rootServiceProvider, principalId, prinpal) = await Setup();
 
+          
 
-            using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
                 var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
                 
                 await ctx.MigrateAsync();
-                 
+
+                
+
+             
 
             }
+         
+            using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                var sp = scope.ServiceProvider;
+                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
 
+
+
+                ctx.Add("Cars", JObject.FromObject(new { name = "a" }));
+
+                await ctx.SaveChangesAsync(prinpal);
+            }
 
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {

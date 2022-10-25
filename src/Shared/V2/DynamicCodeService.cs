@@ -90,8 +90,9 @@ namespace EAVFramework.Shared.V2
 
         internal void RemoveNamespace(string @namespace)
         {
-            foreach (var k in Assemblies.Keys.Where(k => k.StartsWith($"{@namespace}_")).ToArray()){
-                while(!Assemblies.TryRemove(k, out var _));
+            foreach (var k in Assemblies.Keys.Where(k => k.StartsWith($"{@namespace}_")).ToArray())
+            {
+                while (!Assemblies.TryRemove(k, out var _)) ;
             }
         }
     }

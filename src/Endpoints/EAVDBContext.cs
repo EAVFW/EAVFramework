@@ -622,7 +622,7 @@ namespace EAVFramework.Endpoints
         {
             var record = await this.Context.FindAsync(entityName, keys);
             if (record == null)
-                return null;
+                return null;          
             var entry = this.Context.Entry(record);
             entry.State = EntityState.Deleted;
             return entry;
