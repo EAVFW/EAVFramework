@@ -25,6 +25,11 @@ jobs:
       - name: Cleaning
         run: dotnet clean
 
+      - name: Create DBServer
+        run: docker run -e \"ACCEPT_EULA=Y\" -e \"SA_PASSWORD=Bigs3cRet\" -e \"MSSQL_PID=Express\" -p 1433:1433 --name TestDB -d mcr.microsoft.com/mssql/server:2019-latest
+      - name: Create DB
+        run: docker exec -it TestDB /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Bigs3cRet -Q \"CREATE DATABASE TestDB;ALTER DATABASE TestDB SET RECOVERY SIMPLE;\"
+
       - name: Test Generation
         run: dotnet test
 
