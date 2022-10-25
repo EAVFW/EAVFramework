@@ -139,6 +139,7 @@ namespace EAVFramework.Shared.V2
 
                     }
 
+                   
 
                     var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
                     if (keys != null)
@@ -151,7 +152,7 @@ namespace EAVFramework.Shared.V2
                         }
                     }
 
-
+                   
 
                     foreach (var attributeDefinition in entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>())
                     {
@@ -227,18 +228,26 @@ namespace EAVFramework.Shared.V2
                         }
                     }
                 }
-
+              
                 foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
                 {
 
                     var table = tables[entity.Name];
+                    
+                 
+                  
                     table.BuildType();
+
+                  
                 }
 
                 foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
                 {
 
                     var table = tables[entity.Name];
+
+                  //  var a = table.Builder.CreateTypeInfo();
+
                     this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
                     var schema = entity.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
                     var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();

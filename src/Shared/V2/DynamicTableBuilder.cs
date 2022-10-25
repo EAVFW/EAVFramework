@@ -75,6 +75,7 @@ namespace EAVFramework.Shared.V2
 
             SetEntityDTOAttribute();
             SetEntityAttribute();
+          
         }
 
 
@@ -1132,7 +1133,7 @@ namespace EAVFramework.Shared.V2
         {
 
             if (IsCreated)
-                return Builder.GetTypeInfo();
+                return Builder.CreateTypeInfo();
 
             IsCreated = true;
 #if DEBUG
