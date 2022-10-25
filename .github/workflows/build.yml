@@ -29,7 +29,7 @@ jobs:
         run: docker run -e \"ACCEPT_EULA=Y\" -e \"SA_PASSWORD=Bigs3cRet\" -e \"MSSQL_PID=Express\" -p 1433:1433 --name TestDB -d mcr.microsoft.com/mssql/server:2019-latest
       
       - name: Sleep for 30 seconds
-        run: sleep 30s
+        run: sleep 90s
         shell: bash
   
       - name: Create DB
