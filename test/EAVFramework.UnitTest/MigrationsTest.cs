@@ -155,6 +155,9 @@ namespace EAVFramework.UnitTest
             {
                 var sp = scope.ServiceProvider;
                 var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
+               
+               
+                
                 ctx.Add("Cars", JObject.FromObject(new { name = "a" }));
 
                 await ctx.SaveChangesAsync(prinpal);
