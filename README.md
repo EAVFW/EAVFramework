@@ -1,5 +1,6 @@
 # EAVFramework
-
+![Nuget](https://img.shields.io/nuget/v/EAVFramework)
+![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/EAVFramework)
 [![Release](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml/badge.svg)](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml)
 [![Release](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml/badge.svg?branch=dev)](https://github.com/EAVFW/EAVFramework/actions/workflows/release.yml)
 

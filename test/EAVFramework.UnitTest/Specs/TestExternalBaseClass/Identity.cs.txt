@@ -1,0 +1,34 @@
+﻿using EAVFramework.UnitTest;
+using MC.Models;
+using System;
+using EAVFramework.Shared;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
+namespace MC.Models
+{
+	[Serializable()]
+	[EntityDTO(LogicalName="identity",Schema="dbo")]
+	[Entity(LogicalName="identity",SchemaName="Identity",CollectionSchemaName="Identities",IsBaseClass=true)]
+	public partial class Identity : BaseIdEntity<Identity>, IHaveName, IIdentity
+	{
+		public Identity()
+		{
+		}
+
+		[DataMember(Name="name")]
+		[JsonProperty("name")]
+		[JsonPropertyName("name")]
+		[PrimaryField()]
+		public String Name {get;set;}
+
+		[DataMember(Name="identities")]
+		[JsonProperty("identities")]
+		[JsonPropertyName("identities")]
+		[InverseProperty("AwesomeUser")]
+		public ICollection<Identity> Identities {get;set;}
+
+	}
+}

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
     <PackageId>EAVFramework</PackageId>
     <Authors>Poul Kjeldager</Authors>
     <Company>EAVFW</Company>
@@ -16,8 +16,9 @@
 
     <ItemGroup>
      <FrameworkReference Include="Microsoft.AspNetCore.App" />
+     <PackageReference Include="EAVFW.Extensions.Manifest.SDK" Version="2.1.0" />
      <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.7" />
+     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.11" />
 
      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
      <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />

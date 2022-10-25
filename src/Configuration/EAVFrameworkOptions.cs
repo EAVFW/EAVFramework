@@ -53,6 +53,8 @@ namespace EAVFramework.Configuration
         /// The user interaction options.
         /// </value>
         public UserInteractionOptions UserInteraction { get; set; } = new UserInteractionOptions();
+        public string Schema { get; internal set; }
+        public string ConnectionString { get; internal set; }
     }
 
 }

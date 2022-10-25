@@ -1,0 +1,17 @@
+﻿using MC.Models;
+using EAVFramework.UnitTest;
+using System;
+using EAVFramework.Shared;
+namespace MC.Models
+{
+	[Serializable()]
+	[EntityDTO(LogicalName="openidconnectidentityresource",Schema="dbo")]
+	[Entity(LogicalName="openidconnectidentityresource",SchemaName="OpenIdConnectIdentityResource",CollectionSchemaName="OpenIdConnectIdentityResources",IsBaseClass=false)]
+	public partial class OpenIdConnectIdentityResource : OpenIdConnectResource, IOpenIdConnectIdentityResource
+	{
+		public OpenIdConnectIdentityResource()
+		{
+		}
+
+	}
+}

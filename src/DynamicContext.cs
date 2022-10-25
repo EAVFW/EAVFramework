@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.OData.Query.Wrapper;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -404,7 +405,7 @@ namespace EAVFramework
 
             context.EnsureModelCreated();
 
-            var type = context.Manager.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
+            var type = context.Manager.ModelDefinition.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
 
             var metadataQuerySet = context.Set(type);
 
@@ -480,13 +481,29 @@ namespace EAVFramework
             //  return Set<Type2>();
         }
     }
-    public class DynamicContext : DbContext, IDynamicContext
+    public interface IHasModelCacheKey
+    {
+        public string ModelCacheKey { get; }
+    }
+    public class DynamicContextModelCacheKeyFactory : IModelCacheKeyFactory
+    {
+        public object Create(DbContext context, bool designTime)
+           => context is IHasModelCacheKey dynamicContext
+               ? (context.GetType(), dynamicContext.ModelCacheKey, designTime)
+               : (object)context.GetType();
+
+        public object Create(DbContext context)
+            => Create(context, false);
+    }
+    public class DynamicContext : DbContext, IDynamicContext, IHasModelCacheKey
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
         private const string MigrationDefaultName = "Initial";
+
+        public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
 
         public IMigrationManager Manager  => manager;
 
@@ -498,12 +515,10 @@ namespace EAVFramework
             this.modelOptions = modelOptions;
             this.manager = migrationManager;
             this.logger = logger;
-
-
-             
-            
+              
         }
 
+       
         
 
         public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
@@ -532,8 +547,10 @@ namespace EAVFramework
             //    types.Add(name, model.Item1);
             //    factories.Add(model.Item1, model.Item2);
             //}
+            var latestManifest = modelOptions.Value.Manifests.First();
+          //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -548,8 +565,8 @@ namespace EAVFramework
                    
                     var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
 
-                    types.Add($"{++i:D16}{name}", model.Item1);
-                    factories.Add(model.Item1, model.Item2);
+                    types.Add($"{++i:D16}{name}", model.Type);
+                    factories.Add(model.Type, model.MigrationFactory);
                 }
             }
             return new MigrationsInfo {  Factories = factories, Types = types};
@@ -582,12 +599,33 @@ namespace EAVFramework
         }
 
      
-        public void EnsureModelCreated()
+        public ModelDefinition EnsureModelCreated()
         {
+
             var manifest = modelOptions.Value.Manifests.First();
-            manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
+            return manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
         }
-        
+
+        public void AddNewManifest(JToken manifest)
+        {
+            this.modelOptions.Value.Manifests = new[] { manifest }.Concat(this.modelOptions.Value.Manifests).ToArray();
+            ResetMigrationsContext();
+        }
+
+        public void ResetMigrationsContext()
+        {
+            ModelCacheKey = Guid.NewGuid().ToString();
+            if (manager is MigrationManager man)
+            {
+                man.Reset(this.modelOptions.Value);
+            }
+            //var miassemb = Database.GetInfrastructure().GetRequiredService<IMigrationsAssembly>();
+            //if (miassemb is DbSchemaAwareMigrationAssembly mya)
+            //{ 
+            //    mya.Reset(); 
+            //}
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             Console.WriteLine("Test");   
@@ -596,15 +634,18 @@ namespace EAVFramework
             //  EnsureModelCreated();
             if (this.modelOptions.Value.CreateLatestMigration)
             {
+                var latestManifest = modelOptions.Value.Manifests.First();
+             //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
+
                 manager.EnusureBuilded($"{modelOptions.Value.PublisherPrefix}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
-            foreach (var en in manager.EntityDTOs)
+            foreach (var en in manager.ModelDefinition.EntityDTOs)
             {
                 try
                 {
                     var a = modelBuilder.Entity(en.Value);
-                    var config = Activator.CreateInstance(manager.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
+                    var config = Activator.CreateInstance(manager.ModelDefinition.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                     config.Configure(a);
                     foreach(var prop in a.Metadata.GetProperties().Where(c=>(Nullable.GetUnderlyingType( c.ClrType) ?? c.ClrType) == typeof(DateTime)))
                     {
@@ -695,7 +736,7 @@ namespace EAVFramework
         
         public EntityEntry Add(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
             var a= this.Attach(record);
@@ -706,7 +747,7 @@ namespace EAVFramework
 
         public async Task<EntityEntry> AddOrReplace(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
             var keys = this.Model.FindEntityType(type).FindPrimaryKey().Properties.Select(c => (data as JObject).GetValue(c.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name,StringComparison.OrdinalIgnoreCase)?.ToObject(c.PropertyInfo.PropertyType)).ToArray();
@@ -730,7 +771,7 @@ namespace EAVFramework
 
         public EntityEntry Remove(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
             return this.Remove(record);
@@ -738,7 +779,7 @@ namespace EAVFramework
         }
         public void Replace(string entityName, object entry, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
             Entry(entry).CurrentValues.SetValues(record);
@@ -753,12 +794,12 @@ namespace EAVFramework
         public ValueTask<object> FindAsync(string entityName, params object[] keyValues)
         {
 
-            if (!manager.EntityDTOs.ContainsKey(entityName))
+            if (!manager.ModelDefinition.EntityDTOs.ContainsKey(entityName))
             {
-              throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", manager.EntityDTOs.Keys)}");
+              throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", manager.ModelDefinition.EntityDTOs.Keys)}");
             }
 
-            var type = manager.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             //  var record = data.ToObject(type);
             return this.FindAsync(type, keyValues);
             //  logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
@@ -767,12 +808,12 @@ namespace EAVFramework
         }
         public Type GetEntityType(string entityName)
         {
-             var type = manager.EntityDTOs[entityName];
+             var type = manager.ModelDefinition.EntityDTOs[entityName];
             return type;
         }
         public EntityEntry Update(string entityName, JToken data)
         {
-            var type = manager.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
 
@@ -826,10 +867,6 @@ namespace EAVFramework
 
         }
 
-        internal bool IsPluginEnabled(Type handler)
-        {
-            return !modelOptions.Value.DisabledPlugins?.Contains(handler) ??true;
-            
-        }
+       
     }
 }

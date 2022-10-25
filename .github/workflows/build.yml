@@ -1,4 +1,5 @@
-﻿
+﻿name: Build
+
 on:
   pull_request:
     types: [ assigned, opened, synchronize, reopened ]
@@ -6,17 +7,50 @@ on:
     branches:
       - 'feature/**'
 
-jobs:
-  build:
-    runs-on: windows-latest
+jobs: 
+  test:
+    runs-on: ubuntu-latest
     name: Building
     steps:
       - name: Checkout code base
         uses: actions/checkout@v2
 
-      - uses: actions/setup-dotnet@v1
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: | 
+            3.1.x
+            6.0.x
+
+      - name: Cleaning
+        run: dotnet clean
+
+      - name: Create DBServer
+        run: docker run -e ACCEPT_EULA=Y -e SA_PASSWORD=Bigs3cRet -e MSSQL_PID=Express -p 1433:1433 --name TestDB -d mcr.microsoft.com/mssql/server:2019-latest
+      
+      - name: Sleep for 30 seconds
+        run: sleep 90s
+        shell: bash
+  
+      - name: Create DB
+        run: docker exec TestDB /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Bigs3cRet -Q "CREATE DATABASE TestDB;ALTER DATABASE TestDB SET RECOVERY SIMPLE;"
+        continue-on-error: true
+
+      - name: Test Generation
+        run: dotnet test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    name: Building
+    steps:
+      - name: Checkout code base
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
 
       - name: Cleaning
         run: dotnet clean

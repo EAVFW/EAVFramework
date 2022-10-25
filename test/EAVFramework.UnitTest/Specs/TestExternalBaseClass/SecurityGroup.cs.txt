@@ -1,0 +1,16 @@
+﻿using MC.Models;
+using System;
+using EAVFramework.Shared;
+namespace MC.Models
+{
+	[Serializable()]
+	[EntityDTO(LogicalName="securitygroup",Schema="dbo")]
+	[Entity(LogicalName="securitygroup",SchemaName="SecurityGroup",CollectionSchemaName="SecurityGroups",IsBaseClass=false)]
+	public partial class SecurityGroup : Identity
+	{
+		public SecurityGroup()
+		{
+		}
+
+	}
+}

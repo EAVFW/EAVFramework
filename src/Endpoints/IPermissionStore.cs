@@ -3,10 +3,7 @@ using System.Security.Claims;
 
 namespace EAVFramework.Endpoints
 {
-    public interface IPermissionStore 
-    {
-        IQueryable<string> GetPermissions(ClaimsPrincipal user, EAVResource resource);
-    }
+    
     public interface IPermissionStore<TContext> where TContext : DynamicContext
     {
         IQueryable<string> GetPermissions(ClaimsPrincipal user, EAVResource resource);

@@ -41,7 +41,7 @@ GO
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_0')
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_0', N'5.0.15');
+    VALUES (N'tests_1_0_0', N'{{VERSION}}');
 END;
 GO
 
@@ -59,14 +59,14 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
-    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([id]);
+    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([Id]);
 END;
 GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_1', N'5.0.15');
+    VALUES (N'tests_1_0_1', N'{{VERSION}}');
 END;
 GO
 
@@ -84,14 +84,14 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_10')
 BEGIN
-    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([id]) ON DELETE CASCADE;
+    ALTER TABLE [tests].[Cars] ADD CONSTRAINT [FK_Cars_Garages_GarageToParkId] FOREIGN KEY ([GarageToParkId]) REFERENCES [tests].[Garages] ([Id]) ON DELETE CASCADE;
 END;
 GO
 
 IF NOT EXISTS(SELECT * FROM [manifest_migrations].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_10')
 BEGIN
     INSERT INTO [manifest_migrations].[__MigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'tests_1_0_10', N'5.0.15');
+    VALUES (N'tests_1_0_10', N'{{VERSION}}');
 END;
 GO
 

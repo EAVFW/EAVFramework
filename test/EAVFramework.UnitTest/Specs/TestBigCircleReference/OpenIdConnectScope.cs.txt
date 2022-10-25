@@ -1,0 +1,18 @@
+﻿using MC.Models;
+using EAVFramework.UnitTest;
+using EAVFramework;
+using System;
+using EAVFramework.Shared;
+namespace MC.Models
+{
+	[Serializable()]
+	[EntityDTO(LogicalName="openidconnectscope",Schema="dbo")]
+	[Entity(LogicalName="openidconnectscope",SchemaName="OpenIdConnectScope",CollectionSchemaName="OpenIdConnectScopes",IsBaseClass=false)]
+	public partial class OpenIdConnectScope : OpenIdConnectResource, IOpenIdConnectScope<DynamicEntity>
+	{
+		public OpenIdConnectScope()
+		{
+		}
+
+	}
+}

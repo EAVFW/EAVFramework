@@ -25,6 +25,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Linq.Expressions;
 using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 
 namespace EAVFramework.Endpoints
 {
@@ -98,10 +100,84 @@ namespace EAVFramework.Endpoints
         private readonly IServiceProvider serviceProvider;
         private readonly IPluginScheduler<TContext> pluginScheduler;
 
+
+        public T GetContextService<T>() where T : class
+        {
+            return this.Context.Database.GetService<T>();
+        }
+
+        public IRelationalTransactionManager RelationalTransactionManager => GetContextService<IDbContextTransactionManager>() as IRelationalTransactionManager;
+
+        public async ValueTask<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel,
+            CancellationToken cancellationToken = default)
+        {
+            // Note: transactions that specify an explicit isolation level are only supported by
+            // relational providers and trying to use them with a different provider results in
+            // an invalid operation exception being thrown at runtime. To prevent that, a manual
+            // check is made to ensure the underlying transaction manager is relational.
+
+            try
+            {
+                return await Context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            }
+
+            catch(InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        public virtual EntityEntry Remove(object obj)
+        {
+            return this.Context.Remove(obj);
+        }
+        public virtual EntityEntry Add(object obj)
+        {
+            return this.Context.Add(obj);
+        }
+         
+        public virtual EntityEntry RemoveWithoutCascading(object obj)
+        {
+            var entry = this.Context.Entry(obj);
+            entry.State = EntityState.Deleted;
+            return entry;
+        }
+        public virtual EntityEntry Entry(object obj)
+        {
+            return this.Context.Entry(obj);
+        }
+        public virtual EntityEntry<T> Entry<T>(T obj) where T : class
+        {
+            return this.Context.Entry<T>(obj);
+        }
+
+        public void ResetEntryTracking(object obj)
+        {
+            Context.Entry(obj).State = EntityState.Unchanged;
+        }
+        public void ResetEntryTracking(IEnumerable<object> objs)
+        {
+            foreach (var obj in objs)
+            {
+                Context.Entry(obj).State = EntityState.Unchanged;
+            }
+        }
+        public EntityEntry Attach(object obj) {
+            return Context.Attach(obj);
+        }
+        public EntityEntry Update(object obj)
+        {
+            return Context.Update(obj);
+        }
+
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
-        
-        public async Task<T> ExecuteAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
+
+        public void ResetMigrationsContext()
+        {
+            Context.ResetMigrationsContext();
+        }
+            public async Task<T> ExecuteAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
         {
             
             try
@@ -138,7 +214,11 @@ namespace EAVFramework.Endpoints
 
          
 
-        public EAVDBContext(TContext context, PluginsAccesser<TContext> plugins, ILogger<EAVDBContext<TContext>> logger, IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
+        public EAVDBContext(
+            TContext context, 
+            PluginsAccesser<TContext> plugins, 
+            ILogger<EAVDBContext<TContext>> logger, 
+            IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this.plugins = plugins;
@@ -147,13 +227,29 @@ namespace EAVFramework.Endpoints
             this.pluginScheduler = pluginScheduler;
             context.EnsureModelCreated();
         }
-        [DebuggerStepThrough]
+        
         public async Task MigrateAsync()
         {
             var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
-            var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
-            logger.LogInformation("Migrating: {SQL}", sql);
-            await migrator.MigrateAsync();
+            var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+            logger.LogInformation("Migrating: {SQL}", sqlscript);
+           // await migrator.MigrateAsync();
+
+            var conn = Context.Database.GetDbConnection();
+          
+            if(conn.State != System.Data.ConnectionState.Open)
+                await conn.OpenAsync();
+
+            foreach (var sql in sqlscript.Split("GO"))
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = sql;
+                //  await context.Context.Database.ExecuteSqlRawAsync(sql);
+
+
+                var r = await cmd.ExecuteNonQueryAsync();
+            }
+
 
         }
         public async ValueTask<JToken> ReadRecordAsync(HttpContext context, ReadOptions options)
@@ -526,7 +622,7 @@ namespace EAVFramework.Endpoints
         {
             var record = await this.Context.FindAsync(entityName, keys);
             if (record == null)
-                return null;
+                return null;          
             var entry = this.Context.Entry(record);
             entry.State = EntityState.Deleted;
             return entry;
