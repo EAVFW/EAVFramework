@@ -1,5 +1,6 @@
 ﻿using EAVFramework.Configuration;
 using EAVFramework.Endpoints;
+using EAVFramework.Plugins;
 using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,29 +10,23 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace EAVFramework.Plugins
+namespace Microsoft.Extensions.DependencyInjection
 {
 
-    public interface IPluginRegistration
+    public static class PluginExtensions
     {
-
-    }
-
-    public static class PluginAutoReg
-    {
-        public static IEAVFrameworkBuilder AddPlugin<T>(this IEAVFrameworkBuilder builder)
-            where T : class, IPluginRegistration
+        public static IServiceCollection AddPlugin<T>(this IServiceCollection services)
+        where T : class, IPluginRegistration
         {
 
-            return builder.AddPlugin(typeof(T));
+            return services.AddPlugin(typeof(T));
         }
 
-
-        public static IEAVFrameworkBuilder AddPlugin(this IEAVFrameworkBuilder builder, Type pluginType)           
+        public static IServiceCollection AddPlugin(this IServiceCollection services, Type pluginType)
         {
 
-            builder.Services.AddTransient(pluginType);
-             
+            services.AddTransient(pluginType);
+
 
             foreach (var attr in pluginType.GetCustomAttributes<PluginRegistrationAttribute>())
             {
@@ -51,11 +46,38 @@ namespace EAVFramework.Plugins
                 entry.Handler = pluginType;
 
 
-                builder.Services.AddSingleton(entry);
+                services.AddSingleton(entry);
             }
 
+            return services;
+        }
+    }
+}
+namespace EAVFramework.Plugins
+{
+   
+    public interface IPluginRegistration
+    {
+
+    }
+
+    public static class PluginAutoReg
+    {
+        public static IEAVFrameworkBuilder AddPlugin<T>(this IEAVFrameworkBuilder builder)
+            where T : class, IPluginRegistration
+        {
+
+            return builder.AddPlugin(typeof(T));
+        }
+
+     
+        public static IEAVFrameworkBuilder AddPlugin(this IEAVFrameworkBuilder builder, Type pluginType)
+        {
+             builder.Services.AddPlugin(pluginType);
             return builder;
         }
+         
+       
 
     }
 

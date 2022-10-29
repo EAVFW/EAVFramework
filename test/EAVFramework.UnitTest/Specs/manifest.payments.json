@@ -1,0 +1,357 @@
+{
+	"entities": {
+		"Payment Provider Type": {
+			"pluralName": "Payment Provider Types",
+			"attributes": {
+				"Type": {
+					"isPrimaryField": true,
+					"displayName": "Type",
+					"schemaName": "Type",
+					"logicalName": "type",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Type"
+						}
+					}
+				},
+				"Properties": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"displayName": "Properties",
+					"schemaName": "Properties",
+					"logicalName": "properties",
+					"locale": {
+						"1033": {
+							"displayName": "Properties"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Payment Provider Type",
+			"schemaName": "PaymentProviderType",
+			"logicalName": "paymentprovidertype",
+			"collectionSchemaName": "PaymentProviderTypes",
+			"locale": {
+				"1033": {
+					"displayName": "Payment Provider Type",
+					"pluralName": "Payment Provider Types"
+				}
+			}
+		},
+		"Payment Provider": {
+			"pluralName": "Payment Providers",
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Payment Provider Type": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Payment Provider Type",
+						"foreignKey": {
+							"principalTable": "paymentprovidertype",
+							"principalColumn": "id",
+							"principalNameColumn": "type",
+							"name": "paymentprovidertype"
+						}
+					},
+					"displayName": "Payment Provider Type",
+					"schemaName": "PaymentProviderTypeId",
+					"logicalName": "paymentprovidertypeid",
+					"locale": {
+						"1033": {
+							"displayName": "Payment Provider Type"
+						}
+					}
+				},
+				"External Id": {
+					"type": {
+						"type": "Text"
+					},
+					"displayName": "External Id",
+					"schemaName": "ExternalId",
+					"logicalName": "externalid",
+					"locale": {
+						"1033": {
+							"displayName": "External Id"
+						}
+					}
+				},
+				"Auth Context": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"displayName": "Auth Context",
+					"schemaName": "AuthContext",
+					"logicalName": "authcontext",
+					"locale": {
+						"1033": {
+							"displayName": "Auth Context"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Payment Provider",
+			"schemaName": "PaymentProvider",
+			"logicalName": "paymentprovider",
+			"collectionSchemaName": "PaymentProviders",
+			"locale": {
+				"1033": {
+					"displayName": "Payment Provider",
+					"pluralName": "Payment Providers"
+				}
+			}
+		},
+		"Agreement": {
+			"pluralName": "Agreements",
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Provider": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Payment Provider",
+						"foreignKey": {
+							"principalTable": "paymentprovider",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "provider"
+						}
+					},
+					"displayName": "Provider",
+					"schemaName": "ProviderId",
+					"logicalName": "providerid",
+					"locale": {
+						"1033": {
+							"displayName": "Provider"
+						}
+					}
+				},
+		
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Agreement",
+			"schemaName": "Agreement",
+			"logicalName": "agreement",
+			"collectionSchemaName": "Agreements",
+			"locale": {
+				"1033": {
+					"displayName": "Agreement",
+					"pluralName": "Agreements"
+				}
+			}
+		}
+	}
+}

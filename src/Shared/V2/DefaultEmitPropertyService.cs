@@ -390,8 +390,9 @@ namespace EAVFramework.Shared.V2
                 }
             }catch(Exception ex)
             {
-                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
-                    $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
+                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name}",ex);
+               //throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
+               //     $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
             }
 
                 

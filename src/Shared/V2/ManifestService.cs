@@ -2,14 +2,176 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text;
 using static EAVFramework.Shared.TypeHelper;
 
 namespace EAVFramework.Shared.V2
 {
+
+    public class InterfaceShadowBuilderContraintContainer
+    {
+        public int Order { get; set; }
+        public List<InterfaceShadowBuilderContraint> Constraints { get; } = new List<InterfaceShadowBuilderContraint>();
+    }
+    public class InterfaceShadowBuilderContraint
+    {
+        public Type Type { get; internal set; }
+        public InterfaceShadowBuilder Reference { get; internal set; }
+        public string[] TypeToEntityKeys { get; internal set; }
+    }
+    public class InterfaceShadowBuilder
+    {
+        public TypeBuilder Builder { get; }
+
+        public InterfaceShadowBuilder(ModuleBuilder myModule, ConcurrentDictionary<string, InterfaceShadowBuilder> baseTypeInterfacesbuilders, string fullname)
+        {
+            this.Builder = myModule.DefineType(fullname, TypeAttributes.Public
+                                                             | TypeAttributes.Interface
+                                                             | TypeAttributes.Abstract
+                                                             | TypeAttributes.AutoClass
+                                                             | TypeAttributes.AnsiClass
+                                                             | TypeAttributes.Serializable
+                                                             | TypeAttributes.BeforeFieldInit);
+
+            // AddEntityKeyAttributes(@interface as INamedTypeSymbol, interfaceEntityType);
+
+
+        }
+
+
+
+        public ConcurrentDictionary<string, InterfaceShadowBuilderContraintContainer> Contraints = new ConcurrentDictionary<string, InterfaceShadowBuilderContraintContainer>();
+
+        public void AddContraint(string name, InterfaceShadowBuilder interfaceShadowBuilder)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer(){ Order = Contraints.Count });
+            a.Constraints.Add(new InterfaceShadowBuilderContraint { Reference = interfaceShadowBuilder });
+        }
+
+        public void AddContraint(string name, Type type)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
+            a.Constraints.Add(new InterfaceShadowBuilderContraint { Type = type });
+        }
+
+        public void BuildConstraints()
+        {
+            if (Contraints.Keys.Any())
+            {
+
+                var builders = Builder.DefineGenericParameters(Contraints.OrderBy(c=>c.Value.Order).Select(c=>c.Key).ToArray());
+                foreach (var contraintbuilder in builders)
+                {
+                    var container = Contraints[contraintbuilder.Name];
+                   
+                    var types = Contraints[contraintbuilder.Name].Constraints.ToArray();
+
+                    var contraints = types.Select(c => {
+
+                        if (c.Type != null)
+                            return c.Type;
+
+                        var type = c.Reference.CreateType();
+
+                        if (type.IsGenericType)
+                        {
+
+                          //  var ttype = builders.FirstOrDefault(n => n.Name == "TType");
+                            var ttype = type.GetGenericArguments().Select(cc => builders.FirstOrDefault(n => n.Name == cc.Name)).ToArray();
+                            return type.MakeGenericType(ttype);
+                            throw new InvalidOperationException("contraint is generic " + type.Name);
+                            // return type.MakeGenericType(c.TypeToEntityKeys.Select(k => builders.First(b => b.Name == k)).ToArray());
+                        }
+
+                        if (c.TypeToEntityKeys != null)
+                        {
+
+                        }
+
+                        return type;
+
+
+                    }
+                    ).ToArray();
+
+                    contraintbuilder.SetInterfaceConstraints(contraints);
+                }
+            }
+        }
+        public void Build()
+        {
+            if (IsBuilded)
+                return;
+            IsBuilded = true;
+
+            BuildConstraints();
+        }
+        public bool IsBuilded { get; private set; }
+        public Type CreateType()
+        {
+            Build();
+            return Builder.CreateTypeInfo();
+        }
+
+        internal void AddContraint(string name, InterfaceShadowBuilder interfaceShadowBuilder, string[] typeToEntityKeys)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
+            a.Constraints.Add(new InterfaceShadowBuilderContraint { Reference = interfaceShadowBuilder, TypeToEntityKeys = typeToEntityKeys });
+        }
+
+        public static string DumpInterface(Type value)
+        {
+            var sb = new StringBuilder();
+            var constraints = new StringBuilder();
+            sb.Append(value.FullName);
+            if (value.ContainsGenericParameters)
+            {
+                sb.Append("<");
+                var f = false;
+                foreach (var pa in value.GetGenericArguments())
+                {
+                    if (f)
+                        sb.Append(",");
+                    f = true;
+                    sb.Append(pa.Name);
+                    var a = pa.GetGenericParameterConstraints();
+                    if (a.Any())
+                    {
+                        var ger = string.Join(", ", a.Select(aa => {
+
+                            if (aa.IsGenericType)
+                                return $"{aa.Name}<{string.Join(",",aa.GetGenericArguments().Select(ga=>ga.Name))}>";
+
+                            return aa.Name;
+                        }));
+                        constraints.AppendLine($"where {pa.Name} : {ger}");
+                      
+                        
+                    }
+                }
+                sb.Append(">");
+
+                sb.AppendLine();
+                sb.AppendLine(constraints.ToString());
+
+
+            }
+
+            return sb.ToString();
+        }
+
+        internal void AddContraint(string name)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
+        }
+    }
+
     public interface IColumnPropertyResolver
     {
         object GetValue(string argName);
@@ -196,7 +358,7 @@ namespace EAVFramework.Shared.V2
 
                             }
 
-                            if (type == "lookup")
+                            if (type == "lookup" || type == "polylookup")
                             {
                                 propertyInfo
                                     .LookupTo(

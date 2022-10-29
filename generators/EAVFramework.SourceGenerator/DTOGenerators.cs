@@ -28,6 +28,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using static EAVFramework.Shared.TypeHelper;
+using TypeInfo = System.Reflection.TypeInfo;
 
 namespace EAVFramework.Generators
 {
@@ -127,6 +128,9 @@ namespace EAVFramework.Generators
             return $"{Symbol.GetFullName()}[{string.Join(",", Dependencies())}]";
         }
     }
+
+   
+
     /// <summary>
     /// https://dominikjeske.github.io/source-generators/
     /// https://github.com/dotnet/roslyn/issues/44093
@@ -544,26 +548,16 @@ namespace EAVFramework.Generators
                         var interfacebuilders = new ConcurrentDictionary<string, TypeBuilder>();
                         //File.AppendAllLines("test1.txt", new[] { $"All Interfaces Found: {string.Join("\n", interfaces.Values)}" });
                         //File.AppendAllLines("test1.txt", new[] { $"All Interfaces Found: {string.Join("\n", interfaces.Values.TSort(x => x.Dependencies().Where(c => interfaces.ContainsKey(c)).Select(c => interfaces[c])).Select(c => c.Name))}" });
-                        var baseTypeInterfacesbuilders = new ConcurrentDictionary<string, TypeBuilder>();
+                        var baseTypeInterfacesbuilders = new ConcurrentDictionary<string, InterfaceShadowBuilder>();
 
                         foreach (var @interfaceWrap in interfaces.Values.TSort(x => x.Dependencies().Where(c => interfaces.ContainsKey(c)).Select(c => interfaces[c])))
                         {
                             var @interface = @interfaceWrap.Symbol;
-
+                          //  File.AppendAllLines("test1.txt", new[] { $"Building Inteface type: {@interface.GetFullName()}<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
                             baseTypeInterfacesbuilders.GetOrAdd(@interface.GetFullName(), (fullname) =>
                             {
-
-                                TypeBuilder interfaceEntityType = myModule.DefineType(@interface.GetFullName(), TypeAttributes.Public
-                                                              | TypeAttributes.Interface
-                                                              | TypeAttributes.Abstract
-                                                              | TypeAttributes.AutoClass
-                                                              | TypeAttributes.AnsiClass
-                                                              | TypeAttributes.Serializable
-                                                              | TypeAttributes.BeforeFieldInit);
-
-                               // AddEntityKeyAttributes(@interface as INamedTypeSymbol, interfaceEntityType);
-
-                                return interfaceEntityType;
+                                return new InterfaceShadowBuilder(myModule, baseTypeInterfacesbuilders, @interface.GetFullName());
+                               
                             });
                         }
 
@@ -572,6 +566,7 @@ namespace EAVFramework.Generators
                         {
 
                             var @interface = @interfaceWrap.Symbol;
+                           // File.AppendAllLines("test1.txt", new[] { $"Extending Inteface type: {@interface.GetFullName()}<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
 
                             //  baseTypeInterfaces.GetOrAdd(@interface.GetFullName(), (fullname) =>
                             {
@@ -587,65 +582,135 @@ namespace EAVFramework.Generators
 
                                 if (@interface.IsGenericType)
                                 {
-                               //     File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
-                                    //var entityType = interfacebuilders[@interface.GetFullName()];
-                                    var b = interfaceEntityType.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
-                                    .Select((argument, i) =>
+
+                                    foreach(var typeparameter in @interface.TypeParameters)
                                     {
-                                        argument.SetInterfaceConstraints(@interface.TypeParameters[i].ConstraintTypes.Where(ct => ct.GetFullName() != "System.IConvertible").Select(ct =>
+                                        var name = typeparameter.Name;
+                                       // var contraints = typeparameter.ConstraintTypes.Where(ct => ct.GetFullName() != "System.IConvertible").ToArray();
+
+                                        foreach(INamedTypeSymbol contraint in typeparameter.ConstraintTypes)
                                         {
-                                            try
+                                            var contraintFullName = contraint.GetFullName();
+
+                                            if(contraintFullName == "System.IConvertible")
                                             {
-                                             //   File.AppendAllLines("test1.txt", new[] { $"Looking for : {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}" });
+                                                interfaceEntityType.AddContraint(name);
+                                                continue;
+                                            }
 
-                                                if (!baseTypeInterfaces.ContainsKey(ct.GetFullName()))
-                                                {
-                                               //     File.AppendAllLines("test1.txt", new[] { $"Looking for : {ct.GetFullName()} in {string.Join(",", baseTypeInterfacesbuilders.Keys)}" });
-                                                   
-                                                    if (!baseTypeInterfacesbuilders.ContainsKey(ct.GetFullName()))
+                                            if (baseTypeInterfaces.ContainsKey(contraintFullName))
+                                            {
+                                         //       File.AppendAllLines("test1.txt", new[] { $"Creating Contraint {contraintFullName} from BaseInterfaces" });
+
+                                                interfaceEntityType.AddContraint(name, baseTypeInterfaces[contraintFullName]);
+                                                continue;
+                                            }
+
+
+                                            if(baseTypeInterfacesbuilders.ContainsKey(contraintFullName))
+                                            {
+
+                                                var BaseEntityAttributes = @interface.GetAttributes().Where(attr => attr.AttributeClass.Name == "ConstraintMappingAttribute")
+
+                                                    .Select(c => new
                                                     {
-                                                        
-                                                        TypeBuilder interfaceEntityTypeShadow = myModule.DefineType(ct.GetFullName() + @interface.Name, TypeAttributes.Public
-                                                                                      | TypeAttributes.Interface
-                                                                                      | TypeAttributes.Abstract
-                                                                                      | TypeAttributes.AutoClass
-                                                                                      | TypeAttributes.AnsiClass
-                                                                                      | TypeAttributes.Serializable
-                                                                                      | TypeAttributes.BeforeFieldInit);
-
-                                                        var constraintinterface = ct as INamedTypeSymbol;
-                                                        // File.AppendAllLines("test1.txt", new[] { $"Inteface type: {constraintinterface.GetFullName()} is Shadow<{string.Join(",", @interface.TypeParameters.Select(t=>t.Name + " " + t.GetAttributes().Count() + "=" + String.Join("|", t.GetAttributes().Select(attr=>attr.AttributeClass.Name+"="+String.Join(",",  attr.NamedArguments.Select(kv=>$"{kv.Key}={kv.Value.ToString()}"))))) )}>" });
-
-                                                       
+                                                        EntityKey = c.NamedArguments.First(k => k.Key == "EntityKey").Value.Value as string,
+                                                        ConstraintName = c.NamedArguments.First(k => k.Key == "ConstraintName").Value.Value as string
+                                                    })
+                                                    .ToDictionary(k=>k.ConstraintName, v=>v.EntityKey);
 
 
-                                                        AddEntityKeyAttributes(ct as INamedTypeSymbol, interfaceEntityTypeShadow);
-                                                    //    File.AppendAllLines("test1.txt", new[] { $"Added shadow type: {interfaceEntityTypeShadow.Name}" });
-                                                        var t= interfaceEntityTypeShadow.CreateTypeInfo();
-                                                        baseTypeInterfacesbuilders[ct.GetFullName()] = interfaceEntityTypeShadow;
-                                                        return t;
-                                                    }
-                                                    
-                                                    return baseTypeInterfacesbuilders[ct.GetFullName()];
+                                            //    File.AppendAllLines("test1.txt", new[] { $"Creating Contraint {contraintFullName}<{string.Join(",",contraint.TypeParameters.Select(tp=>tp.Name))}> from BaseInterfacesBuilders: {name}" });
+
+                                                if (contraint.TypeParameters.Any())
+                                                {
+                                                    interfaceEntityType.AddContraint(name, baseTypeInterfacesbuilders[contraintFullName], contraint.TypeParameters.Select(tp=>tp.Name).ToArray());
+                                                    continue;
                                                 }
 
-
-                                                return baseTypeInterfaces[ct.GetFullName()];
-
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                        //        File.AppendAllLines("test1.txt", new[] { $"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex.ToString()});
-                                               
-                                                throw new KeyNotFoundException($"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex);
+                                                interfaceEntityType.AddContraint(name, baseTypeInterfacesbuilders[contraintFullName]);
+                                                continue;
                                             }
 
-                                        }).ToArray());
-                                        return argument;
+
+                                            throw new InvalidOperationException("Could not find " + contraintFullName);
+
+                                        }
+                                        
+                                       
+
+
+                                    }
+                                    
+                                    //   File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()} is Generic<{string.Join(",", @interface.TypeParameters.SelectMany(p => p.ConstraintTypes).Select(c => c.GetFullName() + ":" + c.ContainingAssembly.Name))}>" });
+                                    //var entityType = interfacebuilders[@interface.GetFullName()];
+                                    //var b = interfaceEntityType.Builder.DefineGenericParameters(@interface.TypeParameters.Select(c => c.Name).ToArray())
+                                    //.Select((argument, i) =>
+                                    //{
+                                    //    argument.SetInterfaceConstraints(@interface.TypeParameters[i].ConstraintTypes.Where(ct => ct.GetFullName() != "System.IConvertible").Select(ct =>
+                                    //    {
+                                    //        try
+                                    //        {
+                                    //            File.AppendAllLines("test1.txt", new[] { $"Looking for : {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}" });
+
+                                    //            if (!baseTypeInterfaces.ContainsKey(ct.GetFullName()))
+                                    //            {
+                                    //                File.AppendAllLines("test1.txt", new[] { $"Looking for : {ct.GetFullName()} in {string.Join(",", baseTypeInterfacesbuilders.Keys)}" });
+
+                                    //                if (!baseTypeInterfacesbuilders.ContainsKey(ct.GetFullName()))
+                                    //                {
+
+                                    //                    TypeBuilder interfaceEntityTypeShadow = myModule.DefineType(ct.GetFullName() + @interface.Name, TypeAttributes.Public
+                                    //                                                  | TypeAttributes.Interface
+                                    //                                                  | TypeAttributes.Abstract
+                                    //                                                  | TypeAttributes.AutoClass
+                                    //                                                  | TypeAttributes.AnsiClass
+                                    //                                                  | TypeAttributes.Serializable
+                                    //                                                  | TypeAttributes.BeforeFieldInit);
+
+                                    //                    var constraintinterface = ct as INamedTypeSymbol;
+                                    //                    File.AppendAllLines("test1.txt", new[] { $"Inteface type: {constraintinterface.GetFullName()} is Shadow<{string.Join(",", @interface.TypeParameters.Select(t => t.Name + " " + t.GetAttributes().Count() + "=" + String.Join("|", t.GetAttributes().Select(attr => attr.AttributeClass.Name + "=" + String.Join(",", attr.NamedArguments.Select(kv => $"{kv.Key}={kv.Value.ToString()}"))))))}>" });
 
 
 
-                                    }).ToArray();
+
+                                    //                    AddEntityKeyAttributes(ct as INamedTypeSymbol, interfaceEntityTypeShadow);
+                                    //                    //    File.AppendAllLines("test1.txt", new[] { $"Added shadow type: {interfaceEntityTypeShadow.Name}" });
+                                    //                    var shadow = interfaceEntityTypeShadow.CreateTypeInfo();
+                                    //                    baseTypeInterfacesbuilders[ct.GetFullName()] = interfaceEntityTypeShadow;
+                                    //                    return shadow;
+                                    //                }
+
+                                    //                var constraint = baseTypeInterfacesbuilders[ct.GetFullName()];
+                                    //                if (constraint.IsGenericType)
+                                    //                {
+
+                                    //                    File.AppendAllLines("test1.txt", new[] { $"{constraint.Name}<{string.Join(",", constraint.GenericTypeArguments.Select(aa => aa.FullName))}>" });
+                                    //                }
+                                    //                return constraint;
+                                    //            }
+
+
+                                    //            return baseTypeInterfaces[ct.GetFullName()];
+
+                                    //        }
+                                    //        catch (Exception ex)
+                                    //        {
+                                    //            //        File.AppendAllLines("test1.txt", new[] { $"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex.ToString()});
+
+                                    //            throw new KeyNotFoundException($"[{@interface.GetFullName()}] Could not find {ct.GetFullName()} in {string.Join(",", baseTypeInterfaces.Keys)}. {ct.GetFullName() == @interface.GetFullName()}", ex);
+                                    //        }
+
+                                    //    }).ToArray());
+
+                                    //    return argument;
+
+
+
+                                    //}).ToArray();
+
+                                   // File.AppendAllLines("test1.txt", new[] { $"Inteface type: {@interface.GetFullName()}\n{string.Join("\n",b.Select(c=> $"where {c.Name} : " ))}" });
+
                                 }
 
                                 CustomAttributeBuilder CodeGenInterfacePropertiesAttributeBuilder = new CustomAttributeBuilder(typeof(CodeGenInterfacePropertiesAttribute).GetConstructor(new Type[] { }),
@@ -656,7 +721,7 @@ namespace EAVFramework.Generators
                                          @interface.GetMembers().OfType<IPropertySymbol>().Select(c=>c.Name).ToArray(),
 
                                       });
-                                interfaceEntityType.SetCustomAttribute(CodeGenInterfacePropertiesAttributeBuilder);
+                                interfaceEntityType.Builder.SetCustomAttribute(CodeGenInterfacePropertiesAttributeBuilder);
 
 
                                 
@@ -671,7 +736,7 @@ namespace EAVFramework.Generators
                                 //        }
                                 //}
 
-                                AddEntityKeyAttributes(@interface, interfaceEntityType);
+                                AddEntityKeyAttributes(@interface, interfaceEntityType.Builder);
                                 // return interfaceEntityType.CreateTypeInfo();
 
                             }//);
@@ -687,9 +752,9 @@ namespace EAVFramework.Generators
                     //        File.AppendAllLines("test1.txt", new[] { $"Creating {@interfaceWrap}" });
                             var @interface = @interfaceWrap.Symbol;
 
-                            baseTypeInterfaces.GetOrAdd(@interface.GetFullName(), (fullname) => baseTypeInterfacesbuilders[@interface.GetFullName()].CreateTypeInfo());
+                            baseTypeInterfaces.GetOrAdd(@interface.GetFullName(), (fullname) => baseTypeInterfacesbuilders[@interface.GetFullName()].CreateType());
                         }
-                 //       File.AppendAllLines("test1.txt", new[] { $"All Interfaces Created: {string.Join("\n", baseTypeInterfaces.Select(c => c.Key))}" });
+                    //    File.AppendAllLines("test1.txt", new[] { $"All Interfaces Created:\n{string.Join("\n", baseTypeInterfaces.Select(c => InterfaceShadowBuilder.DumpInterface( c.Value)))}" });
                         //foreach (var @interface in interfaces)
                         //{
 
@@ -825,6 +890,8 @@ namespace EAVFramework.Generators
 
 
         }
+
+       
 
         private static void AddEntityKeyAttributes(INamedTypeSymbol @interface, TypeBuilder interfaceEntityType)
         {

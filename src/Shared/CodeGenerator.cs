@@ -364,6 +364,7 @@ namespace EAVFramework.Shared
                     return typeof(string);
                 case "guid":
                 case "lookup":
+                case "polylookup":
                     return typeof(Guid?);
                 case "integer":
                 case "int":
