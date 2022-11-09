@@ -31,6 +31,8 @@ using static EAVFramework.Shared.TypeHelper;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using System.Linq.Expressions;
+using System.Linq;
+using EAVFramework.Shared;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -50,11 +52,48 @@ namespace Microsoft.Extensions.DependencyInjection
     }
 
 
+    public static class GenericTypeExtensions
+    {
+        public static Type ResolveGenericArguments<TModel>(this Type t)
+        {
+            var ttt = t.GetGenericArguments().Select(ta =>
+            {
+                var constraints = ta.GetGenericParameterConstraints();
+                if (constraints.Any(tta => tta == typeof(DynamicContext)))
+                {
+                    return typeof(DynamicContext);
+                }
+
+                var @interface = constraints.FirstOrDefault(c => c.IsInterface && !string.IsNullOrEmpty(c.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey));
+                if (@interface != null)
+                {
+
+                    if (@interface.IsGenericType)
+                    {
+                        return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
+                       t.GetInterfaces().Any(c => c.IsGenericType && c.GetGenericTypeDefinition() == @interface.GetGenericTypeDefinition())).FirstOrDefault();
+                    }
+
+
+                    return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
+                            t.GetInterfaces().Any(c => c == @interface)).FirstOrDefault();
+                }
+
+                throw new InvalidOperationException("Cant find constraint for " + ta.Name);
+
+            }).ToArray();
+            return t.MakeGenericType(ttt);
+        }
+    }
+
     /// <summary>
     /// Builder extension methods for registering core services
     /// </summary>
     public static class EAVFrameworkBuilderExtensionsCore
     {
+
+       
+
         /// <summary>
         /// Creates a builder.
         /// </summary>
@@ -284,12 +323,33 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="name">The name.</param>
         /// <param name="path">The path.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddEndpoint<T,TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
+        public static IEndpointBuilder AddEndpoint<T,TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
             where T : class, IEndpointHandler<TContext>
             where TContext : DynamicContext
         {
-            builder.Services.AddTransient<T>();
-            builder.Services.AddSingleton(new EAVFramework.Hosting.Endpoint<TContext>(name, pattern,methods, typeof(T)));
+            return builder.Services.AddEndpoint<T, TContext>(name,pattern,methods);
+             
+         
+        }
+
+        public static IEndpointBuilder AddEndpoint<T, TContext>(this IServiceCollection services, string name, string pattern, params string[] methods)
+           where T : class, IEndpointHandler<TContext>
+           where TContext : DynamicContext
+        {
+            return services.AddEndpoint<TContext>(typeof(T),name,pattern,methods);
+            
+
+          
+        }
+
+        public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services,Type endpoint,  string name, string pattern, params string[] methods)
+          
+          where TContext : DynamicContext
+        {
+            services.AddTransient(endpoint);
+
+            var builder = new EAVFramework.Hosting.Endpoint<TContext>(name, pattern, methods, endpoint);
+            services.AddSingleton(builder);
 
             return builder;
         }

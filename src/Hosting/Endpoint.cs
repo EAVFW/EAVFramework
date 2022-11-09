@@ -2,6 +2,7 @@
 using EAVFramework.Events;
 using EAVFramework.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -182,8 +183,12 @@ namespace EAVFramework.Hosting
     //        }
     //    }
     //}
-
-    public class Endpoint<TContext> where TContext : DynamicContext
+    public interface IEndpointBuilder
+    {
+        IEndpointBuilder WithMetadata(params object[] metadata);
+    }
+    public class Endpoint<TContext> : IEndpointBuilder
+        where TContext : DynamicContext
     {
         public Endpoint(string name, string pattern, IEnumerable<string> methods, Type handlerType)
         {
@@ -224,5 +229,12 @@ namespace EAVFramework.Hosting
         /// The handler.
         /// </value>
         public Type Handler { get; set; }
+
+        public List<object> Metadata { get; } = new List<object>();
+        public IEndpointBuilder WithMetadata(params object[] metadata)
+        {
+            Metadata.AddRange(metadata);
+            return this;
+        }
     }
 }

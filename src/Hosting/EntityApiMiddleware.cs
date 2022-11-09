@@ -50,7 +50,13 @@ namespace EAVFramework.Hosting
                         .ProcessAsync(context, context.RequestServices.GetService(endpoint.Handler) as IEndpointHandler<TContext>))
                     .WithDisplayName(endpoint.Name)
                     .WithMetadata(endpoint);
-                
+
+                if (endpoint.Metadata.Any())
+                {
+                    endpointConfig.WithMetadata(items: endpoint.Metadata.ToArray());
+                }
+
+
                 options.Endpoints.EndpointAuthorizationConfiguration?.Invoke(endpointConfig);
 
                 options.Endpoints.EndpointConfiguration?.Invoke(endpointConfig);
