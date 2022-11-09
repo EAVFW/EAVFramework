@@ -40,13 +40,16 @@ namespace EAVFramework.Shared.V2
                 attProp.SetCustomAttribute(DataMemberAttributeBuilder);
             }
             {
-                CustomAttributeBuilder EntityFieldAttributeBuilder =
-                   new CustomAttributeBuilder(EntityFieldAttributeCtor, new object[] { }, new[] {
+                if (!string.IsNullOrEmpty(attributeKey))
+                {
+                    CustomAttributeBuilder EntityFieldAttributeBuilder =
+                       new CustomAttributeBuilder(EntityFieldAttributeCtor, new object[] { }, new[] {
                    EntityFieldAttributeAttributeKeyName
-                   }, new[] { attributeKey });
+                       }, new[] { attributeKey });
 
 
-                attProp.SetCustomAttribute(EntityFieldAttributeBuilder);
+                    attProp.SetCustomAttribute(EntityFieldAttributeBuilder);
+                }
             }
 
         }

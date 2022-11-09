@@ -5,7 +5,7 @@ namespace MC.Models
 {
 	[Serializable()]
 	[EntityDTO(LogicalName="securitygroup",Schema="dbo")]
-	[Entity(LogicalName="securitygroup",SchemaName="SecurityGroup",CollectionSchemaName="SecurityGroups",IsBaseClass=false)]
+	[Entity(LogicalName="securitygroup",SchemaName="SecurityGroup",CollectionSchemaName="SecurityGroups",IsBaseClass=false,EntityKey="Security Group")]
 	public partial class SecurityGroup : Identity
 	{
 		public SecurityGroup()
