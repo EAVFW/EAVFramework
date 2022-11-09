@@ -99,13 +99,15 @@ namespace EAVFramework.Shared.V2
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName)),
-                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.IsBaseClass))
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.IsBaseClass)),
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.EntityKey))
 
                     }, new object[] {
                    LogicalName ,
                    SchemaName,
                    CollectionSchemaName,
-                   IsBaseEntity
+                   IsBaseEntity,
+                   EntityKey
                     }));
 
 

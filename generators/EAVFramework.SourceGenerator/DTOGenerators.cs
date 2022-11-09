@@ -298,10 +298,12 @@ namespace EAVFramework.Generators
 
 
                     var referencedBaseTypes = FindReferencedBaseTypes(context, "BaseEntityAttribute").ToArray();
-                    var interfaces = FindReferencedBaseTypes(context, "EntityInterfaceAttribute", "ConstraintMappingAttribute").Select(BaseInterfaceType.Create)
+                    var interfaces = FindReferencedBaseTypes(context, "EntityInterfaceAttribute", "ConstraintMappingAttribute")
+                        .Where(c=>c.TypeKind == TypeKind.Interface)
+                        .Select(BaseInterfaceType.Create)
                      .ToDictionary(k => k.Name ?? Guid.NewGuid().ToString(), v => v);
 
-
+                   
 
 
                     //if (!context.Compilation.ReferencedAssemblyNames.Any(ai => ai.Name.Equals("Newtonsoft.Json", StringComparison.OrdinalIgnoreCase)))

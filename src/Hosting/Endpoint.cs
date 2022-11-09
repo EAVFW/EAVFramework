@@ -186,6 +186,8 @@ namespace EAVFramework.Hosting
     public interface IEndpointBuilder
     {
         IEndpointBuilder WithMetadata(params object[] metadata);
+
+        IEndpointBuilder IgnoreRoutePrefix(bool ignoreRoutePrefix =true);
     }
     public class Endpoint<TContext> : IEndpointBuilder
         where TContext : DynamicContext
@@ -234,6 +236,12 @@ namespace EAVFramework.Hosting
         public IEndpointBuilder WithMetadata(params object[] metadata)
         {
             Metadata.AddRange(metadata);
+            return this;
+        }
+        public bool RoutePrefixIgnored { get; private set; }
+        public IEndpointBuilder IgnoreRoutePrefix(bool ignoreRoutePrefix)
+        {
+            RoutePrefixIgnored = ignoreRoutePrefix;
             return this;
         }
     }

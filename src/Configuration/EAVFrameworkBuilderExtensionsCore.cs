@@ -54,14 +54,34 @@ namespace Microsoft.Extensions.DependencyInjection
 
     public static class GenericTypeExtensions
     {
-        public static Type ResolveGenericArguments<TModel>(this Type t)
+        public static Type ResolveGenericArguments<TContext,TModel>(this Type t) where TContext : DynamicContext
         {
             var ttt = t.GetGenericArguments().Select(ta =>
             {
                 var constraints = ta.GetGenericParameterConstraints();
                 if (constraints.Any(tta => tta == typeof(DynamicContext)))
                 {
-                    return typeof(DynamicContext);
+                    return typeof(TContext);
+                }
+
+                if(constraints.Any(tta => tta == typeof(IConvertible)))
+                {
+                    //enums
+                    var constraintMapping = t.GetCustomAttributes<ConstraintMappingAttribute>().FirstOrDefault(c => c.ConstraintName == ta.Name)
+                    ?? throw new InvalidOperationException($"No ConstraintMappingAttribute set for the Contraints {ta.Name} on {t.Name}");
+
+
+
+                    var entirtyType = typeof(TModel).Assembly.GetTypes().FirstOrDefault(t => 
+                    t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute &&
+                    t.GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && attr.EntityKey == constraintMapping.EntityKey);
+
+                    var propertyType = entirtyType.GetProperties().FirstOrDefault(c =>
+                        c.GetCustomAttribute<EntityFieldAttribute>() is EntityFieldAttribute field && field.AttributeKey == constraintMapping.AttributeKey);
+
+                    return Nullable.GetUnderlyingType(propertyType.PropertyType) ?? propertyType.PropertyType;
+
+
                 }
 
                 var @interface = constraints.FirstOrDefault(c => c.IsInterface && !string.IsNullOrEmpty(c.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey));
@@ -79,7 +99,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             t.GetInterfaces().Any(c => c == @interface)).FirstOrDefault();
                 }
 
-                throw new InvalidOperationException("Cant find constraint for " + ta.Name);
+                throw new InvalidOperationException($"Cant find constraint for {ta.Name} on {t.Name}" );
 
             }).ToArray();
             return t.MakeGenericType(ttt);

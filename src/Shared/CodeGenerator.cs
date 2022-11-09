@@ -72,8 +72,12 @@ namespace EAVFramework.Shared
         public string CollectionSchemaName { get; set; }
 
         public bool IsBaseClass { get; set; }
+        public string EntityKey { get; set; }
     }
-
+    public class EntityFieldAttribute : Attribute
+    {
+        public string AttributeKey { get; set; }
+    }
 
     public class AttributeAttribute : Attribute
     {
@@ -86,6 +90,7 @@ namespace EAVFramework.Shared
     {
         public string LogicalName { get; set; }
         public string Schema { get; set; }
+       
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
@@ -105,7 +110,8 @@ namespace EAVFramework.Shared
     {
         public string AttributeKey { get; set; }
     }
-    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = true)]
+     
     public class ConstraintMappingAttribute : Attribute
     {
         public string EntityKey { get; set; }

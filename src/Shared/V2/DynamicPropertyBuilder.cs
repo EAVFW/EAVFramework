@@ -122,7 +122,7 @@ namespace EAVFramework.Shared.V2
 
             var (prop, field) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, DTOPropertyType ?? PropertyType);
 
-            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(prop, LogicalName);
+            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(prop, LogicalName,AttributeKey);
 
             dynamicCodeService.EmitPropertyService.CreateJsonSerializationAttribute(prop, LogicalName);
 
