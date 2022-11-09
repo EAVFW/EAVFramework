@@ -609,13 +609,15 @@ namespace EAVFramework.Generators
 
                                             if(baseTypeInterfacesbuilders.ContainsKey(contraintFullName))
                                             {
+                                                var defaultEntityKey = @interface.GetAttributes().Where(attr => attr.AttributeClass.Name == "EntityInterfaceAttribute")
+                                                    .FirstOrDefault().NamedArguments.FirstOrDefault(k => k.Key == "EntityKey").Value.Value as string;
 
                                                 var BaseEntityAttributes = @interface.GetAttributes().Where(attr => attr.AttributeClass.Name == "ConstraintMappingAttribute")
 
                                                     .Select(c => new
                                                     {
-                                                        EntityKey = c.NamedArguments.First(k => k.Key == "EntityKey").Value.Value as string,
-                                                        ConstraintName = c.NamedArguments.First(k => k.Key == "ConstraintName").Value.Value as string
+                                                        EntityKey = c.NamedArguments.FirstOrDefault(k => k.Key == "EntityKey").Value.Value as string ?? defaultEntityKey ?? throw new KeyNotFoundException($"ConstraintMappingAttribute EntityKey default='{defaultEntityKey}' not found for " + @interface.Name),
+                                                        ConstraintName = c.NamedArguments.FirstOrDefault(k => k.Key == "ConstraintName").Value.Value as string ?? throw new KeyNotFoundException("ConstraintMappingAttribute Attribute Key not found for " + @interface.Name)
                                                     })
                                                     .ToDictionary(k=>k.ConstraintName, v=>v.EntityKey);
 
