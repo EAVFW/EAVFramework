@@ -97,6 +97,10 @@ namespace EAVFramework.Plugins
         }
     }
 
+    public class PluginContextAccessor
+    {
+        public PluginContext Context { get; internal set; }
+    }
 
     public class EntityPlugin<TContext,T> : EntityPlugin<TContext>
         where TContext : DynamicContext
@@ -110,8 +114,10 @@ namespace EAVFramework.Plugins
         public override async Task Execute(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry collectionEntry)
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
+            var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
             foreach (var entity in collectionEntry.CurrentValue)
             {
+
                 var plugincontext = new PluginContext<TContext, T>
                 {
                     Input = entity as T,
@@ -124,6 +130,8 @@ namespace EAVFramework.Plugins
                           EntityCollectionSchemaName = entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
                       }
                 };
+
+                contextWrapper.Context = plugincontext;
                 //var pluginContext = Activator.CreateInstance(typeof(PluginContext<,>).MakeGenericType(typeof(DBContext), entity.Entity.GetType()));
 
                 var handler = services.GetService(Handler) as IPlugin<TContext, T>;
@@ -140,27 +148,12 @@ namespace EAVFramework.Plugins
         public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) 
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
-            var plugincontext = new PluginContext<TContext, T>
-            {
-                Input = entity.Entity as T,
-                DB= db,
-                User = principal,
-                
-                EntityResource = new EAVResource
-                {
-                    EntityType = entity.Entity.GetType(),
-                    EntityCollectionSchemaName = entity.Entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
-                }
-            };
-            //var pluginContext = Activator.CreateInstance(typeof(PluginContext<,>).MakeGenericType(typeof(DBContext), entity.Entity.GetType()));
-
+           
+            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services,db, entity, principal);
+           
             var handler = services.GetService(Handler) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
-            //var invoker = Invokers.GetOrAdd(entityType, (t) => typeof(IPlugin<,>).MakeGenericType(t).GetMethod("Execute"));
-
-            //var task = invoker.Invoke(handler, new object[] { pluginContext }) as Task;
-            //await task;
-
+            
             return plugincontext;
         }
     }

@@ -32,7 +32,7 @@ namespace EAVFramework
     [Serializable]
     public class DynamicEntity
     {
-       
+        
     }
 
 

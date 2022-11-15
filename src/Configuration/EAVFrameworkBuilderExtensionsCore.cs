@@ -51,6 +51,8 @@ namespace Microsoft.Extensions.DependencyInjection
         }
     }
 
+  
+
 
     public static class GenericTypeExtensions
     {
@@ -304,6 +306,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddPluggableServices(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.TryAddScoped<PluginContextAccessor>();
             builder.Services.TryAddScoped(typeof(PluginsAccesser<>));
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
@@ -351,6 +354,7 @@ namespace Microsoft.Extensions.DependencyInjection
              
          
         }
+      
 
         public static IEndpointBuilder AddEndpoint<T, TContext>(this IServiceCollection services, string name, string pattern, params string[] methods)
            where T : class, IEndpointHandler<TContext>
@@ -362,6 +366,17 @@ namespace Microsoft.Extensions.DependencyInjection
           
         }
 
+
+        public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services, Type endpoint)
+               where TContext : DynamicContext
+        {
+            var attr = endpoint.GetCustomAttribute<EndpointRouteAttribute>();
+
+            return services.AddEndpoint<TContext>(endpoint,attr.Name, attr.Route,
+                endpoint.GetCustomAttributes<EndpointRouteMethodAttribute>(true).Select(c=>c.Method).ToArray());
+
+
+        }
         public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services,Type endpoint,  string name, string pattern, params string[] methods)
           
           where TContext : DynamicContext

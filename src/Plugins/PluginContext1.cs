@@ -6,15 +6,17 @@ using EAVFramework.Endpoints;
 using EAVFramework.Shared;
 using EAVFramework.Validation;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EAVFramework.Plugins
 {
     public static class PluginContextFactory
     {
-        public static PluginContext<TContext,T> CreateContext<TContext,T>(EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user )
+        public static PluginContext<TContext,T> CreateContext<TContext,T>(IServiceProvider services,EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user )
             where TContext : DynamicContext
         {
-             var plugincontext = new PluginContext<TContext, T>
+            var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
+            var plugincontext = new PluginContext<TContext, T>
             {
                 Input = (T)entry.Entity,
                 DB = context,
@@ -25,6 +27,7 @@ namespace EAVFramework.Plugins
                     EntityCollectionSchemaName = entry.Entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
                 }
             };
+            contextWrapper.Context = plugincontext;
             return plugincontext;
         }
         public static PluginContext CreateContext<TContext>(TContext context, EntityEntry entry, ClaimsPrincipal user, Type recordtype)
