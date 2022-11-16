@@ -177,13 +177,14 @@ namespace EAVFramework.Endpoints
         {
             Context.ResetMigrationsContext();
         }
-            public async Task<T> ExecuteAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
+
+        public async Task<T> ExecuteTaskAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
         {
-            
+
             try
             {
                 await semaphoreSlim.WaitAsync(cancellationToken);
-                
+
                 return await query();
             }
             finally
@@ -191,7 +192,7 @@ namespace EAVFramework.Endpoints
                 semaphoreSlim.Release();
             }
         }
-        public async ValueTask<T> ExecuteAsync<T>(Func<ValueTask<T>> query, CancellationToken cancellationToken = default)
+        public async ValueTask<T> ExecuteValueTaskAsync<T>(Func<ValueTask<T>> query, CancellationToken cancellationToken = default)
         {
 
             try

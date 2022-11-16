@@ -603,7 +603,7 @@ namespace EAVFramework
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            return manager.EnusureBuilded($"{modelOptions.Value.Schema}_{manifest.SelectToken("$.version") ?? MigrationDefaultName}", manifest, this.modelOptions.Value);
+            return manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", manifest, this.modelOptions.Value);
         }
 
         public void AddNewManifest(JToken manifest)
