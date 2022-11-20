@@ -355,6 +355,12 @@ namespace EAVFramework.Shared
     }
     public class DefaultManifestTypeMapper : IManifestTypeMapper
     {
+        private readonly CodeGenerationOptions codeGenerationOptions;
+
+        public DefaultManifestTypeMapper(CodeGenerationOptions codeGenerationOptions)
+        {
+            this.codeGenerationOptions = codeGenerationOptions;
+        }
         public Type GetCLRType(string manifestType)
         {
             if (string.IsNullOrWhiteSpace(manifestType))
@@ -364,6 +370,10 @@ namespace EAVFramework.Shared
 
             switch (manifestType.ToLower())
             {
+                case "point":
+                    return codeGenerationOptions.GeoSpatialOptions.PointGeomeryType;
+                case "time":
+                    return typeof(TimeSpan?);
                 case "text":
                 case "string":
                 case "multilinetext":

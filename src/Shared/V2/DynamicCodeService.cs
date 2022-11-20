@@ -30,7 +30,7 @@ namespace EAVFramework.Shared.V2
             EmitPropertyService = emitPropertyService ?? new DefaultEmitPropertyService(options);
             LookupPropertyBuilder = lookupPropertyBuilder ?? new DefaultLookupBuilder(options.MigrationBuilderCreateIndex);
             ChoiceEnumBuilder = choiceEnumBuilder ?? new DefaultChoiceEnumBuilder();
-            TypeMapper = typeMapper ?? new DefaultManifestTypeMapper();
+            TypeMapper = typeMapper ?? new DefaultManifestTypeMapper(options);
         }
 
 

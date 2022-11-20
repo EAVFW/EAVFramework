@@ -3,6 +3,10 @@ using System.Reflection;
 
 namespace EAVFramework.Shared.V2
 {
+    public class GeoSpatialOptions
+    {
+        public Type PointGeomeryType {get;set;}
+    }
     public class CodeGenerationOptions
     {
         
@@ -74,6 +78,9 @@ namespace EAVFramework.Shared.V2
         public int ReferentialActionNoAction { get; set; }
         public MethodInfo LambdaBase { get; set; }
         public InversePropertyCollectionNamePattern InversePropertyCollectionName { get; set; } = InversePropertyCollectionNamePattern.ConcatWhenMultipleLookups;
+
+
+        public GeoSpatialOptions GeoSpatialOptions { get; set; } = new GeoSpatialOptions();
     }
     public enum InversePropertyCollectionNamePattern
     {

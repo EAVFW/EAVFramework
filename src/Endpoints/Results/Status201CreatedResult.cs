@@ -20,4 +20,19 @@ namespace EAVFramework.Endpoints.Results
             await context.Response.WriteJsonAsync(data, null, context.Request.Query.ContainsKey("pretty") ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None);
         }
     }
+    public class Status200CreatedResult : IEndpointResult
+    {
+       
+
+        public Status200CreatedResult()
+        {
+             
+        }
+
+        public Task ExecuteAsync(HttpContext context)
+        {
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            return Task.CompletedTask;
+        }
+    }
 }

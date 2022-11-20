@@ -36,6 +36,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 var contexttype = plugin[0];
                 var entitytype = plugin[1];
 
+
+
                 var entry = (EntityPlugin)Activator.CreateInstance(typeof(EntityPlugin<,>).MakeGenericType(contexttype, entitytype));
 
                 entry.Execution = attr.Execution;
