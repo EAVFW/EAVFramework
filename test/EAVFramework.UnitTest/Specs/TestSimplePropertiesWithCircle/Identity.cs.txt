@@ -9,7 +9,7 @@ namespace MC.Models
 {
 	[Serializable()]
 	[EntityDTO(LogicalName="identity",Schema="dbo")]
-	[Entity(LogicalName="identity",SchemaName="Identity",CollectionSchemaName="Identities",IsBaseClass=true)]
+	[Entity(LogicalName="identity",SchemaName="Identity",CollectionSchemaName="Identities",IsBaseClass=true,EntityKey="Identity")]
 	public partial class Identity : DynamicEntity
 	{
 		public Identity()
@@ -17,12 +17,14 @@ namespace MC.Models
 		}
 
 		[DataMember(Name="id")]
+		[EntityField(AttributeKey="Id")]
 		[JsonProperty("id")]
 		[JsonPropertyName("id")]
 		[PrimaryKey()]
 		public Guid Id {get;set;}
 
 		[DataMember(Name="primaryserver")]
+		[EntityField(AttributeKey="Primary Server")]
 		[JsonProperty("primaryserver")]
 		[JsonPropertyName("primaryserver")]
 		public Server PrimaryServer {get;set;}

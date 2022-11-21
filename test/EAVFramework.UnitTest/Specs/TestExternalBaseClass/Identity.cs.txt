@@ -11,7 +11,7 @@ namespace MC.Models
 {
 	[Serializable()]
 	[EntityDTO(LogicalName="identity",Schema="dbo")]
-	[Entity(LogicalName="identity",SchemaName="Identity",CollectionSchemaName="Identities",IsBaseClass=true)]
+	[Entity(LogicalName="identity",SchemaName="Identity",CollectionSchemaName="Identities",IsBaseClass=true,EntityKey="Identity")]
 	public partial class Identity : BaseIdEntity<Identity>, IHaveName, IIdentity
 	{
 		public Identity()
@@ -19,6 +19,7 @@ namespace MC.Models
 		}
 
 		[DataMember(Name="name")]
+		[EntityField(AttributeKey="Name")]
 		[JsonProperty("name")]
 		[JsonPropertyName("name")]
 		[PrimaryField()]

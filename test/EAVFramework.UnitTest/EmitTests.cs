@@ -122,7 +122,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
             });
 
             var assembly = codeMigratorV2.CreateAssemblyBuilder("MC.Models", "MC.Models");
@@ -159,10 +159,10 @@ namespace EAVFramework.UnitTest
             {
                 o.Schema = "dbo";
                 o.DTOBaseClasses = new[] { typeof(FullBaseOwnerEntity<>), typeof(FullBaseIdEntity<>) };
-                o.DTOInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
+                o.DTOBaseInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
-                    typeof(IOpenIdConnectClient<,,>),
+                    typeof(IOpenIdConnectClient<,>),
                     typeof(IAllowedGrantType<>),
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
@@ -206,7 +206,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] {  
+                o.DTOBaseInterfaces = new[] {  
                     typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
                     typeof(IOpenIdConnectResource<>),
@@ -255,7 +255,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
                 o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) };
 
             });
@@ -288,7 +288,7 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
                 o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) }; 
                 
             });
@@ -518,18 +518,18 @@ namespace EAVFramework.UnitTest
     [EntityInterface(EntityKey = "OpenId Connect Client")]
     [ConstraintMapping(AttributeKey = "Consent Type", ConstraintName = "TOpenIdConnectClientConsentTypes")]
     [ConstraintMapping(AttributeKey = "Type", ConstraintName = "TOpenIdConnectClientTypes")]
-    [ConstraintMapping(EntityKey = "Allowed Grant Type", ConstraintName = nameof(TAllowedGrantType))]
+   // [ConstraintMapping(EntityKey = "Allowed Grant Type", ConstraintName = nameof(TAllowedGrantType))]
 
-    public interface IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes>
+    public interface IOpenIdConnectClient<TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes>
         where TOpenIdConnectClientTypes : struct, IConvertible
         where TOpenIdConnectClientConsentTypes : struct, IConvertible
-        where TAllowedGrantType : DynamicEntity //, IAllowedGrantType<TAllowedGrantTypeValue>
+       // where TAllowedGrantType : DynamicEntity //, IAllowedGrantType<TAllowedGrantTypeValue>
     {
         public TOpenIdConnectClientTypes? Type { get; set; }
 
         public TOpenIdConnectClientConsentTypes? ConsentType { get; set; }
 
-        public ICollection<TAllowedGrantType> AllowedGrantTypes { get; set; }
+      //  public ICollection<TAllowedGrantType> AllowedGrantTypes { get; set; }
     }
        
     [EntityInterface(EntityKey = "OpenId Connect Identity Resource")]

@@ -27,14 +27,14 @@ namespace EAVFramework
 
 
 
-   
-   
+
+
     [Serializable]
     public class DynamicEntity
     {
-    
+        
     }
-   
+
 
     public class DynamicMigration : Migration
     {

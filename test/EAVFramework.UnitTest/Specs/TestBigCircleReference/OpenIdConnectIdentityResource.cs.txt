@@ -6,7 +6,7 @@ namespace MC.Models
 {
 	[Serializable()]
 	[EntityDTO(LogicalName="openidconnectidentityresource",Schema="dbo")]
-	[Entity(LogicalName="openidconnectidentityresource",SchemaName="OpenIdConnectIdentityResource",CollectionSchemaName="OpenIdConnectIdentityResources",IsBaseClass=false)]
+	[Entity(LogicalName="openidconnectidentityresource",SchemaName="OpenIdConnectIdentityResource",CollectionSchemaName="OpenIdConnectIdentityResources",IsBaseClass=false,EntityKey="OpenId Connect Identity Resource")]
 	public partial class OpenIdConnectIdentityResource : OpenIdConnectResource, IOpenIdConnectIdentityResource
 	{
 		public OpenIdConnectIdentityResource()

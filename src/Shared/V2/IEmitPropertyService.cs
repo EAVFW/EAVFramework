@@ -8,7 +8,7 @@ namespace EAVFramework.Shared.V2
     {
         void AddInterfaces(DynamicTableBuilder dynamicTableBuilder);
         void CreateJsonSerializationAttribute(PropertyBuilder attProp, string logicalName);
-        void CreateDataMemberAttribute(PropertyBuilder attProp, string logicalName);
+        void CreateDataMemberAttribute(PropertyBuilder attProp, string logicalName, string entityKey);
         (PropertyBuilder, FieldBuilder) CreateProperty(TypeBuilder builder, string name, Type type, PropertyAttributes props = PropertyAttributes.None,
             MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Virtual);
 

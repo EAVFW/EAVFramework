@@ -14,6 +14,28 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
+    CREATE TABLE [tests].[Identities] (
+        [Id] uniqueidentifier NOT NULL,
+        [Name] nvarchar(255) NULL,
+        [CreatedById] uniqueidentifier NOT NULL,
+        [CreatedOn] datetime2 NOT NULL,
+        [ModifiedById] uniqueidentifier NOT NULL,
+        [ModifiedOn] datetime2 NOT NULL,
+        [OwnerId] uniqueidentifier NOT NULL,
+        [RowVersion] rowversion NOT NULL,
+        CONSTRAINT [PK_Identities] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Identities_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_Identities_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
+        CONSTRAINT [FK_Identities_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
+    );
+    DECLARE @description AS sql_variant;
+    SET @description = N'comment';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Identities';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
     CREATE TABLE [tests].[Servers] (
         [Id] uniqueidentifier NOT NULL,
         [Name] nvarchar(255) NULL,
@@ -63,29 +85,8 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
-    CREATE TABLE [tests].[Identities] (
-        [Id] uniqueidentifier NOT NULL,
-        [Name] nvarchar(255) NULL,
-        [CreatedById] uniqueidentifier NOT NULL,
-        [CreatedOn] datetime2 NOT NULL,
-        [ModifiedById] uniqueidentifier NOT NULL,
-        [ModifiedOn] datetime2 NOT NULL,
-        [OwnerId] uniqueidentifier NOT NULL,
-        [RowVersion] rowversion NOT NULL,
-        CONSTRAINT [PK_Identities] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_Identities_Identities_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_Identities_Identities_ModifiedById] FOREIGN KEY ([ModifiedById]) REFERENCES [tests].[Identities] ([Id]),
-        CONSTRAINT [FK_Identities_Identities_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [tests].[Identities] ([Id])
-    );
-    DECLARE @description AS sql_variant;
-    SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Identities';
-END;
-GO
-
-IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
-BEGIN
     CREATE TABLE [tests].[OpenIdConnectClients] (
+        [Id] uniqueidentifier NOT NULL,
         [AbsoluteRefreshTokenLifetime] int NULL,
         [AccessTokenLifetime] int NULL,
         [AccessTokenType] int NULL,
@@ -132,7 +133,8 @@ BEGIN
         [Type] int NOT NULL,
         [UpdateAccessTokenClaimsOnRefresh] bit NULL,
         [UserCodeType] nvarchar(100) NULL,
-        [UserSSOLifetime] int NULL
+        [UserSSOLifetime] int NULL,
+        CONSTRAINT [PK_OpenIdConnectClients] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -237,7 +239,9 @@ GO
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
     CREATE TABLE [tests].[SystemUsers] (
-        [Email] nvarchar(100) NULL
+        [Id] uniqueidentifier NOT NULL,
+        [Email] nvarchar(100) NULL,
+        CONSTRAINT [PK_SystemUsers] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
@@ -248,8 +252,10 @@ GO
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
     CREATE TABLE [tests].[SecurityGroups] (
+        [Id] uniqueidentifier NOT NULL,
         [ExternalId] nvarchar(100) NULL,
-        [IsBusinessUnit] bit NULL
+        [IsBusinessUnit] bit NULL,
+        CONSTRAINT [PK_SecurityGroups] PRIMARY KEY ([Id])
     );
     DECLARE @description AS sql_variant;
     SET @description = N'comment';

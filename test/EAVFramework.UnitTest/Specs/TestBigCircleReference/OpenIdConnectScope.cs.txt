@@ -7,7 +7,7 @@ namespace MC.Models
 {
 	[Serializable()]
 	[EntityDTO(LogicalName="openidconnectscope",Schema="dbo")]
-	[Entity(LogicalName="openidconnectscope",SchemaName="OpenIdConnectScope",CollectionSchemaName="OpenIdConnectScopes",IsBaseClass=false)]
+	[Entity(LogicalName="openidconnectscope",SchemaName="OpenIdConnectScope",CollectionSchemaName="OpenIdConnectScopes",IsBaseClass=false,EntityKey="OpenId Connect Scope")]
 	public partial class OpenIdConnectScope : OpenIdConnectResource, IOpenIdConnectScope<DynamicEntity>
 	{
 		public OpenIdConnectScope()

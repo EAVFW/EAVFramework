@@ -31,81 +31,91 @@ using static EAVFramework.Shared.TypeHelper;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using System.Linq.Expressions;
+using System.Linq;
+using EAVFramework.Shared;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class DynamicCodeServiceFactory
+
+    public static class DynamicCodeServiceExtensions
     {
-        public static DynamicCodeService Create(string schema)
+        public static IServiceCollection AddCodeServices(this IServiceCollection services)
         {
-            return new DynamicCodeService(CreateOptions(schema));
-        }
-
-        public static CodeGenerationOptions CreateOptions(string schema)
-        {
-            return new CodeGenerationOptions
+            services.AddSingleton<IMigrationManager, MigrationManager>();
+            services.AddOptions<MigrationManagerOptions>().Configure<IOptions<DynamicContextOptions>>((o, oo) =>
             {
-                //  MigrationName="Initial",
-                Schema = schema,
-                JsonPropertyAttributeCtor = typeof(JsonPropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
-                JsonPropertyNameAttributeCtor = typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute).GetConstructor(new Type[] { typeof(string) }),
-                InverseAttributeCtor = typeof(InversePropertyAttribute).GetConstructor(new Type[] { typeof(string) }),
-                ForeignKeyAttributeCtor = typeof(ForeignKeyAttribute).GetConstructor(new Type[] { typeof(string) }),
-
-                EntityConfigurationInterface = typeof(IEntityTypeConfiguration),
-                EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),
-                EntityTypeBuilderType = typeof(EntityTypeBuilder),
-                EntityTypeBuilderToTable = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }), "EntityTypeBuilderToTable"),
-                EntityTypeBuilderHasKey = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasKey"),
-                EntityTypeBuilderPropertyMethod = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }), "EntityTypeBuilderPropertyMethod"),
-
-                IsRequiredMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                                   .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRequired)), "IsRequiredMethod"),
-                IsRowVersionMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                                     .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.IsRowVersion)), "IsRowVersionMethod"),
-                HasConversionMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                              .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasConversion), 1, new Type[] { }), "HasConversionMethod"),
-                HasPrecisionMethod = Resolve(() => typeof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder)
-                                   .GetMethod(nameof(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasPrecision), new Type[] { typeof(int), typeof(int) }), "HasPrecisionMethod"),
-
-
-
-                DynamicTableType = typeof(IDynamicTable),
-                DynamicTableArrayType = typeof(IDynamicTable[]),
-
-
-                ColumnsBuilderType = typeof(ColumnsBuilder),
-                CreateTableBuilderType = typeof(CreateTableBuilder<>),
-                CreateTableBuilderPrimaryKeyName = nameof(CreateTableBuilder<object>.PrimaryKey),
-                CreateTableBuilderForeignKeyName = nameof(CreateTableBuilder<object>.ForeignKey),
-                ColumnsBuilderColumnMethod = Resolve(() => typeof(ColumnsBuilder).GetMethod(nameof(ColumnsBuilder.Column), BindingFlags.Public | BindingFlags.Instance), "ColumnsBuilderColumnMethod"),
-                OperationBuilderAddColumnOptionType = typeof(OperationBuilder<AddColumnOperation>),
-
-
-                MigrationBuilderDropTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)), "MigrationBuilderDropTable"),
-                MigrationBuilderCreateTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)), "MigrationBuilderCreateTable"),
-                MigrationBuilderSQL = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.Sql)), "MigrationBuilderSQL"),
-                MigrationBuilderCreateIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string) }), "MigrationBuilderCreateIndex"),
-                MigrationBuilderDropIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
-                MigrationsBuilderAddColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)), "MigrationsBuilderAddColumn"),
-                MigrationsBuilderAddForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey), new Type[] { typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(ReferentialAction), typeof(ReferentialAction) }), "MigrationsBuilderAddForeignKey"),
-                MigrationsBuilderAlterColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AlterColumn)), "MigrationsBuilderAlterColumn"),
-                MigrationsBuilderDropForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropForeignKey)), "MigrationsBuilderDropForeignKey"),
-
-                ReferentialActionType = typeof(ReferentialAction),
-                ReferentialActionNoAction = (int)ReferentialAction.NoAction,
-
-
-                LambdaBase = Resolve(() => typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null), "LambdaBase"),
-
-            };
+                o.CopyFrom(oo.Value);
+            });
+            services.AddSingleton<IDynamicCodeServiceFactory, DynamicCodeServiceFactory>();
+            return services;
         }
     }
+
+  
+
+
+    public static class GenericTypeExtensions
+    {
+        public static Type ResolveGenericArguments<TContext,TModel>(this Type t) where TContext : DynamicContext
+        {
+            var ttt = t.GetGenericArguments().Select(ta =>
+            {
+                var constraints = ta.GetGenericParameterConstraints();
+                if (constraints.Any(tta => tta == typeof(DynamicContext)))
+                {
+                    return typeof(TContext);
+                }
+
+                if(constraints.Any(tta => tta == typeof(IConvertible)))
+                {
+                    //enums
+                    var constraintMapping = t.GetCustomAttributes<ConstraintMappingAttribute>().FirstOrDefault(c => c.ConstraintName == ta.Name)
+                    ?? throw new InvalidOperationException($"No ConstraintMappingAttribute set for the Contraints {ta.Name} on {t.Name}");
+
+
+
+                    var entirtyType = typeof(TModel).Assembly.GetTypes().FirstOrDefault(t => 
+                    t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute &&
+                    t.GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && attr.EntityKey == constraintMapping.EntityKey);
+
+                    var propertyType = entirtyType.GetProperties().FirstOrDefault(c =>
+                        c.GetCustomAttribute<EntityFieldAttribute>() is EntityFieldAttribute field && field.AttributeKey == constraintMapping.AttributeKey);
+
+                    return Nullable.GetUnderlyingType(propertyType.PropertyType) ?? propertyType.PropertyType;
+
+
+                }
+
+                var @interface = constraints.FirstOrDefault(c => c.IsInterface && !string.IsNullOrEmpty(c.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey));
+                if (@interface != null)
+                {
+
+                    if (@interface.IsGenericType)
+                    {
+                        return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
+                       t.GetInterfaces().Any(c => c.IsGenericType && c.GetGenericTypeDefinition() == @interface.GetGenericTypeDefinition())).FirstOrDefault();
+                    }
+
+
+                    return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
+                            t.GetInterfaces().Any(c => c == @interface)).FirstOrDefault();
+                }
+
+                throw new InvalidOperationException($"Cant find constraint for {ta.Name} on {t.Name}" );
+
+            }).ToArray();
+            return t.MakeGenericType(ttt);
+        }
+    }
+
     /// <summary>
     /// Builder extension methods for registering core services
     /// </summary>
     public static class EAVFrameworkBuilderExtensionsCore
     {
+
+       
+
         /// <summary>
         /// Creates a builder.
         /// </summary>
@@ -114,8 +124,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IEAVFrameworkBuilder AddEAVFrameworkBuilder<TContext>(this IServiceCollection services, string schema, string connectionString)
             where TContext : DynamicContext
         {
-            services.TryAddSingleton<DynamicCodeService>();
-            services.AddSingleton(DynamicCodeServiceFactory.CreateOptions(schema));
+         
             services.Configure<EAVFrameworkOptions>(o=> {
                 o.Schema = schema;
                 o.ConnectionString = connectionString;
@@ -278,12 +287,13 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddOptions();
             builder.Services.AddSingleton(
                 resolver => resolver.GetRequiredService<IOptions<EAVFrameworkOptions>>().Value);
-            builder.Services.AddSingleton<IMigrationManager, MigrationManager>();
+
+            
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
             builder.Services.AddScoped(typeof(EAVDBContext<>),typeof(EAVDBContext<>));
             builder.Services.AddSingleton<IODataConverterFactory, OdatatConverterFactory>();
-        
+            builder.Services.AddCodeServices();
             //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }
@@ -296,6 +306,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddPluggableServices(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.TryAddScoped<PluginContextAccessor>();
             builder.Services.TryAddScoped(typeof(PluginsAccesser<>));
             builder.Services.TryAddTransient<IEventService, DefaultEventService>();
             builder.Services.TryAddTransient<IEventSink, DefaultEventSink>();
@@ -335,12 +346,45 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="name">The name.</param>
         /// <param name="path">The path.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddEndpoint<T,TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
+        public static IEndpointBuilder AddEndpoint<T,TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
             where T : class, IEndpointHandler<TContext>
             where TContext : DynamicContext
         {
-            builder.Services.AddTransient<T>();
-            builder.Services.AddSingleton(new EAVFramework.Hosting.Endpoint<TContext>(name, pattern,methods, typeof(T)));
+            return builder.Services.AddEndpoint<T, TContext>(name,pattern,methods);
+             
+         
+        }
+      
+
+        public static IEndpointBuilder AddEndpoint<T, TContext>(this IServiceCollection services, string name, string pattern, params string[] methods)
+           where T : class, IEndpointHandler<TContext>
+           where TContext : DynamicContext
+        {
+            return services.AddEndpoint<TContext>(typeof(T),name,pattern,methods);
+            
+
+          
+        }
+
+
+        public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services, Type endpoint)
+               where TContext : DynamicContext
+        {
+            var attr = endpoint.GetCustomAttribute<EndpointRouteAttribute>();
+
+            return services.AddEndpoint<TContext>(endpoint,attr.Name, attr.Route,
+                endpoint.GetCustomAttributes<EndpointRouteMethodAttribute>(true).Select(c=>c.Method).ToArray());
+
+
+        }
+        public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services,Type endpoint,  string name, string pattern, params string[] methods)
+          
+          where TContext : DynamicContext
+        {
+            services.AddTransient(endpoint);
+
+            var builder = new EAVFramework.Hosting.Endpoint<TContext>(name, pattern, methods, endpoint);
+            services.AddSingleton(builder);
 
             return builder;
         }

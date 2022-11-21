@@ -2,14 +2,176 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text;
 using static EAVFramework.Shared.TypeHelper;
 
 namespace EAVFramework.Shared.V2
 {
+
+    public class InterfaceShadowBuilderContraintContainer
+    {
+        public int Order { get; set; }
+        public List<InterfaceShadowBuilderContraint> Constraints { get; } = new List<InterfaceShadowBuilderContraint>();
+    }
+    public class InterfaceShadowBuilderContraint
+    {
+        public Type Type { get; internal set; }
+        public InterfaceShadowBuilder Reference { get; internal set; }
+        public string[] TypeToEntityKeys { get; internal set; }
+    }
+    public class InterfaceShadowBuilder
+    {
+        public TypeBuilder Builder { get; }
+
+        public InterfaceShadowBuilder(ModuleBuilder myModule, ConcurrentDictionary<string, InterfaceShadowBuilder> baseTypeInterfacesbuilders, string fullname)
+        {
+            this.Builder = myModule.DefineType(fullname, TypeAttributes.Public
+                                                             | TypeAttributes.Interface
+                                                             | TypeAttributes.Abstract
+                                                             | TypeAttributes.AutoClass
+                                                             | TypeAttributes.AnsiClass
+                                                             | TypeAttributes.Serializable
+                                                             | TypeAttributes.BeforeFieldInit);
+
+            // AddEntityKeyAttributes(@interface as INamedTypeSymbol, interfaceEntityType);
+
+
+        }
+
+
+
+        public ConcurrentDictionary<string, InterfaceShadowBuilderContraintContainer> Contraints = new ConcurrentDictionary<string, InterfaceShadowBuilderContraintContainer>();
+
+        public void AddContraint(string name, InterfaceShadowBuilder interfaceShadowBuilder)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer(){ Order = Contraints.Count });
+            a.Constraints.Add(new InterfaceShadowBuilderContraint { Reference = interfaceShadowBuilder });
+        }
+
+        public void AddContraint(string name, Type type)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
+            a.Constraints.Add(new InterfaceShadowBuilderContraint { Type = type });
+        }
+
+        public void BuildConstraints()
+        {
+            if (Contraints.Keys.Any())
+            {
+
+                var builders = Builder.DefineGenericParameters(Contraints.OrderBy(c=>c.Value.Order).Select(c=>c.Key).ToArray());
+                foreach (var contraintbuilder in builders)
+                {
+                    var container = Contraints[contraintbuilder.Name];
+                   
+                    var types = Contraints[contraintbuilder.Name].Constraints.ToArray();
+
+                    var contraints = types.Select(c => {
+
+                        if (c.Type != null)
+                            return c.Type;
+
+                        var type = c.Reference.CreateType();
+
+                        if (type.IsGenericType)
+                        {
+
+                          //  var ttype = builders.FirstOrDefault(n => n.Name == "TType");
+                            var ttype = type.GetGenericArguments().Select(cc => builders.FirstOrDefault(n => n.Name == cc.Name)).ToArray();
+                            return type.MakeGenericType(ttype);
+                            throw new InvalidOperationException("contraint is generic " + type.Name);
+                            // return type.MakeGenericType(c.TypeToEntityKeys.Select(k => builders.First(b => b.Name == k)).ToArray());
+                        }
+
+                        if (c.TypeToEntityKeys != null)
+                        {
+
+                        }
+
+                        return type;
+
+
+                    }
+                    ).ToArray();
+
+                    contraintbuilder.SetInterfaceConstraints(contraints);
+                }
+            }
+        }
+        public void Build()
+        {
+            if (IsBuilded)
+                return;
+            IsBuilded = true;
+
+            BuildConstraints();
+        }
+        public bool IsBuilded { get; private set; }
+        public Type CreateType()
+        {
+            Build();
+            return Builder.CreateTypeInfo();
+        }
+
+        internal void AddContraint(string name, InterfaceShadowBuilder interfaceShadowBuilder, string[] typeToEntityKeys)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
+            a.Constraints.Add(new InterfaceShadowBuilderContraint { Reference = interfaceShadowBuilder, TypeToEntityKeys = typeToEntityKeys });
+        }
+
+        public static string DumpInterface(Type value)
+        {
+            var sb = new StringBuilder();
+            var constraints = new StringBuilder();
+            sb.Append(value.FullName);
+            if (value.ContainsGenericParameters)
+            {
+                sb.Append("<");
+                var f = false;
+                foreach (var pa in value.GetGenericArguments())
+                {
+                    if (f)
+                        sb.Append(",");
+                    f = true;
+                    sb.Append(pa.Name);
+                    var a = pa.GetGenericParameterConstraints();
+                    if (a.Any())
+                    {
+                        var ger = string.Join(", ", a.Select(aa => {
+
+                            if (aa.IsGenericType)
+                                return $"{aa.Name}<{string.Join(",",aa.GetGenericArguments().Select(ga=>ga.Name))}>";
+
+                            return aa.Name;
+                        }));
+                        constraints.AppendLine($"where {pa.Name} : {ger}");
+                      
+                        
+                    }
+                }
+                sb.Append(">");
+
+                sb.AppendLine();
+                sb.AppendLine(constraints.ToString());
+
+
+            }
+
+            return sb.ToString();
+        }
+
+        internal void AddContraint(string name)
+        {
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
+        }
+    }
+
     public interface IColumnPropertyResolver
     {
         object GetValue(string argName);
@@ -51,7 +213,6 @@ namespace EAVFramework.Shared.V2
 
         public bool GenerateDTO { get; set; } = true;
         public bool PartOfMigration { get; set; }
-
         public string ModuleName => $"{Namespace}_{MigrationName}";
 
         public Dictionary<string, Type> EntityDTOs { get; set; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
@@ -113,15 +274,24 @@ namespace EAVFramework.Shared.V2
             var tables = new Dictionary<string, DynamicTableBuilder>();
             foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
             {
+
+                var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entity.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+
+
                 var table = builder.WithTable(entity.Name,
                     tableSchemaname: entity.Value.SelectToken("$.schemaName").ToString(),
                     tableLogicalName: entity.Value.SelectToken("$.logicalName").ToString(),
                     tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
                      entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
                      entity.Value.SelectToken("$.abstract") != null
-                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false);
+                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
+
+                
 
                 tables.Add(entity.Name, table);
+
+
             }
 
             //  if (this.options.GenerateDTO)
@@ -166,8 +336,8 @@ namespace EAVFramework.Shared.V2
                             var schemaName = attributeDefinition.Value.SelectToken("$.schemaName").ToString();
                             var logicalName = attributeDefinition.Value.SelectToken("$.logicalName").ToString();
 
-                            if (isprimaryKey && !string.IsNullOrEmpty(parentName))
-                                continue;
+                            //if (isprimaryKey && !string.IsNullOrEmpty(parentName))
+                            //    continue;
 
                             if (type == "choices")
                                 continue;
@@ -197,7 +367,7 @@ namespace EAVFramework.Shared.V2
 
                             }
 
-                            if (type == "lookup")
+                            if (type == "lookup" || type == "polylookup")
                             {
                                 propertyInfo
                                     .LookupTo(
@@ -245,19 +415,22 @@ namespace EAVFramework.Shared.V2
                 {
 
                     var table = tables[entity.Name];
+                    if(entity.Name == "Identity")
+                    {
 
-                  //  var a = table.Builder.CreateTypeInfo();
-
-                    this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
-                    var schema = entity.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                    }
+                    //  var a = table.Builder.CreateTypeInfo();
+                    var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
                     var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+                     
+                    this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
                     this.options.EntityDTOs[table.CollectionSchemaName] = result ?? table.CreateTypeInfo();
                 }
 
             }
 
             return (CreateDynamicMigration(dynamicCodeService, manifest),
-                tables.Values.Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
+                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
 
 
 

@@ -39,6 +39,7 @@ namespace EAVFramework.Shared.V2
         public string EntityKey { get; }
 
         public bool IsExternal { get; private set; }
+        public TypeInfo RemoteType { get; private set; }
 
         public DynamicTableBuilder(
             DynamicCodeService dynamicCodeService,
@@ -99,13 +100,15 @@ namespace EAVFramework.Shared.V2
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) ,
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.SchemaName)),
                         typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.CollectionSchemaName)),
-                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.IsBaseClass))
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.IsBaseClass)),
+                        typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.EntityKey))
 
                     }, new object[] {
                    LogicalName ,
                    SchemaName,
                    CollectionSchemaName,
-                   IsBaseEntity
+                   IsBaseEntity,
+                   EntityKey
                     }));
 
 
@@ -398,7 +401,7 @@ namespace EAVFramework.Shared.V2
 
                         var principalSchema = fk.ReferenceType.Schema ?? options.Schema ?? "dbo";
                         var principalTable = fk.ReferenceType.CollectionSchemaName;
-                        var principalColumn = fk.ReferenceType.AllProperties.SingleOrDefault(p => p.IsPrimaryKey)?.SchemaName;
+                        var principalColumn = fk.ReferenceType.Properties.SingleOrDefault(p => p.IsPrimaryKey)?.SchemaName;
 
                         if (string.IsNullOrEmpty(principalColumn))
                         {
@@ -1131,10 +1134,16 @@ namespace EAVFramework.Shared.V2
         public bool IsCreated { get; private set; }
         public TypeInfo CreateTypeInfo()
         {
+            if(RemoteType != null)
+            {
+                return RemoteType;
+            }
+ 
+
 
             if (IsCreated)
                 return Builder.CreateTypeInfo();
-
+           
             IsCreated = true;
 #if DEBUG
             // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
@@ -1154,7 +1163,7 @@ namespace EAVFramework.Shared.V2
             {
 #if DEBUG
                 //  File.AppendAllLines("test1.txt", new[] { $"Failed {SchemaName}" });
-
+                IsCreated = false;
 #endif
                 throw new InvalidOperationException($"Could not build {SchemaName}: {string.Join(",", Builder.GetInterfaces().Select(c => $"{c.Name}<{string.Join(",", c.GetGenericArguments().Select(t => $"{t.Name}<{t.BaseType.Name},{string.Join(",", t.GetInterfaces().Select(i => i.Name))}>"))}>"))}", ex);
             }
@@ -1214,7 +1223,7 @@ namespace EAVFramework.Shared.V2
 
         }
 
-        public List<DynamicTableBuilder> Dependencies { get; } = new List<DynamicTableBuilder>();
+        public HashSet<DynamicTableBuilder> Dependencies { get; } = new HashSet<DynamicTableBuilder>();
         public DynamicTableBuilder AddAsDependency(DynamicTableBuilder value)
         {
             Dependencies.Add(value);
@@ -1257,9 +1266,10 @@ namespace EAVFramework.Shared.V2
             this.Keys.Add(name, props);
         }
 
-        internal DynamicTableBuilder External(bool v)
+        internal DynamicTableBuilder External(bool v, TypeInfo remoteType)
         {
             IsExternal = v;
+            RemoteType = remoteType;
             return this;
         }
     }

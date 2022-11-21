@@ -72,8 +72,12 @@ namespace EAVFramework.Shared
         public string CollectionSchemaName { get; set; }
 
         public bool IsBaseClass { get; set; }
+        public string EntityKey { get; set; }
     }
-
+    public class EntityFieldAttribute : Attribute
+    {
+        public string AttributeKey { get; set; }
+    }
 
     public class AttributeAttribute : Attribute
     {
@@ -86,6 +90,7 @@ namespace EAVFramework.Shared
     {
         public string LogicalName { get; set; }
         public string Schema { get; set; }
+       
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
@@ -105,7 +110,8 @@ namespace EAVFramework.Shared
     {
         public string AttributeKey { get; set; }
     }
-    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = true)]
+     
     public class ConstraintMappingAttribute : Attribute
     {
         public string EntityKey { get; set; }
@@ -349,6 +355,12 @@ namespace EAVFramework.Shared
     }
     public class DefaultManifestTypeMapper : IManifestTypeMapper
     {
+        private readonly CodeGenerationOptions codeGenerationOptions;
+
+        public DefaultManifestTypeMapper(CodeGenerationOptions codeGenerationOptions)
+        {
+            this.codeGenerationOptions = codeGenerationOptions;
+        }
         public Type GetCLRType(string manifestType)
         {
             if (string.IsNullOrWhiteSpace(manifestType))
@@ -358,12 +370,17 @@ namespace EAVFramework.Shared
 
             switch (manifestType.ToLower())
             {
+                case "point":
+                    return codeGenerationOptions.GeoSpatialOptions.PointGeomeryType;
+                case "time":
+                    return typeof(TimeSpan?);
                 case "text":
                 case "string":
                 case "multilinetext":
                     return typeof(string);
                 case "guid":
                 case "lookup":
+                case "polylookup":
                     return typeof(Guid?);
                 case "integer":
                 case "int":

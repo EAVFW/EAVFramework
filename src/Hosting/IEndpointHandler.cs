@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Threading.Tasks;
 
 namespace EAVFramework.Hosting
 {
+
     /// <summary>
     /// Endpoint handler
     /// </summary>

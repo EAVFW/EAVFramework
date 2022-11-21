@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace EAVFramework.Endpoints.Results
@@ -22,40 +23,6 @@ namespace EAVFramework.Endpoints.Results
         public async Task ExecuteAsync(HttpContext context)
         {
             await context.Response.WriteJsonAsync(data,null, context.Request.Query.ContainsKey("pretty")? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None);
-        }
-    }
-
-    public class NotFoundResult : IEndpointResult
-    {
-       
-
-        public NotFoundResult()
-        {
-          
-        }
-
-        public Task ExecuteAsync(HttpContext context)
-        {
-            context.Response.StatusCode = 404;
-            return Task.CompletedTask;
-        }
-    }
-
-    public class AuthorizationEndpointResult : IEndpointResult
-    {
-        private object data;
-
-        public AuthorizationEndpointResult(object data)
-        {
-            this.data = data;
-        }
-
-        public async Task ExecuteAsync(HttpContext context)
-        {
-           // context.Features.Get<IHttpResponseFeature>().ReasonPhrase = "Fai;
-            context.Response.StatusCode = 401;
-            
-            await context.Response.WriteJsonAsync(data, null, context.Request.Query.ContainsKey("pretty") ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None);
         }
     }
 }

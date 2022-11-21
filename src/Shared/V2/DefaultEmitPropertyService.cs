@@ -21,7 +21,9 @@ namespace EAVFramework.Shared.V2
     public class DefaultEmitPropertyService : IEmitPropertyService
     {
         static ConstructorInfo DataMemberAttributeCtor = typeof(DataMemberAttribute).GetConstructor(new Type[] { });
+        static ConstructorInfo EntityFieldAttributeCtor = typeof(EntityFieldAttribute).GetConstructor(new Type[] { });
         static PropertyInfo DataMemberAttributeNameProperty = typeof(DataMemberAttribute).GetProperty("Name");
+        static PropertyInfo EntityFieldAttributeAttributeKeyName = typeof(EntityFieldAttribute).GetProperty(nameof(EntityFieldAttribute.AttributeKey));
         protected readonly CodeGenerationOptions options;
 
         public DefaultEmitPropertyService(CodeGenerationOptions codeGenerationOptions)
@@ -29,13 +31,26 @@ namespace EAVFramework.Shared.V2
             this.options = codeGenerationOptions;
         }
 
-        public virtual void CreateDataMemberAttribute(PropertyBuilder attProp, string logicalName)
+        public virtual void CreateDataMemberAttribute(PropertyBuilder attProp, string logicalName, string attributeKey)
         {
+            {
+                CustomAttributeBuilder DataMemberAttributeBuilder =
+                    new CustomAttributeBuilder(DataMemberAttributeCtor, new object[] { }, new[] { DataMemberAttributeNameProperty }, new[] { logicalName });
 
-            CustomAttributeBuilder DataMemberAttributeBuilder = new CustomAttributeBuilder(DataMemberAttributeCtor, new object[] { }, new[] { DataMemberAttributeNameProperty }, new[] { logicalName });
+                attProp.SetCustomAttribute(DataMemberAttributeBuilder);
+            }
+            {
+                if (!string.IsNullOrEmpty(attributeKey))
+                {
+                    CustomAttributeBuilder EntityFieldAttributeBuilder =
+                       new CustomAttributeBuilder(EntityFieldAttributeCtor, new object[] { }, new[] {
+                   EntityFieldAttributeAttributeKeyName
+                       }, new[] { attributeKey });
 
-            attProp.SetCustomAttribute(DataMemberAttributeBuilder);
 
+                    attProp.SetCustomAttribute(EntityFieldAttributeBuilder);
+                }
+            }
 
         }
         public void CreateTableImpl(string entityCollectionName, string schema, Type columnsCLRType, MethodBuilder columsMethod, MethodBuilder ConstraintsMethod, ILGenerator UpMethodIL)
@@ -292,7 +307,7 @@ namespace EAVFramework.Shared.V2
 
         public virtual void AddInterfaces(DynamicTableBuilder dynamicTableBuilder)
         {
-            var interfaces = options.DTOInterfaces
+            var interfaces = options.DTOBaseInterfaces
               .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == dynamicTableBuilder.EntityKey ||
               (attr.EntityKey == "*")))
               .ToList();
@@ -390,8 +405,9 @@ namespace EAVFramework.Shared.V2
                 }
             }catch(Exception ex)
             {
-                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
-                    $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
+                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name}",ex);
+               //throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
+               //     $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
             }
 
                 

@@ -1,5 +1,6 @@
 ﻿using EAVFramework.Configuration;
 using EAVFramework.Endpoints;
+using EAVFramework.Plugins;
 using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +10,54 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace EAVFramework.Plugins
+namespace Microsoft.Extensions.DependencyInjection
 {
 
+    public static class PluginExtensions
+    {
+        public static IServiceCollection AddPlugin<T>(this IServiceCollection services)
+        where T : class, IPluginRegistration
+        {
+
+            return services.AddPlugin(typeof(T));
+        }
+
+        public static IServiceCollection AddPlugin(this IServiceCollection services, Type pluginType)
+        {
+
+            services.AddTransient(pluginType);
+
+
+            foreach (var attr in pluginType.GetCustomAttributes<PluginRegistrationAttribute>())
+            {
+
+                var plugin = pluginType.GetInterface("IPlugin`2").GenericTypeArguments;
+
+                var contexttype = plugin[0];
+                var entitytype = plugin[1];
+
+
+
+                var entry = (EntityPlugin)Activator.CreateInstance(typeof(EntityPlugin<,>).MakeGenericType(contexttype, entitytype));
+
+                entry.Execution = attr.Execution;
+                entry.Mode = attr.Mode;
+                entry.Order = attr.Order;
+                entry.Operation = attr.Operation;
+                entry.Type = entitytype;
+                entry.Handler = pluginType;
+
+
+                services.AddSingleton(entry);
+            }
+
+            return services;
+        }
+    }
+}
+namespace EAVFramework.Plugins
+{
+   
     public interface IPluginRegistration
     {
 
@@ -26,36 +72,14 @@ namespace EAVFramework.Plugins
             return builder.AddPlugin(typeof(T));
         }
 
-
-        public static IEAVFrameworkBuilder AddPlugin(this IEAVFrameworkBuilder builder, Type pluginType)           
+     
+        public static IEAVFrameworkBuilder AddPlugin(this IEAVFrameworkBuilder builder, Type pluginType)
         {
-
-            builder.Services.AddTransient(pluginType);
-             
-
-            foreach (var attr in pluginType.GetCustomAttributes<PluginRegistrationAttribute>())
-            {
-
-                var plugin = pluginType.GetInterface("IPlugin`2").GenericTypeArguments;
-
-                var contexttype = plugin[0];
-                var entitytype = plugin[1];
-
-                var entry = (EntityPlugin)Activator.CreateInstance(typeof(EntityPlugin<,>).MakeGenericType(contexttype, entitytype));
-
-                entry.Execution = attr.Execution;
-                entry.Mode = attr.Mode;
-                entry.Order = attr.Order;
-                entry.Operation = attr.Operation;
-                entry.Type = entitytype;
-                entry.Handler = pluginType;
-
-
-                builder.Services.AddSingleton(entry);
-            }
-
+             builder.Services.AddPlugin(pluginType);
             return builder;
         }
+         
+       
 
     }
 
@@ -75,6 +99,10 @@ namespace EAVFramework.Plugins
         }
     }
 
+    public class PluginContextAccessor
+    {
+        public PluginContext Context { get; internal set; }
+    }
 
     public class EntityPlugin<TContext,T> : EntityPlugin<TContext>
         where TContext : DynamicContext
@@ -88,8 +116,10 @@ namespace EAVFramework.Plugins
         public override async Task Execute(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry collectionEntry)
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
+            var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
             foreach (var entity in collectionEntry.CurrentValue)
             {
+
                 var plugincontext = new PluginContext<TContext, T>
                 {
                     Input = entity as T,
@@ -102,6 +132,8 @@ namespace EAVFramework.Plugins
                           EntityCollectionSchemaName = entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
                       }
                 };
+
+                contextWrapper.Context = plugincontext;
                 //var pluginContext = Activator.CreateInstance(typeof(PluginContext<,>).MakeGenericType(typeof(DBContext), entity.Entity.GetType()));
 
                 var handler = services.GetService(Handler) as IPlugin<TContext, T>;
@@ -118,27 +150,12 @@ namespace EAVFramework.Plugins
         public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) 
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
-            var plugincontext = new PluginContext<TContext, T>
-            {
-                Input = entity.Entity as T,
-                DB= db,
-                User = principal,
-                
-                EntityResource = new EAVResource
-                {
-                    EntityType = entity.Entity.GetType(),
-                    EntityCollectionSchemaName = entity.Entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
-                }
-            };
-            //var pluginContext = Activator.CreateInstance(typeof(PluginContext<,>).MakeGenericType(typeof(DBContext), entity.Entity.GetType()));
-
+           
+            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services,db, entity, principal);
+           
             var handler = services.GetService(Handler) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
-            //var invoker = Invokers.GetOrAdd(entityType, (t) => typeof(IPlugin<,>).MakeGenericType(t).GetMethod("Execute"));
-
-            //var task = invoker.Invoke(handler, new object[] { pluginContext }) as Task;
-            //await task;
-
+            
             return plugincontext;
         }
     }

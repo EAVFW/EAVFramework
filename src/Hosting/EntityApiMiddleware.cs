@@ -44,13 +44,19 @@ namespace EAVFramework.Hosting
 
             foreach (var endpoint in endpoints)
             {
-                var endpointConfig = config.MapMethods($"{options.RoutePrefix}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
+                var endpointConfig = config.MapMethods($"{(endpoint.RoutePrefixIgnored ? String.Empty : options.RoutePrefix)}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
                     context =>
                         context.RequestServices.GetService<IEndpointRouter<TContext>>()
                         .ProcessAsync(context, context.RequestServices.GetService(endpoint.Handler) as IEndpointHandler<TContext>))
                     .WithDisplayName(endpoint.Name)
                     .WithMetadata(endpoint);
-                
+
+                if (endpoint.Metadata.Any())
+                {
+                    endpointConfig.WithMetadata(items: endpoint.Metadata.ToArray());
+                }
+
+
                 options.Endpoints.EndpointAuthorizationConfiguration?.Invoke(endpointConfig);
 
                 options.Endpoints.EndpointConfiguration?.Invoke(endpointConfig);
