@@ -274,15 +274,24 @@ namespace EAVFramework.Shared.V2
             var tables = new Dictionary<string, DynamicTableBuilder>();
             foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
             {
+
+                var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entity.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+
+
                 var table = builder.WithTable(entity.Name,
                     tableSchemaname: entity.Value.SelectToken("$.schemaName").ToString(),
                     tableLogicalName: entity.Value.SelectToken("$.logicalName").ToString(),
                     tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
                      entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
                      entity.Value.SelectToken("$.abstract") != null
-                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false);
+                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
+
+                
 
                 tables.Add(entity.Name, table);
+
+
             }
 
             //  if (this.options.GenerateDTO)
@@ -406,12 +415,15 @@ namespace EAVFramework.Shared.V2
                 {
 
                     var table = tables[entity.Name];
+                    if(entity.Name == "Identity")
+                    {
 
-                  //  var a = table.Builder.CreateTypeInfo();
-
-                    this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
-                    var schema = entity.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                    }
+                    //  var a = table.Builder.CreateTypeInfo();
+                    var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
                     var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+                     
+                    this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
                     this.options.EntityDTOs[table.CollectionSchemaName] = result ?? table.CreateTypeInfo();
                 }
 

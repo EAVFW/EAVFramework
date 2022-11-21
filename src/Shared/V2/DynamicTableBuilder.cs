@@ -39,6 +39,7 @@ namespace EAVFramework.Shared.V2
         public string EntityKey { get; }
 
         public bool IsExternal { get; private set; }
+        public TypeInfo RemoteType { get; private set; }
 
         public DynamicTableBuilder(
             DynamicCodeService dynamicCodeService,
@@ -1133,6 +1134,12 @@ namespace EAVFramework.Shared.V2
         public bool IsCreated { get; private set; }
         public TypeInfo CreateTypeInfo()
         {
+            if(RemoteType != null)
+            {
+                return RemoteType;
+            }
+ 
+
 
             if (IsCreated)
                 return Builder.CreateTypeInfo();
@@ -1259,9 +1266,10 @@ namespace EAVFramework.Shared.V2
             this.Keys.Add(name, props);
         }
 
-        internal DynamicTableBuilder External(bool v)
+        internal DynamicTableBuilder External(bool v, TypeInfo remoteType)
         {
             IsExternal = v;
+            RemoteType = remoteType;
             return this;
         }
     }
