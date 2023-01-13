@@ -76,7 +76,7 @@ namespace EAVFramework.Shared.V2
 
             SetEntityDTOAttribute();
             SetEntityAttribute();
-          
+
         }
 
 
@@ -291,6 +291,19 @@ namespace EAVFramework.Shared.V2
 
                     new[] { LogicalName, migrationName, upSql });
                 entityTypeBuilder.SetCustomAttribute(EntityMigrationAttributeBuilder);
+
+                foreach (var k in Keys)
+                {
+                    entityTypeBuilder.SetCustomAttribute(
+                        new CustomAttributeBuilder(
+                            typeof(EntityIndexAttribute).GetConstructor(new Type[] { }),
+                            new object[] { },
+                        new[] {
+                     typeof(EntityIndexAttribute).GetProperty(nameof(EntityIndexAttribute.IndexName)),
+                        }, new[] {
+                            k.Key
+                        }));
+                }
             }
 
             entityTypeBuilder.AddInterfaceImplementation(options.DynamicTableType);
@@ -436,6 +449,10 @@ namespace EAVFramework.Shared.V2
                 var hasPriorEntity = dynamicCodeService.GetTypes().FirstOrDefault(t => !t.IsPendingTypeBuilder() && t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == LogicalName);
 
 
+
+              
+
+
                 if (hasPriorEntity == null)
                 {
                     dynamicCodeService.EmitPropertyService.CreateTableImpl(CollectionSchemaName, Schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
@@ -444,46 +461,46 @@ namespace EAVFramework.Shared.V2
                     //alternativ keys //TODO create dropindex
 
 
-                    {
-                        foreach (var key in Keys)
-                        {
-                            var props = key.Value;
+                    //{
+                    //    foreach (var key in Keys)
+                    //    {
+                    //        var props = key.Value;
 
-                            try
-                            {
-                                UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                                UpMethodIL.Emit(OpCodes.Ldstr, key.Key); //Constant keyname 
-                                UpMethodIL.Emit(OpCodes.Ldstr, CollectionSchemaName); //Constant table name
-
-
-                                UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
-                                UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
-                                for (var j = 0; j < props.Length; j++)
-                                {
-                                    var attributeDefinition = Properties.Single(k => k.AttributeKey == props[j]);// entityDefinition.Value.SelectToken($"$.attributes['{props[j]}']");
-                                    var attributeSchemaName = attributeDefinition.SchemaName;
-                                    UpMethodIL.Emit(OpCodes.Dup);
-                                    UpMethodIL.Emit(OpCodes.Ldc_I4, j);
-                                    UpMethodIL.Emit(OpCodes.Ldstr, attributeSchemaName);
-                                    UpMethodIL.Emit(OpCodes.Stelem_Ref);
-                                }
+                    //        try
+                    //        {
+                    //            UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                    //            UpMethodIL.Emit(OpCodes.Ldstr, key.Key); //Constant keyname 
+                    //            UpMethodIL.Emit(OpCodes.Ldstr, CollectionSchemaName); //Constant table name
 
 
+                    //            UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
+                    //            UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                    //            for (var j = 0; j < props.Length; j++)
+                    //            {
+                    //                var attributeDefinition = Properties.Single(k => k.AttributeKey == props[j]);// entityDefinition.Value.SelectToken($"$.attributes['{props[j]}']");
+                    //                var attributeSchemaName = attributeDefinition.SchemaName;
+                    //                UpMethodIL.Emit(OpCodes.Dup);
+                    //                UpMethodIL.Emit(OpCodes.Ldc_I4, j);
+                    //                UpMethodIL.Emit(OpCodes.Ldstr, attributeSchemaName);
+                    //                UpMethodIL.Emit(OpCodes.Stelem_Ref);
+                    //            }
 
-                                UpMethodIL.Emit(OpCodes.Ldstr, Schema); //Constant schema
-                                UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
-                                UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
 
 
-                                UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
-                                UpMethodIL.Emit(OpCodes.Pop);
-                            }
-                            catch (Exception ex)
-                            {
-                                throw new Exception($"Failed to create key for {CollectionSchemaName}.{key.Key}", ex);
-                            }
-                        }
-                    }
+                    //            UpMethodIL.Emit(OpCodes.Ldstr, Schema); //Constant schema
+                    //            UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
+                    //            UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                    //            UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                    //            UpMethodIL.Emit(OpCodes.Pop);
+                    //        }
+                    //        catch (Exception ex)
+                    //        {
+                    //            throw new Exception($"Failed to create key for {CollectionSchemaName}.{key.Key}", ex);
+                    //        }
+                    //    }
+                    //}
 
                     //Create indexes from lookup fields.
 
@@ -492,6 +509,7 @@ namespace EAVFramework.Shared.V2
                 }
                 else if (members.Any())
                 {
+
                     var hasPriorEntityColumnBuilders = dynamicCodeService.GetTypes().Where(t => !t.IsPendingTypeBuilder()
                        && t.GetCustomAttributes<EntityMigrationColumnsAttribute>()
                        .Any(migrationAttribute => migrationAttribute.LogicalName == LogicalName)).ToArray();
@@ -594,6 +612,54 @@ namespace EAVFramework.Shared.V2
                         }
                     }
                 }
+
+
+                foreach (var key in Keys)
+                {
+
+                    if (hasPriorEntity?.GetCustomAttributes<EntityIndexAttribute>().Any(c => c.IndexName == key.Key) ?? false)
+                    {
+                        continue;
+                    }
+
+                    var props = key.Value;
+
+                    try
+                    {
+                        UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                        UpMethodIL.Emit(OpCodes.Ldstr, key.Key); //Constant keyname 
+                        UpMethodIL.Emit(OpCodes.Ldstr, CollectionSchemaName); //Constant table name
+
+
+                        UpMethodIL.Emit(OpCodes.Ldc_I4, props.Length); // Array length
+                        UpMethodIL.Emit(OpCodes.Newarr, typeof(string));
+                        for (var j = 0; j < props.Length; j++)
+                        {
+                            var attributeDefinition = Properties.Single(k => k.AttributeKey == props[j]);// entityDefinition.Value.SelectToken($"$.attributes['{props[j]}']");
+                            var attributeSchemaName = attributeDefinition.SchemaName;
+                            UpMethodIL.Emit(OpCodes.Dup);
+                            UpMethodIL.Emit(OpCodes.Ldc_I4, j);
+                            UpMethodIL.Emit(OpCodes.Ldstr, attributeSchemaName);
+                            UpMethodIL.Emit(OpCodes.Stelem_Ref);
+                        }
+
+
+
+                        UpMethodIL.Emit(OpCodes.Ldstr, Schema); //Constant schema
+                        UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
+                        UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+
+
+                        UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
+                        UpMethodIL.Emit(OpCodes.Pop);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to create key for {CollectionSchemaName}.{key.Key}", ex);
+                    }
+                }
+
+
 
                 //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
                 if (!string.IsNullOrEmpty(upSql))
@@ -1134,16 +1200,16 @@ namespace EAVFramework.Shared.V2
         public bool IsCreated { get; private set; }
         public TypeInfo CreateTypeInfo()
         {
-            if(RemoteType != null)
+            if (RemoteType != null)
             {
                 return RemoteType;
             }
- 
+
 
 
             if (IsCreated)
                 return Builder.CreateTypeInfo();
-           
+
             IsCreated = true;
 #if DEBUG
             // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
