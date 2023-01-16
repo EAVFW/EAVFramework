@@ -139,7 +139,7 @@ namespace EAVFramework.Shared
         {
             try
             {
-                return p();
+                return p() ?? throw new InvalidOperationException("Failed to get option: " + onError);
             }
             catch (Exception ex)
             {
