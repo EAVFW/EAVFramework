@@ -36,6 +36,13 @@ namespace EAVFramework.Shared
         public string MigrationName { get; set; }
         public string RawUpMigration { get; set; }
     }
+   
+    [AttributeUsage(AttributeTargets.Class,AllowMultiple =true)]
+    public class EntityIndexAttribute : Attribute
+    {
+        public string IndexName { get; set; }
+        
+    }
     public class EntityMigrationColumnsAttribute : Attribute
     {
         public string LogicalName { get; set; }
@@ -132,7 +139,7 @@ namespace EAVFramework.Shared
         {
             try
             {
-                return p();
+                return p() ?? throw new InvalidOperationException("Failed to get option: " + onError);
             }
             catch (Exception ex)
             {

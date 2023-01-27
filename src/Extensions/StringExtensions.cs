@@ -6,7 +6,7 @@ using System.Text;
 
 namespace EAVFramework.Extensions
 {
-    internal static class StringExtensions
+    public static class StringExtensions
     {
 
         [DebuggerStepThrough]

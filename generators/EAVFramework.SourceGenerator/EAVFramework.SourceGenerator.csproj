@@ -17,7 +17,7 @@
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
 		<GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
-
+		<LangVersion>8.0</LangVersion>
 
 	</PropertyGroup>
 
