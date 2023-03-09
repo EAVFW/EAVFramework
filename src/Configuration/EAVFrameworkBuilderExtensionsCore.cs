@@ -248,7 +248,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddCookie(Constants.DefaultCookieAuthenticationScheme, options =>
                 {
 
-
+                  
                     options.Events.OnRedirectToAccessDenied = ReplaceRedirector(HttpStatusCode.Forbidden, options.Events.OnRedirectToAccessDenied);
                     options.Events.OnRedirectToLogin = ReplaceRedirector(HttpStatusCode.Unauthorized, options.Events.OnRedirectToLogin);
 

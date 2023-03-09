@@ -199,8 +199,8 @@ namespace EAVFramework.Extensions
                 }
                 else
                 {
-                        context.Response.StatusCode = 401; 
-                       await context.Response.WriteJsonAsync(new { error = "Not Authenticated"});
+                        context.Response.StatusCode = 401;
+                        await context.Response.WriteJsonAsync(new { error = "Not Authenticated"});
 
                 }
             });
