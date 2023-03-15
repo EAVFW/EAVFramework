@@ -12,13 +12,16 @@
     <PackageProjectUrl>https://github.com/EAVFW/EAVFramework</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <RemoteEAVFramework>true</RemoteEAVFramework>
+    
   </PropertyGroup>
 
     <ItemGroup>
      <FrameworkReference Include="Microsoft.AspNetCore.App" />
-     <PackageReference Include="EAVFW.Extensions.Manifest.SDK" Version="3.0.0" />
+
      <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.11" />
+     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.12" />
 
      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
      <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
@@ -29,9 +32,15 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.17" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.15" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(RemoteEAVFramework) == 'false'">
+    <ProjectReference Include="C:\dev2\EAVFW.Extensions.Manifest.ManifestEnricherTool\src\EAVFW.Extensions.Manifest.SDK\EAVFW.Extensions.Manifest.SDK.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="$(RemoteEAVFramework) != 'false'">
+    <PackageReference Include="EAVFW.Extensions.Manifest.SDK" Version="3.0.2" />
   </ItemGroup>
   
-
 </Project>
