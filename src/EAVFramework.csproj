@@ -13,12 +13,12 @@
 	<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-    <RemoteEAVFramework>true</RemoteEAVFramework>
+    <RemoteEAVFramework>$(UseEAVFromNuget)</RemoteEAVFramework>
     
   </PropertyGroup>
 
     <ItemGroup>
-     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+
 
      <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
      <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.12" />

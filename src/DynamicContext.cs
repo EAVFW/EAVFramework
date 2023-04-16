@@ -197,28 +197,22 @@ namespace EAVFramework
     {
         private static IODataRuntimeTypeFactory typeParser = new ODataRuntimeTypeFactory();
 
-        private Type type;
+    
         private IODataConverterFactory odatatConverterFactory;
-        private MethodInfo entityProperty;
-      
-        
-
-        //  private PropertyInfo namedProperty;
+ 
         private Func<IEdmModel, IEdmStructuredType, IPropertyMapper> MapperProvider;
-        //private readonly string serializedType;
+ 
         public SelectCoverter(Type type, IODataConverterFactory odatatConverterFactory)
         {
-            this.type = type;
+            //this.type = type;
             this.odatatConverterFactory = odatatConverterFactory;
-            this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
+            //this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
             var SelectExpandWrapperConverter = type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
             this.MapperProvider =(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
           
             
 
-           // this.namedProperty =type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Container.NamedProperty`1")?.GetProperty("Value");
-           //serializedType = $"{type.GetGenericArguments().First().FullName}, {type.GetGenericArguments().First().Assembly.GetName().Name}";
-        }
+         }
 
        
 
@@ -263,12 +257,12 @@ namespace EAVFramework
     }
     internal class EnumerableConverter : IODataConverter
     {
-        private Type type;
+       
         private IODataConverterFactory odatatConverterFactory;
 
-        public EnumerableConverter(Type type, IODataConverterFactory odatatConverterFactory)
+        public EnumerableConverter(IODataConverterFactory odatatConverterFactory)
         {
-            this.type = type;
+          
             this.odatatConverterFactory = odatatConverterFactory;
         }
 
@@ -284,6 +278,50 @@ namespace EAVFramework
                 list.Add(converter.Convert(i));
             }
             return list;
+        }
+    }
+
+    /// <summary>
+    /// Singleton - return the Values Property from type
+    /// </summary>
+    public class GroupByConverter : IODataConverter
+    {
+        private readonly IODataConverterFactory odatatConverterFactory;
+
+        public PropertyInfo Method { get; }
+
+        public GroupByConverter(Type type , IODataConverterFactory odatatConverterFactory)
+        {
+            this.Method = type.GetProperty("Values");
+            this.odatatConverterFactory = odatatConverterFactory;
+        }
+
+        public object Convert(object data)
+        { 
+            var poco= Method.GetValue(data) as Dictionary<string, object>;
+
+            // poco["$type"] = typeParser.GetDataType(data);
+            foreach (var kv in poco.ToArray())
+            {
+                if (kv.Value == null)
+                {
+                    poco.Remove(kv.Key);
+                    continue;
+                }
+
+                var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
+                var value = converter.Convert(kv.Value);
+                if (value == null)
+                {
+                    poco.Remove(kv.Key);
+                }
+                else
+                {
+                    poco[kv.Key] = value;
+                }
+            }
+
+            return poco;
         }
     }
     public class OdatatConverterFactory : IODataConverterFactory
@@ -307,8 +345,11 @@ namespace EAVFramework
                  }
                  else if (typeof(IEnumerable).IsAssignableFrom(type) && (type != typeof(string)))
                  {
-                     return new EnumerableConverter(type, this);
+                     return new EnumerableConverter( this);
 
+                 }else if(type.Name == "NoGroupByAggregationWrapper" || type.Name == "GroupByWrapper" || type.Name == "AggregationWrapper")
+                 {
+                     return new GroupByConverter(type,this);
                  }
                  else
                  {
@@ -426,7 +467,7 @@ namespace EAVFramework
 
             if (request != null)
             {
-                if (!request.Query.ContainsKey("$select"))
+                if (!request.Query.ContainsKey("$select") && !request.Query.ContainsKey("$apply"))
                 {
                     request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
                 }
