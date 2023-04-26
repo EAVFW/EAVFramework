@@ -475,11 +475,11 @@ namespace EAVFramework
                 IODataFeature odataFeature = request.HttpContext.ODataFeature();
                 odataFeature.RoutePrefix = "/api/";
 
-                odataContext.DefaultQuerySettings.EnableFilter = true;
-                odataContext.DefaultQuerySettings.EnableExpand = true;
-                odataContext.DefaultQuerySettings.EnableSelect = true;
-                odataContext.DefaultQuerySettings.EnableCount = true;
-                odataContext.DefaultQuerySettings.EnableSkipToken = true;
+                odataContext.DefaultQueryConfigurations.EnableFilter = true;
+                odataContext.DefaultQueryConfigurations.EnableExpand = true;
+                odataContext.DefaultQueryConfigurations.EnableSelect = true;
+                odataContext.DefaultQueryConfigurations.EnableCount = true;
+                odataContext.DefaultQueryConfigurations.EnableSkipToken = true;
 
                 var odata = new ODataQueryOptions(odataContext, request);
 

@@ -868,7 +868,11 @@ namespace EAVFramework.Generators
                 }
                 catch (Exception ex)
                 {
-                    File.AppendAllLines("err.txt", new[] { ex.ToString() });
+                    throw;
+                    //try
+                    //{
+                    //    File.AppendAllLines("err.txt", new[] { ex.ToString() });
+                    //}
                     //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "test2", ex.StackTrace.ToString(), "", DiagnosticSeverity.Info, true), null));
                     //    context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("101", "test2", ex.ToString().Replace("\n", " "), "", DiagnosticSeverity.Info, true), null));
 
