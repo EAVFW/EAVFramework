@@ -8,6 +8,9 @@ namespace EAVFramework.Endpoints
     {
         public TContext Context { get; set; }
         public List<ValidationError> Errors { get; set; } = new List<ValidationError>();
-     //   public EntityEntry Entity { get; set; }
+        public string PreOperationChanges { get; internal set; }
+       
+        public string PostOperationChanges { get; internal set; }
+        //   public EntityEntry Entity { get; set; }
     }
 }

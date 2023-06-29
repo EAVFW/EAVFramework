@@ -85,5 +85,22 @@ namespace EAVFramework.Extensions
         {
             return input.Sha512()?.TrimEnd(padding)?.Replace('+', '-')?.Replace('/', '_');
         }
+
+        public static string CreateMD5(this string input)
+        {
+            // Use input string to calculate MD5 hash
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.Unicode.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+                 
+                 StringBuilder sb = new System.Text.StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("x2"));
+                }
+                return sb.ToString();
+            }
+        }
     }
 }

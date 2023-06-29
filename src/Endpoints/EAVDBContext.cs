@@ -633,8 +633,29 @@ namespace EAVFramework.Endpoints
         {
             return this.Context.Set<T>();
         }
+        public DbSet<TBase> Set<TBase>(Type type) where TBase : DynamicEntity
+        {
+           
+            var a=this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]);
+            var b = (DbSet<TBase>)a;
+            return b;
+        }
+        public IQueryable<TBase> FromSqlRaw<TBase>(Type type,string sql, params object[] parameters) where TBase : DynamicEntity
+        {
+            var m = typeof(RelationalQueryableExtensions).GetMethod(nameof(RelationalQueryableExtensions.FromSqlRaw), BindingFlags.Public | BindingFlags.Static);
 
-       
+            var set= this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]); ;
+
+            var b=m.MakeGenericMethod(type).Invoke(null, new object[] { set,sql, parameters });
+
+            var c = (IQueryable<TBase>)b;
+            return c;
+
+
+        }
+
+
+
         public IQueryable Set(string name)
         {
             return this.Context.Set(this.Context.GetEntityType(name));

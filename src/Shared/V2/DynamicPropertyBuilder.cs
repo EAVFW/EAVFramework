@@ -163,7 +163,7 @@ namespace EAVFramework.Shared.V2
             if (enumbuilder != null)
             {
                 foreach (var values in Choices)
-                    enumbuilder.DefineLiteral(values.Key, values.Value);
+                    enumbuilder.DefineLiteral(string.IsNullOrWhiteSpace( values.Key) ? "Empty": values.Key, values.Value);
 
                 DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder.CreateTypeInfo()); ;
                 //                }
