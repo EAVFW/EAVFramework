@@ -394,7 +394,7 @@ namespace EAVFramework.Shared.V2
                         }
                         catch (Exception ex)
                         {
-                            throw new InvalidOperationException($"Failed to generate field {attributeDefinition.Name}", ex);
+                            throw new InvalidOperationException($"Failed to generate field {attributeDefinition.Name}:{ex.ToString()}", ex);
                         }
                     }
                 }

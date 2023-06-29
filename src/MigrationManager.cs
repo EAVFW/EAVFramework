@@ -26,6 +26,7 @@ using PropertyBuilder = System.Reflection.Emit.PropertyBuilder;
 using static EAVFramework.Shared.TypeHelper;
 using EAVFramework.Shared.V2;
 using Microsoft.Extensions.DependencyInjection;
+using System.IO;
 
 namespace EAVFramework
 {
@@ -162,6 +163,17 @@ namespace EAVFramework
         public GeoSpatialOptions BuildNetTopologySuiteOptions()
         {
             var assembly = GetAssemblyByName("NetTopologySuite");
+            if(assembly == null)
+            {
+                var referencedPaths = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "NetTopologySuite.dll").FirstOrDefault();
+                if (!string.IsNullOrEmpty(referencedPaths))
+                {
+
+                    assembly=AppDomain.CurrentDomain.Load(AssemblyName.GetAssemblyName(referencedPaths));
+                }
+
+                //
+            }
             return new GeoSpatialOptions
             {
                 PointGeomeryType = assembly?.GetType("NetTopologySuite.Geometries.Point")
