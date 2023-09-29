@@ -246,12 +246,14 @@ namespace EAVFramework
 
                 foreach (var entity in m.EntityDTOs)
                 {
-
+                 
                     var config = builder.AddEntityType(entity.Value);
                     if (options.WithODATAEntitySet)
                     {
                         builder.AddEntitySet(entity.Key, config);
                     }
+
+                 //   builder.Function(entity.Key + "Set").ReturnsCollectionFromEntitySet(entity.Value, entity.Key);
 
                     //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
                     //{
@@ -307,6 +309,8 @@ namespace EAVFramework
 
 
                 }
+              
+               // builder.Function("Test").ReturnsCollectionFromEntitySet()
                 m.Model = builder.GetEdmModel();
                 return m;
                 //}

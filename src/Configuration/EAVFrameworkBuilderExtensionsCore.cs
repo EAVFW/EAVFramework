@@ -33,6 +33,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using System.Linq.Expressions;
 using System.Linq;
 using EAVFramework.Shared;
+using EAVFramework.Endpoints.Query.OData;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -69,16 +70,16 @@ namespace Microsoft.Extensions.DependencyInjection
                 if(constraints.Any(tta => tta == typeof(IConvertible)))
                 {
                     //enums
-                    var constraintMapping = t.GetCustomAttributes<ConstraintMappingAttribute>().FirstOrDefault(c => c.ConstraintName == ta.Name)
+                    var constraintMapping = t.GetCustomAttributes<ConstraintMappingAttribute>().SingleOrDefault(c => c.ConstraintName == ta.Name)
                     ?? throw new InvalidOperationException($"No ConstraintMappingAttribute set for the Contraints {ta.Name} on {t.Name}");
 
 
 
-                    var entirtyType = typeof(TModel).Assembly.GetTypes().FirstOrDefault(t => 
+                    var entirtyType = typeof(TModel).Assembly.GetTypes().SingleOrDefault(t => 
                     t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute &&
                     t.GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && attr.EntityKey == constraintMapping.EntityKey);
 
-                    var propertyType = entirtyType.GetProperties().FirstOrDefault(c =>
+                    var propertyType = entirtyType.GetProperties().Single(c =>
                         c.GetCustomAttribute<EntityFieldAttribute>() is EntityFieldAttribute field && field.AttributeKey == constraintMapping.AttributeKey);
 
                     return Nullable.GetUnderlyingType(propertyType.PropertyType) ?? propertyType.PropertyType;
@@ -93,12 +94,12 @@ namespace Microsoft.Extensions.DependencyInjection
                     if (@interface.IsGenericType)
                     {
                         return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
-                       t.GetInterfaces().Any(c => c.IsGenericType && c.GetGenericTypeDefinition() == @interface.GetGenericTypeDefinition())).FirstOrDefault();
+                       t.GetInterfaces().Any(c => c.IsGenericType && c.GetGenericTypeDefinition() == @interface.GetGenericTypeDefinition())).Single();
                     }
 
 
                     return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
-                            t.GetInterfaces().Any(c => c == @interface)).FirstOrDefault();
+                            t.GetInterfaces().Any(c => c == @interface)).Single();
                 }
 
                 throw new InvalidOperationException($"Cant find constraint for {ta.Name} on {t.Name}" );

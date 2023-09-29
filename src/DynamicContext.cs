@@ -1,4 +1,8 @@
-﻿using EAVFramework.Shared;
+﻿using EAVFramework.Endpoints;
+using EAVFramework.Endpoints.Query;
+using EAVFramework.Endpoints.Query.OData;
+using EAVFramework.Extensions;
+using EAVFramework.Shared;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
@@ -38,388 +42,6 @@ using System.Threading.Tasks;
 namespace EAVFramework
 {
 
-    public class QueryContext<TContext> where TContext :  DynamicContext
-    {
-        public DynamicContext Context { get; set; }
-        public Type Type { get; set; }
-        public HttpRequest Request { get; set; }
-
-        public Dictionary<IQueryExtender<TContext>, bool> SkipQueryExtenders { get; set; } = new Dictionary<IQueryExtender<TContext>, bool>();
-    }
-
-    //public class QueryContext : QueryContext<DynamicContext>
-    //{
-        
-    //}
-
-    //public interface IQueryExtender
-    //{
-    //    IQueryable ApplyTo(IQueryable metadataQuerySet, QueryContext context);
-    //} 
-    public interface IQueryExtender<TContext>  where TContext : DynamicContext
-    {
-        IQueryable ApplyTo(IQueryable metadataQuerySet, QueryContext<TContext> context);
-    }
-
-    public static class TypeChanger
-    {
-        public static IQueryable<T> ChangeType<T>(IQueryable data)
-        {
-            return data.Cast<T>();// as IQueryable<T>;
-        }
-
-        public static IQueryable Cast(this IQueryable data, Type type)
-        {
-            return (IQueryable)typeof(TypeChanger).GetMethod(nameof(TypeChanger.ChangeType)).MakeGenericMethod(type).Invoke(null, new[] { data });
-        }
-    }
-
-    public interface IODataConverter
-    {
-        object Convert(object data);
-
-    }
-    public interface IODataConverterFactory
-    {
-        IODataConverter CreateConverter(Type type);
-    }
-    public interface IODataRuntimeType
-    {
-        string GetDataType(object data);
-    }
-    public interface IODataRuntimeTypeFactory
-    {
-        IODataRuntimeType CreateTypeParser(Type type, object data);
-    }
-    public class SelectSomeOfT : IODataRuntimeType
-    {
-        private IODataRuntimeTypeFactory oDataRuntimeTypeFactory;
-
-       
-        private static PropertyInfo untypedInstance  =  typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
-            .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper")?.GetProperty("UntypedInstance");
-        private static PropertyInfo container = typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
-            .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper")?.GetProperty("Container");
-
-        private static MethodInfo getElementType = typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
-           .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper")?.GetMethod("GetElementType", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        public SelectSomeOfT(IODataRuntimeTypeFactory oDataRuntimeTypeFactory)
-        {
-            this.oDataRuntimeTypeFactory=oDataRuntimeTypeFactory;
-           
-        }
-        private ConcurrentDictionary<Type, PropertyInfo> _NamedPropertyBag = new ConcurrentDictionary<Type, PropertyInfo>();
-        private ConcurrentDictionary<string, string> LogicalNameMapping = new ConcurrentDictionary<string, string>();
-
-        public static Type GetType(string typeName)
-        {
-            var type = Type.GetType(typeName);
-            if (type != null) return type;
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                type = a.GetType(typeName);
-                if (type != null)
-                    return type;
-            }
-            return null;
-        }
-
-        public string GetDataType(object data)
-        {
-            var test = data as  IEdmObject;
-            var modeltype = test.GetEdmType();
-            var serializedType = LogicalNameMapping.GetOrAdd(modeltype.Definition.FullTypeName(), (typename) =>
-            {
-                return GetType(typename)?.GetCustomAttribute<EntityAttribute>()?.LogicalName??typename;
-
-            });
-
-            //var instance = untypedInstance?.GetValue(data);
-            //if (instance== null)
-            //{
-            //    var aa = getElementType.Invoke(data,null);
-
-
-            //    var c = container.GetValue(data);
-            //    var namedProperty = _NamedPropertyBag.GetOrAdd(c.GetType(), (t) => t.GetProperty("Value"));
-            //    var n = namedProperty.GetValue(c);
-            //    instance=untypedInstance.GetValue(n);
-            //}
-            //var serializedType = instance?.GetType().GetCustomAttribute<EntityAttribute>()?.LogicalName;
-            return serializedType;
-        }
-    }
-
-    public class ConstantRuntimeType : IODataRuntimeType
-    {
-        private string logicalName;
-
-        public ConstantRuntimeType(string logicalName)
-        {
-            this.logicalName=logicalName;
-        }
-
-        public string GetDataType(object data)
-        {
-            return logicalName;
-        }
-    }
-    public class ODataRuntimeTypeFactory : IODataRuntimeTypeFactory
-    {
-        private static ConcurrentDictionary<Type, IODataRuntimeType> _typeParsers = new ConcurrentDictionary<Type, IODataRuntimeType>();
-        private static Type selectexpandwrapper = typeof(Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper)
-            .Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapper`1");
-       
-
-        public IODataRuntimeType CreateTypeParser(Type type, object data)
-        {
-            return ODataRuntimeTypeFactory._typeParsers.GetOrAdd(type, type=>Factory(type,data));
-           
-        }
-
-        private IODataRuntimeType Factory(Type type, object data)
-        {
-            //
-            if (type.IsGenericType && 
-                ODataRuntimeTypeFactory.selectexpandwrapper.MakeGenericType(type.GenericTypeArguments[0]).IsAssignableFrom(type) &&
-                 
-                type.GenericTypeArguments[0].GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && !attr.IsBaseClass)
-            {
-                return new ConstantRuntimeType(attr.LogicalName);
-            }
-
-            return new SelectSomeOfT(this);
-
-        }
-    }
-    internal class SelectCoverter : IODataConverter
-    {
-        private static IODataRuntimeTypeFactory typeParser = new ODataRuntimeTypeFactory();
-
-    
-        private IODataConverterFactory odatatConverterFactory;
- 
-        private Func<IEdmModel, IEdmStructuredType, IPropertyMapper> MapperProvider;
- 
-        public SelectCoverter(Type type, IODataConverterFactory odatatConverterFactory)
-        {
-            //this.type = type;
-            this.odatatConverterFactory = odatatConverterFactory;
-            //this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
-            var SelectExpandWrapperConverter = type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
-            this.MapperProvider =(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
-          
-            
-
-         }
-
-       
-
-        //Microsoft.AspNetCore.OData.Query.Container.NamedProperty<T> //https://github.com/OData/AspNetCoreOData/blob/main/src/Microsoft.AspNetCore.OData/Query/Container/NamedPropertyOfT.cs
-
-
-
-        public object Convert(object data)
-        {
-             
-            //https://github.com/OData/AspNetCoreOData/blob/main/src/Microsoft.AspNetCore.OData/Query/Wrapper/SelectAllOfT.cs
-            //Microsoft.AspNetCore.OData.Query.Wrapper.SelectAll<KFST.Vanddata.Model.Identity>
-            
-            var poco =(data as Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper).ToDictionary(MapperProvider);
-
-            var typeParser = SelectCoverter.typeParser.CreateTypeParser(data.GetType(),data);
-            // var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
-            poco["$type"] = typeParser.GetDataType(data);
-
-            foreach (var kv in poco.ToArray())
-            {
-                if(kv.Value == null)
-                {
-                    poco.Remove(kv.Key);
-                    continue;
-                }
-
-                var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
-                var value= converter.Convert(kv.Value);
-                if (value == null)
-                {
-                    poco.Remove(kv.Key);
-                }
-                else
-                {
-                    poco[kv.Key] = value;
-                }
-            }
-
-            return poco;
-        }
-    }
-    internal class EnumerableConverter : IODataConverter
-    {
-       
-        private IODataConverterFactory odatatConverterFactory;
-
-        public EnumerableConverter(IODataConverterFactory odatatConverterFactory)
-        {
-          
-            this.odatatConverterFactory = odatatConverterFactory;
-        }
-
-        public object Convert(object data)
-        {
-            if (data is byte[])
-                return data;
-
-            var list = new List<object>();
-            foreach (var i in data as IEnumerable)
-            {
-                var converter = odatatConverterFactory.CreateConverter(i.GetType());
-                list.Add(converter.Convert(i));
-            }
-            return list;
-        }
-    }
-
-    /// <summary>
-    /// Singleton - return the Values Property from type
-    /// </summary>
-    public class GroupByConverter : IODataConverter
-    {
-        private readonly IODataConverterFactory odatatConverterFactory;
-
-        public PropertyInfo Method { get; }
-
-        public GroupByConverter(Type type , IODataConverterFactory odatatConverterFactory)
-        {
-            this.Method = type.GetProperty("Values");
-            this.odatatConverterFactory = odatatConverterFactory;
-        }
-
-        public object Convert(object data)
-        { 
-            var poco= Method.GetValue(data) as Dictionary<string, object>;
-
-            // poco["$type"] = typeParser.GetDataType(data);
-            foreach (var kv in poco.ToArray())
-            {
-                if (kv.Value == null)
-                {
-                    poco.Remove(kv.Key);
-                    continue;
-                }
-
-                var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
-                var value = converter.Convert(kv.Value);
-                if (value == null)
-                {
-                    poco.Remove(kv.Key);
-                }
-                else
-                {
-                    poco[kv.Key] = value;
-                }
-            }
-
-            return poco;
-        }
-    }
-    public class OdatatConverterFactory : IODataConverterFactory
-    {
-        private static ConcurrentDictionary<Type, IODataConverter> _converters = new ConcurrentDictionary<Type, IODataConverter>();
-
-        public IODataConverter CreateConverter(Type type)
-        {
-            return _converters.GetOrAdd(type, type =>
-             {
-                 if (type.Name == "SelectAllAndExpand`1")
-                 {
-                     return new SelectAllAndExpandConverter(type, this);
-
-                 }
-                 else if (type.Name == "SelectSome`1" || type.Name == "SelectAll`1" || type.Name == "SelectSomeAndInheritance`1")
-                 {
-                     return new SelectCoverter(type, this);
-
-
-                 }
-                 else if (typeof(IEnumerable).IsAssignableFrom(type) && (type != typeof(string)))
-                 {
-                     return new EnumerableConverter( this);
-
-                 }else if(type.Name == "NoGroupByAggregationWrapper" || type.Name == "GroupByWrapper" || type.Name == "AggregationWrapper")
-                 {
-                     return new GroupByConverter(type,this);
-                 }
-                 else
-                 {
-                     return new PrimitivConverter();
-                 }
-
-             });
-
-        }
-    }
-    internal class SelectAllAndExpandConverter : IODataConverter
-    {
-        private readonly Type type;
-        private OdatatConverterFactory odatatConverterFactory;
-        private PropertyInfo entityProperty;
-
-        public SelectAllAndExpandConverter(Type type, OdatatConverterFactory odatatConverterFactory)
-        {
-            this.type = type ?? throw new ArgumentNullException(nameof(type));
-            this.odatatConverterFactory = odatatConverterFactory ?? throw new ArgumentNullException(nameof(odatatConverterFactory));
-            this.entityProperty = type.GetProperty("Instance");
-        }
-
-        public object Convert(object data)
-        {
-            var value = entityProperty.GetValue(data);
-
-            var converter = odatatConverterFactory.CreateConverter(value.GetType());
-
-            return converter.Convert(value);
-        }
-    }
-
-    internal class PrimitivConverter : IODataConverter
-    {
-        public object Convert(object data)
-        {
-            
-            return data;
-        }
-    }
-
-    public interface IFormContextFeature<TDynamicContext> where TDynamicContext : DynamicContext
-    {
-        public ValueTask<JToken> GetManifestAsync();
-    }
-    public class DefaultFormContextFeature<TDynamicContext> :IFormContextFeature<DynamicContext> where TDynamicContext : DynamicContext
-    {
-        private readonly IOptions<DynamicContextOptions> options;
-
-        public DefaultFormContextFeature(IOptions<DynamicContextOptions> options)
-        {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
-        }
-
-        public ValueTask<JToken> GetManifestAsync()
-        {
-            return new ValueTask<JToken>(options.Value.Manifests.First());
-        }
-    }
-
-    public class UtcValueConverter : ValueConverter<DateTime, DateTime>
-    {
-        public static UtcValueConverter Instance = new UtcValueConverter();
-        public UtcValueConverter()
-            : base(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc))
-        {
-        }
-    }
-
     public static class DynamicContextExtensions
     {
         private static OdatatConverterFactory _factory = new OdatatConverterFactory();
@@ -436,19 +58,46 @@ namespace EAVFramework
 
         }
 
+        public static  Task<PageResult<object>> ExecuteHttpRequest<TContext>(this EAVDBContext<TContext> context, string entityCollectionSchemaName, string sql, HttpRequest request, params object[] sqlparams) where TContext : DynamicContext
+        {
+            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(request);
 
-        public static async Task<PageResult<object>> ExecuteHttpRequest<TContext>(this TContext context, string entityCollectionSchemaName, HttpRequest request) where TContext:DynamicContext
+            context.Context.EnsureModelCreated();
+
+            var type = context.Context.Manager.ModelDefinition.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
+  
+            var metadataQuerySet = context.FromSqlRaw<DynamicEntity>(type, sql, sqlparams) as IQueryable;
+            
+            return Execute<TContext>(request, type, context.Context, metadataQuerySet);
+
+          
+        }
+
+        private static List<IQueryExtender<TContext>> GetQueryInspectors<TContext>(HttpRequest request) where TContext : DynamicContext
         {
             var t1 = typeof(IQueryExtender<>).MakeGenericType(typeof(TContext));
             var t2 = typeof(IEnumerable<>).MakeGenericType(t1);
             var queryInspectors = (request.HttpContext.RequestServices.GetService(t2) as IEnumerable).Cast<IQueryExtender<TContext>>()
                 .ToList();
+            return queryInspectors;
+        }
+
+        public static Task<PageResult<object>> ExecuteHttpRequest<TContext>(this TContext context, string entityCollectionSchemaName, HttpRequest request) where TContext : DynamicContext
+        {
+           
 
             context.EnsureModelCreated();
 
             var type = context.Manager.ModelDefinition.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
 
             var metadataQuerySet = context.Set(type);
+
+            return Execute<TContext>(request,type,context,metadataQuerySet);
+           
+        }
+        public static async Task<PageResult<object>> Execute<TContext>(HttpRequest request, Type type, TContext context, IQueryable metadataQuerySet) where TContext : DynamicContext
+        {
+            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(request);
 
             var queryContext = new QueryContext<TContext>
             {
@@ -546,7 +195,7 @@ namespace EAVFramework
 
         public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
 
-        public IMigrationManager Manager  => manager;
+        public IMigrationManager Manager => manager;
 
         protected DynamicContext(DbContextOptions options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger logger)
           : base(options)
@@ -556,11 +205,11 @@ namespace EAVFramework
             this.modelOptions = modelOptions;
             this.manager = migrationManager;
             this.logger = logger;
-              
+
         }
 
-       
-        
+
+
 
         public DynamicContext(DbContextOptions<DynamicContext> options, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicContext> logger)
         : this(options as DbContextOptions, modelOptions, migrationManager, logger as ILogger)
@@ -589,7 +238,7 @@ namespace EAVFramework
             //    factories.Add(model.Item1, model.Item2);
             //}
             var latestManifest = modelOptions.Value.Manifests.First();
-          //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
+            //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
             manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
 
@@ -597,29 +246,29 @@ namespace EAVFramework
             {
                 int i = 0;
                 foreach (var migration in modelOptions.Value.Manifests
-                    .Select((m,i) => (target:m, source: i+1 == modelOptions.Value.Manifests.Length? new JObject(): modelOptions.Value.Manifests[i+1]))
+                    .Select((m, i) => (target: m, source: i + 1 == modelOptions.Value.Manifests.Length ? new JObject() : modelOptions.Value.Manifests[i + 1]))
 
                     .Reverse())
                 {
-                    
-                    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".","_") ?? MigrationDefaultName}";
-                   
-                    var model = manager.CreateMigration(name, migration.target,migration.source, this.modelOptions.Value);
+
+                    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName}";
+
+                    var model = manager.CreateMigration(name, migration.target, migration.source, this.modelOptions.Value);
 
                     types.Add($"{++i:D16}{name}", model.Type);
                     factories.Add(model.Type, model.MigrationFactory);
                 }
             }
-            return new MigrationsInfo {  Factories = factories, Types = types};
+            return new MigrationsInfo { Factories = factories, Types = types };
 
-            
+
         }
 
-       
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-          
+
 
             if (this.modelOptions.Value.EnableDynamicMigrations)
             {
@@ -636,10 +285,10 @@ namespace EAVFramework
                 EnsureModelCreated();
             }
 
-           // optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
+            // optionsBuilder.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
         }
 
-     
+
         public ModelDefinition EnsureModelCreated()
         {
 
@@ -669,14 +318,14 @@ namespace EAVFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            Console.WriteLine("Test");   
+            Console.WriteLine("Test");
             var sw = Stopwatch.StartNew();
-    
+
             //  EnsureModelCreated();
             if (this.modelOptions.Value.CreateLatestMigration)
             {
                 var latestManifest = modelOptions.Value.Manifests.First();
-             //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
+                //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
                 manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
@@ -688,17 +337,18 @@ namespace EAVFramework
                     var a = modelBuilder.Entity(en.Value);
                     var config = Activator.CreateInstance(manager.ModelDefinition.EntityDTOConfigurations[en.Key]) as IEntityTypeConfiguration;
                     config.Configure(a);
-                    foreach(var prop in a.Metadata.GetProperties().Where(c=>(Nullable.GetUnderlyingType( c.ClrType) ?? c.ClrType) == typeof(DateTime)))
+                    foreach (var prop in a.Metadata.GetProperties().Where(c => (Nullable.GetUnderlyingType(c.ClrType) ?? c.ClrType) == typeof(DateTime)))
                     {
                         prop.SetValueConverter(UtcValueConverter.Instance);
                     }
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to configure: { en.Key}: { en.Value.FullName}");
+                    Console.WriteLine($"Failed to configure: {en.Key}: {en.Value.FullName}");
                     logger.LogWarning(ex, "Failed to configure: {Model}: {Class}", en.Key, en.Value.FullName);
                     throw;
                 }
-                 
+
             }
 
 
@@ -762,25 +412,25 @@ namespace EAVFramework
         //    var metadataQuerySet = (DbSet<DynamicEntity>)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
         //    return metadataQuerySet;
         //}
-        
+
         public IQueryable Set(Type type)
         {
             return (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
         }
 
-        
 
-        
-       
-      
 
-        
+
+
+
+
+
         public EntityEntry Add(string entityName, JToken data)
         {
             var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
             logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
-            var a= this.Attach(record);
+            var a = this.Attach(record);
             a.State = EntityState.Added;
             return a;
 
@@ -791,12 +441,12 @@ namespace EAVFramework
             var type = manager.ModelDefinition.EntityDTOs[entityName];
             var record = data.ToObject(type);
 
-            var keys = this.Model.FindEntityType(type).FindPrimaryKey().Properties.Select(c => (data as JObject).GetValue(c.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name,StringComparison.OrdinalIgnoreCase)?.ToObject(c.PropertyInfo.PropertyType)).ToArray();
+            var keys = this.Model.FindEntityType(type).FindPrimaryKey().Properties.Select(c => (data as JObject).GetValue(c.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name, StringComparison.OrdinalIgnoreCase)?.ToObject(c.PropertyInfo.PropertyType)).ToArray();
             //  this.Set(entityName).FindAsync()
-          
-            
+
+
             var db = await this.FindAsync(type, keys);
-            if(db==null)
+            if (db == null)
             {
                 return this.Add(record);
             }
@@ -806,7 +456,7 @@ namespace EAVFramework
                 entry.State = EntityState.Detached;
                 return this.Update(record);
             }
- 
+
 
         }
 
@@ -837,7 +487,7 @@ namespace EAVFramework
 
             if (!manager.ModelDefinition.EntityDTOs.ContainsKey(entityName))
             {
-              throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", manager.ModelDefinition.EntityDTOs.Keys)}");
+                throw new KeyNotFoundException($"The requested {entityName} was not part of model: {string.Join(", ", manager.ModelDefinition.EntityDTOs.Keys)}");
             }
 
             var type = manager.ModelDefinition.EntityDTOs[entityName];
@@ -849,7 +499,7 @@ namespace EAVFramework
         }
         public Type GetEntityType(string entityName)
         {
-             var type = manager.ModelDefinition.EntityDTOs[entityName];
+            var type = manager.ModelDefinition.EntityDTOs[entityName];
             return type;
         }
         public EntityEntry Update(string entityName, JToken data)
@@ -858,13 +508,13 @@ namespace EAVFramework
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
 
-           
-            var entity= this.Update(record);
- 
-            foreach(var prop in entity.Properties)
+
+            var entity = this.Update(record);
+
+            foreach (var prop in entity.Properties)
             {
                 var logicalName = prop.Metadata.PropertyInfo.GetCustomAttribute<DataMemberAttribute>()?.Name;
-                if(!string.IsNullOrEmpty(logicalName) && !prop.Metadata.IsPrimaryKey())
+                if (!string.IsNullOrEmpty(logicalName) && !prop.Metadata.IsPrimaryKey())
                     prop.IsModified = data[logicalName] != null;
             }
 
@@ -875,26 +525,26 @@ namespace EAVFramework
                 var deletedItems = data[$"{attr.PropertyName}@deleted"];
                 if (deletedItems != null)
                 {
-                    foreach(var id in deletedItems)
+                    foreach (var id in deletedItems)
                     {
-//#if NET5_0
-                        var related=Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
+                        //#if NET5_0
+                        var related = Activator.CreateInstance(collection.Metadata.TargetEntityType.ClrType);
                         //var keys = collection.Metadata.TargetEntityType.GetKeys();
                         //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
 
                         //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
 
                         collection.Metadata.TargetEntityType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
-//#else
-//                        var targetType = collection.Metadata.GetTargetType();
-//                        var related = Activator.CreateInstance(targetType.ClrType);
-//                        //var keys = collection.Metadata.TargetEntityType.GetKeys();
-//                        //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
+                        //#else
+                        //                        var targetType = collection.Metadata.GetTargetType();
+                        //                        var related = Activator.CreateInstance(targetType.ClrType);
+                        //                        //var keys = collection.Metadata.TargetEntityType.GetKeys();
+                        //                        //var primary = collection.Metadata.TargetEntityType.FindPrimaryKey();
 
-//                        //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
+                        //                        //var a = primary.GetPrincipalKeyValueFactory<Guid>().CreateFromKeyValues(new object[] { id.ToObject<Guid>() });
 
-//                        targetType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
-//#endif
+                        //                        targetType.ClrType.GetProperty("Id").SetValue(related, id.ToObject<Guid>());
+                        //#endif
 
 
 
@@ -908,6 +558,6 @@ namespace EAVFramework
 
         }
 
-       
+
     }
 }
