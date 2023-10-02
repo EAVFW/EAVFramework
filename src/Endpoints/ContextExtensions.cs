@@ -164,7 +164,8 @@ namespace EAVFramework.Endpoints
                      
                 } while (newItems_preop || newItems_preval);
 
-              
+
+                _operation.PreOperationChanges = dynamicContext.ChangeTracker.DebugView.ShortView;
                 await dynamicContext.SaveChangesAsync();
 
 
@@ -198,6 +199,7 @@ namespace EAVFramework.Endpoints
  
                 } while (newItems_preop || newItems_preval || newItems_postop);
 
+                _operation.PostOperationChanges = dynamicContext.ChangeTracker.DebugView.ShortView;
                 await _operation.Context.SaveChangesAsync();
 
 

@@ -369,16 +369,26 @@ namespace EAVFramework.Shared.V2
 
                             if (type == "lookup" || type == "polylookup")
                             {
-                                propertyInfo
-                                    .LookupTo(
-                                        tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
-                                        //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
-                                        attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType),
-                                        attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType))
-                                    .WithIndex(attributeDefinition.Value.SelectToken("$.type.index") != null ?
-                                        attributeDefinition.Value.SelectToken("$.type.index")?.ToObject<IndexInfo>() ?? new IndexInfo { Unique = true } : null);
+                                if (typeObj.SelectToken("$.inline")?.ToObject<bool>() ?? false)
+                                {
+                                    /*
+                                     * When the poly lookup is inline, then there is generated additional lookups
+                                     * and this should be considered a guid? property.
+                                     */
+                                    continue;
+                                }
+                             
+                                
+                                    propertyInfo
+                                        .LookupTo(
+                                            tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
+                                            //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
+                                            attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType),
+                                            attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType))
+                                        .WithIndex(attributeDefinition.Value.SelectToken("$.type.index") != null ?
+                                            attributeDefinition.Value.SelectToken("$.type.index")?.ToObject<IndexInfo>() ?? new IndexInfo { Unique = true } : null);
 
-
+                                
 
                             }
 
@@ -394,7 +404,7 @@ namespace EAVFramework.Shared.V2
                         }
                         catch (Exception ex)
                         {
-                            throw new InvalidOperationException($"Failed to generate field {attributeDefinition.Name}", ex);
+                            throw new InvalidOperationException($"Failed to generate field {attributeDefinition.Name}:{ex.ToString()}", ex);
                         }
                     }
                 }

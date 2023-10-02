@@ -446,14 +446,16 @@ namespace EAVFramework.Shared.V2
 
                 var UpMethodIL = UpMethod.GetILGenerator();
 
-                var hasPriorEntity = dynamicCodeService.GetTypes().FirstOrDefault(t => !t.IsPendingTypeBuilder() && t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == LogicalName);
+                var priorEntities = dynamicCodeService.GetTypes()
+                    .Where(t => !t.IsPendingTypeBuilder() && t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == LogicalName)
+                    .ToArray();
 
 
 
               
 
 
-                if (hasPriorEntity == null)
+                if (!priorEntities.Any())
                 {
                     dynamicCodeService.EmitPropertyService.CreateTableImpl(CollectionSchemaName, Schema, columnsCLRType, columsMethod, ConstraintsMethod, UpMethodIL);
 
@@ -617,7 +619,7 @@ namespace EAVFramework.Shared.V2
                 foreach (var key in Keys)
                 {
 
-                    if (hasPriorEntity?.GetCustomAttributes<EntityIndexAttribute>().Any(c => c.IndexName == key.Key) ?? false)
+                    if (priorEntities.Any(prior=>prior?.GetCustomAttributes<EntityIndexAttribute>().Any(c => c.IndexName == key.Key) ?? false))
                     {
                         continue;
                     }
@@ -687,7 +689,7 @@ namespace EAVFramework.Shared.V2
                 var DownMethod = entityTypeBuilder.DefineMethod("Down", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderDropTable.DeclaringType });
                 var DownMethodIL = DownMethod.GetILGenerator();
 
-                if (hasPriorEntity == null)
+                if (!priorEntities.Any())
                 {
                     DownMethodIL.Emit(OpCodes.Ldarg_1); //first argument
                     DownMethodIL.Emit(OpCodes.Ldstr, CollectionSchemaName); //Constant

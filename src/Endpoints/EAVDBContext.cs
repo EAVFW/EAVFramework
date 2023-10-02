@@ -308,7 +308,16 @@ namespace EAVFramework.Endpoints
             //   this.Context.ChangeTracker.LazyLoadingEnabled=true;
             var entity = await FindAsync(entityName, recordId);
 
-            var relatedProps = record.OfType<JProperty>().Where(p => p.Value.Type == JTokenType.Object).ToArray();
+
+            /**
+             * We load up all properties with an object from database unless no id on object is provided,
+             * then its assumed to be a new object or partial update
+             * Two Cases:
+             * 1: if the object has no id field but the root object do have propertyname + "id", then it should be partial update
+             * 2: if no id and no propertyname + "id" field on root, then its assume that the object should replace the existing as new
+             */
+            var relatedProps = record.OfType<JProperty>()
+                .Where(p => p.Value.Type == JTokenType.Object && p.Value is JObject obj && (obj.ContainsKey("id")|| record[p.Name+"id"] !=null )).ToArray();
 
             foreach (var related in relatedProps.Select(related =>
                  entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
@@ -633,8 +642,29 @@ namespace EAVFramework.Endpoints
         {
             return this.Context.Set<T>();
         }
+        public DbSet<TBase> Set<TBase>(Type type) where TBase : DynamicEntity
+        {
+           
+            var a=this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]);
+            var b = (DbSet<TBase>)a;
+            return b;
+        }
+        public IQueryable<TBase> FromSqlRaw<TBase>(Type type,string sql, params object[] parameters) where TBase : DynamicEntity
+        {
+            var m = typeof(RelationalQueryableExtensions).GetMethod(nameof(RelationalQueryableExtensions.FromSqlRaw), BindingFlags.Public | BindingFlags.Static);
 
-       
+            var set= this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]); ;
+
+            var b=m.MakeGenericMethod(type).Invoke(null, new object[] { set,sql, parameters });
+
+            var c = (IQueryable<TBase>)b;
+            return c;
+
+
+        }
+
+
+
         public IQueryable Set(string name)
         {
             return this.Context.Set(this.Context.GetEntityType(name));
