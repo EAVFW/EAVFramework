@@ -23,7 +23,8 @@
 	
   <ItemGroup>
     
-    <ProjectReference Include="../../src/EAVFramework.csproj" />
+    <ProjectReference Include="../../src/EAVFramework.csproj" />    
+    <ProjectReference Include="..\..\sdk\EAVFW.Extensions.Manifest.SDK.csproj" />
   </ItemGroup>
 
   <ItemGroup>

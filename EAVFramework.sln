@@ -28,6 +28,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\todo.yml = .github\workflows\todo.yml
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EAVFW.Extensions.Manifest.SDK", "sdk\EAVFW.Extensions.Manifest.SDK.csproj", "{B67A9BF3-506D-4AE1-B08A-F92564EF8B0D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{2D94A574-9FE3-4DAF-B9EA-F9B57F0F358A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D94A574-9FE3-4DAF-B9EA-F9B57F0F358A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D94A574-9FE3-4DAF-B9EA-F9B57F0F358A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B67A9BF3-506D-4AE1-B08A-F92564EF8B0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B67A9BF3-506D-4AE1-B08A-F92564EF8B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B67A9BF3-506D-4AE1-B08A-F92564EF8B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B67A9BF3-506D-4AE1-B08A-F92564EF8B0D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +60,7 @@ Global
 		{13EA7011-EAAD-4711-9C56-335E3AA6A460} = {000AD218-EE1D-4478-A4FB-BEC306DCFBD1}
 		{6559459D-C82B-4D31-B1F9-53C1B40391BB} = {000AD218-EE1D-4478-A4FB-BEC306DCFBD1}
 		{D6322B62-74C6-4F70-9654-95DEEC0BEE00} = {E09CFDBE-BEF9-4A00-BC75-EAFE614F357B}
+		{B67A9BF3-506D-4AE1-B08A-F92564EF8B0D} = {000AD218-EE1D-4478-A4FB-BEC306DCFBD1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {39A465A1-3369-4D33-A6F3-32C4FA834213}
