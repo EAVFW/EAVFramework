@@ -1,24 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>disable</Nullable>
+	<PropertyGroup>
+		<TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>disable</Nullable>
 
-	  <Title>EAVFW.Extensions.Manifest.SDK</Title>
-	  <Authors>Poul Kjeldager</Authors>
-	  <Description>SDK for EAVFW Manifest</Description>
-	  <PackageReadmeFile>README.md</PackageReadmeFile>
-	  <RepositoryUrl>https://github.com/EAVFW/EAVFW.Extensions.Manifest.ManifestEnricherTool</RepositoryUrl>
-	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Title>EAVFW.Extensions.Manifest.SDK</Title>
+		<Authors>Poul Kjeldager</Authors>
+		<Description>SDK for EAVFW Manifest</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-  </PropertyGroup>
-	
-  <ItemGroup>
-     
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-	<PackageReference Include="DotNETDevOps.JsonFunctions" Version="3.0.26" />
-  </ItemGroup>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Link="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="3.0.26" />
+	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.31" />
 	</ItemGroup>
