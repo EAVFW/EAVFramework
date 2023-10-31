@@ -30,8 +30,13 @@ namespace EAVFramework.Shared
     {
 
     }
+    public class EntityMappingStrategyAttribute : Attribute
+    {
+         public MappingStrategy MappingStrategy { get; set; }
+    }
     public class EntityMigrationAttribute : Attribute
     {
+        public string Namespace { get; set; }
         public string LogicalName { get; set; }
         public string MigrationName { get; set; }
         public string RawUpMigration { get; set; }

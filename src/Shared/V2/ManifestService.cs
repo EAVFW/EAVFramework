@@ -284,10 +284,11 @@ namespace EAVFramework.Shared.V2
                     tableLogicalName: entity.Value.SelectToken("$.logicalName").ToString(),
                     tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
                      entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
-                     entity.Value.SelectToken("$.abstract") != null
+                     entity.Value.SelectToken("$.abstract") != null,
+                     entity.Value.SelectToken("$.mappingStrategy")?.ToObject<MappingStrategy>()
                     ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
 
-                
+                 
 
                 tables.Add(entity.Name, table);
 
@@ -302,7 +303,7 @@ namespace EAVFramework.Shared.V2
 
                     var table = tables[entityDefinition.Name];
 
-                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString();
+                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString() ?? entityDefinition.Value.SelectToken("$.TPC")?.ToString(); 
                     if (!string.IsNullOrEmpty(parentName))
                     {
                         table.WithBaseEntity(tables[parentName]);
@@ -440,7 +441,7 @@ namespace EAVFramework.Shared.V2
             }
 
             return (CreateDynamicMigration(dynamicCodeService, manifest),
-                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
+                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.Namespace, this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
 
 
 

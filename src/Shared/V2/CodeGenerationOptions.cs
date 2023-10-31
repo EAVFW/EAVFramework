@@ -41,6 +41,8 @@ namespace EAVFramework.Shared.V2
         public string EntityConfigurationConfigureName { get; set; }
         public Type EntityTypeBuilderType { get; set; }
         public MethodInfo EntityTypeBuilderToTable { get; set; }
+        public MethodInfo UseTpcMappingStrategy { get; set; }
+        
 
         /// <summary>
         /// Global schema to use when not specified per entity

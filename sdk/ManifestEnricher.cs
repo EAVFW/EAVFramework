@@ -278,6 +278,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                             
                                 var columns = jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].attributes").OfType<JProperty>()
                                         .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT")}'].attributes").OfType<JProperty>())
+                                        .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC")}'].attributes").OfType<JProperty>())
                                         .GroupBy(k => k.Name).Select(g => g.First())
                                         .ToArray();
 
@@ -490,7 +491,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             {
                 var entity = qque.Dequeue();
 
-                var tpt = entity.Value.SelectToken("$.TPT")?.ToString();
+                var tpt = entity.Value.SelectToken("$.TPT")?.ToString() ?? entity.Value.SelectToken("$.TPC")?.ToString(); 
                 if (!string.IsNullOrEmpty(tpt))
                 {
                     var baseentity = jsonraw.SelectToken($"$.entities['{tpt}']").Parent as JProperty;
