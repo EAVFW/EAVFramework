@@ -1,7 +1,4 @@
-﻿using DotNETDevOps.JsonFunctions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -650,10 +647,9 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                     foreach (var attr in (entityValue.SelectToken("$.attributes") as JObject)?.Properties() ?? Enumerable.Empty<JProperty>())
                     {
-                        var attrValue = attr.Value as JObject;
-                        var attrType = attrValue.SelectToken("$.type");
-                         
+                        if(!(attr.Value is JObject attrValue)) continue;
                         
+                        var attrType = attrValue.SelectToken("$.type");
                        
                         if (!ConvertToSchemaType(attrType, out var type)) continue;
 
@@ -722,7 +718,12 @@ namespace EAVFW.Extensions.Manifest.SDK
                     }
                 }
 
-                var queue = new Queue<JObject?>(attributes.Properties().Select(c => c.Value as JObject));
+                var queue =
+                    new Queue<JObject?>(
+                        attributes.Properties()
+                            .Select(c => c.Value as JObject)
+                            .Where(x => x != null)
+                    );
 
                 foreach (var attribute in attributes.Properties())
                 {
@@ -851,7 +852,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                 }
 
-                foreach (var attr in attributes.Properties())
+                foreach (var attr in attributes.Properties().Where(x => x.Value.Type == JTokenType.Object))
                 {
                     var attributeLocaleEnglish = new JObject(new JProperty("displayName", attr.Value["displayName"]));
                     var attributeLocale = attr.Value.SelectToken("$.locale") as JObject ?? SetDefault(attr.Value, attributeLocaleEnglish);
