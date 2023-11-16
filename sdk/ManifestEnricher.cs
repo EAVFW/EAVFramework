@@ -647,7 +647,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                     foreach (var attr in (entityValue.SelectToken("$.attributes") as JObject)?.Properties() ?? Enumerable.Empty<JProperty>())
                     {
-                        if(attr.Value is not JObject attrValue) continue;
+                        if(!(attr.Value is JObject attrValue)) continue;
                         
                         var attrType = attrValue.SelectToken("$.type");
                        
