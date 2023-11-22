@@ -9,5 +9,11 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("description")] public string Description { get; set; }
         [JsonPropertyName("attributes")] public Dictionary<string, AttributeDefinitionBase> Attributes { get; set; }
         [JsonPropertyName("wizards")] public Dictionary<string, WizardDefinition> Wizards { get; set; }
+
+        /// <summary>
+        /// Exclusively used to capture non-spec items
+        /// </summary>
+        [JsonExtensionData]
+        public Dictionary<string, object> AdditionalFields { get; set; }
     }
 }
