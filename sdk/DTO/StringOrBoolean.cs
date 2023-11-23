@@ -16,10 +16,15 @@ namespace EAVFW.Extensions.Manifest.SDK
             BooleanValue = booleanValue;
         }
 
-        public string? StringValue { get; }
+        public string StringValue { get; }
 
         public bool BooleanValue { get; }
 
         public bool IsBool { get; }
+
+        public override string ToString()
+        {
+            return IsBool ? BooleanValue.ToString() : StringValue;
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
         [JsonConverter(typeof(StringOrBooleanTabConverter))]
         [JsonPropertyName("visible")]
-        public StringOrBoolean StringOrBoolean { get; set; }
+        public StringOrBoolean Visible { get; set; }
 
         [JsonPropertyName("onTransitionOut")] public TransitionDefinition OnTransitionOut { get; set; }
 

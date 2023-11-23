@@ -55,11 +55,12 @@ namespace EAVFW.Extensions.Manifest.SDK
     public class AttributeObjectDefinition : AttributeDefinitionBase
     {
         [JsonPropertyName("isPrimaryField")] public bool IsPrimaryField { get; set; }
-        // [JsonPropertyName("type")] public TypeDefinition Type { get; set; }
 
         [JsonPropertyName("moduleSource")] public string ModuleSource { get; set; }
 
         [JsonPropertyName("moduleLocation")] public string ModuleLocation { get; set; }
+
+        [JsonPropertyName("type")] public TypeDefinition AttributeType { get; set; }
 
         /// <summary>
         /// Exclusively used to capture non-spec items
@@ -72,6 +73,8 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         [JsonPropertyName("type")] public string Type { get; set; }
         [JsonPropertyName("referenceType")] public string ReferenceType { get; set; }
+
+        [JsonPropertyName("options")] public Dictionary<string, JsonElement> Options { get; set; }
 
         /// <summary>
         /// Exclusively used to capture non-spec items
