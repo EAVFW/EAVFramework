@@ -9,6 +9,6 @@ namespace EAVFW.Extensions.Manifest.SDK
 
         [JsonPropertyName("message")] public MessageDefinition Message { get; set; }
 
-        [JsonExtensionData] public Dictionary<string, object> AdditionalData { get; set; } = new();
+        [JsonExtensionData] public Dictionary<string, object> AdditionalData { get; set; } = new Dictionary<string, object>();
     }
 }
