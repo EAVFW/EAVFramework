@@ -21,7 +21,6 @@ jobs:
           dotnet-version: | 
             3.1.x
             6.0.x
-            8.0.x
 
       - name: Cleaning
         run: dotnet clean
