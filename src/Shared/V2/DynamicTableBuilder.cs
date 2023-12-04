@@ -1,4 +1,4 @@
-﻿
+
 
 using System;
 using System.Collections.Concurrent;
@@ -1019,7 +1019,7 @@ namespace EAVFramework.Shared.V2
                         case "nullable":
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
                             break;
-                        case "type" when propertyInfo.Type == "mpultilinetext":
+                        case "type" when propertyInfo.Type == "multilinetext":
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)"), arg1);
                             break;
 
