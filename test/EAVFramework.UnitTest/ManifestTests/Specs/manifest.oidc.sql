@@ -377,6 +377,12 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
+    CREATE INDEX [IX_PermissionId] ON [tests].[SecurityRolePermissions] ([PermissionId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
     EXEC(N'CREATE UNIQUE INDEX [IX_RolePermission] ON [tests].[SecurityRolePermissions] ([SecurityRoleId], [PermissionId]) WHERE [SecurityRoleId] IS NOT NULL AND [PermissionId] IS NOT NULL');
 END;
 GO
@@ -408,6 +414,12 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
+    CREATE INDEX [IX_IdentityId] ON [tests].[SecurityRoleAssignments] ([IdentityId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
     EXEC(N'CREATE UNIQUE INDEX [IX_IdentityRole] ON [tests].[SecurityRoleAssignments] ([SecurityRoleId], [IdentityId]) WHERE [SecurityRoleId] IS NOT NULL AND [IdentityId] IS NOT NULL');
 END;
 GO
@@ -434,6 +446,12 @@ BEGIN
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
     EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'SecurityGroupMembers';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
+    CREATE INDEX [IX_IdentityId] ON [tests].[SecurityGroupMembers] ([IdentityId]);
 END;
 GO
 
@@ -471,6 +489,12 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
 BEGIN
+    CREATE INDEX [IX_PermissionId] ON [tests].[RecordShares] ([PermissionId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
     CREATE TABLE [tests].[Signins] (
         [Id] uniqueidentifier NOT NULL,
         [Claims] nvarchar(max) NULL,
@@ -494,6 +518,12 @@ BEGIN
     DECLARE @description AS sql_variant;
     SET @description = N'comment';
     EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'Signins';
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [oidc].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_8')
+BEGIN
+    CREATE INDEX [IX_IdentityId] ON [tests].[Signins] ([IdentityId]);
 END;
 GO
 
