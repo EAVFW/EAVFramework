@@ -1,4 +1,4 @@
-﻿using EAVFramework.Shared;
+using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -136,8 +136,14 @@ namespace EAVFramework
                 MigrationBuilderDropTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropTable)), "MigrationBuilderDropTable"),
                 MigrationBuilderCreateTable = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateTable)), "MigrationBuilderCreateTable"),
                 MigrationBuilderSQL = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.Sql)), "MigrationBuilderSQL"),
+
+                /* .NET 8 added  descending*/
                 MigrationBuilderCreateIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex),
-                    new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/ }), "MigrationBuilderCreateIndex"),
+                    new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/ })
+                ?? typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex),
+                    new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/, typeof(bool[]) /*descending*/ }), "MigrationBuilderCreateIndex"),
+                
+                
                 MigrationBuilderDropIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
                 MigrationsBuilderAddColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)), "MigrationsBuilderAddColumn"),
                 MigrationsBuilderAddForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey), new Type[] { typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(ReferentialAction), typeof(ReferentialAction) }), "MigrationsBuilderAddForeignKey"),
