@@ -27,7 +27,7 @@
      <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.1.1" />
 
      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
+      
     </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
