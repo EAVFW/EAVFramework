@@ -19,13 +19,9 @@
 
     <ItemGroup>
 
-      <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    
-
-
-     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+   
      <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.1.1" />
-
      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       
     </ItemGroup>
