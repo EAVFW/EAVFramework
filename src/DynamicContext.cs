@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints;
+using EAVFramework.Endpoints;
 using EAVFramework.Endpoints.Query;
 using EAVFramework.Endpoints.Query.OData;
 using EAVFramework.Extensions;
@@ -318,7 +318,7 @@ namespace EAVFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            Console.WriteLine("Test");
+            
             var sw = Stopwatch.StartNew();
 
             //  EnsureModelCreated();

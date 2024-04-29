@@ -64,14 +64,14 @@ namespace EAVFramework.Extensions
 
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
                             claimsPrincipal, new AuthenticationProperties(
-
+                                
                                 new Dictionary<string, string>
                                 {
                                     ["handleId"] = handleId,
                                     ["callbackUrl"] = redirectUri,
                                     ["schema"] = auth.AuthenticationName
                                 })
-                            {
+                            { 
                                  RedirectUri = redirectUri 
                             });
 
