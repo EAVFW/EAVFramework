@@ -650,7 +650,10 @@ namespace EAVFramework.Shared.V2
                         UpMethodIL.Emit(OpCodes.Ldstr, Schema); //Constant schema
                         UpMethodIL.Emit(OpCodes.Ldc_I4_1); //Constant unique=true
                         UpMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
-
+                        if (options.MigrationBuilderCreateIndex.GetParameters().Length > 6)
+                        {
+                            UpMethodIL.Emit(OpCodes.Ldnull); //Constant descending=null
+                        }
 
                         UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
                         UpMethodIL.Emit(OpCodes.Pop);
