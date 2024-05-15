@@ -272,24 +272,40 @@ namespace EAVFramework.Shared.V2
             var options = dynamicCodeService.Options;
 
             var tables = new Dictionary<string, DynamicTableBuilder>();
-            foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
+            foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
             {
-
-                var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
-                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entity.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
-
-
-                var table = builder.WithTable(entity.Name,
-                    tableSchemaname: entity.Value.SelectToken("$.schemaName").ToString(),
-                    tableLogicalName: entity.Value.SelectToken("$.logicalName").ToString(),
-                    tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
-                     entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
-                     entity.Value.SelectToken("$.abstract") != null
-                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
-
                 
+                var schema = entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityDefinition.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
 
-                tables.Add(entity.Name, table);
+
+
+                var table = builder
+                    .WithTable(entityDefinition.Name,
+                        tableSchemaname: entityDefinition.Value.SelectToken("$.schemaName").ToString(),
+                        tableLogicalName: entityDefinition.Value.SelectToken("$.logicalName").ToString(),
+                        tableCollectionSchemaName: entityDefinition.Value.SelectToken("$.collectionSchemaName").ToString(),
+                        entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
+                        entityDefinition.Value.SelectToken("$.abstract") != null
+                    ).External(entityDefinition.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
+                    
+
+                var upSqlToken = entityDefinition.Value.SelectToken("$.sql.migrations.up");
+                
+                if (upSqlToken?.Type == JTokenType.String)
+                {
+                    table.WithSQLUp(upSqlToken.ToString());
+                }
+                else if (upSqlToken?.Type == JTokenType.Array)
+                {
+                    foreach(var sql in upSqlToken.Select(c => c.ToString())){
+                        table.WithSQLUp(sql);
+                    }
+                }
+
+
+
+                tables.Add(entityDefinition.Name, table);
 
 
             }

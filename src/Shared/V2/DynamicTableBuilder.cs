@@ -678,9 +678,9 @@ namespace EAVFramework.Shared.V2
                     {
 
                         UpMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                        UpMethodIL.Emit(OpCodes.Ldstr, upSql);
+                        UpMethodIL.Emit(OpCodes.Ldstr, upSql); 
+                        UpMethodIL.Emit(OpCodes.Ldc_I4_0);
 
-                        UpMethodIL.Emit(OpCodes.Ldnull);
                         UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderSQL);
                         UpMethodIL.Emit(OpCodes.Pop);
                     }
@@ -1341,6 +1341,13 @@ namespace EAVFramework.Shared.V2
         {
             IsExternal = v;
             RemoteType = remoteType;
+            return this;
+        }
+
+        
+        internal DynamicTableBuilder WithSQLUp(string upSql)
+        {
+            SQLUpStatements.Add(upSql);
             return this;
         }
     }
