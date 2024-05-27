@@ -361,7 +361,7 @@ namespace EAVFramework.Shared.V2
                             if (type == "choices")
                                 continue;
 
-                            if ((attributeDefinition.Value.SelectToken("$.metadataOnly")?.ToObject<bool>() == true) )
+                            if (attributeDefinition.Value.SelectToken("$.metadataOnly")?.ToObject<bool>() == true )
                             {
                                 /*
                                  * When the poly lookup is split, then there is generted additional 

@@ -242,7 +242,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                                 }
                                 polyLookup.Value["type"]["type"] = "polylookup";
-                                polyLookup.Value["metadataOnly"] = true;
+                               
                                 //   polyLookup.Remove();
                             }
                             else
