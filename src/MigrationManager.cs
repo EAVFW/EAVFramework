@@ -27,6 +27,8 @@ using static EAVFramework.Shared.TypeHelper;
 using EAVFramework.Shared.V2;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using EAVFW.Extensions.Manifest.SDK;
+using System.Text.Json;
 
 namespace EAVFramework
 {
@@ -57,6 +59,7 @@ namespace EAVFramework
 
         public TypeInfo Type { get; set; }
         public Func<Migration> MigrationFactory { get; set; }
+        public Dictionary<string, EntityDefinition> Entities { get; set; }
     }
     public class MigrationManagerOptions
     {
@@ -370,7 +373,12 @@ namespace EAVFramework
 
                 try
                 {
-                    var m = new ModelDefinition();
+                    var m = new ModelDefinition()
+                    {
+                        Entities = new Dictionary<string, EntityDefinition>( System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString())
+                        .Entities.ToDictionary(k=>k.Value.CollectionSchemaName, v=>v.Value),StringComparer.OrdinalIgnoreCase)
+                    };
+                    
                     //var asmb = dynamicCodeService.CreateAssemblyBuilder(options.Namespace);
                     var manfiestservice = new ManifestService(new ManifestServiceOptions
                     {

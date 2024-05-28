@@ -51,10 +51,12 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         public string Value { get; set; }
     }
+    
 
     public class AttributeObjectDefinition : AttributeDefinitionBase
     {
         [JsonPropertyName("isPrimaryField")] public bool IsPrimaryField { get; set; }
+        [JsonPropertyName("logicalName")] public string LogicalName { get; set; }
 
         [JsonPropertyName("moduleSource")] public string ModuleSource { get; set; }
 
@@ -72,6 +74,8 @@ namespace EAVFW.Extensions.Manifest.SDK
     public class TypeDefinition
     {
         [JsonPropertyName("type")] public string Type { get; set; }
+
+        [JsonPropertyName("split")] public bool Split { get; set; }
         [JsonPropertyName("referenceType")] public string ReferenceType { get; set; }
 
         [JsonPropertyName("options")] public Dictionary<string, JsonElement> Options { get; set; }
