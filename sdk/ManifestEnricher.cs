@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -45,7 +45,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         {
             this.parameterGenerator = parameterGenerator ?? throw new ArgumentNullException(nameof(parameterGenerator));
         }
-        public async Task<string> CreateInitializationScript(JToken model, string systemUserEntity)
+        public Task<string> CreateInitializationScript(JToken model, string systemUserEntity)
         {
 
             var sb = new StringBuilder();
@@ -80,7 +80,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                 WritePermissionStatement(sb, entitiy, "Assign", "Assign", adminSGId);
             }
 
-            return sb.ToString();
+            return Task.FromResult(sb.ToString());
         }
         private void WritePermissionStatement(StringBuilder sb, JProperty entitiy, string permission, string permissionName, string adminSGId, bool adminSRId1 = false)
         {
@@ -134,7 +134,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         {
             return args.Select((o, i) => new { label = o, value = i + 1 }).ToArray();
         }
-        private JObject CreateAttribute(JObject attr, string displayName, object type, string? schemaName = null, object? additionalProps = null)
+        private JObject CreateAttribute(JObject attr, string displayName, object type, string schemaName = null, object additionalProps = null)
         {
             if (additionalProps != null)
                 return Merge(Merge(attr, new { displayName, type, schemaName }), additionalProps);
@@ -777,7 +777,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                 }
 
                 var queue =
-                    new Queue<JObject?>(
+                    new Queue<JObject>(
                         attributes.Properties()
                             .Select(c => c.Value as JObject)
                             .Where(x => x != null)

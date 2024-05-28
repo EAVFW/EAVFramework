@@ -19,8 +19,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                     return new AttributeStringDefinition { Value = reader.GetString() ?? "" };
                 case JsonTokenType.StartObject:
                     var node = JsonNode.Parse(ref reader);
-                    var t = node.Deserialize<AttributeObjectDefinition>();
-                    return t;
+                    
+                        var t = node.Deserialize<AttributeObjectDefinition>(new JsonSerializerOptions { Converters={ new TypeDefinitionConverter()} });
+                        return t;
+                    
+                    
                 default:
                     throw new Exception($"{reader.TokenType} is not supported as AttributeDefinition");
             }
@@ -85,8 +88,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                     return new TypeDefinition { Type = reader.GetString() ?? "" };
                 case JsonTokenType.StartObject:
                     var node = JsonNode.Parse(ref reader);
-                    var t = node.Deserialize<TypeDefinition>();
-                    return t;
+                      
+                        var t = node.Deserialize<TypeDefinition>();
+                        return t;
+                    
+                   
                 default:
                     throw new Exception($"{reader.TokenType} is not supported as AttributeDefinition");
             }
@@ -106,8 +112,10 @@ namespace EAVFW.Extensions.Manifest.SDK
             jsonNode?.WriteTo(writer, options);
         }
     }
-    [JsonConverter(typeof(TypeDefinitionConverter))]
-    public class TypeDefinition
+    
+   // [JsonConverter(typeof(TypeDefinitionConverter))]
+    
+    public class TypeDefinition 
     {
         [JsonPropertyName("type")] public string Type { get; set; }
 
