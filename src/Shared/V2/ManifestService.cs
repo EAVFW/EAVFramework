@@ -282,9 +282,12 @@ namespace EAVFramework.Shared.V2
 
                 var table = builder
                     .WithTable(entityDefinition.Name,
-                        tableSchemaname: entityDefinition.Value.SelectToken("$.schemaName").ToString(),
-                        tableLogicalName: entityDefinition.Value.SelectToken("$.logicalName").ToString(),
-                        tableCollectionSchemaName: entityDefinition.Value.SelectToken("$.collectionSchemaName").ToString(),
+                        tableSchemaname: entityDefinition.Value.SelectToken("$.schemaName")?.ToString() 
+                            ?? throw new Exception($"Failed to get schemaname for {entityDefinition.Name}"),
+                        tableLogicalName: entityDefinition.Value.SelectToken("$.logicalName")?.ToString() 
+                            ?? throw new Exception($"Failed to get logicalname for {entityDefinition.Name}"),
+                        tableCollectionSchemaName: entityDefinition.Value.SelectToken("$.collectionSchemaName")?.ToString() 
+                            ?? throw new Exception($"Failed to get collectionSchemaName for {entityDefinition.Name}"),
                         entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
                         entityDefinition.Value.SelectToken("$.abstract") != null
                     ).External(entityDefinition.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
@@ -358,6 +361,16 @@ namespace EAVFramework.Shared.V2
                             if (type == "choices")
                                 continue;
 
+                            if (attributeDefinition.Value.SelectToken("$.metadataOnly")?.ToObject<bool>() == true )
+                            {
+                                /*
+                                 * When the poly lookup is split, then there is generted additional 
+                                 * reference tabels to link things together and migrations is set to false indicating that it can be skipped
+                                 */
+                                continue;
+                            }
+
+
                             var propertyInfo = table
                                 .AddProperty(attributeKey, schemaName, logicalName, type)
                                 .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))
@@ -393,9 +406,10 @@ namespace EAVFramework.Shared.V2
                                      */
                                     continue;
                                 }
-                             
-                                
-                                    propertyInfo
+
+                              
+
+                                propertyInfo
                                         .LookupTo(
                                             tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
                                             //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),

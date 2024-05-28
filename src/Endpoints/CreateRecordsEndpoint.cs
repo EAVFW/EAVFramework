@@ -1,24 +1,13 @@
-﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
-using EAVFramework.Plugins;
-using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using static EAVFramework.Constants;
 
