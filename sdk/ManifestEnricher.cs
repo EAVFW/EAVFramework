@@ -212,7 +212,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                                         {
                                             type = "lookup",
                                             referenceType = entitieP.Name,
-                                            index = new { unique=true}
+                                            index = new { unique=true},
+                                            cascade = new
+                                            {
+                                                delete= "cascade"
+                                            }
                                         }
                                     }
                                 }
