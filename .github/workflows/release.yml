@@ -60,7 +60,7 @@ jobs:
           node-version: '20'
 
       - name: Add plugin for conventional commits
-        run: npm install conventional-changelog-conventionalcommits
+        run: npm install conventional-changelog-conventionalcommits@7.0.2
         working-directory: ./.github/workflows
 
       - name: Add plugin for executing bash commands
