@@ -236,7 +236,7 @@ namespace EAVFramework.Generators
                         MigrationsBuilderAlterColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AlterColumn)), "MigrationsBuilderAlterColumn"),
                         MigrationsBuilderDropForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropForeignKey)), "MigrationsBuilderDropForeignKey"),
 
-
+                        UseTpcMappingStrategy = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.UseTpcMappingStrategy),new[] { typeof(EntityTypeBuilder) }), "UseTpcMappingStrategy"),
 
                         ColumnsBuilderType = typeof(ColumnsBuilder),
                         CreateTableBuilderType = typeof(CreateTableBuilder<>),
@@ -954,95 +954,7 @@ namespace EAVFramework.Generators
             }
         }
 
-        private string GenerateSourceCode(Type type, bool generatePoco)
-        {
-            var namespaces = new HashSet<string>();
-
-            var sb = new StringBuilder();
-
-            sb.AppendLine($"namespace {type.Namespace}\r\n{{");
-            {
-                var inherience = type.BaseType?.Name;
-                if (type.BaseType == typeof(object))
-                {
-                    inherience = null;
-                }
-                namespaces.Add(type.BaseType.Namespace);
-
-                if (!string.IsNullOrEmpty(inherience))
-                {
-                    inherience = " : " + SerializeGenericType(type.BaseType, namespaces);
-                }
-
-                Type[] allInterfaces = type.GetInterfaces();
-                var exceptInheritedInterfaces = allInterfaces.Where(i => !type.BaseType.GetInterfaces().Any(i2 => i2 == i));
-
-                foreach (var @interface in exceptInheritedInterfaces)
-                {
-                    inherience += ", " + SerializeGenericType(@interface, namespaces);
-                }
-
-                if (!generatePoco)
-                    GenerateAttributes(sb, "\t", namespaces, type.CustomAttributes);
-
-                if (type.IsEnum)
-                {
-                    sb.AppendLine($"\tpublic enum {type.Name}\r\n\t{{");
-                    {
-                        System.Type enumUnderlyingType = System.Enum.GetUnderlyingType(type);
-                        System.Array enumValues = System.Enum.GetValues(type);
-                        // System.Array enumNames = System.Enum.GetNames(type);
-
-                        for (int i = 0; i < enumValues.Length; i++)
-                        {
-                            // Retrieve the value of the ith enum item.
-                            object value = enumValues.GetValue(i);
-                            // object name = enumNames.GetValue(i);
-
-                            // Convert the value to its underlying type (int, byte, long, ...)
-                            object underlyingValue = System.Convert.ChangeType(value, enumUnderlyingType);
-
-                            sb.Append($"\t\t{value} = {underlyingValue}");
-                            if (i + 1 < enumValues.Length)
-                                sb.AppendLine(",");
-                            else
-                                sb.AppendLine();
-
-                        }
-                    }
-                }
-                else
-                {
-                    sb.AppendLine($"\tpublic{(false && type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
-                    {
-                        foreach (var ctor in type.GetConstructors())
-                        {
-                            GenerateContructorSourceCode(sb, "\t\t", namespaces, ctor);
-                        }
-                        foreach (var method in type.GetMethods())
-                        {
-                            var body = method.GetMethodBody();
-
-                        }
-                        foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public
-        | System.Reflection.BindingFlags.Instance
-        | System.Reflection.BindingFlags.DeclaredOnly))
-                        {
-
-                            GeneratePropertySource(sb, "\t\t", namespaces, prop);
-
-                        }
-
-
-                    }
-                }
-
-                sb.AppendLine("\t}");
-            }
-            sb.AppendLine("}");
-            return string.Join("\r\n", namespaces.Select(n => $"using {n};")) + "\r\n" + sb.ToString();
-        }
-
+  
         private void GenerateContructorSourceCode(StringBuilder sb, string indention, HashSet<string> namespaces, ConstructorInfo ctor)
         {
             sb.AppendLine($"{indention}public {ctor.DeclaringType.Name}({string.Join(",", ctor.GetParameters().Select(p => $"{p.ParameterType.Namespace}.{p.ParameterType.Name} {p.Name ?? "arg" + p.Position}"))})");

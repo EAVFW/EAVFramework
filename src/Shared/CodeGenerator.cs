@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using EAVFramework.Shared.V2;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -2686,7 +2686,7 @@ namespace EAVFramework.Shared
                 }
                 else
                 {
-                    sb.AppendLine($"\tpublic{(false && type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
+                    sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
                     {
                         foreach (var ctor in type.GetConstructors())
                         {

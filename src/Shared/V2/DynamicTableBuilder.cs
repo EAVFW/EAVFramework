@@ -1,4 +1,4 @@
-﻿
+
 
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -63,7 +63,7 @@ namespace EAVFramework.Shared.V2
 
 
             Builder = myModule.DefineType($"{dynamicAssemblyBuilder.Namespace}.{SchemaName}", TypeAttributes.Public
-                                                                        | (isAbstract ? TypeAttributes.Class : TypeAttributes.Class)
+                                                                        | (isAbstract ? TypeAttributes.Abstract : TypeAttributes.Class)
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
                                                                         | TypeAttributes.Serializable
@@ -387,7 +387,7 @@ namespace EAVFramework.Shared.V2
                     ConstraintsMethodIL.Emit(OpCodes.Ldarg_1); //first argument                    
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, $"PK_{CollectionSchemaName}"); //PK Name
 
-                    dynamicCodeService.EmitPropertyService.WriteLambdaExpression(builder, ConstraintsMethodIL, columnsCLRType, primaryKeys.Select(c => columnsCLRType.GetProperty(c.Name["get_".Length..]).GetMethod).ToArray());
+                    dynamicCodeService.EmitPropertyService.WriteLambdaExpression(builder, ConstraintsMethodIL, columnsCLRType, primaryKeys.Select(c => columnsCLRType.GetProperty(c.Name.Substring(4)).GetMethod).ToArray());
 
                     var createTableMethod = options.CreateTableBuilderType.MakeGenericType(columnsCLRType).GetMethod(options.CreateTableBuilderPrimaryKeyName, BindingFlags.Public | BindingFlags.Instance, null,
                         new[] { typeof(string), typeof(Expression<>).MakeGenericType(typeof(Func<,>).MakeGenericType(columnsCLRType, typeof(object))) }, null);
@@ -1288,23 +1288,19 @@ namespace EAVFramework.Shared.V2
 
 
 
-            if (IsBaseEntity && MappingStrategy.HasValue)
+            if (IsBaseEntity && MappingStrategy.HasValue && MappingStrategy == V2.MappingStrategy.TPC)
             {
 
-                if (MappingStrategy == V2.MappingStrategy.TPC)
-                {
+               
                     /**                     
                      * modelBuilder.Entity<Entity>().UseTpcMappingStrategy();
                      */
                     ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument
                     ConfigureMethod2IL.Emit(OpCodes.Call, options.UseTpcMappingStrategy);
                     ConfigureMethod2IL.Emit(OpCodes.Pop);
-                }
+                
 
-            }
-
-
-            {
+            }else {
                 /**                     
                  * modelBuilder.Entity<Entity>().ToTable("PluralSchemaName");
                  */

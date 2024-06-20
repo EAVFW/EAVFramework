@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +30,16 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders
     }
     public static class RelationalEntityTypeBuilderExtensions
     {
+        /// <summary>
+        ///     Configures TPC as the mapping strategy for the derived types. Each type will be mapped to a different database object.
+        ///     All properties will be mapped to columns on the corresponding object.
+        /// </summary>
+        /// <remarks>
+        ///     See <see href="https://aka.ms/efcore-docs-inheritance">Entity type hierarchy mapping</see> for more information and examples.
+        /// </remarks>
+        /// <param name="entityTypeBuilder">The builder for the entity type being configured.</param>
+        /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+        public static EntityTypeBuilder UseTpcMappingStrategy(this EntityTypeBuilder entityTypeBuilder) => throw new NotImplementedException();
         public static EntityTypeBuilder ToTable([NotNullAttribute] this EntityTypeBuilder entityTypeBuilder, [CanBeNullAttribute] string name, [CanBeNullAttribute] string schema) => throw new NotImplementedException();
 
     }

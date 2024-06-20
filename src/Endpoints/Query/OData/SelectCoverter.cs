@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.OData.Query.Container;
+using Microsoft.AspNetCore.OData.Formatter.Value;
+using Microsoft.AspNetCore.OData.Query.Container;
 using Microsoft.OData.Edm;
 using System;
 using System.Linq;
@@ -33,17 +34,18 @@ namespace EAVFramework.Endpoints.Query.OData
 
 
 
-        public object Convert(object data)
+        public ConvertResult Convert(object data)
         {
-
+            
             //https://github.com/OData/AspNetCoreOData/blob/main/src/Microsoft.AspNetCore.OData/Query/Wrapper/SelectAllOfT.cs
             //Microsoft.AspNetCore.OData.Query.Wrapper.SelectAll<KFST.Vanddata.Model.Identity>
-
+            
             var poco = (data as Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper).ToDictionary(MapperProvider);
 
             var typeParser = SelectCoverter.typeParser.CreateTypeParser(data.GetType(), data);
             // var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
             poco["$type"] = typeParser.GetDataType(data);
+            
 
             foreach (var kv in poco.ToArray())
             {
@@ -54,18 +56,24 @@ namespace EAVFramework.Endpoints.Query.OData
                 }
 
                 var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
-                var value = converter.Convert(kv.Value);
-                if (value == null)
+                var result = converter.Convert(kv.Value);
+                if (result?.Value == null)
                 {
                     poco.Remove(kv.Key);
                 }
                 else
                 {
-                    poco[kv.Key] = value;
+                    poco[kv.Key] = result.Value;
+                    if (result.TotalCount.HasValue)
+                    {
+                        poco[kv.Key+"@odata.count"] = result.TotalCount;
+
+                    }
+
                 }
             }
 
-            return poco;
+            return new ConvertResult { Value = poco };
         }
     }
 }
