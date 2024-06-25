@@ -422,7 +422,10 @@ namespace EAVFramework
 
 
 
-
+        public string GetCollectionName(string entityLogicalName)
+        {
+            return manager.ModelDefinition.Entities.FirstOrDefault(x => x.Value.LogicalName == entityLogicalName).Value.CollectionSchemaName;
+        }
 
 
 
