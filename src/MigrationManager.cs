@@ -111,9 +111,9 @@ namespace EAVFramework
                 EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),
                 EntityTypeBuilderType = typeof(EntityTypeBuilder),
                 EntityTypeBuilderToTable = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }), "EntityTypeBuilderToTable"),
-              
+#if NET8_0_OR_GREATER
                 UseTpcMappingStrategy = Resolve(()=>typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.UseTpcMappingStrategy),0, new[] { typeof(EntityTypeBuilder) }), "UseTpcMappingStrategy"),
-
+#endif
                 EntityTypeBuilderHasKey = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasKey"),
                 EntityTypeBuilderPropertyMethod = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }), "EntityTypeBuilderPropertyMethod"),
 

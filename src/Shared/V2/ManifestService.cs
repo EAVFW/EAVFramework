@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json.Linq;
 using System;
@@ -279,14 +279,14 @@ namespace EAVFramework.Shared.V2
                 var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityDefinition.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
 
 
-                var table = builder.WithTable(entity.Name,
-                    tableSchemaname: entity.Value.SelectToken("$.schemaName").ToString(),
-                    tableLogicalName: entity.Value.SelectToken("$.logicalName").ToString(),
-                    tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
-                     entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
-                     entity.Value.SelectToken("$.abstract") != null,
-                     entity.Value.SelectToken("$.mappingStrategy")?.ToObject<MappingStrategy>()
-                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
+                var table = builder.WithTable(entityDefinition.Name,
+                    tableSchemaname: entityDefinition.Value.SelectToken("$.schemaName").ToString(),
+                    tableLogicalName: entityDefinition.Value.SelectToken("$.logicalName").ToString(),
+                    tableCollectionSchemaName: entityDefinition.Value.SelectToken("$.collectionSchemaName").ToString(),
+                     entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
+                     entityDefinition.Value.SelectToken("$.abstract") != null,
+                     entityDefinition.Value.SelectToken("$.mappingStrategy")?.ToObject<MappingStrategy>()
+                    ).External(entityDefinition.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
 
                 var upSqlToken = entityDefinition.Value.SelectToken("$.sql.migrations.up");
 
@@ -302,7 +302,7 @@ namespace EAVFramework.Shared.V2
                     }
                 }
 
-                tables.Add(entity.Name, table);
+                tables.Add(entityDefinition.Name, table);
 
 
             }
