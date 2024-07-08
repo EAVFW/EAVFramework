@@ -272,11 +272,11 @@ namespace EAVFramework.Shared.V2
             var options = dynamicCodeService.Options;
 
             var tables = new Dictionary<string, DynamicTableBuilder>();
-            foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
+            foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
             {
-
-                var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
-                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entity.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+                
+                var schema = entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityDefinition.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
 
 
                 var table = builder.WithTable(entity.Name,
@@ -288,7 +288,19 @@ namespace EAVFramework.Shared.V2
                      entity.Value.SelectToken("$.mappingStrategy")?.ToObject<MappingStrategy>()
                     ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
 
-                 
+                var upSqlToken = entityDefinition.Value.SelectToken("$.sql.migrations.up");
+
+                if (upSqlToken?.Type == JTokenType.String)
+                {
+                    table.WithSQLUp(upSqlToken.ToString());
+                }
+                else if (upSqlToken?.Type == JTokenType.Array)
+                {
+                    foreach (var sql in upSqlToken.Select(c => c.ToString()))
+                    {
+                        table.WithSQLUp(sql);
+                    }
+                }
 
                 tables.Add(entity.Name, table);
 
@@ -343,6 +355,16 @@ namespace EAVFramework.Shared.V2
                             if (type == "choices")
                                 continue;
 
+                            if (attributeDefinition.Value.SelectToken("$.metadataOnly")?.ToObject<bool>() == true )
+                            {
+                                /*
+                                 * When the poly lookup is split, then there is generted additional 
+                                 * reference tabels to link things together and migrations is set to false indicating that it can be skipped
+                                 */
+                                continue;
+                            }
+
+
                             var propertyInfo = table
                                 .AddProperty(attributeKey, schemaName, logicalName, type)
                                 .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))
@@ -378,9 +400,10 @@ namespace EAVFramework.Shared.V2
                                      */
                                     continue;
                                 }
-                             
-                                
-                                    propertyInfo
+
+                              
+
+                                propertyInfo
                                         .LookupTo(
                                             tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
                                             //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),

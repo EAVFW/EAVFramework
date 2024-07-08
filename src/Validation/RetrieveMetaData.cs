@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents.SystemFunctions;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 
 namespace EAVFramework.Validation
 {

@@ -1,4 +1,4 @@
-﻿using EAVFramework.Authentication;
+using EAVFramework.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -72,6 +72,7 @@ namespace EAVFramework.Configuration
         /// If set, will require frame-src CSP headers being emitting on the end session callback endpoint which renders iframes to clients for front-channel signout notification.
         /// </summary>
         public bool RequireCspFrameSrcForSignout { get; set; } = true;
+        public CookieSecurePolicy CookieSecurePolicy { get; set; } = CookieSecurePolicy.Always;
     }
 
 }

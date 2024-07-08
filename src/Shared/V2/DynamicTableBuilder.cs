@@ -776,7 +776,6 @@ namespace EAVFramework.Shared.V2
                         if (options.MigrationBuilderCreateIndex.GetParameters().Length == 7)
                             UpMethodIL.Emit(OpCodes.Ldnull); //#8Constant order=null
 
-
                         UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderCreateIndex);
                         UpMethodIL.Emit(OpCodes.Pop);
                     }
@@ -1217,7 +1216,7 @@ namespace EAVFramework.Shared.V2
                         case "nullable":
                             entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_1);
                             break;
-                        case "type" when propertyInfo.Type == "mpultilinetext":
+                        case "type" when propertyInfo.Type == "multilinetext":
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)"), arg1);
                             break;
 
@@ -1556,6 +1555,13 @@ namespace EAVFramework.Shared.V2
         {
             IsExternal = v;
             RemoteType = remoteType;
+            return this;
+        }
+
+        
+        internal DynamicTableBuilder WithSQLUp(string upSql)
+        {
+            SQLUpStatements.Add(upSql);
             return this;
         }
     }

@@ -48,7 +48,7 @@ namespace EAVFramework.Extensions
                     var handleId = await options.Authentication.GenerateHandleId(httpcontext);
 
                     var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
-                    var callbackUrl = $"{baseUrl}/.auth/login/{auth.AuthenticationName}/callback?token={handleId}";
+                    var callbackUrl = $"{baseUrl}{httpcontext.Request.PathBase}/.auth/login/{auth.AuthenticationName}/callback?token={handleId}";
 
                     await auth.OnAuthenticate(httpcontext,handleId, callbackUrl);
                   //  await requestDelegate(httpcontext);
@@ -64,18 +64,18 @@ namespace EAVFramework.Extensions
 
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
                             claimsPrincipal, new AuthenticationProperties(
-
+                                
                                 new Dictionary<string, string>
                                 {
                                     ["handleId"] = handleId,
                                     ["callbackUrl"] = redirectUri,
                                     ["schema"] = auth.AuthenticationName
                                 })
-                            {
+                            { 
                                  RedirectUri = redirectUri 
                             });
 
-                        httpcontext.Response.Redirect("/account/login/callback");
+                        httpcontext.Response.Redirect($"{httpcontext.Request.PathBase}/account/login/callback");
                     }).WithMetadata(new AllowAnonymousAttribute());
             }
 
@@ -203,7 +203,7 @@ namespace EAVFramework.Extensions
                         await context.Response.WriteJsonAsync(new { error = "Not Authenticated"});
 
                 }
-            });
+            }).WithMetadata(new AllowAnonymousAttribute());
 
             endpoints.MapGet("/.auth/logout", async httpcontext =>
             {

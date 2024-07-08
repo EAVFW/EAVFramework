@@ -3,6 +3,7 @@ using EAVFramework.Endpoints.Query;
 using EAVFramework.Endpoints.Query.OData;
 using EAVFramework.Extensions;
 using EAVFramework.Shared;
+using EAVFW.Extensions.Manifest.SDK;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
@@ -310,7 +311,7 @@ namespace EAVFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            Console.WriteLine("Test");
+            
             var sw = Stopwatch.StartNew();
 
             //  EnsureModelCreated();
@@ -413,13 +414,41 @@ namespace EAVFramework
 
 
 
-
+        public string GetCollectionName(string entityLogicalName)
+        {
+            return manager.ModelDefinition.Entities.FirstOrDefault(x => x.Value.LogicalName == entityLogicalName).Value.CollectionSchemaName;
+        }
 
 
 
         public EntityEntry Add(string entityName, JToken data)
         {
             var type = manager.ModelDefinition.EntityDTOs[entityName];
+
+
+            //Handling Polylookups (Split mode)
+            if (manager.ModelDefinition.Entities.ContainsKey(entityName))
+            {
+                var entity = manager.ModelDefinition.Entities[entityName];
+                foreach(var poly in entity.Attributes.Where(a=>a.Value is AttributeObjectDefinition typeobj && typeobj.AttributeType.Type == "polylookup" && typeobj.AttributeType.Split))
+                {
+                    var attr = poly.Value as AttributeObjectDefinition;
+                    var reference = data[attr.LogicalName]?.ToString();
+
+                    if (!string.IsNullOrEmpty(reference))
+                    {
+                        var referenceType = reference.Substring(0, reference.IndexOf(':'));
+                        var referenceId = reference.Substring(referenceType.Length+1);
+                        data[$"{entity.LogicalName}{referenceType}references"] = new JArray(
+                            new JObject(
+                                new JProperty($"{referenceType}id", referenceId)
+                                )
+                            );
+                    }
+                }
+            }
+
+
             var record = data.ToObject(type);
             logger.LogInformation("Adding {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
             var a = this.Attach(record);

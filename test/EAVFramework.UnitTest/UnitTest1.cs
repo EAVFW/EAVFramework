@@ -18,10 +18,11 @@ namespace EAVFramework.UnitTest
 
 
         [TestMethod]
-        public async Task TestMethod1()
+        public Task TestMethod1()
         {
             var a = new DefaultChoiceEnumBuilder();
             Assert.AreEqual("DirectDebitReturnOrRefund", a.GetLiteralName("Direct Debit return/refund"));
+            return Task.CompletedTask;
         }
 
 

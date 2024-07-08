@@ -278,7 +278,7 @@ namespace EAVFramework.Shared.V2
 
         internal DynamicPropertyBuilder WithIndex(IndexInfo indexInfo)
         {
-            IndexInfo = IndexInfo;
+            IndexInfo = indexInfo;
             return this;
         }
         public EnumBuilder enumbuilder { get; private set; }

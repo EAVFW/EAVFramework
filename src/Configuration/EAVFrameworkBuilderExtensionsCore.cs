@@ -1,4 +1,4 @@
-﻿using EAVFramework;
+using EAVFramework;
 using EAVFramework.Configuration;
 using EAVFramework.Endpoints;
 using EAVFramework.Extensions;
@@ -421,7 +421,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddCookie(name, o =>
                 {
 
-                    o.LoginPath = "/account/login";
+                    o.LoginPath = "~/account/login";
                 });
             return builder;
         }

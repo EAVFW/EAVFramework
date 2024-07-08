@@ -1,4 +1,4 @@
-﻿using DotNETDevOps.JsonFunctions;
+using DotNETDevOps.JsonFunctions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -211,14 +211,10 @@ namespace EAVFW.Extensions.Manifest.SDK
                                     }
                                     else
                                     {
-                                        try
-                                        {
+                                         
                                             parentObj.Add(childProp);
                                             q.Enqueue(childProp);
-                                        }catch(Exception ex)
-                                        {
-                                            throw;
-                                        }
+                                        
                                     }
 
                                     // parentObj.Add(childProp.Name, childProp.Value);
@@ -284,7 +280,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                     }
 
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     Console.WriteLine($"{entityPath}| {attributePath}");
                     throw;
