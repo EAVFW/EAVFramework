@@ -25,7 +25,7 @@ namespace EAVFramework.Shared.V2
             this.dynamicCodeService = dynamicCodeService;
             this.options = options;
 
-            this.il = new Lazy<ILGenerator>(() =>  upMethod.GetILGenerator());
+            this.il = new Lazy<ILGenerator>(() => upMethod.GetILGenerator());
         }
 
 
@@ -67,7 +67,7 @@ namespace EAVFramework.Shared.V2
             return required;
         }
 
-        public void EmitAlterColumn(string table,string schema, DynamicPropertyBuilder attributeDefinition)
+        public void EmitAlterColumn(string table, string schema, DynamicPropertyBuilder attributeDefinition)
         {
             var method = options.MigrationsBuilderAlterColumn.MakeGenericMethod(attributeDefinition.PropertyType);
 
@@ -81,7 +81,7 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Pop);
         }
 
-        public (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(DynamicTableBuilder table,  string migrationName, bool partOfMigration)
+        public (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(DynamicTableBuilder table, string migrationName, bool partOfMigration)
         {
             var builder = table.DynamicAssemblyBuilder.Module;
             var options = dynamicCodeService.Options;
@@ -465,7 +465,7 @@ namespace EAVFramework.Shared.V2
             }
         }
 
-        public void CreateIndex(string table,string schema,string name, bool unique=true, params string[] columns)
+        public void CreateIndex(string table, string schema, string name, bool unique = true, params string[] columns)
         {
 
             /**
@@ -998,8 +998,8 @@ namespace EAVFramework.Shared.V2
                         ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalColumn);
                         ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalSchema);
 
-                        ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int)fk.OnUpdateCascade); //OnUpdate
-                        ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int)fk.OnDeleteCascade); //OnDelete
+                        ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int) fk.OnUpdateCascade); //OnUpdate
+                        ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int) fk.OnDeleteCascade); //OnDelete
 
 
                         //
@@ -1241,40 +1241,40 @@ namespace EAVFramework.Shared.V2
                     var colums = props.Select(p => Properties.Single(k => k.AttributeKey == p).SchemaName).ToArray();
                     migrationBuilder.CreateIndex(CollectionSchemaName, Schema, name, true, colums);
 
+                }
 
+                //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
+                if (!string.IsNullOrEmpty(upSql))
+                {
+                    var alreadyExists = dynamicCodeService.GetTypes().FirstOrDefault(t =>
+                          !t.IsPendingTypeBuilder() &&
+                          t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute &&
+                          migrationAttribute.LogicalName == LogicalName && migrationAttribute.RawUpMigration == upSql);
 
-                    //  if (entityTypeBuilder.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migration && string.IsNullOrEmpty( migration.RawUpMigration))
-                    if (!string.IsNullOrEmpty(upSql))
+                    if (alreadyExists == null)
                     {
-                        var alreadyExists = dynamicCodeService.GetTypes().FirstOrDefault(t =>
-                              !t.IsPendingTypeBuilder() &&
-                              t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute &&
-                              migrationAttribute.LogicalName == LogicalName && migrationAttribute.RawUpMigration == upSql);
-
-                        if (alreadyExists == null)
-                        {
-                            EmitSQLUp(options, migrationBuilder.UpMethodIL, upSql);
-
-                        }
+                        EmitSQLUp(options, migrationBuilder.UpMethodIL, upSql);
 
                     }
-
-                    migrationBuilder.UpMethodIL.Emit(OpCodes.Ret);
-
-                    var DownMethod = entityTypeBuilder.DefineMethod("Down", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderDropTable.DeclaringType });
-                    var DownMethodIL = DownMethod.GetILGenerator();
-
-                    if (!priorEntities.Any())
-                    {
-                        DownMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                        DownMethodIL.Emit(OpCodes.Ldstr, CollectionSchemaName); //Constant
-                        DownMethodIL.Emit(OpCodes.Ldstr, Schema);
-                        DownMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderDropTable);
-                        DownMethodIL.Emit(OpCodes.Pop);
-                    }
-                    DownMethodIL.Emit(OpCodes.Ret);
 
                 }
+
+                migrationBuilder.UpMethodIL.Emit(OpCodes.Ret);
+
+                var DownMethod = entityTypeBuilder.DefineMethod("Down", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderDropTable.DeclaringType });
+                var DownMethodIL = DownMethod.GetILGenerator();
+
+                if (!priorEntities.Any())
+                {
+                    DownMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+                    DownMethodIL.Emit(OpCodes.Ldstr, CollectionSchemaName); //Constant
+                    DownMethodIL.Emit(OpCodes.Ldstr, Schema);
+                    DownMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderDropTable);
+                    DownMethodIL.Emit(OpCodes.Pop);
+                }
+                DownMethodIL.Emit(OpCodes.Ret);
+
+
 
                 return MigrationBuilder.CreateTypeInfo();
             }
@@ -1291,7 +1291,7 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Pop);
         }
 
-         
+
 
         public void BuildDTOConfiguration()
         {
@@ -1312,16 +1312,18 @@ namespace EAVFramework.Shared.V2
             if (IsBaseEntity && MappingStrategy.HasValue && MappingStrategy == V2.MappingStrategy.TPC)
             {
 
-               
-                    /**                     
-                     * modelBuilder.Entity<Entity>().UseTpcMappingStrategy();
-                     */
-                    ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument
-                    ConfigureMethod2IL.Emit(OpCodes.Call, options.UseTpcMappingStrategy);
-                    ConfigureMethod2IL.Emit(OpCodes.Pop);
-                
 
-            }else {
+                /**                     
+                 * modelBuilder.Entity<Entity>().UseTpcMappingStrategy();
+                 */
+                ConfigureMethod2IL.Emit(OpCodes.Ldarg_1); //first argument
+                ConfigureMethod2IL.Emit(OpCodes.Call, options.UseTpcMappingStrategy);
+                ConfigureMethod2IL.Emit(OpCodes.Pop);
+
+
+            }
+            else
+            {
                 /**                     
                  * modelBuilder.Entity<Entity>().ToTable("PluralSchemaName");
                  */
@@ -1580,7 +1582,7 @@ namespace EAVFramework.Shared.V2
             return this;
         }
 
-        
+
         internal DynamicTableBuilder WithSQLUp(string upSql)
         {
             SQLUpStatements.Add(upSql);
