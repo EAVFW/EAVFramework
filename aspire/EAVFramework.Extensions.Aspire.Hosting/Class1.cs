@@ -1,4 +1,17 @@
-﻿namespace EAVFramework.Extensions.Aspire.Hosting
+﻿using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Lifecycle;
+using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK.Migrations;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace EAVFramework.Extensions.Aspire.Hosting
 {
 
     public record EAVFWModelMetadataAnnotation(string ModelPath) : IResourceAnnotation
@@ -101,7 +114,9 @@ public class PublishEAVFWProjectLifecycleHook : IDistributedApplicationLifecycle
             {
 
 
-                var migrator = new SQLMigrationGenerator();
+                var migrator = new SQLMigrationGenerator(new ManifestPermissionGenerator(new DataClientParameterGenerator()));
+                   
+                    var sqls = await migrator.GenerateSQL(dacpacPath, true, "SystemUsers");
 
                 await _resourceNotificationService.PublishUpdateAsync(sqlProject,
               state => state with { State = new ResourceStateSnapshot($"{targetDatabaseResource.DatabaseName} ready", KnownResourceStateStyles.Success) });
