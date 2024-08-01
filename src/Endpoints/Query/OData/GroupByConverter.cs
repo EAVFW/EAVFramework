@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -20,7 +20,7 @@ namespace EAVFramework.Endpoints.Query.OData
             this.odatatConverterFactory = odatatConverterFactory;
         }
 
-        public object Convert(object data)
+        public ConvertResult Convert(object data)
         {
             var poco = Method.GetValue(data) as Dictionary<string, object>;
 
@@ -34,18 +34,23 @@ namespace EAVFramework.Endpoints.Query.OData
                 }
 
                 var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
-                var value = converter.Convert(kv.Value);
-                if (value == null)
+                var result = converter.Convert(kv.Value);
+                if (result?.Value == null)
                 {
                     poco.Remove(kv.Key);
                 }
                 else
                 {
-                    poco[kv.Key] = value;
+                    poco[kv.Key] = result.Value;
+                    if (result.TotalCount.HasValue)
+                    {
+                        poco[kv.Key + "@odata.count"] = result.TotalCount;
+
+                    }
                 }
             }
 
-            return poco;
+            return new ConvertResult { Value = poco };
         }
     }
 }

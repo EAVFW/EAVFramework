@@ -1,4 +1,4 @@
-﻿using EAVFramework.Plugins;
+using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -90,6 +90,9 @@ namespace EAVFramework.Endpoints
         public abstract ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys);
         public abstract EntityEntry Add(string entityName, JToken record);
     }
+
+    public record EntityRef([property: JsonProperty("$type")] string Type, [property: JsonProperty("id")] Guid Id);
+
     public class EAVDBContext<TContext> : EAVDBContext
         where TContext : DynamicContext
     {
@@ -621,6 +624,20 @@ namespace EAVFramework.Endpoints
                 return null;
 
             return this.Context.Entry(obj);
+        }
+
+        public async ValueTask<EntityEntry> FindAsync(EntityRef entityRef)
+        {
+            var obj = await this.Context.FindAsync(GetCollectionName(entityRef.Type), entityRef.Id);
+            if (obj == null)
+                return null;
+
+            return this.Context.Entry(obj);
+        }
+
+        public string GetCollectionName(string entityName)
+        {
+            return this.Context.GetCollectionName(entityName);
         }
 
         public override EntityEntry Add(string entityName, JToken record)

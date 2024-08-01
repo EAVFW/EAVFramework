@@ -1,6 +1,7 @@
-﻿using EAVFramework.Shared;
+using EAVFramework.Shared;
 using EAVFramework.Shared.V2;
 using EAVFramework.UnitTest.ManifestTests;
+using EAVFW.Extensions.Manifest.SDK;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using System;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -104,8 +106,8 @@ namespace EAVFramework.UnitTest
         public async Task TestInherienceLevel2()
         {
             //Arrange
-            var manifest = JToken.Parse(File.ReadAllText(@"Specs/manifest.payments.json"));
-
+            var manifest = JToken.Parse(File.ReadAllText(@"Specs/manifest.payments.json")); 
+            
 
             //Act
             var sql = RunDBWithSchema("payments", manifest);

@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json.Linq;
 using System;
@@ -272,24 +272,37 @@ namespace EAVFramework.Shared.V2
             var options = dynamicCodeService.Options;
 
             var tables = new Dictionary<string, DynamicTableBuilder>();
-            foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
+            foreach (var entityDefinition in manifest.SelectToken("$.entities").OfType<JProperty>())
             {
-
-                var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
-                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entity.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
-
-
-                var table = builder.WithTable(entity.Name,
-                    tableSchemaname: entity.Value.SelectToken("$.schemaName").ToString(),
-                    tableLogicalName: entity.Value.SelectToken("$.logicalName").ToString(),
-                    tableCollectionSchemaName: entity.Value.SelectToken("$.collectionSchemaName").ToString(),
-                     entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
-                     entity.Value.SelectToken("$.abstract") != null
-                    ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
-
                 
+                var schema = entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
+                var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == entityDefinition.Value.SelectToken("$.logicalName").ToString() && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
 
-                tables.Add(entity.Name, table);
+
+                var table = builder.WithTable(entityDefinition.Name,
+                    tableSchemaname: entityDefinition.Value.SelectToken("$.schemaName").ToString(),
+                    tableLogicalName: entityDefinition.Value.SelectToken("$.logicalName").ToString(),
+                    tableCollectionSchemaName: entityDefinition.Value.SelectToken("$.collectionSchemaName").ToString(),
+                     entityDefinition.Value.SelectToken("$.schema")?.ToString() ?? options.Schema,
+                     entityDefinition.Value.SelectToken("$.abstract") != null,
+                     entityDefinition.Value.SelectToken("$.mappingStrategy")?.ToObject<MappingStrategy>()
+                    ).External(entityDefinition.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
+
+                var upSqlToken = entityDefinition.Value.SelectToken("$.sql.migrations.up");
+
+                if (upSqlToken?.Type == JTokenType.String)
+                {
+                    table.WithSQLUp(upSqlToken.ToString());
+                }
+                else if (upSqlToken?.Type == JTokenType.Array)
+                {
+                    foreach (var sql in upSqlToken.Select(c => c.ToString()))
+                    {
+                        table.WithSQLUp(sql);
+                    }
+                }
+
+                tables.Add(entityDefinition.Name, table);
 
 
             }
@@ -302,7 +315,7 @@ namespace EAVFramework.Shared.V2
 
                     var table = tables[entityDefinition.Name];
 
-                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString();
+                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString() ?? entityDefinition.Value.SelectToken("$.TPC")?.ToString(); 
                     if (!string.IsNullOrEmpty(parentName))
                     {
                         table.WithBaseEntity(tables[parentName]);
@@ -342,6 +355,16 @@ namespace EAVFramework.Shared.V2
                             if (type == "choices")
                                 continue;
 
+                            if (attributeDefinition.Value.SelectToken("$.metadataOnly")?.ToObject<bool>() == true )
+                            {
+                                /*
+                                 * When the poly lookup is split, then there is generted additional 
+                                 * reference tabels to link things together and migrations is set to false indicating that it can be skipped
+                                 */
+                                continue;
+                            }
+
+
                             var propertyInfo = table
                                 .AddProperty(attributeKey, schemaName, logicalName, type)
                                 .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))
@@ -377,9 +400,10 @@ namespace EAVFramework.Shared.V2
                                      */
                                     continue;
                                 }
-                             
-                                
-                                    propertyInfo
+
+                              
+
+                                propertyInfo
                                         .LookupTo(
                                             tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
                                             //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
@@ -440,7 +464,7 @@ namespace EAVFramework.Shared.V2
             }
 
             return (CreateDynamicMigration(dynamicCodeService, manifest),
-                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
+                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.Namespace, this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
 
 
 

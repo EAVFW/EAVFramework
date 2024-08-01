@@ -1,7 +1,4 @@
-﻿using DotNETDevOps.JsonFunctions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -48,7 +45,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         {
             this.parameterGenerator = parameterGenerator ?? throw new ArgumentNullException(nameof(parameterGenerator));
         }
-        public async Task<string> CreateInitializationScript(JToken model, string systemUserEntity)
+        public Task<string> CreateInitializationScript(JToken model, string systemUserEntity)
         {
 
             var sb = new StringBuilder();
@@ -83,7 +80,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                 WritePermissionStatement(sb, entitiy, "Assign", "Assign", adminSGId);
             }
 
-            return sb.ToString();
+            return Task.FromResult(sb.ToString());
         }
         private void WritePermissionStatement(StringBuilder sb, JProperty entitiy, string permission, string permissionName, string adminSGId, bool adminSRId1 = false)
         {
@@ -137,7 +134,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         {
             return args.Select((o, i) => new { label = o, value = i + 1 }).ToArray();
         }
-        private JObject CreateAttribute(JObject attr, string displayName, object type, string? schemaName = null, object? additionalProps = null)
+        private JObject CreateAttribute(JObject attr, string displayName, object type, string schemaName = null, object additionalProps = null)
         {
             if (additionalProps != null)
                 return Merge(Merge(attr, new { displayName, type, schemaName }), additionalProps);
@@ -181,78 +178,136 @@ namespace EAVFW.Extensions.Manifest.SDK
                     var pluralName = name + " References"; //$"{entitieP.Value.SelectToken("$.displayName")} {polyLookup.Value.SelectToken("$.displayName")} References";
                     var reverse = polyLookup.Value.SelectToken("$.type.reverse")?.ToObject<bool>() ?? false;
                     var inline = polyLookup.Value.SelectToken("$.type.inline")?.ToObject<bool>() ?? false;
-                    if (!entities.ContainsKey(Key))
-                    { 
-                        var attributes = polyLookup.Value.SelectToken("$.type.referenceTypes").ToObject<string[]>()
-                            .ToDictionary(k => k, v => JToken.FromObject(new { type = new { type = "lookup", referenceType = v } }));
+                    var split = polyLookup.Value.SelectToken("$.type.split")?.ToObject<bool>() ?? false;
+                       
+                    
 
-                        if (inline)
-                        {
-                            foreach (var attribute in attributes)
-                            {
-                                entitieP.Value["attributes"][attribute.Key] = attribute.Value;
-
-                            }
-                            polyLookup.Value["type"]["type"] = "polylookup";
-                            //   polyLookup.Remove();
-                        }
-                        else
-                        {
-
-
-                            //  attributes["Id"] = JToken.FromObject(new { isPrimaryKey = true });
-                            attributes["Name"] = JToken.FromObject(new { isPrimaryField = true });
-
-
-
-                            entities[Key] = JToken.FromObject(new
-                            {
-                                pluralName = pluralName,
-                                attributes = attributes
-                            });
-
-
-                            SetRequiredProps(entities[Key] as JObject, Key);
-                        }
-                    }
-
-
-
-                    if (!inline)
+                    if (split)
                     {
-                        var entity = entities[Key] as JObject;
-                        polyLookup.Value["type"]["foreignKey"] = JToken.FromObject(new
-                        {
-                            principalTable = entity["logicalName"].ToString(),
-                            principalColumn = "id",
-                            principalNameColumn = "name",
-                            name = TrimId(polyLookup.Value.SelectToken("$.logicalName")?.ToString()) // jsonraw.SelectToken($"$.entities['{ attr["type"]["referenceType"] }'].logicalName").ToString().Replace(" ", ""),
-                        });
-                        polyLookup.Value["type"]["referenceType"] = Key;
+                        polyLookup.Value["metadataOnly"] = true;
 
-                        if (reverse)
+                        var attributes = polyLookup.Value.SelectToken("$.type.referenceTypes").ToObject<string[]>()
+                           .ToDictionary(k => k, v => JToken.FromObject(new { type = new { type = "lookup", referenceType = v } }));
+
+                        foreach (var polylookupreference in attributes)
                         {
-                            entities[Key]["attributes"][polyLookup.Name] = JToken.FromObject(new
+                            string key = $"{entitieP.Name} {polylookupreference.Key} Reference";
+
+                            entities[key] = JToken.FromObject(new
                             {
-                                type = new
+                                pluralName = key + "s",
+                                attributes = new Dictionary<string, object>
                                 {
-                                    type = "lookup",
-                                    referenceType = entitieP.Name
+                                    [polylookupreference.Key] = new
+                                    {
+                                        type = new
+                                        {
+                                            type = "lookup",
+                                            referenceType = polylookupreference.Key
+                                        }
+                                    },
+                                    [entitieP.Name] = new
+                                    {
+                                        type = new
+                                        {
+                                            type = "lookup",
+                                            referenceType = entitieP.Name,
+                                            index = new { unique=true},
+                                            cascade = new
+                                            {
+                                                delete= "cascade"
+                                            }
+                                        }
+                                    }
                                 }
                             });
+                            
+                            SetRequiredProps(entities[key] as JObject, key);
 
-                            // polyLookup.Remove();
+                            await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entities[key] as JObject);
                         }
+                        //polyLookup.Remove();
 
-
-                        //  polyLookup.Value["type"]["type"] = "lookup";
-
-                        await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entity);
                     }
                     else
                     {
 
-                        await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entitieP.Value as JObject);
+
+                        if (!entities.ContainsKey(Key))
+                        {
+                            var attributes = polyLookup.Value.SelectToken("$.type.referenceTypes").ToObject<string[]>()
+                                .ToDictionary(k => k, v => JToken.FromObject(new { type = new { type = "lookup", referenceType = v } }));
+
+                            if (inline)
+                            {
+                                foreach (var attribute in attributes)
+                                {
+                                    entitieP.Value["attributes"][attribute.Key] = attribute.Value;
+
+                                }
+                                polyLookup.Value["type"]["type"] = "polylookup";
+                               
+                                //   polyLookup.Remove();
+                            }
+                            else
+                            {
+
+
+                                //  attributes["Id"] = JToken.FromObject(new { isPrimaryKey = true });
+                                attributes["Name"] = JToken.FromObject(new { isPrimaryField = true });
+
+
+
+                                entities[Key] = JToken.FromObject(new
+                                {
+                                    pluralName = pluralName,
+                                    attributes = attributes
+                                });
+
+
+                                SetRequiredProps(entities[Key] as JObject, Key);
+                            }
+                        }
+
+
+
+                        if (!inline)
+                        {
+                            var entity = entities[Key] as JObject;
+                            polyLookup.Value["type"]["foreignKey"] = JToken.FromObject(new
+                            {
+                                principalTable = entity["logicalName"].ToString(),
+                                principalColumn = "id",
+                                principalNameColumn = "name",
+                                name = TrimId(polyLookup.Value.SelectToken("$.logicalName")?.ToString()) // jsonraw.SelectToken($"$.entities['{ attr["type"]["referenceType"] }'].logicalName").ToString().Replace(" ", ""),
+                            });
+                            polyLookup.Value["type"]["referenceType"] = Key;
+
+                            if (reverse)
+                            {
+                                entities[Key]["attributes"][polyLookup.Name] = JToken.FromObject(new
+                                {
+                                    type = new
+                                    {
+                                        type = "lookup",
+                                        referenceType = entitieP.Name
+                                    }
+                                });
+
+                                // polyLookup.Remove();
+                            }
+
+
+                            //  polyLookup.Value["type"]["type"] = "lookup";
+
+                            await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entity);
+                        }
+                        else
+                        {
+                            
+
+                            await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entitieP.Value as JObject);
+                        }
                     }
                 }
             }
@@ -278,6 +333,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                             
                                 var columns = jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].attributes").OfType<JProperty>()
                                         .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT")}'].attributes").OfType<JProperty>())
+                                        .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC")}'].attributes").OfType<JProperty>())
                                         .GroupBy(k => k.Name).Select(g => g.First())
                                         .ToArray();
 
@@ -490,7 +546,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             {
                 var entity = qque.Dequeue();
 
-                var tpt = entity.Value.SelectToken("$.TPT")?.ToString();
+                var tpt = entity.Value.SelectToken("$.TPT")?.ToString() ?? entity.Value.SelectToken("$.TPC")?.ToString(); 
                 if (!string.IsNullOrEmpty(tpt))
                 {
                     var baseentity = jsonraw.SelectToken($"$.entities['{tpt}']").Parent as JProperty;
@@ -650,10 +706,9 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                     foreach (var attr in (entityValue.SelectToken("$.attributes") as JObject)?.Properties() ?? Enumerable.Empty<JProperty>())
                     {
-                        var attrValue = attr.Value as JObject;
-                        var attrType = attrValue.SelectToken("$.type");
-                         
+                        if(!(attr.Value is JObject attrValue)) continue;
                         
+                        var attrType = attrValue.SelectToken("$.type");
                        
                         if (!ConvertToSchemaType(attrType, out var type)) continue;
 
@@ -722,7 +777,12 @@ namespace EAVFW.Extensions.Manifest.SDK
                     }
                 }
 
-                var queue = new Queue<JObject?>(attributes.Properties().Select(c => c.Value as JObject));
+                var queue =
+                    new Queue<JObject>(
+                        attributes.Properties()
+                            .Select(c => c.Value as JObject)
+                            .Where(x => x != null)
+                    );
 
                 foreach (var attribute in attributes.Properties())
                 {
@@ -851,7 +911,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                 }
 
-                foreach (var attr in attributes.Properties())
+                foreach (var attr in attributes.Properties().Where(x => x.Value.Type == JTokenType.Object))
                 {
                     var attributeLocaleEnglish = new JObject(new JProperty("displayName", attr.Value["displayName"]));
                     var attributeLocale = attr.Value.SelectToken("$.locale") as JObject ?? SetDefault(attr.Value, attributeLocaleEnglish);

@@ -56,7 +56,7 @@ namespace EAVFramework.Shared.V2
                 ModuleBuilder myModule =
                   builder.DefineDynamicModule(moduleName + ".dll");
 
-                return new DynamicAssemblyBuilder(this, myModule, @namespace);
+                return new DynamicAssemblyBuilder(this, myModule, @namespace,moduleName);
             });
         }
 

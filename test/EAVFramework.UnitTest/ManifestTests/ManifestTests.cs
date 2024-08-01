@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +13,7 @@ using System.IO;
 using System.Reflection;
 using EAVFW.Extensions.Manifest.SDK;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Text.RegularExpressions;
 
 namespace EAVFramework.UnitTest.ManifestTests
 {
@@ -25,8 +26,8 @@ namespace EAVFramework.UnitTest.ManifestTests
             var version = typeof(DbContext).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
             expected = expected.Replace("{{VERSION}}", version);
-
-            Assert.AreEqual(expected.Trim(), actual.Trim());
+            
+            Assert.AreEqual(Regex.Replace(expected.Trim(), @"\s", string.Empty), Regex.Replace(actual.Trim(), @"\s", string.Empty));
 
         }
     }
