@@ -1,4 +1,4 @@
-﻿name: Build
+name: Build
 
 on:
   pull_request:
@@ -16,8 +16,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
+          global-json-file: global.json
           dotnet-version: | 
             3.1.x
             6.0.x
@@ -50,7 +51,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          global-json-file: global.json
 
       - name: Cleaning
         run: dotnet clean
@@ -62,10 +63,10 @@ jobs:
         run: dotnet build -o ../build/net6.0/ -f net6.0 -c Release --no-restore -m:1
 
       - name: Restore NuGet packages
-        run: dotnet restore EAVFramework.sln -p:TargetFramework=netcoreapp3.1
+        run: dotnet restore EAVFramework.sln -p:TargetFramework=net8.0
 
       - name: Build solution
-        run: dotnet build -o ../build/netcoreapp3.1/ -f netcoreapp3.1 -c Release --no-restore -m:1
+        run: dotnet build -o ../build/net8.0/ -f net8.0 -c Release --no-restore -m:1
          
       - name: Archive build to artifacts
         uses: actions/upload-artifact@v2

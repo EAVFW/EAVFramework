@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using EAVFramework.Shared.V2;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -42,12 +42,12 @@ namespace EAVFramework.Shared
         public string MigrationName { get; set; }
         public string RawUpMigration { get; set; }
     }
-   
-    [AttributeUsage(AttributeTargets.Class,AllowMultiple =true)]
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class EntityIndexAttribute : Attribute
     {
         public string IndexName { get; set; }
-        
+
     }
     public class EntityMigrationColumnsAttribute : Attribute
     {
@@ -58,11 +58,11 @@ namespace EAVFramework.Shared
         public int MaxLength { get; set; }
         public string AttributeHash { get; set; }
         public string AttributeTypeHash { get; set; }
-        internal IDictionary<string,object> GetChanges(EntityMigrationColumnsAttribute value)
+        internal IDictionary<string, object> GetChanges(EntityMigrationColumnsAttribute value)
         {
             var changes = new Dictionary<string, object>();
 
-            if(this.MaxLength != value.MaxLength)
+            if (this.MaxLength != value.MaxLength)
                 changes["maxlength"] = value.MaxLength;
 
             return changes;
@@ -103,7 +103,7 @@ namespace EAVFramework.Shared
     {
         public string LogicalName { get; set; }
         public string Schema { get; set; }
-       
+
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
@@ -124,7 +124,7 @@ namespace EAVFramework.Shared
         public string AttributeKey { get; set; }
     }
     [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = true)]
-     
+
     public class ConstraintMappingAttribute : Attribute
     {
         public string EntityKey { get; set; }
@@ -169,9 +169,9 @@ namespace EAVFramework.Shared
 
         internal TypeInfo CreateTypeInfo(ModuleBuilder builder)
         {
-             
 
-         //   File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo start : {string.Join(",",Dependencies.Select(c=>c.EntitySchameName))}" });
+
+            //   File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo start : {string.Join(",",Dependencies.Select(c=>c.EntitySchameName))}" });
             var deps = Dependencies.ToArray();
             Dependencies.Clear();
 
@@ -182,41 +182,41 @@ namespace EAVFramework.Shared
                 {
                     if (!dep.Builder.IsCreated())
                     {
-                      //  File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling dependency: {dep.EntitySchameName}" });
+                        //  File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling dependency: {dep.EntitySchameName}" });
                         dep.CreateTypeInfo(builder);
                     }
                 }
-         //       File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling parent: {Parent?.EntitySchameName}" });
+                //       File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo calling parent: {Parent?.EntitySchameName}" });
                 Parent?.CreateTypeInfo(builder);
 
                 var type = Builder.CreateTypeInfo();
 
-       //         File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo done {Builder.Name} {Builder.IsCreated()}: {type?.Name}" });
+                //         File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] CreateTypeInfo done {Builder.Name} {Builder.IsCreated()}: {type?.Name}" });
                 return type;
             }
-            catch(TypeLoadException loaderex)
+            catch (TypeLoadException loaderex)
             {
                 var t = builder.GetType(loaderex.TypeName);
-                
-               var a = (t as TypeBuilder)?.CreateTypeInfo();
+
+                var a = (t as TypeBuilder)?.CreateTypeInfo();
                 var b = (t as TypeBuilder)?.CreateTypeInfo();
-   //             File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] Failed to load: {loaderex.TypeName}, trying that {t?.Name} TypeBuilder={t is TypeBuilder} {a?.Name} {b?.Name}" });
+                //             File.AppendAllLines("test1.txt", new[] { $"[{EntitySchameName}] Failed to load: {loaderex.TypeName}, trying that {t?.Name} TypeBuilder={t is TypeBuilder} {a?.Name} {b?.Name}" });
 
                 return CreateTypeInfo(builder);
 
                 throw new InvalidOperationException($"Failed to create: {Builder.Name}", loaderex);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
-                throw new InvalidOperationException($"Failed to create: {Builder.Name}",ex);
+                throw new InvalidOperationException($"Failed to create: {Builder.Name}", ex);
             }
         }
         public override string ToString()
         {
             return $"[{EntityKey}] Initialized={Initialized} StaticBaseType={StaticBaseType?.Name} Created={Builder.IsCreated()} ";
 
-            
+
         }
     }
     //public class CodeGeneratorOptions
@@ -337,29 +337,30 @@ namespace EAVFramework.Shared
     }
     public class DefaultChoiceEnumBuilder : IChoiceEnumBuilder
     {
-       
-        public string GetEnumName(  JToken attributeDefinition, string @namespace)
+
+        public string GetEnumName(JToken attributeDefinition, string @namespace)
         {
             var optionSetDefinedName = attributeDefinition.SelectToken("$.type.name");
             var schemaName = attributeDefinition.SelectToken("$.schemaName");
 
-            if(attributeDefinition.SelectToken("$.type.type")?.ToString().ToLower() == "choices"){
+            if (attributeDefinition.SelectToken("$.type.type")?.ToString().ToLower() == "choices")
+            {
                 return $"{@namespace}.{optionSetDefinedName ?? schemaName + "Options"}".Replace(" ", "") + "Value";
 
                 //  throw new InvalidOperationException("Only choice can be used to get enum name");
             }
 
-            return $"{@namespace}.{optionSetDefinedName ?? schemaName+"Options"}".Replace(" ", "");
+            return $"{@namespace}.{optionSetDefinedName ?? schemaName + "Options"}".Replace(" ", "");
         }
- 
+
         public string GetLiteralName(string name)
         {
-          
+
             TextInfo info = CultureInfo.CurrentCulture.TextInfo;
-            return  info.ToTitleCase(name.Replace("/"," Or ")).Replace(" ", string.Empty);
+            return info.ToTitleCase(name.Replace("/", " Or ")).Replace(" ", string.Empty);
 
 
-         
+
         }
     }
     public interface IManifestTypeMapper
@@ -421,7 +422,7 @@ namespace EAVFramework.Shared
 
     public interface ILookupBuilder
     {
-      //  void CreateLookupIndexes(CodeGeneratorOptions options, JProperty entityDefinition, string entityCollectionSchemaName, string schema, ILGenerator upMethodIL);
+        //  void CreateLookupIndexes(CodeGeneratorOptions options, JProperty entityDefinition, string entityCollectionSchemaName, string schema, ILGenerator upMethodIL);
         //  void CreateLoopupIndex( string EntityCollectionSchemaName, string schema, ILGenerator upMethodIL);
         void CreateLoopupIndex(ILGenerator upMethodIL, string EntityCollectionSchemaName, string schema, string propertySchemaName, IndexInfo indexInfo);
         void CreateLookupIndexes(ILGenerator upMethodIL, DynamicTableBuilder dynamicTableBuilder);
@@ -445,37 +446,43 @@ namespace EAVFramework.Shared
 
         public void CreateLookupIndexes(ILGenerator upMethodIL, DynamicTableBuilder dynamicTableBuilder)
         {
-            foreach (var propertyInfo in dynamicTableBuilder.Properties.Where(c=>c.IndexInfo !=null))
-                CreateLoopupIndex(upMethodIL,dynamicTableBuilder.CollectionSchemaName, dynamicTableBuilder.Schema,propertyInfo.SchemaName, propertyInfo.IndexInfo);
+            foreach (var propertyInfo in dynamicTableBuilder.Properties.Where(c => c.IndexInfo != null))
+                CreateLoopupIndex(upMethodIL, dynamicTableBuilder.CollectionSchemaName, dynamicTableBuilder.Schema, propertyInfo.SchemaName, propertyInfo.IndexInfo);
         }
 
-        public void CreateLoopupIndex(ILGenerator upMethodIL, string EntityCollectionSchemaName, string schema , string propertySchemaName, IndexInfo indexInfo)
+        public void CreateLoopupIndex(ILGenerator upMethodIL, string EntityCollectionSchemaName, string schema, string propertySchemaName, IndexInfo indexInfo)
         {
-            
-              
-
-                upMethodIL.Emit(OpCodes.Ldarg_1); //first argument
-                upMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + propertySchemaName); //Constant keyname 
-                upMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
 
 
-                upMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
-                upMethodIL.Emit(OpCodes.Newarr, typeof(string));
-                upMethodIL.Emit(OpCodes.Dup);
-                upMethodIL.Emit(OpCodes.Ldc_I4_0);
-                upMethodIL.Emit(OpCodes.Ldstr, propertySchemaName);
-                upMethodIL.Emit(OpCodes.Stelem_Ref);
+
+            upMethodIL.Emit(OpCodes.Ldarg_1); //first argument
+            upMethodIL.Emit(OpCodes.Ldstr, indexInfo.Name ?? "IX_" + propertySchemaName); //Constant keyname 
+            upMethodIL.Emit(OpCodes.Ldstr, EntityCollectionSchemaName); //Constant table name
 
 
-                upMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
-                upMethodIL.Emit(indexInfo.Unique ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); //Constant unique=true
-                upMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
+            upMethodIL.Emit(OpCodes.Ldc_I4_1); // Array length
+            upMethodIL.Emit(OpCodes.Newarr, typeof(string));
+            upMethodIL.Emit(OpCodes.Dup);
+            upMethodIL.Emit(OpCodes.Ldc_I4_0);
+            upMethodIL.Emit(OpCodes.Ldstr, propertySchemaName);
+            upMethodIL.Emit(OpCodes.Stelem_Ref);
 
 
-                upMethodIL.Emit(OpCodes.Callvirt, migrationBuilderCreateIndex);
-                upMethodIL.Emit(OpCodes.Pop);
+            upMethodIL.Emit(OpCodes.Ldstr, schema); //Constant schema
+            upMethodIL.Emit(indexInfo.Unique ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); //Constant unique=true
+            upMethodIL.Emit(OpCodes.Ldnull); //Constant filter=null
 
-            
+
+            if (migrationBuilderCreateIndex.GetParameters().Length > 6)
+            {
+                upMethodIL.Emit(OpCodes.Ldnull); //Constant descending=null
+            }
+
+
+            upMethodIL.Emit(OpCodes.Callvirt, migrationBuilderCreateIndex);
+            upMethodIL.Emit(OpCodes.Pop);
+
+
         }
     }
     //public class CodeGenerator : ICodeGenerator
@@ -533,7 +540,7 @@ namespace EAVFramework.Shared
 
     //        var logicalName = entityDefinition.Value.SelectToken("$.logicalName").ToString();
     //        var hasPriorEntity = builder.GetTypes().FirstOrDefault(t => !IsPendingTypeBuilder(t)&& t.GetCustomAttribute<EntityMigrationAttribute>() is EntityMigrationAttribute migrationAttribute && migrationAttribute.LogicalName == logicalName);
-           
+
 
 
     //        TypeBuilder entityTypeBuilder =
@@ -558,7 +565,7 @@ namespace EAVFramework.Shared
 
     //        if (options.PartOfMigration)
     //        {
-               
+
 
     //            CustomAttributeBuilder EntityMigrationAttributeBuilder = new CustomAttributeBuilder(
     //                typeof(EntityMigrationAttribute).GetConstructor(new Type[] { }),
@@ -597,7 +604,7 @@ namespace EAVFramework.Shared
     //        {
 
     //            var (columnsCLRType, columnsctor, members) = CreateColumnsType(manifest, EntitySchameName, EntityCollectionSchemaName, entityDefinition.Value as JObject, builder);
-                 
+
 
 
 
@@ -683,7 +690,7 @@ namespace EAVFramework.Shared
     //                    ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalTable);
     //                    ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalColumn);
     //                    ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalSchema);
-                         
+
     //                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int)fk.OnUpdateCascade); //OnUpdate
     //                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int)fk.OnDeleteCascade); //OnDelete
 
@@ -781,8 +788,8 @@ namespace EAVFramework.Shared
     //                    if (!test.Any(c => c.MigrationName != options.migrationName))
     //                    {
     //                        //There are no other migration names than this one, its a new member.
-                             
-                           
+
+
 
     //                        var method = GetColumnForType(options.MigrationsBuilderAddColumn, type);
     //                        if (method == null)
@@ -796,7 +803,7 @@ namespace EAVFramework.Shared
     //                        UpMethodIL.Emit(OpCodes.Callvirt, method);
     //                        UpMethodIL.Emit(OpCodes.Pop);
 
-                             
+
     //                        if (attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup")
     //                        {
     //                            AddForeignKey(manifest, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
@@ -824,22 +831,22 @@ namespace EAVFramework.Shared
     //                            UpMethodIL.Emit(OpCodes.Callvirt, method);
     //                            UpMethodIL.Emit(OpCodes.Pop);
 
-                                
+
     //                                //SOMETHING CHANGED
 
 
-                                
+
     //                        }
 
     //                        if (test[test.Length - 2].HasAttributeTypeChanged( test[test.Length - 1]) && attributeDefinition.Value.SelectToken("$.type.type")?.ToString() == "lookup")
     //                        {
-                            
+
     //                            UpMethodIL.Emit(OpCodes.Ldarg_1);
     //                            var tableName = EntityCollectionSchemaName;
     //                            foreach (var arg1 in options.MigrationsBuilderDropForeignKey.GetParameters())
     //                            {
     //                                var argName = arg1.Name;
-                                    
+
 
     //                                switch (argName)
     //                                {
@@ -849,7 +856,7 @@ namespace EAVFramework.Shared
     //                                }
     //                            }
 
-                               
+
     //                            UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderDropForeignKey);
     //                            UpMethodIL.Emit(OpCodes.Pop);
 
@@ -1225,7 +1232,7 @@ namespace EAVFramework.Shared
     //        UpMethodIL.Emit(OpCodes.Ldarg_0); //this
     //        UpMethodIL.Emit(OpCodes.Ldftn, ConstraintsMethod);
     //        UpMethodIL.Emit(OpCodes.Newobj, typeof(Action<>).MakeGenericType(options.CreateTableBuilderType.MakeGenericType(columnsCLRType)).GetConstructors().Single());
-             
+
     //        UpMethodIL.Emit(OpCodes.Ldstr, "comment");
 
     //        UpMethodIL.Emit(OpCodes.Callvirt, createTableMethod);
@@ -1493,7 +1500,7 @@ namespace EAVFramework.Shared
 
     //            if (clrType != null)
     //            {
-                    
+
     //                var (attProp, attField) = CreateProperty(entityType, attributeSchemaName, clrType);
 
 
@@ -1615,7 +1622,7 @@ namespace EAVFramework.Shared
     //                        File.AppendAllLines("test1.txt", new[] {$"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}" , ex.ToString() });
     //                      //  throw new InvalidOperationException($"failed to create lookup property {entity.Name.Replace(" ", "")}.{attribute.Name.Replace(" ", "")} for {entityDefinition2.Value.SelectToken("$.logicalName").ToString()}",ex);
 
-                            
+
     //                    }
     //                }
     //            }
@@ -1721,11 +1728,11 @@ namespace EAVFramework.Shared
     //        {
     //            return _type; 
     //        }
-                
+
 
     //        try
     //        {
-               
+
     //            InitializeTypeInfo(myModule, manifest, _type);
 
     //            foreach (var dependencies in _type.Dependencies)
@@ -1917,7 +1924,7 @@ namespace EAVFramework.Shared
 
 
     //        File.AppendAllLines("test1.txt", new[] { $"Creating type done: {entityInfo.EntitySchameName}|{entityInfo.EntityKey}: " });
-             
+
     //    }
 
     //    private IEnumerable<JProperty> GetAllAttributes(JToken manifest, JObject entityDefinition)
@@ -1927,7 +1934,7 @@ namespace EAVFramework.Shared
     //            return manifest.SelectToken($"$.entities['{entityDefinition.SelectToken("$.TPT")}'].attributes")
     //                .OfType<JProperty>().Concat(entityDefinition.SelectToken("$.attributes").OfType<JProperty>());
     //        }
-            
+
     //        return entityDefinition.SelectToken("$.attributes").OfType<JProperty>();
     //    }
 
@@ -1980,7 +1987,7 @@ namespace EAVFramework.Shared
     //                catch (Exception ex)
     //                {
     //                    File.AppendAllLines("test1.txt", new[] { $"GetTypeBuilderFromConstraint: {constraint.DeclaringType.FullName} Failed={enumName}", ex.ToString() });
-                        
+
     //                    throw new KeyNotFoundException($"Could not find {enumName} in {string.Join(",", options.ChoiceBuilders.Keys)}", ex);
     //                }
     //            }
@@ -2108,7 +2115,7 @@ namespace EAVFramework.Shared
     //        {
     //            var attributeLogicalName = attributeDefinition.Value.SelectToken("$.logicalName")?.ToString();
     //            var attributeSchemaName = attributeDefinition.Value.SelectToken("$.schemaName")?.ToString() ?? attributeDefinition.Name.Replace(" ", "");
-                 
+
     //            var (typeObj, type) = GetTypeInfo(manifest, attributeDefinition);
 
     //            var method = GetColumnForType(options.ColumnsBuilderColumnMethod, type);
@@ -2120,7 +2127,7 @@ namespace EAVFramework.Shared
 
     //            var (attProp, attField) = CreateProperty(entityType, attributeSchemaName, options.OperationBuilderAddColumnOptionType);
 
-                
+
 
     //            var columparams = BuildParametersForcolumn(entityCtorBuilderIL, attributeDefinition, typeObj, type, method);
 
@@ -2148,13 +2155,13 @@ namespace EAVFramework.Shared
     //                CustomAttributeBuilder EntityMigrationColumnsAttributeBuilder = new CustomAttributeBuilder(typeof(EntityMigrationColumnsAttribute)
     //                    .GetConstructor(new Type[] { }), 
     //                    new object[] { }, attributeProperties, attributesValues );
-                  
+
     //                entityType.Builder.SetCustomAttribute(EntityMigrationColumnsAttributeBuilder);
     //            }
 
 
     //            members[attributeLogicalName] = attProp;
-                  
+
 
     //        }
     //        entityCtorBuilderIL.Emit(OpCodes.Ret);
@@ -2331,7 +2338,7 @@ namespace EAVFramework.Shared
     //            [typeof(int?)]= entityCtorBuilderIL.DeclareLocal(typeof(int?)),
 
     //        };
-           
+
 
 
 
@@ -2353,7 +2360,7 @@ namespace EAVFramework.Shared
     //            }
 
 
-                
+
 
 
     //            if (typeObj.Type == JTokenType.Object && typeObj.SelectToken($"$.sql.{argName}") is JToken sqlColumnArgs)
@@ -2380,7 +2387,7 @@ namespace EAVFramework.Shared
     //                        entityCtorBuilderIL.Emit(OpCodes.Initobj, arg1.ParameterType);
     //                        entityCtorBuilderIL.Emit(OpCodes.Ldloc, locals[arg1.ParameterType]);
 
-                           
+
     //                    }
     //                    else
     //                    {
@@ -2431,7 +2438,7 @@ namespace EAVFramework.Shared
 
 
     //                        break;
-                          
+
     //                    default:
     //                        if (Nullable.GetUnderlyingType(arg1.ParameterType) != null)
     //                        {
@@ -2444,7 +2451,7 @@ namespace EAVFramework.Shared
     //                        }
     //                        else
     //                        {
-                                 
+
     //                            entityCtorBuilderIL.Emit(OpCodes.Ldnull);
     //                        }
 
@@ -2459,7 +2466,7 @@ namespace EAVFramework.Shared
     //            //    computedColumnSql:null, fixedLength:false,comment:"",collation:"",precision:0,scale:0,stored:false);
     //            //type:
 
-               
+
     //        }
     //        return parameters;
     //    }
@@ -2531,7 +2538,7 @@ namespace EAVFramework.Shared
 
 
 
-                
+
     //            // Define the "get" accessor method for CustomerName.
     //            MethodBuilder custNameGetPropMthdBldr =
     //                entityTypeBuilder.Builder.DefineMethod($"get_{name}",
@@ -2579,13 +2586,13 @@ namespace EAVFramework.Shared
     //                {
 
     //                }
-                     
+
     //            }
 
     //            return (proertyBuilder, customerNameBldr);
     //        }catch(Exception ex)
     //        {
-                
+
     //            throw new Exception($"Failed to create Property: {entityTypeBuilder.Builder.Name}.{name}",ex);
     //        }
     //    }
@@ -2600,7 +2607,7 @@ namespace EAVFramework.Shared
         {
             this.options = options;
         }
-        public IDictionary<string,string> GenerateSourceCode(IEnumerable<Type> types, bool generatePoco)
+        public IDictionary<string, string> GenerateSourceCode(IEnumerable<Type> types, bool generatePoco)
         {
             var context = new Dictionary<string, string>();
 
@@ -2608,7 +2615,7 @@ namespace EAVFramework.Shared
             foreach (var type in types.Where(t => { try { return t.GetCustomAttribute<EntityDTOAttribute>() != null; } catch (Exception) { } return false; }))
             {
 
-              //  context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
+                //  context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("100", "Generating", "Generated for " + type.GetCustomAttribute<EntityAttribute>().LogicalName, "", DiagnosticSeverity.Info, true), null));
 
                 context.Add($"{type.Name}.cs", GenerateSourceCode(type, generatePoco));
 
@@ -2687,7 +2694,7 @@ namespace EAVFramework.Shared
                 }
                 else
                 {
-                    sb.AppendLine($"\tpublic{(false && type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
+                    sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
                     {
                         foreach (var ctor in type.GetConstructors())
                         {
@@ -2701,7 +2708,7 @@ namespace EAVFramework.Shared
                         foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public
         | System.Reflection.BindingFlags.Instance
         | System.Reflection.BindingFlags.DeclaredOnly)
-                            .OrderByDescending(x=>x.GetCustomAttribute(typeof(PrimaryKeyAttribute)) != null).ThenByDescending(x => x.GetCustomAttribute(typeof(PrimaryFieldAttribute)) != null)
+                            .OrderByDescending(x => x.GetCustomAttribute(typeof(PrimaryKeyAttribute)) != null).ThenByDescending(x => x.GetCustomAttribute(typeof(PrimaryFieldAttribute)) != null)
                             .ThenByDescending(x => x.GetCustomAttribute(options.InverseAttributeCtor.DeclaringType) == null).ThenBy(c => c.Name))
                         {
 

@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 
@@ -26,6 +26,7 @@ namespace EAVFramework.Configuration
                 options.Cookie.Name = Constants.DefaultCookieAuthenticationScheme;
                 options.Cookie.IsEssential = true;
                 options.Cookie.SameSite = _options.Authentication.CookieSameSiteMode;
+                options.Cookie.SecurePolicy = _options.Authentication.CookieSecurePolicy;
 
                 options.LoginPath = ExtractLocalUrl(_options.UserInteraction.LoginUrl);
                 options.LogoutPath = ExtractLocalUrl(_options.UserInteraction.LogoutUrl);
@@ -47,6 +48,7 @@ namespace EAVFramework.Configuration
                 // hold onto them and send on the next redirect to the callback page.
                 // see: https://brockallen.com/2019/01/11/same-site-cookies-asp-net-core-and-external-authentication-providers/
                 options.Cookie.SameSite = _options.Authentication.CookieSameSiteMode;
+                options.Cookie.SecurePolicy = _options.Authentication.CookieSecurePolicy;
             }
         }
 

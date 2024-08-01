@@ -27,6 +27,8 @@ using static EAVFramework.Shared.TypeHelper;
 using EAVFramework.Shared.V2;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using EAVFW.Extensions.Manifest.SDK;
+using System.Text.Json;
 
 namespace EAVFramework
 {
@@ -57,6 +59,7 @@ namespace EAVFramework
 
         public TypeInfo Type { get; set; }
         public Func<Migration> MigrationFactory { get; set; }
+        public Dictionary<string, EntityDefinition> Entities { get; set; }
     }
     public class MigrationManagerOptions
     {
@@ -108,9 +111,9 @@ namespace EAVFramework
                 EntityConfigurationConfigureName = nameof(IEntityTypeConfiguration.Configure),
                 EntityTypeBuilderType = typeof(EntityTypeBuilder),
                 EntityTypeBuilderToTable = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }), "EntityTypeBuilderToTable"),
-              
+#if NET8_0_OR_GREATER
                 UseTpcMappingStrategy = Resolve(()=>typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.UseTpcMappingStrategy),0, new[] { typeof(EntityTypeBuilder) }), "UseTpcMappingStrategy"),
-
+#endif
                 EntityTypeBuilderHasKey = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasKey"),
                 EntityTypeBuilderPropertyMethod = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }), "EntityTypeBuilderPropertyMethod"),
 
@@ -147,7 +150,8 @@ namespace EAVFramework
 
                 MigrationBuilderCreateIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex),
                     new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/ })
-                ?? typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex), new Type[] { typeof(string), typeof(string), typeof(string[]), typeof(string), typeof(bool), typeof(string), typeof(bool[]) }), "MigrationBuilderCreateIndex"),
+                ?? typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex),
+                    new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/, typeof(bool[]) /*descending*/ }), "MigrationBuilderCreateIndex"),
                 
                 
                 MigrationBuilderDropIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
@@ -376,7 +380,12 @@ namespace EAVFramework
 
                 try
                 {
-                    var m = new ModelDefinition();
+                    var m = new ModelDefinition()
+                    {
+                        Entities = new Dictionary<string, EntityDefinition>( System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString())
+                        .Entities.ToDictionary(k=>k.Value.CollectionSchemaName, v=>v.Value),StringComparer.OrdinalIgnoreCase)
+                    };
+                    
                     //var asmb = dynamicCodeService.CreateAssemblyBuilder(options.Namespace);
                     var manfiestservice = new ManifestService(new ManifestServiceOptions
                     {
