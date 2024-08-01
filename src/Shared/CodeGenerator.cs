@@ -32,7 +32,8 @@ namespace EAVFramework.Shared
     }
     public class EntityMappingStrategyAttribute : Attribute
     {
-         public MappingStrategy MappingStrategy { get; set; }
+        public MappingStrategy OldMappingStrategy { get; set; }
+        public MappingStrategy MappingStrategy { get; set; }
     }
     public class EntityMigrationAttribute : Attribute
     {

@@ -85,8 +85,11 @@ namespace EAVFramework.Shared.V2
 
 
 
-            dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo())
-               .AddForeignKey(SchemaName);
+            var propBuilder = dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo());
+
+           // if(!(related.IsBaseEntity && related.MappingStrategy == MappingStrategy.TPC ))
+                propBuilder.AddForeignKey(SchemaName);
+
 
             //var (attFKProp, attFKField) = CreateProperty(entityType, (FKSchemaName ??
             //    (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ?
