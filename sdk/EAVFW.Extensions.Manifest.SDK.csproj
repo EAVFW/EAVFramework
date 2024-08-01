@@ -20,7 +20,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="System.Text.Json" Version="8.0.0"/>
+		<PackageReference Include="System.Text.Json" Version="8.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="3.0.26" />
 	</ItemGroup>

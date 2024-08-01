@@ -23,6 +23,7 @@
    
      <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.1.1" />
      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+     <PackageReference Include="Semver" Version="2.2.0" />
       
     </ItemGroup>
 
