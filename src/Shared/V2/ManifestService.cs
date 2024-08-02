@@ -1188,8 +1188,9 @@ namespace EAVFramework.Shared.V2
                             {
                                 AddForeignKey(entity.CollectionSchemaName, schema, migrationBuilder.UpMethodIL, newField, migration.Entities[newField.AttributeType.ReferenceType]);
                                  
+                                if(newField.AttributeType.IndexInfo !=null)
                                 dynamicCodeService.LookupPropertyBuilder.CreateLoopupIndex(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, entity.Schema ?? dynamicCodeService.Options.Schema ??"dbo",
-                                    newField.SchemaName, newField.AttributeType.IndexInfo ?? new IndexInfo {  Unique = true}); //.CreateLoopupIndex(options, EntityCollectionSchemaName, schema, UpMethodIL, attributeDefinition);
+                                    newField.SchemaName, newField.AttributeType.IndexInfo); 
 
                             }
 
