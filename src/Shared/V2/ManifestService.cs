@@ -1376,7 +1376,7 @@ namespace EAVFramework.Shared.V2
                     /**
                      * We will skip the FKs if its a TPC and base class. See above comment
                      */
-                    if (fk.ReferenceType.Abstract ?? false && fk.ReferenceType.MappingStrategy == MappingStrategy.TPC)
+                    if ((fk.ReferenceType.Abstract ?? false) && fk.ReferenceType.MappingStrategy == MappingStrategy.TPC)
                     {
                         continue;
                     }
