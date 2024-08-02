@@ -66,7 +66,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
         public async Task<MigrationResult> GenerateSQL(string projectPath, bool shouldGeneratePermissions, string systemEntity,
             Action<SqlServerDbContextOptionsBuilder> extend=null)
         {
-            var schema = _parameterGenerator.GetParameter("DBSchema");// "$(DBSchema)";
+            var schema = _parameterGenerator.GetParameter("DBSchema",false);// "$(DBSchema)";
             var model = JToken.Parse(File.ReadAllText(Path.Combine(projectPath, "obj", "manifest.g.json")));
             var models = Directory.Exists(Path.Combine(projectPath, "manifests")) ? Directory.EnumerateFiles(Path.Combine(projectPath, "manifests"))
                 .Select(file => JToken.Parse(File.ReadAllText(file)))
