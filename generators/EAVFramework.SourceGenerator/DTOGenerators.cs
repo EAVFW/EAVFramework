@@ -823,7 +823,6 @@ namespace EAVFramework.Generators
                   //      File.AppendAllLines("test1.txt", new[] { $"Base type: {basetypes.Name}<{string.Join(",", basetypes.GetProperties().Select(c=>c.Name))}>" });
                     }
                  //   File.AppendAllLines("test1.txt", new[] { $"Generating Code from manifest" });
-                    var manifestservice = new ManifestService(new ManifestServiceOptions { Namespace= @namespace, MigrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}", });
                     options.DTOBaseClasses = baseTypes.ToArray();
                     options.DTOBaseInterfaces = baseTypeInterfaces.Values.Where(c => c.IsInterface).ToArray();
 
@@ -834,6 +833,8 @@ namespace EAVFramework.Generators
 
                     // var tables = generator.GetTables(json, myModule);
                     var codeservice = new DynamicCodeService(options);
+                    var manifestservice = new ManifestService(codeservice,new ManifestServiceOptions { Namespace = @namespace, MigrationName = $"{@namespace}_{json.SelectToken("$.version") ?? "Initial"}", });
+
                     var (migrationType, tables) = manifestservice.BuildDynamicModel(codeservice, json);
 
                     var code = codeservice.GenerateCodeFiles();
