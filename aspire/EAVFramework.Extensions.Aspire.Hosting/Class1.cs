@@ -114,7 +114,7 @@ public class PublishEAVFWProjectLifecycleHook : IDistributedApplicationLifecycle
             {
 
 
-                var migrator = new SQLMigrationGenerator(new ManifestPermissionGenerator(new DataClientParameterGenerator()));
+                var migrator = new SQLMigrationGenerator(new SQLClientParameterGenerator(), new ManifestPermissionGenerator(new SQLClientParameterGenerator()));
                    
                     var sqls = await migrator.GenerateSQL(dacpacPath, true, "SystemUsers");
 

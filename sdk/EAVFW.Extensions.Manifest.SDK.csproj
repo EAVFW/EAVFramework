@@ -11,6 +11,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <LangVersion>9.0</LangVersion>
 
 	</PropertyGroup>
 

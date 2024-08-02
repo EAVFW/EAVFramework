@@ -1,9 +1,7 @@
 using EAVFramework.Extensions;
 using EAVFW.Extensions.Manifest.SDK;
 using EAVFW.Extensions.Manifest.SDK.DTO;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -1046,8 +1044,10 @@ namespace EAVFramework.Shared.V2
             var result = new List<Type>();
             var module = builder.Module;
             var migrationName = options.MigrationName.Replace(".", "_");
-            foreach (var (entityKey, entity) in migration.Entities)
+            foreach (var pair in migration.Entities)
             {
+                var entityKey = pair.Key;
+                var entity = pair.Value;
 
                 var schema = entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo";
 
