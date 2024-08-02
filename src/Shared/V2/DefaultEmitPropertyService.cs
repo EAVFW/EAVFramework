@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using EAVFW.Extensions.Manifest.SDK;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -161,6 +162,8 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationsBuilderAddForeignKey);
             UpMethodIL.Emit(OpCodes.Pop);
         }
+
+      
 
         public void WriteLambdaExpression(ModuleBuilder builder, ILGenerator il, Type clrType, params MethodInfo[] getters)
         {

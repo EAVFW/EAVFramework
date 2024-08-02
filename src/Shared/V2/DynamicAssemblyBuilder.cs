@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EAVFW.Extensions.Manifest.SDK.DTO;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;

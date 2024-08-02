@@ -1,5 +1,7 @@
 using EAVFramework.Extensions;
 using EAVFramework.Shared.V2;
+using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK.DTO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -324,11 +326,7 @@ namespace EAVFramework.Shared
             }
         }
     }
-    public class IndexInfo
-    {
-        public bool Unique { get; set; } = true;
-        public string Name { get; set; }
-    }
+
 
     public interface IChoiceEnumBuilder
     {
@@ -426,6 +424,7 @@ namespace EAVFramework.Shared
         //  void CreateLoopupIndex( string EntityCollectionSchemaName, string schema, ILGenerator upMethodIL);
         void CreateLoopupIndex(ILGenerator upMethodIL, string EntityCollectionSchemaName, string schema, string propertySchemaName, IndexInfo indexInfo);
         void CreateLookupIndexes(ILGenerator upMethodIL, DynamicTableBuilder dynamicTableBuilder);
+        void CreateLookupIndexes(ILGenerator upMethodIL, EntityDefinition dynamicTableBuilder, string defaultSchema);
 
     }
     public class DefaultLookupBuilder : ILookupBuilder
@@ -448,6 +447,14 @@ namespace EAVFramework.Shared
         {
             foreach (var propertyInfo in dynamicTableBuilder.Properties.Where(c => c.IndexInfo != null))
                 CreateLoopupIndex(upMethodIL, dynamicTableBuilder.CollectionSchemaName, dynamicTableBuilder.Schema, propertyInfo.SchemaName, propertyInfo.IndexInfo);
+        }
+        public void CreateLookupIndexes(ILGenerator upMethodIL, EntityDefinition entity, string defaultSchema)
+        {
+            foreach (var propertyInfo in entity
+                    .Attributes.Values.OfType<AttributeObjectDefinition>()
+                    
+                    .Where(c => string.Equals( c.AttributeType.Type , "lookup",StringComparison.OrdinalIgnoreCase) || string.Equals(c.AttributeType.Type, "polylookup", StringComparison.OrdinalIgnoreCase)))
+                CreateLoopupIndex(upMethodIL, entity.CollectionSchemaName, entity.Schema ?? defaultSchema, propertyInfo.SchemaName, propertyInfo.AttributeType.IndexInfo ?? new IndexInfo { Unique = true });
         }
 
         public void CreateLoopupIndex(ILGenerator upMethodIL, string EntityCollectionSchemaName, string schema, string propertySchemaName, IndexInfo indexInfo)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EAVFW.Extensions.Manifest.SDK;
+using System;
 using System.Reflection;
 
 namespace EAVFramework.Shared.V2
@@ -77,7 +78,7 @@ namespace EAVFramework.Shared.V2
         public MethodInfo MigrationsBuilderAlterColumn { get; set; }
         public MethodInfo MigrationsBuilderDropForeignKey { get; set; }
         public Type ReferentialActionType { get; set; }
-        public int ReferentialActionNoAction { get; set; }
+        public CascadeAction ReferentialActionNoAction { get; set; }
         public MethodInfo LambdaBase { get; set; }
         public InversePropertyCollectionNamePattern InversePropertyCollectionName { get; set; } = InversePropertyCollectionNamePattern.ConcatWhenMultipleLookups;
 
