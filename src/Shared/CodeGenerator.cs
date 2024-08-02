@@ -451,10 +451,11 @@ namespace EAVFramework.Shared
         public void CreateLookupIndexes(ILGenerator upMethodIL, EntityDefinition entity, string defaultSchema)
         {
             foreach (var propertyInfo in entity
-                    .Attributes.Values.OfType<AttributeObjectDefinition>()
+                    .Attributes.Values.OfType<AttributeObjectDefinition>().Where(c=>c.AttributeType.IndexInfo != null)
+                    
                     
                     .Where(c => string.Equals( c.AttributeType.Type , "lookup",StringComparison.OrdinalIgnoreCase) || string.Equals(c.AttributeType.Type, "polylookup", StringComparison.OrdinalIgnoreCase)))
-                CreateLoopupIndex(upMethodIL, entity.CollectionSchemaName, entity.Schema ?? defaultSchema, propertyInfo.SchemaName, propertyInfo.AttributeType.IndexInfo ?? new IndexInfo { Unique = true });
+                CreateLoopupIndex(upMethodIL, entity.CollectionSchemaName, entity.Schema ?? defaultSchema, propertyInfo.SchemaName, propertyInfo.AttributeType.IndexInfo);
         }
 
         public void CreateLoopupIndex(ILGenerator upMethodIL, string EntityCollectionSchemaName, string schema, string propertySchemaName, IndexInfo indexInfo)
