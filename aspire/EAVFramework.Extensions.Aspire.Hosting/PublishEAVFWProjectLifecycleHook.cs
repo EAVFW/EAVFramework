@@ -200,10 +200,10 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                                     }
 
-
+                                   
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
-                                  state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Running, KnownResourceStateStyles.Success) });
-
+                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Running, KnownResourceStateStyles.Success) });
+                                    migrationannotation.Success = true;
 
                                 }
                                 catch (Exception ex)
