@@ -1,3 +1,6 @@
+using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK.DTO;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,12 +9,14 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text.Json;
 
 namespace EAVFramework.Shared.V2
 {
 
     public class MigrationBuilderBuilder
     {
+        private readonly DynamicAssemblyBuilder builder;
         private MethodBuilder upMethod;
         private readonly DynamicCodeService dynamicCodeService;
         private CodeGenerationOptions options;
@@ -19,8 +24,9 @@ namespace EAVFramework.Shared.V2
 
         public ILGenerator UpMethodIL => this.il.Value;
 
-        public MigrationBuilderBuilder(MethodBuilder upMethod, DynamicCodeService dynamicCodeService, CodeGenerationOptions options)
+        public MigrationBuilderBuilder(DynamicAssemblyBuilder builder, MethodBuilder upMethod, DynamicCodeService dynamicCodeService, CodeGenerationOptions options)
         {
+            this.builder = builder;
             this.upMethod = upMethod;
             this.dynamicCodeService = dynamicCodeService;
             this.options = options;
@@ -67,6 +73,8 @@ namespace EAVFramework.Shared.V2
             return required;
         }
 
+        
+
         public void EmitAlterColumn(string table, string schema, DynamicPropertyBuilder attributeDefinition)
         {
             var method = options.MigrationsBuilderAlterColumn.MakeGenericMethod(attributeDefinition.PropertyType);
@@ -81,21 +89,23 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Pop);
         }
 
-        public (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(DynamicTableBuilder table, string migrationName, bool partOfMigration)
-        {
-            var builder = table.DynamicAssemblyBuilder.Module;
-            var options = dynamicCodeService.Options;
 
-            var logicalName = table.LogicalName;// entityDefinition.SelectToken("$.logicalName").ToString();
+       
+
+        public (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(string schemaName,string logicalName, 
+             string migrationName, bool partOfMigration, IReadOnlyCollection< DynamicPropertyBuilder> props)
+        {
+            
+            var options = dynamicCodeService.Options;
 
             var members = new Dictionary<string, PropertyBuilder>();
 
-            var columnsType = builder.DefineType($"{table.DynamicAssemblyBuilder.Namespace}.{table.SchemaName}Columns_{migrationName.Replace(".", "_")}", TypeAttributes.Public);
+            var columnsType = builder.Module.DefineType($"{builder.Namespace}.{schemaName}Columns_{migrationName.Replace(".", "_")}", TypeAttributes.Public);
 
 
 
 
-            CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { table.LogicalName });
+            CustomAttributeBuilder EntityAttributeBuilder = new CustomAttributeBuilder(typeof(EntityAttribute).GetConstructor(new Type[] { }), new object[] { }, new[] { typeof(EntityAttribute).GetProperty(nameof(EntityAttribute.LogicalName)) }, new[] { logicalName });
             columnsType.SetCustomAttribute(EntityAttributeBuilder);
 
 
@@ -114,23 +124,7 @@ namespace EAVFramework.Shared.V2
             entityCtorBuilderIL.Emit(OpCodes.Call, dfc);
 
 
-            bool IsParentTPCStrategry()
-            {
-                var c = table; ;
-
-
-                while (c != null)
-                {
-                    if (c.Parent?.MappingStrategy == V2.MappingStrategy.TPC)
-                        return true;
-                    c = c.Parent;
-                }
-                return false;
-
-            }
-            var name = table.SchemaName;
-            var istpc = IsParentTPCStrategry();
-            var props = istpc ? table.AllProperties : table.Properties;
+           
             foreach (var propertyInfo in props)
             {
                 var attributeLogicalName = propertyInfo.LogicalName;
@@ -165,7 +159,7 @@ namespace EAVFramework.Shared.V2
                              typeof(EntityMigrationColumnsAttribute).GetProperty(nameof(EntityMigrationColumnsAttribute.AttributeTypeHash))
                         }).ToArray();
                     var attributesValues = columparams.Values.Concat(new[] {
-                               table.LogicalName,
+                               logicalName,
                                 migrationName,
                                 attributeLogicalName,
                                 propertyInfo.ExternalHash,
@@ -464,6 +458,8 @@ namespace EAVFramework.Shared.V2
                     _parameters[prop] = value;
             }
         }
+
+     
 
         public void CreateIndex(string table, string schema, string name, bool unique = true, params string[] columns)
         {
@@ -814,8 +810,8 @@ namespace EAVFramework.Shared.V2
                           typeof(EntityMappingStrategyAttribute).GetProperty(nameof(EntityMappingStrategyAttribute.OldMappingStrategy)),
                           typeof(EntityMappingStrategyAttribute).GetProperty(nameof(EntityMappingStrategyAttribute.MappingStrategy)),
                     }, new object[] {
-                        priorEntities.LastOrDefault()?.GetCustomAttribute< EntityMappingStrategyAttribute>().MappingStrategy ?? V2.MappingStrategy.TPT,
-                        MappingStrategy ?? V2.MappingStrategy.TPT });
+                        priorEntities.LastOrDefault()?.GetCustomAttribute< EntityMappingStrategyAttribute>().MappingStrategy ?? EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPT,
+                        MappingStrategy ?? EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPT });
                 entityTypeBuilder.SetCustomAttribute(EntityMappingStrategyAttributeBuilder);
 
                 CustomAttributeBuilder EntityMigrationAttributeBuilder = new CustomAttributeBuilder(
@@ -868,9 +864,30 @@ namespace EAVFramework.Shared.V2
             {
 
                 var UpMethod = entityTypeBuilder.DefineMethod("Up", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderCreateTable.DeclaringType });
-                var migrationBuilder = new MigrationBuilderBuilder(UpMethod, dynamicCodeService, options);
+                var migrationBuilder = new MigrationBuilderBuilder(DynamicAssemblyBuilder,UpMethod, dynamicCodeService, options);
 
-                var (columnsCLRType, columnsctor, members) = migrationBuilder.CreateColumnsType(this, migrationName, partOfMigration);
+
+
+
+                bool IsParentTPCStrategry()
+                {
+                    var c = this; ;
+
+
+                    while (c != null)
+                    {
+                        if (c.Parent?.MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC)
+                            return true;
+                        c = c.Parent;
+                    }
+                    return false;
+
+                }
+                // var name = schemaName;
+                var istpc = IsParentTPCStrategry();
+               
+                var (columnsCLRType, columnsctor, members) = migrationBuilder.CreateColumnsType(this.SchemaName,this.LogicalName,
+                    migrationName, partOfMigration, istpc ? this.AllProperties : this.Properties);
 
                 var columsMethod = entityTypeBuilder.DefineMethod("Columns", MethodAttributes.Public, columnsCLRType, new[] { options.ColumnsBuilderType });
 
@@ -966,7 +983,7 @@ namespace EAVFramework.Shared.V2
                         /**
                          * We will skip the FKs if its a TPC and base class. See above comment
                          */
-                        if (fk.ReferenceType.IsBaseEntity && fk.ReferenceType.MappingStrategy == V2.MappingStrategy.TPC)
+                        if (fk.ReferenceType.IsBaseEntity && fk.ReferenceType.MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC)
                         {
                             continue;
                         }
@@ -1023,7 +1040,7 @@ namespace EAVFramework.Shared.V2
 
                 var changingFromTPT2TPC = priorEntities.Any() &&
                     priorEntities.Last().GetCustomAttribute<EntityMappingStrategyAttribute>()?.MappingStrategy != MappingStrategy
-                    && MappingStrategy == V2.MappingStrategy.TPC;
+                    && MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC;
 
                 bool changingFromTPT2TPCCalc()
                 {
@@ -1037,7 +1054,7 @@ namespace EAVFramework.Shared.V2
 
                         if (priorEntities.Any() &&
                             priorEntities.Last().GetCustomAttribute<EntityMappingStrategyAttribute>()?.MappingStrategy != c.MappingStrategy
-                            && c.MappingStrategy == V2.MappingStrategy.TPC)
+                            && c.MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC)
                             return true;
 
                         c = c.Parent;
@@ -1200,7 +1217,7 @@ namespace EAVFramework.Shared.V2
                     /**
                      * We will skip the FKs if its a TPC and base class. See above comment
                      */
-                    if (fk.ReferenceType.IsBaseEntity && fk.ReferenceType.MappingStrategy == V2.MappingStrategy.TPC)
+                    if (fk.ReferenceType.IsBaseEntity && fk.ReferenceType.MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC)
                     {
 
                         //CREATE INDEX [IX_SecurityGroup_OwnerId] ON [SecurityGroup] ([OwnerId]);
@@ -1216,7 +1233,7 @@ namespace EAVFramework.Shared.V2
                                .ToArray();
 
                             if (priorBaseEntities.LastOrDefault()?.GetCustomAttribute<EntityMappingStrategyAttribute>() is EntityMappingStrategyAttribute mappingStrategy
-                                && mappingStrategy.OldMappingStrategy != mappingStrategy.MappingStrategy && mappingStrategy.MappingStrategy == V2.MappingStrategy.TPC)
+                                && mappingStrategy.OldMappingStrategy != mappingStrategy.MappingStrategy && mappingStrategy.MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC)
                             {
                                 migrationBuilder.DropForeignKey(CollectionSchemaName, Schema, fk.Name);
                             }
@@ -1309,7 +1326,7 @@ namespace EAVFramework.Shared.V2
 
 
 
-            if (IsBaseEntity && MappingStrategy.HasValue && MappingStrategy == V2.MappingStrategy.TPC)
+            if (IsBaseEntity && MappingStrategy.HasValue && MappingStrategy == EAVFW.Extensions.Manifest.SDK.DTO.MappingStrategy.TPC)
             {
 
 
@@ -1589,9 +1606,5 @@ namespace EAVFramework.Shared.V2
             return this;
         }
     }
-    public enum MappingStrategy
-    {
-        TPT,
-        TPC
-    }
+
 }

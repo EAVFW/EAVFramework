@@ -1,4 +1,5 @@
 
+using EAVFW.Extensions.Manifest.SDK;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

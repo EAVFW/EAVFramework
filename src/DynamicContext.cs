@@ -3,7 +3,9 @@ using EAVFramework.Endpoints.Query;
 using EAVFramework.Endpoints.Query.OData;
 using EAVFramework.Extensions;
 using EAVFramework.Shared;
+using EAVFramework.Shared.V2;
 using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK.DTO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
@@ -38,13 +40,149 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Reflection.PortableExecutable;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace EAVFramework
 {
+    public class MigrationAttributeDefinition
+    {
+        public AttributeObjectDefinition Source { get; set; }
+        public AttributeObjectDefinition Target { get; set; }
+        public string Key { get;  set; }
+        public MigrationEntityDefinition Entity { get; set; }
+    }
+
+    public enum MappingStrategyChangeEnum
+    {
+
+        None,
+        TPT2TPC,
+        TPC2TPT
+    }
+
+    public class MigrationEntityDefinition
+    {
+        public EntityDefinition Source { get; set; }
+        public EntityDefinition Target { get; set; }
+
+        
+
+        //public MappingStrategyChangeEnum MappingStrategyChange => Source.MappingStrategy switch
+        //{
+        //    null when Target.MappingStrategy == null => MappingStrategyChangeEnum.None,
+        //    MappingStrategy.TPC when Target.MappingStrategy == MappingStrategy.TPC => MappingStrategyChangeEnum.None,
+        //    MappingStrategy.TPT when Target.MappingStrategy == MappingStrategy.TPT => MappingStrategyChangeEnum.None,
+        //    MappingStrategy.TPT when Target.MappingStrategy == MappingStrategy.TPC => MappingStrategyChangeEnum.TPT2TPC,
+        //    MappingStrategy.TPC when Target.MappingStrategy == MappingStrategy.TPT => MappingStrategyChangeEnum.TPC2TPT,
+
+        //    _ => throw new NotImplementedException(),
+        //};
+
+        public MappingStrategyChangeEnum MappingStrategyChange
+        {
+
+            get
+            {
+                var source = Source.MappingStrategy ??
+                    (!string.IsNullOrEmpty(Source.TPT) ? MappingStrategy.TPT : !string.IsNullOrEmpty(Source.TPC) ? MappingStrategy.TPC : null);
+                var target = Target.MappingStrategy ??
+                    (!string.IsNullOrEmpty(Target.TPT) ? MappingStrategy.TPT : !string.IsNullOrEmpty(Target.TPC) ? MappingStrategy.TPC : null);
+
+                if (source == target)
+                {
+                    return MappingStrategyChangeEnum.None;
+                }
+
+                return source switch
+                {
+
+                    MappingStrategy.TPT when target == MappingStrategy.TPC => MappingStrategyChangeEnum.TPT2TPC,
+                    MappingStrategy.TPC when target == MappingStrategy.TPT => MappingStrategyChangeEnum.TPC2TPT,
+
+                    _ => throw new NotImplementedException($"{source} => {target}"),
+                };
+            }
+        }
+
+        public IEnumerable<AttributeDefinitionBase> GetNewAttributes()
+        {
+            return Target.Attributes.Where(e => !Source.Attributes.ContainsKey(e.Key)).Select(c => c.Value);
+        }
+
+        public IEnumerable<MigrationAttributeDefinition> GetExistingFields()
+        {
+            foreach (var target in Target.Attributes)
+            {
+                if (Source.Attributes.TryGetValue(target.Key, out var source) && source is AttributeObjectDefinition sfield && target.Value is AttributeObjectDefinition tfield)
+                {
+                    yield return new MigrationAttributeDefinition { Entity = this, Key = target.Key, Source = sfield, Target = tfield };
+                }
+            }
+        }
+
+    }
+    public class MigrationDefinition
+    {
+        public ManifestDefinition Source { get; set; }
+        public ManifestDefinition Target { get; set; }
+
+
+        public IEnumerable<KeyValuePair<string,EntityDefinition>> GetNewEntities()
+        {
+            return Target.Entities.Where(e => !(Source?.Entities.ContainsKey(e.Key) ?? false));
+        
+        }
+        public Dictionary<string, EntityDefinition> Entities => Target.Entities;
+
+        public IEnumerable<MigrationEntityDefinition> GetModifiedEntities()
+        {
+            foreach(var target in Target.Entities)
+            {
+                if (Source.Entities.TryGetValue(target.Key, out var source))
+                {
+                    yield return new MigrationEntityDefinition { Source = source, Target = target.Value };
+                }
+            }
+        }
+
+        public MigrationEntityDefinition GetEntityMigration(string entityKey)
+        {
+            return new MigrationEntityDefinition
+            {
+                Source = Source.Entities[entityKey],
+                Target = Target.Entities[entityKey]
+            };
+        }
+
+        internal bool IsTableNew(string entityKey)
+        {
+           return !(Source?.Entities?.ContainsKey(entityKey) ?? false);
+        }
+    }
+    public class ManifestDefinitionCollection
+    {
+        public List<ManifestDefinition> Manifests { get; set; } = new List<ManifestDefinition>();
+        public List<MigrationDefinition> Migrations { get; set; } = new List<MigrationDefinition>();
+
+        public void Add(ManifestDefinition manifestDefinition)
+        {
+            Migrations.Add(new MigrationDefinition
+            {
+                Source = Manifests.LastOrDefault(),
+                Target = manifestDefinition
+            });
+
+            Manifests.Add(manifestDefinition);
+           
+        }
+
+    }
 
     public static class DynamicContextExtensions
     {
@@ -221,36 +359,50 @@ namespace EAVFramework
             };
             var factories = new Dictionary<TypeInfo, Func<Migration>>();
 
-            //if(modelOptions.Value.Manifests.Any())
-            //{
-            //    var migration = modelOptions.Value.Manifests.First();
-            //    var name = $"{modelOptions.Value.PublisherPrefix}_{migration.SelectToken("$.version") ?? MigrationDefaultName}";
-            //    var model = manager.CreateModel(name, migration, this.modelOptions.Value);
-
-            //    types.Add(name, model.Item1);
-            //    factories.Add(model.Item1, model.Item2);
-            //}
+            
             var latestManifest = modelOptions.Value.Manifests.First();
-            //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
-
+             
             manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
-                int i = 0;
-                foreach (var migration in modelOptions.Value.Manifests
-                    .Select((m, i) => (target: m, source: i + 1 == modelOptions.Value.Manifests.Length ? new JObject() : modelOptions.Value.Manifests[i + 1]))
 
-                    .Reverse())
+                var test = new ManifestDefinitionCollection();
+                foreach(var manifest in modelOptions.Value.Manifests.Reverse())
+                {
+                    test.Add(System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString()));
+                }
+
+
+                int i = 0;
+                foreach (var migration in test.Migrations)
                 {
 
-                    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName}";
+                    var name = $"{modelOptions.Value.Schema}_{migration.Target.Version.Replace(".", "_") ?? MigrationDefaultName}";
 
-                    var model = manager.CreateMigration(name, migration.target, migration.source, this.modelOptions.Value);
+                    var model = manager.CreateMigration(name, migration, this.modelOptions.Value);
 
                     types.Add($"{++i:D16}{name}", model.Type);
                     factories.Add(model.Type, model.MigrationFactory);
                 }
+
+                
+
+
+                //int i = 0;
+                //foreach (var migration in modelOptions.Value.Manifests
+                //    .Select((m, i) => (target: m, source: i + 1 == modelOptions.Value.Manifests.Length ? new JObject() : modelOptions.Value.Manifests[i + 1]))
+
+                //    .Reverse())
+                //{
+
+                //    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName}";
+
+                //    var model = manager.CreateMigration(name, migration.target, migration.source, this.modelOptions.Value);
+
+                //    types.Add($"{++i:D16}{name}", model.Type);
+                //    factories.Add(model.Type, model.MigrationFactory);
+                //}
             }
             return new MigrationsInfo { Factories = factories, Types = types };
 

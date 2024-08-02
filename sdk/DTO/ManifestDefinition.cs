@@ -5,6 +5,9 @@ namespace EAVFW.Extensions.Manifest.SDK
 {
     public class ManifestDefinition
     {
-        [JsonPropertyName("entities")] public Dictionary<string, EntityDefinition> Entities { get; set; }
+        [JsonPropertyName("entities")] 
+        public Dictionary<string, EntityDefinition> Entities { get; set; }
+        [JsonPropertyName("version")]
+        public string Version { get; set; }
     }
 }
