@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace EAVFW.Extensions.Manifest.SDK
 {
@@ -23,6 +24,15 @@ namespace EAVFW.Extensions.Manifest.SDK
     }
     public class SQLClientParameterGenerator : IParameterGenerator
     {
+        public string DoReplacements(string cmdText, Dictionary<string, string> replacements)
+        {
+            foreach (var r in replacements)
+            {
+                cmdText = cmdText.Replace($"$({r.Key})", r.Value);
+            }
+            return cmdText;
+        }
+
         public string GetParameter(string name, bool escape)
         {
             if(escape)
