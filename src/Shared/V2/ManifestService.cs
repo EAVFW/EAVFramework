@@ -1038,16 +1038,34 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Pop);
         }
 
-
+        class TableResult
+        {
+            public HashSet<string> Dependencies { get; set; } = new HashSet<string>();
+            public string Key { get; set; }
+            public Type Type { get; set; }
+        }
         internal IDynamicTable[] CreateMigrationTables(MigrationDefinition migration, DynamicCodeService dynamicCodeService, DynamicAssemblyBuilder builder)
         {
-            var result = new List<Type>();
+            var results = new Dictionary<string,TableResult>();
             var module = builder.Module;
             var migrationName = options.MigrationName.Replace(".", "_");
             foreach (var pair in migration.Entities)
             {
+                var result = new TableResult
+                {
+                    Key = pair.Key
+                };
+                results.Add(pair.Key,result);
+
+            
+
                 var entityKey = pair.Key;
                 var entity = pair.Value;
+
+                foreach(var field in GetFields(entity).Where(v => IsAttributeLookup(v.Value)))
+                {
+                    result.Dependencies.Add(field.Value.AttributeType.ReferenceType);
+                }
 
                 var schema = entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo";
 
@@ -1074,7 +1092,7 @@ namespace EAVFramework.Shared.V2
 
                     DownMethodIL.Emit(OpCodes.Ret);
 
-                    result.Add(entityTypeBuilder.CreateTypeInfo());
+                    result.Type = entityTypeBuilder.CreateTypeInfo();
                     continue;
                 }
 
@@ -1227,8 +1245,8 @@ namespace EAVFramework.Shared.V2
 
                     DownMethodIL.Emit(OpCodes.Ret);
 
-
-                    result.Add(entityTypeBuilder.CreateTypeInfo());
+                    result.Type = entityTypeBuilder.CreateTypeInfo();
+                   
                 }
 
 
@@ -1242,7 +1260,8 @@ namespace EAVFramework.Shared.V2
 
 
 
-            return result.Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray();
+            return results.Keys.TSort(x => results[x].Dependencies)
+                .Select(entity => Activator.CreateInstance(results[entity].Type) as IDynamicTable).ToArray();
 
         }
 
