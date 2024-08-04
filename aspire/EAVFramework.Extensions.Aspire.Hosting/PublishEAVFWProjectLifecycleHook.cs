@@ -185,9 +185,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                                                 if (!string.IsNullOrEmpty(cmd.CommandText))
                                                 {
-                                                    logger.LogInformation("Executing Migration SQL:\n{mig}", cmd.CommandText);
+                                                   // logger.LogInformation("Executing Migration SQL:\n{mig}", cmd.CommandText);
                                                     var r = await cmd.ExecuteNonQueryAsync();
-                                                    Console.WriteLine("Rows changed: " + r);
+                                                   // Console.WriteLine("Rows changed: " + r);
                                                 }
                                             }
 
@@ -205,6 +205,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                          state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Running, KnownResourceStateStyles.Success) });
                                     migrationannotation.Success = true;
 
+                                }
+                                catch (SqlException sqlexception)
+                                {
+                                    migrationannotation.Attempt++;
+                                    logger.LogWarning(sqlexception, "Transient error, properly due to sql server not ready yet. We are backing off and trying again");
+                                    throw;
                                 }
                                 catch (Exception ex)
                                 {
