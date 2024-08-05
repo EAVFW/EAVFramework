@@ -97,7 +97,8 @@ namespace EAVFramework.Authentication.Passwordless
                 mailMessage.Body = msgHtml;
                 mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
             
-                _logger.LogInformation("Sending sigin email to {email} with handleId {handleId}", MaskEmail( email), handleId);
+                _logger.LogInformation("Sending sigin email to {email} with handleId {handleId} from {sender}",
+                    MaskEmail( email), handleId, _options.Value.Sender);
               
                 await _smtp.SendMailAsync(mailMessage);
 
