@@ -54,6 +54,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         public EntityDefinition Source { get; set; }
         public EntityDefinition Target { get; set; }
+        public MigrationDefinition MigrationDefinition { get;  set; }
 
 
 
@@ -68,36 +69,8 @@ namespace EAVFW.Extensions.Manifest.SDK
         //    _ => throw new NotImplementedException(),
         //};
 
-        public MappingStrategyChangeEnum MappingStrategyChange
-        {
 
-            get
-            {
-                var source = Source.MappingStrategy ??
-                    (!string.IsNullOrEmpty(Source.TPT) ? MappingStrategy.TPT : !string.IsNullOrEmpty(Source.TPC) ? MappingStrategy.TPC : null);
-                var target = Target.MappingStrategy ??
-                    (!string.IsNullOrEmpty(Target.TPT) ? MappingStrategy.TPT : !string.IsNullOrEmpty(Target.TPC) ? MappingStrategy.TPC : null);
 
-                if (source == target)
-                {
-                    return MappingStrategyChangeEnum.None;
-                }
-
-                return source switch
-                {
-
-                    MappingStrategy.TPT when target == MappingStrategy.TPC => MappingStrategyChangeEnum.TPT2TPC,
-                    MappingStrategy.TPC when target == MappingStrategy.TPT => MappingStrategyChangeEnum.TPC2TPT,
-
-                    _ => throw new NotImplementedException($"{source} => {target}"),
-                };
-            }
-        }
-
-        public IEnumerable<AttributeDefinitionBase> GetNewAttributes()
-        {
-            return Target.Attributes.Where(e => !Source.Attributes.ContainsKey(e.Key)).Select(c => c.Value);
-        }
 
         public IEnumerable<MigrationAttributeDefinition> GetExistingFields()
         {
@@ -141,7 +114,9 @@ namespace EAVFW.Extensions.Manifest.SDK
         {
             return new MigrationEntityDefinition
             {
+                MigrationDefinition = this,
                 Source = Source.Entities[entityKey],
+                
                 Target = Target.Entities[entityKey]
             };
         }

@@ -111,8 +111,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
                  , NullLogger<DynamicContext>.Instance);
 
 
-            try
-            {
+            
                 var migrator = ctx.Database.GetInfrastructure().GetRequiredService<IMigrator>();
 
                 var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
@@ -124,11 +123,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
                 result.Permissions = await InitializeSystemAdministrator(result.Model, systemEntity);
 
             return result;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            
         }
         public async Task<string> InitializeSystemAdministrator(JToken model, string systemUserEntity)
         {
