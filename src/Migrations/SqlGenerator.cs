@@ -11,13 +11,14 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace EAVFW.Extensions.Manifest.SDK.Migrations
 {
     public class MigrationResult
     {
-        public JToken Model { get; set; }
+        public ManifestDefinition Model { get; set; }
         public string SQL { get; set; }
         public string Permissions { get; set; }
 
@@ -67,6 +68,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
             Action<SqlServerDbContextOptionsBuilder> extend=null)
         {
             var schema = _parameterGenerator.GetParameter("DBSchema",false);// "$(DBSchema)";
+            var definition = JsonSerializer.Deserialize<ManifestDefinition>(File.ReadAllText(Path.Combine(projectPath, "obj", "manifest.g.json")));
             var model = JToken.Parse(File.ReadAllText(Path.Combine(projectPath, "obj", "manifest.g.json")));
             var models = Directory.Exists(Path.Combine(projectPath, "manifests")) ? Directory.EnumerateFiles(Path.Combine(projectPath, "manifests"))
                 .Select(file => JToken.Parse(File.ReadAllText(file)))
@@ -116,7 +118,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
 
                 var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
 
-                var result = new MigrationResult { Model = model, SQL = sql }; ;
+                var result = new MigrationResult { Model = definition, SQL = sql }; ;
            
 
             if (shouldGeneratePermissions)
@@ -125,7 +127,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
             return result;
             
         }
-        public async Task<string> InitializeSystemAdministrator(JToken model, string systemUserEntity)
+        public async Task<string> InitializeSystemAdministrator(ManifestDefinition model, string systemUserEntity)
         {
             //TODO : Fix such this is only done if security package is installed.
 

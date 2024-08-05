@@ -21,23 +21,23 @@ namespace EAVFramework.Shared.V2
 {
     public static class KeyValuePairLinqExtensions
     {
-        public static IEnumerable<KeyValuePair<TKey, TTargetValue>> OfType<TKey, TValue,TTargetValue>(
+        public static IEnumerable<KeyValuePair<TKey, TTargetValue>> OfType<TKey, TValue, TTargetValue>(
             this IEnumerable<KeyValuePair<TKey, TValue>> source)
         {
             foreach (var item in source)
             {
                 if (item.Value is TTargetValue converted)
-                    yield return new KeyValuePair<TKey, TTargetValue>(item.Key,converted);
+                    yield return new KeyValuePair<TKey, TTargetValue>(item.Key, converted);
             }
         }
 
-        public static IEnumerable<KeyValuePair<TKey, TTargetValue>> OfType<TKey,TTargetValue>(
+        public static IEnumerable<KeyValuePair<TKey, TTargetValue>> OfType<TKey, TTargetValue>(
          this IEnumerable source)
         {
             foreach (var item in source)
             {
 
-                if (item is KeyValuePair<TKey,object> kvp && kvp.Value is TTargetValue converted)
+                if (item is KeyValuePair<TKey, object> kvp && kvp.Value is TTargetValue converted)
                     yield return new KeyValuePair<TKey, TTargetValue>(kvp.Key, converted);
             }
         }
@@ -80,7 +80,7 @@ namespace EAVFramework.Shared.V2
 
         public void AddContraint(string name, InterfaceShadowBuilder interfaceShadowBuilder)
         {
-            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer(){ Order = Contraints.Count });
+            var a = Contraints.GetOrAdd(name, new InterfaceShadowBuilderContraintContainer() { Order = Contraints.Count });
             a.Constraints.Add(new InterfaceShadowBuilderContraint { Reference = interfaceShadowBuilder });
         }
 
@@ -95,14 +95,15 @@ namespace EAVFramework.Shared.V2
             if (Contraints.Keys.Any())
             {
 
-                var builders = Builder.DefineGenericParameters(Contraints.OrderBy(c=>c.Value.Order).Select(c=>c.Key).ToArray());
+                var builders = Builder.DefineGenericParameters(Contraints.OrderBy(c => c.Value.Order).Select(c => c.Key).ToArray());
                 foreach (var contraintbuilder in builders)
                 {
                     var container = Contraints[contraintbuilder.Name];
-                   
+
                     var types = Contraints[contraintbuilder.Name].Constraints.ToArray();
 
-                    var contraints = types.Select(c => {
+                    var contraints = types.Select(c =>
+                    {
 
                         if (c.Type != null)
                             return c.Type;
@@ -112,7 +113,7 @@ namespace EAVFramework.Shared.V2
                         if (type.IsGenericType)
                         {
 
-                          //  var ttype = builders.FirstOrDefault(n => n.Name == "TType");
+                            //  var ttype = builders.FirstOrDefault(n => n.Name == "TType");
                             var ttype = type.GetGenericArguments().Select(cc => builders.FirstOrDefault(n => n.Name == cc.Name)).ToArray();
                             return type.MakeGenericType(ttype);
                             throw new InvalidOperationException("contraint is generic " + type.Name);
@@ -173,16 +174,17 @@ namespace EAVFramework.Shared.V2
                     var a = pa.GetGenericParameterConstraints();
                     if (a.Any())
                     {
-                        var ger = string.Join(", ", a.Select(aa => {
+                        var ger = string.Join(", ", a.Select(aa =>
+                        {
 
                             if (aa.IsGenericType)
-                                return $"{aa.Name}<{string.Join(",",aa.GetGenericArguments().Select(ga=>ga.Name))}>";
+                                return $"{aa.Name}<{string.Join(",", aa.GetGenericArguments().Select(ga => ga.Name))}>";
 
                             return aa.Name;
                         }));
                         constraints.AppendLine($"where {pa.Name} : {ger}");
-                      
-                        
+
+
                     }
                 }
                 sb.Append(">");
@@ -355,7 +357,7 @@ namespace EAVFramework.Shared.V2
                      entity.Value.SelectToken("$.mappingStrategy")?.ToObject<MappingStrategy>()
                     ).External(entity.Value.SelectToken("$.external")?.ToObject<bool>() ?? false, result);
 
-                 
+
 
                 tables.Add(entity.Name, table);
 
@@ -370,14 +372,14 @@ namespace EAVFramework.Shared.V2
 
                     var table = tables[entityDefinition.Name];
 
-                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString() ?? entityDefinition.Value.SelectToken("$.TPC")?.ToString(); 
+                    var parentName = entityDefinition.Value.SelectToken("$.TPT")?.ToString() ?? entityDefinition.Value.SelectToken("$.TPC")?.ToString();
                     if (!string.IsNullOrEmpty(parentName))
                     {
                         table.WithBaseEntity(tables[parentName]);
 
                     }
 
-                   
+
 
                     var keys = entityDefinition.Value.SelectToken("$.keys") as JObject;
                     if (keys != null)
@@ -390,7 +392,7 @@ namespace EAVFramework.Shared.V2
                         }
                     }
 
-                   
+
 
                     foreach (var attributeDefinition in entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>())
                     {
@@ -445,18 +447,18 @@ namespace EAVFramework.Shared.V2
                                      */
                                     continue;
                                 }
-                             
-                                
-                                    propertyInfo
-                                        .LookupTo(
-                                            tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
-                                            //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
-                                            attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType),
-                                            attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType))
-                                        .WithIndex(attributeDefinition.Value.SelectToken("$.type.index") != null ?
-                                            attributeDefinition.Value.SelectToken("$.type.index")?.ToObject<IndexInfo>() ?? new IndexInfo { Unique = true } : null);
 
-                                
+
+                                propertyInfo
+                                    .LookupTo(
+                                        tables[attributeDefinition.Value.SelectToken("$.type.referenceType")?.ToString()],
+                                        //attributeDefinition.Value.SelectToken("$.type.foreignKey")?.ToObject<ForeignKeyInfo>(),
+                                        attributeDefinition.Value.SelectToken("$.type.cascade.delete")?.ToObject(options.ReferentialActionType),
+                                        attributeDefinition.Value.SelectToken("$.type.cascade.update")?.ToObject(options.ReferentialActionType))
+                                    .WithIndex(attributeDefinition.Value.SelectToken("$.type.index") != null ?
+                                        attributeDefinition.Value.SelectToken("$.type.index")?.ToObject<IndexInfo>() ?? new IndexInfo { Unique = true } : null);
+
+
 
                             }
 
@@ -476,31 +478,31 @@ namespace EAVFramework.Shared.V2
                         }
                     }
                 }
-              
+
                 foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
                 {
 
                     var table = tables[entity.Name];
-                    
-                 
-                  
+
+
+
                     table.BuildType();
 
-                  
+
                 }
 
                 foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
                 {
 
                     var table = tables[entity.Name];
-                    if(entity.Name == "Identity")
+                    if (entity.Name == "Identity")
                     {
 
                     }
                     //  var a = table.Builder.CreateTypeInfo();
                     var schema = entity.Value.SelectToken("$.schema")?.ToString() ?? options.Schema ?? "dbo";
                     var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
-                     
+
                     this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
                     this.options.EntityDTOs[table.CollectionSchemaName] = result ?? table.CreateTypeInfo();
                 }
@@ -508,7 +510,7 @@ namespace EAVFramework.Shared.V2
             }
 
             return (CreateDynamicMigration(dynamicCodeService, manifest),
-                tables.Values.TSort(d=>d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.Namespace, this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
+                tables.Values.TSort(d => d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.Namespace, this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
 
 
 
@@ -533,7 +535,7 @@ namespace EAVFramework.Shared.V2
             var builder = dynamicCodeService.CreateAssemblyBuilder(this.options.ModuleName, this.options.Namespace);
             var options = dynamicCodeService.Options;
 
-           // var tables = new Dictionary<string, DynamicTableBuilder>();
+            // var tables = new Dictionary<string, DynamicTableBuilder>();
 
             //foreach (var (entityKey, entity) in migration.GetNewEntities())
             //{
@@ -587,7 +589,7 @@ namespace EAVFramework.Shared.V2
                 CreateMigrationTables(migration, dynamicCodeService, builder));
 
             //    tables.Values.TSort(d => d.Dependencies).Select(entity => entity.CreateMigrationType(this.options.Namespace, this.options.MigrationName, this.options.PartOfMigration)).Select(entity => Activator.CreateInstance(entity) as IDynamicTable).ToArray());
-            
+
         }
 
         public MethodInfo[] GetPrimaryKeys(EntityDefinition entity, Type columnsCLRType)
@@ -606,8 +608,8 @@ namespace EAVFramework.Shared.V2
             return string.Equals(attribute.AttributeType.Type, "lookup", StringComparison.OrdinalIgnoreCase);
         }
 
-      
-         
+
+
         public string[] GetForeignKeys(Dictionary<string, EntityDefinition> entities, EntityDefinition entity)
         {
             var properties = entity.GetAllProperties(entities).Values.OfType<AttributeObjectDefinition>(); ; // entity.Attributes.Values.OfType<AttributeObjectDefinition>();
@@ -615,20 +617,20 @@ namespace EAVFramework.Shared.V2
             var fKeys = properties.Where(IsAttributeLookup) // entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
                                                             //  .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
                                                             // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
-                  
+
                  .Select(attribute => $"FK_{entity.CollectionSchemaName}_{entities[attribute.AttributeType.ReferenceType].CollectionSchemaName}_{attribute.SchemaName}".Replace(" ", ""))
                  .OrderBy(n => n)
                  .ToArray();
             return fKeys;
         }
-        public ForeignKeyModel[] GetForeignKeys(Dictionary<string,EntityDefinition> entities, EntityDefinition entity, Type columnsCLRType, CascadeAction referentialActionNoAction)
+        public ForeignKeyModel[] GetForeignKeys(Dictionary<string, EntityDefinition> entities, EntityDefinition entity, Type columnsCLRType, CascadeAction referentialActionNoAction)
         {
-            
+
             var properties = entity.Attributes.Values.OfType<AttributeObjectDefinition>();
 
             var fKeys = properties.Where(IsAttributeLookup) // entityDefinition.Value.SelectToken("$.attributes").OfType<JProperty>()
-                                                                 //  .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
-                                                                 // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
+                                                            //  .Where(attribute => attribute.Value.SelectToken("$.type.type")?.ToString() == "lookup")
+                                                            // .Where(attribute => members.ContainsKey(attribute.Value.SelectToken("$.logicalName")?.ToString()))
                  .Where(attribute => columnsCLRType.GetProperty(attribute.SchemaName) != null)
                  .Where(attribute => entities[attribute.AttributeType.ReferenceType].GetMappingStrategy(entities) == MappingStrategy.TPT)
                  .Select(attribute => new ForeignKeyModel
@@ -636,8 +638,8 @@ namespace EAVFramework.Shared.V2
                      Name = $"FK_{entity.CollectionSchemaName}_{entities[attribute.AttributeType.ReferenceType].CollectionSchemaName}_{attribute.SchemaName}".Replace(" ", ""),
                      AttributeSchemaName = attribute.SchemaName,  //attribute.Value.SelectToken("$.schemaName").ToString(),
                      PropertyGetMethod = columnsCLRType.GetProperty(attribute.SchemaName).GetMethod,
-                     ReferenceType = entities[ attribute.AttributeType.ReferenceType],
-                     OnDeleteCascade = (ReferentialAction)( attribute.AttributeType?.Cascades?.OnDelete ?? referentialActionNoAction),
+                     ReferenceType = entities[attribute.AttributeType.ReferenceType],
+                     OnDeleteCascade = (ReferentialAction)(attribute.AttributeType?.Cascades?.OnDelete ?? referentialActionNoAction),
                      OnUpdateCascade = (ReferentialAction)(attribute.AttributeType?.Cascades?.OnUpdate ?? referentialActionNoAction),
                      // ForeignKey = attribute.ForeignKey
                  }).OrderBy(n => n.Name)
@@ -654,8 +656,8 @@ namespace EAVFramework.Shared.V2
             public ReferentialAction OnUpdateCascade { get; set; }
         }
 
-       
-        
+
+
         private Dictionary<PropertyInfo, object> BuildParametersForcolumn(ILGenerator entityCtorBuilderIL, AttributeObjectDefinition propertyInfo, MethodInfo method, string tableName = null, string schema = null)
         {
             // The following parameters can be set from the typeobject
@@ -936,7 +938,7 @@ namespace EAVFramework.Shared.V2
 
         public void EmitAddColumn(ILGenerator il, string table, string schema, AttributeObjectDefinition attributeDefinition)
         {
-            
+
             var clrType = dynamicCodeService.TypeMapper.GetCLRType(attributeDefinition.AttributeType.Type);
 
             var method = dynamicCodeService.Options.MigrationsBuilderAddColumn.MakeGenericMethod(clrType);
@@ -945,18 +947,18 @@ namespace EAVFramework.Shared.V2
             il.Emit(OpCodes.Ldarg_1); //first argument
                                       //MigrationsBuilderAddColumn
 
-            
-             
-              
-            BuildParametersForcolumn(il, attributeDefinition, method, table, schema);
-            
 
-           
-           
+
+
+            BuildParametersForcolumn(il, attributeDefinition, method, table, schema);
+
+
+
+
 
             il.Emit(OpCodes.Callvirt, method);
             il.Emit(OpCodes.Pop);
-           
+
         }
 
         public void AddForeignKey(string EntityCollectionSchemaName, string schema, ILGenerator UpMethodIL,
@@ -1050,7 +1052,7 @@ namespace EAVFramework.Shared.V2
         }
         internal IDynamicTable[] CreateMigrationTables(MigrationDefinition migration, DynamicCodeService dynamicCodeService, DynamicAssemblyBuilder builder)
         {
-            var results = new Dictionary<string,TableResult>();
+            var results = new Dictionary<string, TableResult>();
             var module = builder.Module;
             var migrationName = options.MigrationName.Replace(".", "_");
             foreach (var pair in migration.Entities)
@@ -1059,14 +1061,14 @@ namespace EAVFramework.Shared.V2
                 {
                     Key = pair.Key
                 };
-                results.Add(pair.Key,result);
+                results.Add(pair.Key, result);
 
-            
+
 
                 var entityKey = pair.Key;
                 var entity = pair.Value;
 
-                foreach(var field in GetFields(entity).Where(v => IsAttributeLookup(v.Value)))
+                foreach (var field in GetFields(entity).Where(v => IsAttributeLookup(v.Value)))
                 {
                     result.Dependencies.Add(field.Value.AttributeType.ReferenceType);
                 }
@@ -1106,11 +1108,11 @@ namespace EAVFramework.Shared.V2
                     var migrationBuilder = new MigrationBuilderBuilder(builder, UpMethod, dynamicCodeService, dynamicCodeService.Options);
 
 
-                    
+
                     if (migration.IsTableNew(entityKey))
                     {
                         var (columnsCLRType, columnsctor, members) = CreateColumnsType(
-                            builder,entity.SchemaName, entity.LogicalName, migrationName, true,
+                            builder, entity.SchemaName, entity.LogicalName, migrationName, true,
                             entity.GetProperties(migration.Entities).Values.OfType<AttributeObjectDefinition>().ToList());
 
                         var columsMethod = entityTypeBuilder.DefineMethod("Columns", MethodAttributes.Public, columnsCLRType, new[] { dynamicCodeService.Options.ColumnsBuilderType });
@@ -1129,12 +1131,12 @@ namespace EAVFramework.Shared.V2
 
                         dynamicCodeService.EmitPropertyService.CreateTableImpl(entity.CollectionSchemaName, schema, columnsCLRType, columsMethod, ConstraintsMethod, migrationBuilder.UpMethodIL);
 
-                        dynamicCodeService.LookupPropertyBuilder.CreateLookupIndexes(migrationBuilder.UpMethodIL, entity, dynamicCodeService.Options.Schema??"dbo");
+                        dynamicCodeService.LookupPropertyBuilder.CreateLookupIndexes(migrationBuilder.UpMethodIL, entity, dynamicCodeService.Options.Schema ?? "dbo");
 
 
 
                         var primaryKeys = GetPrimaryKeys(entity, columnsCLRType);
-                        var foreignKeys = GetForeignKeys(migration.Entities, entity, columnsCLRType, 
+                        var foreignKeys = GetForeignKeys(migration.Entities, entity, columnsCLRType,
                             dynamicCodeService.Options.ReferentialActionNoAction);
 
 
@@ -1150,66 +1152,102 @@ namespace EAVFramework.Shared.V2
 
                         ConstraintsMethodIL.Emit(OpCodes.Ret);
 
-                    }else
+                    }
+                    else
                     {
 
                         var entityMigration = migration.GetEntityMigration(entityKey);
                         var migrationStrategy = entityMigration.MappingStrategyChange();
- 
 
-                        foreach(var newField in entityMigration.GetNewAttributes().OfType<AttributeObjectDefinition>())
+
+
+                        foreach (var newField in entityMigration.GetNewAttributes().OfType<AttributeObjectDefinition>())
                         {
                             var required = (newField.IsRequired ?? false) || (newField.IsRequired ?? false);
-                            
+
                             //We cant add a required column to existing table, rely on it being altered after data is set.
                             //this is a case when we are changing from TPT to TPC 
                             newField.IsRequired = newField.Required = false;
                             EmitAddColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, newField);
                             newField.IsRequired = newField.Required = required;
 
-                            if (IsFieldLookup( newField))
+                            if (IsFieldLookup(newField))
                             {
                                 var refrenceType = migration.Entities[newField.AttributeType.ReferenceType];
-                                
+
                                 if (refrenceType.GetMappingStrategy(migration.Entities) == MappingStrategy.TPT)
                                     AddForeignKey(entity.CollectionSchemaName, schema, migrationBuilder.UpMethodIL, newField,
                                         refrenceType);
-                                 
-                                if(newField.AttributeType.IndexInfo !=null)
-                                dynamicCodeService.LookupPropertyBuilder.CreateLoopupIndex(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, entity.Schema ?? dynamicCodeService.Options.Schema ??"dbo",
-                                    newField.SchemaName, newField.AttributeType.IndexInfo); 
+
+                                if (newField.AttributeType.IndexInfo != null)
+                                    dynamicCodeService.LookupPropertyBuilder.CreateLoopupIndex(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo",
+                                        newField.SchemaName, newField.AttributeType.IndexInfo);
 
                             }
 
                         }
 
-                        foreach(var existingField in entityMigration.GetExistingFields())
+                        if (migrationStrategy == MappingStrategyChangeEnum.TPT2TPC)
+                        {
+                            var columnsToMove = entityMigration.GetAttributesMovingFromBase()
+                                .OfType<AttributeObjectDefinition>()
+                                .Where(c=>!c.IsRowVersion)
+                                .ToArray();
+                            var columnsToMoveSql = string.Join("\n",
+                                columnsToMove
+                                .Select(attr => $"\t[{schema}].[{entity.CollectionSchemaName}].[{attr.SchemaName}] = BaseRecords.[{attr.SchemaName}],"));
+
+                            var upSql1 = $"""
+                                        UPDATE
+                                        [{schema}].[{entity.CollectionSchemaName}]
+                                        SET
+                                        {columnsToMoveSql.Trim(',')}
+                                        FROM
+                                            [{schema}].[{entity.CollectionSchemaName}] Records
+                                        INNER JOIN
+                                            [{schema}].[{entity.GetBaseEntity(migration.Source.Entities).CollectionSchemaName}] BaseRecords
+                                        ON 
+                                            records.Id = BaseRecords.Id;
+                                        """;
+
+                            EmitSQLUp(migrationBuilder.UpMethodIL, upSql1);
+
+                            foreach (var existingField in columnsToMove)
+                            {
+
+                                if (IsFieldRequired(existingField))
+                                    EmitAlterColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, existingField);
+                            }
+                        }
+
+
+                        foreach (var existingField in entityMigration.GetExistingFields())
                         {
 
-                            if (!existingField.Target.IsRowVersion && IsBaseMember(migration.Entities,entity, existingField.Key,out var parent)  && migrationStrategy == MappingStrategyChangeEnum.TPT2TPC)
-                            {
-                                var upSql1 = $@"UPDATE
-                                [{schema}].[{entity.CollectionSchemaName}]
-                                SET
-                                    [{schema}].[{entity.CollectionSchemaName}].[{existingField.Target.SchemaName}] = BaseRecords.[{existingField.Target.SchemaName}]
-                                FROM
-                                    [{schema}].[{entity.CollectionSchemaName}] Records
-                                INNER JOIN
-                                    [{schema}].[{parent.CollectionSchemaName}] BaseRecords
-                                ON 
-                                    records.Id = BaseRecords.Id;";
+                            //if (!existingField.Target.IsRowVersion && IsBaseMember(migration.Entities, entity, existingField.Key, out var parent) && migrationStrategy == MappingStrategyChangeEnum.TPT2TPC)
+                            //{
+                            //    var upSql1 = $@"UPDATE
+                            //    [{schema}].[{entity.CollectionSchemaName}]
+                            //    SET
+                            //        [{schema}].[{entity.CollectionSchemaName}].[{existingField.Target.SchemaName}] = BaseRecords.[{existingField.Target.SchemaName}]
+                            //    FROM
+                            //        [{schema}].[{entity.CollectionSchemaName}] Records
+                            //    INNER JOIN
+                            //        [{schema}].[{parent.CollectionSchemaName}] BaseRecords
+                            //    ON 
+                            //        records.Id = BaseRecords.Id;";
 
-                                EmitSQLUp(migrationBuilder.UpMethodIL, upSql1);
+                            //    EmitSQLUp(migrationBuilder.UpMethodIL, upSql1);
 
-                                // see comment above for why we alter the column to required.
-                                if (IsFieldRequired( existingField.Source))
-                                {
-                                    EmitAlterColumn(migrationBuilder.UpMethodIL,entity.CollectionSchemaName, schema, existingField.Target);
-                                }
+                            //    // see comment above for why we alter the column to required.
+                            //    if (IsFieldRequired(existingField.Source))
+                            //    {
+                            //        EmitAlterColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, existingField.Target);
+                            //    }
 
-                            }
+                            //}
 
-                            if ( IsFieldLookup(existingField.Target)
+                            if (IsFieldLookup(existingField.Target)
                                 && !string.IsNullOrEmpty(existingField.Target.AttributeType.ReferenceType) && migration.Entities[existingField.Target.AttributeType.ReferenceType] is EntityDefinition referenceType
                                 && (referenceType.Abstract ?? false)
                                 && migration.GetEntityMigration(existingField.Target.AttributeType.ReferenceType).MappingStrategyChange() == MappingStrategyChangeEnum.TPT2TPC)
@@ -1219,11 +1257,11 @@ namespace EAVFramework.Shared.V2
                             }
 
                         }
-                        
 
 
-                        
-                        
+
+
+
                     }
 
 
@@ -1246,7 +1284,7 @@ namespace EAVFramework.Shared.V2
                     DownMethodIL.Emit(OpCodes.Ret);
 
                     result.Type = entityTypeBuilder.CreateTypeInfo();
-                   
+
                 }
 
 
@@ -1302,7 +1340,7 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Pop);
         }
 
-      
+
         private bool IsBaseMember(Dictionary<string, EntityDefinition> entities, EntityDefinition entity, string key, out EntityDefinition parentEntity)
         {
             parentEntity = null;
@@ -1312,7 +1350,7 @@ namespace EAVFramework.Shared.V2
             {
                 if (GetFields(parent).Any(p => p.Key == key))
                 {
-                    parentEntity= parent;
+                    parentEntity = parent;
                     return true;
                 }
                 parent = parent.GetParentEntity(entities);
@@ -1502,7 +1540,7 @@ namespace EAVFramework.Shared.V2
             }
             return entity;
         }
-        public static EntityDefinition GetParentEntity(this EntityDefinition entity , Dictionary<string, EntityDefinition> entities)
+        public static EntityDefinition GetParentEntity(this EntityDefinition entity, Dictionary<string, EntityDefinition> entities)
         {
 
             var parentName = entity.TPC ?? entity.TPT;
@@ -1533,7 +1571,7 @@ namespace EAVFramework.Shared.V2
 
 
         }
-        public static IEnumerable<AttributeDefinitionBase> GetNewAttributes( this MigrationEntityDefinition migrationEntity )
+        public static IEnumerable<AttributeDefinitionBase> GetNewAttributes(this MigrationEntityDefinition migrationEntity)
         {
             var target = migrationEntity.Target;
             var source = migrationEntity.Source;
@@ -1544,37 +1582,49 @@ namespace EAVFramework.Shared.V2
 
             return targetAttributes.Where(e => !sourceAttributes.ContainsKey(e.Key)).Select(c => c.Value);
         }
+        public static IEnumerable<AttributeDefinitionBase> GetAttributesMovingFromBase(this MigrationEntityDefinition migrationEntity)
+        {
+            var target = migrationEntity.Target;
+            var source = migrationEntity.Source;
 
-        public static Dictionary<string,AttributeDefinitionBase> GetProperties(this EntityDefinition entity,
+            var targetAttributes = target.GetProperties(migrationEntity.MigrationDefinition.Target.Entities);
+            var sourceAttributes = source.GetProperties(migrationEntity.MigrationDefinition.Source.Entities);
+
+
+
+            return targetAttributes.Where(e => !sourceAttributes.ContainsKey(e.Key) && !target.Attributes.ContainsKey(e.Key)).Select(c => c.Value);
+        }
+
+        public static Dictionary<string, AttributeDefinitionBase> GetProperties(this EntityDefinition entity,
             Dictionary<string, EntityDefinition> entities)
         {
             return (entity.GetMappingStrategy(entities) == MappingStrategy.TPC ?
                                entity.GetAllProperties(entities) : entity.Attributes);
-            
+
         }
 
         public static MappingStrategyChangeEnum MappingStrategyChange(this MigrationEntityDefinition migrationEntity)
         {
 
-         
 
-                var source = migrationEntity.Source.GetMappingStrategy(migrationEntity.MigrationDefinition.Source.Entities);
-                var target = migrationEntity.Target.GetMappingStrategy(migrationEntity.MigrationDefinition.Target.Entities); 
 
-                if (source == target)
-                {
-                    return MappingStrategyChangeEnum.None;
-                }
+            var source = migrationEntity.Source.GetMappingStrategy(migrationEntity.MigrationDefinition.Source.Entities);
+            var target = migrationEntity.Target.GetMappingStrategy(migrationEntity.MigrationDefinition.Target.Entities);
 
-                return source switch
-                {
+            if (source == target)
+            {
+                return MappingStrategyChangeEnum.None;
+            }
 
-                    MappingStrategy.TPT when target == MappingStrategy.TPC => MappingStrategyChangeEnum.TPT2TPC,
-                    MappingStrategy.TPC when target == MappingStrategy.TPT => MappingStrategyChangeEnum.TPC2TPT,
+            return source switch
+            {
 
-                    _ => throw new NotImplementedException($"{source} => {target}"),
-                };
-            
+                MappingStrategy.TPT when target == MappingStrategy.TPC => MappingStrategyChangeEnum.TPT2TPC,
+                MappingStrategy.TPC when target == MappingStrategy.TPT => MappingStrategyChangeEnum.TPC2TPT,
+
+                _ => throw new NotImplementedException($"{source} => {target}"),
+            };
+
         }
 
 
@@ -1587,13 +1637,13 @@ namespace EAVFramework.Shared.V2
             // TPT is the default
             // The stategy is stored on the base class, and if not provided
             // its indicated based on the navigation properties TPT,TPC on entity
-            var mappingstrategy = entity.MappingStrategy ?? (!string.IsNullOrEmpty(entity.TPT) ? 
+            var mappingstrategy = entity.MappingStrategy ?? (!string.IsNullOrEmpty(entity.TPT) ?
                 MappingStrategy.TPT : !string.IsNullOrEmpty(entity.TPC) ? MappingStrategy.TPC : MappingStrategy.TPT);
 
 
             var parent = GetParentEntity(entity, entities);
-           
-            if(parent != null)
+
+            if (parent != null)
             {
                 mappingstrategy = parent.MappingStrategy ?? mappingstrategy;
                 parent = parent.GetParentEntity(entities);
