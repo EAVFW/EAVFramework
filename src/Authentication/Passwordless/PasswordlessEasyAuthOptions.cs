@@ -55,5 +55,7 @@ namespace EAVFramework.Authentication.Passwordless
             var webRootPath = httpcontext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath;
             await httpcontext.Response.SendFileAsync($"{webRootPath}/account/login/passwordless/index.html");
         }
+
+        public bool MaskEmailInLogs { get; set; } = true;
     }
 }

@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using Microsoft.EntityFrameworkCore;
+using EAVFramework.OpenTelemetry;
 namespace EAVFramework.Configuration
 {
     /// <summary>
@@ -22,6 +23,8 @@ namespace EAVFramework.Configuration
         public EAVFrameworkBuilder(IServiceCollection services)
         {
             Services = services ?? throw new ArgumentNullException(nameof(services));
+
+
         }
 
         public EAVFrameworkBuilder(IServiceCollection services, string schema, string connectionString) : this(services)
@@ -42,6 +45,16 @@ namespace EAVFramework.Configuration
                 optionsBuilder.ReplaceService<IModelCacheKeyFactory, DynamicContextModelCacheKeyFactory>();
 
             });
+
+        }
+
+        public IEAVFrameworkBuilder WithMetrics()
+        {
+ 
+            Services.AddSingleton<EAVMetrics>();
+
+
+            return this;
 
         }
 

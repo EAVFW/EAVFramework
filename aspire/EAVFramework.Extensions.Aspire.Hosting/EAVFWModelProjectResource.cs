@@ -1,4 +1,4 @@
-﻿using Aspire.Hosting;
+using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using System;
 using System.Linq;
@@ -17,10 +17,10 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                 return projectPath;
             }
 
-            var dacpacMetadata = Annotations.OfType<EAVFWModelMetadataAnnotation>().FirstOrDefault();
-            if (dacpacMetadata != null)
+            var metadata = Annotations.OfType<EAVFWModelMetadataAnnotation>().FirstOrDefault();
+            if (metadata != null)
             {
-                return dacpacMetadata.ModelPath;
+                return metadata.ModelPath;
             }
 
             throw new InvalidOperationException($"Unable to locate SQL Server Database project package for resource {Name}.");

@@ -12,6 +12,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -371,12 +372,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             where TProject : IProjectMetadata, new()
         {
 
+            return builder.AddEAVFWModel(name).WithAnnotation(new TProject());
 
-            var resource = new EAVFWModelProjectResource(name);
-
-            return builder.AddResource(resource).ExcludeFromManifest()
-                 .WithAnnotation(HealthCheckAnnotation.Create(cs => new AspireEAVFWHealthCheck(cs)))
-                 .WithAnnotation(new TProject());
+ 
         }
 
 
@@ -392,7 +390,21 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             var resource = new EAVFWModelProjectResource(name);
 
 
-            return builder.AddResource(resource).ExcludeFromManifest()
+            var state = new CustomResourceSnapshot()
+            {
+                ResourceType = "Data Model",
+                
+                // hide parameters by default
+                State = new ResourceStateSnapshot( "Generating", KnownResourceStateStyles.Info), 
+                Urls = [new UrlSnapshot("manifest.json",$"file://manifest.json",false)],
+                Properties = []
+                 
+            };
+
+
+            return builder.AddResource(resource)
+                .ExcludeFromManifest()
+                .WithInitialState(state)
                .WithAnnotation(HealthCheckAnnotation.Create(cs => new AspireEAVFWHealthCheck(cs)));
         }
 

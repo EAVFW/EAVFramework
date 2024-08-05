@@ -12,22 +12,28 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using EAVFramework.Extensions;
+using Microsoft.Extensions.Logging;
+using EAVFramework.OpenTelemetry;
 
 namespace EAVFramework.Authentication.Passwordless
 {
     public class PasswordlessEasyAuthProvider : IEasyAuthProvider
     {
-      
+        private readonly ILogger<PasswordlessEasyAuthProvider> _logger;
+        private readonly EAVMetrics _metrics;
         private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
 
         public PasswordlessEasyAuthProvider() { }
 
-        public PasswordlessEasyAuthProvider(
+        public PasswordlessEasyAuthProvider( 
+            ILogger<PasswordlessEasyAuthProvider> logger,
+            EAVMetrics metrics,
             SmtpClient smtpClient,
             IOptions<PasswordlessEasyAuthOptions> options)
         {
-         
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _metrics = metrics;
             _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -40,6 +46,7 @@ namespace EAVFramework.Authentication.Passwordless
         {
            // return async (httpcontext) =>
             {
+                _metrics.StartSignup();
 
                 var email = httpcontext.Request.Query["email"].FirstOrDefault();
                 var redirectUri = httpcontext.Request.Query["redirectUri"].FirstOrDefault();
@@ -48,7 +55,14 @@ namespace EAVFramework.Authentication.Passwordless
 
                 if (user == null)
                 {
-                    httpcontext.Response.Redirect(callbackUrl  + $"{(callbackUrl.Contains('?')?"&":"?")}error=access_denied&error_subcode=user_not_found");
+                    _metrics.SigninFailed();
+
+                    var redirectUrl = callbackUrl + $"{(callbackUrl.Contains('?') ? "&" : "?")}error=access_denied&error_subcode=user_not_found";
+                   
+                    _logger.LogWarning("User not found for email {email}, redirecting to {redirectUrl}", email, redirectUrl);
+
+                    httpcontext.Response.Redirect(redirectUrl);
+                   
                     return;
                 }
 
@@ -82,6 +96,9 @@ namespace EAVFramework.Authentication.Passwordless
                 mailMessage.IsBodyHtml = true;
                 mailMessage.Body = msgHtml;
                 mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
+            
+                _logger.LogInformation("Sending sigin email to {email} with handleId {handleId}", MaskEmail( email), handleId);
+              
                 await _smtp.SendMailAsync(mailMessage);
 
               
@@ -92,7 +109,30 @@ namespace EAVFramework.Authentication.Passwordless
 
             };
         }
+        private string MaskEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return email;
+            }
 
+            var atIndex = email.IndexOf('@');
+            if (atIndex < 0)
+            {
+                return email;
+            }
+
+            var localPart = email.Substring(0, atIndex);
+            var domain = email.Substring(atIndex);
+
+            if (localPart.Length <= 3)
+            {
+                return $"{localPart}***{domain}";
+            }
+
+            var maskedLocalPart = localPart.Substring(0, 3) + new string('*', localPart.Length - 3);
+            return $"{maskedLocalPart}{domain}";
+        }
         public async Task<(ClaimsPrincipal, string,string)> OnCallback(HttpContext httpcontext)
         {
             var handleId = httpcontext.Request.Query["token"].FirstOrDefault();
@@ -105,6 +145,8 @@ namespace EAVFramework.Authentication.Passwordless
             var identity = new ClaimsIdentity(
                 ticket.Select(kv => new Claim(kv.Key, kv.Value)).ToArray(),
                 AuthenticationName);
+
+            _metrics.SigninSuccess();
 
             return await Task.FromResult((new ClaimsPrincipal(identity), redirectUri, handleId));
         }
