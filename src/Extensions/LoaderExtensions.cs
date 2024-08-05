@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints;
+using EAVFramework.Endpoints;
 using EAVFramework.Plugins;
 using System;
 using System.Collections.Generic;
@@ -20,36 +20,31 @@ namespace EAVFramework.Extensions
             var member = selector.Body as MemberExpression;
             var getter = selector.Compile();
 
-            if (member.Expression is MemberExpression propEx)
-            {
-                var prop = propEx.Member as PropertyInfo;
-                var b = (prop).GetValue(entity, null);
-                var k = prop.DeclaringType.GetProperty(prop.GetCustomAttribute<ForeignKeyAttribute>().Name).GetValue(entity);
-                b ??= await context.Context.FindAsync(prop.PropertyType, k);
-
-                prop.SetValue(entity, b);
-
-
-
-
-                return getter(entity);
-            }
-            else
-            {
-
-                propEx = member;
-
-                var prop = propEx.Member as PropertyInfo;
-                var b = (prop).GetValue(entity, null);
-                var k = prop.DeclaringType.GetProperty(prop.GetCustomAttribute<ForeignKeyAttribute>().Name).GetValue(entity);
-                b ??= await context.Context.FindAsync(prop.PropertyType, k);
-
-                prop.SetValue(entity, b);
-                  
-                return getter(entity);
-            }
+            return await ResolveProp(context, entity, getter, member.Member as PropertyInfo);
 
         }
+
+        private static async ValueTask<TProperty> ResolveProp<TContext, TEntity, TProperty>(EAVDBContext<TContext> context, TEntity entity, Func<TEntity, TProperty> getter, PropertyInfo prop)
+            where TContext : DynamicContext
+            where TEntity : DynamicEntity
+        {
+            if (prop.DeclaringType.IsInterface)
+            {
+                prop = entity.GetType().GetProperty(prop.Name);
+            }
+
+            var b = (prop).GetValue(entity, null);
+            var k = prop.DeclaringType.GetProperty(prop.GetCustomAttribute<ForeignKeyAttribute>().Name).GetValue(entity);
+            b ??= await context.Context.FindAsync(prop.PropertyType, k);
+
+            prop.SetValue(entity, b);
+
+
+
+
+            return getter(entity);
+        }
+
         public static ValueTask<TProperty> LoadIfMissingAsync<TContext, TEntity, TProperty>(this PluginContext<TContext, TEntity> context, Expression<Func<TEntity, TProperty>> selector)
             where TContext : DynamicContext
             where TEntity : DynamicEntity
