@@ -177,7 +177,10 @@ namespace EAVFW.Extensions.Manifest.SDK
     }
     public class IndexInfo
     {
+        [JsonPropertyName("unique")]
         public bool Unique { get; set; } = true;
+      
+        [JsonPropertyName("name")]
         public string Name { get; set; }
     }
 
