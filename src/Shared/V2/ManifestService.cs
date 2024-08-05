@@ -1187,17 +1187,19 @@ namespace EAVFramework.Shared.V2
 
                         }
 
-                        if (migrationStrategy == MappingStrategyChangeEnum.TPT2TPC)
+                        if (migrationStrategy == MappingStrategyChangeEnum.TPT2TPC && !(entity.Abstract??false))
                         {
                             var columnsToMove = entityMigration.GetAttributesMovingFromBase()
                                 .OfType<AttributeObjectDefinition>()
                                 .Where(c=>!c.IsRowVersion)
                                 .ToArray();
-                            var columnsToMoveSql = string.Join("\n",
-                                columnsToMove
-                                .Select(attr => $"\t[{schema}].[{entity.CollectionSchemaName}].[{attr.SchemaName}] = BaseRecords.[{attr.SchemaName}],"));
 
-                            var upSql1 = $"""
+                           
+                                var columnsToMoveSql = string.Join("\n",
+                                    columnsToMove
+                                    .Select(attr => $"\t[{schema}].[{entity.CollectionSchemaName}].[{attr.SchemaName}] = BaseRecords.[{attr.SchemaName}],"));
+
+                                var upSql1 = $"""
                                         UPDATE
                                         [{schema}].[{entity.CollectionSchemaName}]
                                         SET
@@ -1209,6 +1211,7 @@ namespace EAVFramework.Shared.V2
                                         ON 
                                             records.Id = BaseRecords.Id;
                                         """;
+                            
 
                             EmitSQLUp(migrationBuilder.UpMethodIL, upSql1);
 
