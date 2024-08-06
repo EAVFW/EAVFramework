@@ -2702,7 +2702,7 @@ namespace EAVFramework.Shared
                 }
                 else
                 {
-                    sb.AppendLine($"\tpublic{(type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
+                    sb.AppendLine($"\tpublic{(options.GenerateAbstractClasses && type.IsAbstract ? " abstract " : " ")}partial class {type.Name}{inherience}\r\n\t{{");
                     {
                         foreach (var ctor in type.GetConstructors())
                         {

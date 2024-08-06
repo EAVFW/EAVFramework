@@ -78,8 +78,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonExtensionData]
         public Dictionary<string, JsonElement> AdditionalFields { get; set; }
 
-        [JsonPropertyName("maxLength")]
-        public int? MaxLength { get; set; }
+        
         
         [JsonPropertyName("isPrimaryKey")]
         public bool? IsPrimaryKey { get; set; }
@@ -88,9 +87,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         
         public bool? IsRequired { get; set; }
        
-        [JsonPropertyName("required")]
-
-        public bool? Required { get; set; }
+    
 
         [JsonPropertyName("isRowVersion")]
         public bool IsRowVersion { get; set; }
@@ -146,6 +143,16 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("update")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public CascadeAction? OnUpdate { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is CascadeOptions cascadeOptions)
+            {
+                return OnDelete == cascadeOptions.OnDelete && OnUpdate == cascadeOptions.OnUpdate;
+            }
+            
+            return base.Equals(obj);
+        }
     }
 
     public enum CascadeAction
@@ -200,6 +207,12 @@ namespace EAVFW.Extensions.Manifest.SDK
 
         [JsonPropertyName("index")]
         public IndexInfo IndexInfo { get; set; }
+
+        [JsonPropertyName("required")]
+
+        public bool? Required { get; set; }
+        [JsonPropertyName("maxLength")]
+        public int? MaxLength { get; set; }
 
         /// <summary>
         /// Exclusively used to capture non-spec items

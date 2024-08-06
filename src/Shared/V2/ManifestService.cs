@@ -863,18 +863,18 @@ namespace EAVFramework.Shared.V2
                     {
 
 
-                        case "maxLength" when propertyInfo.MaxLength.HasValue:
+                        case "maxLength" when propertyInfo.AttributeType.MaxLength.HasValue:
 
-                            dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, propertyInfo.MaxLength.Value), arg1);
+                            dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4, propertyInfo.AttributeType.MaxLength.Value), arg1);
 
-                            AddParameterComparison(parameters, argName, propertyInfo.MaxLength.Value);
+                            AddParameterComparison(parameters, argName, propertyInfo.AttributeType.MaxLength.Value);
 
                             break;
                         case "table" when !string.IsNullOrEmpty(tableName): entityCtorBuilderIL.Emit(OpCodes.Ldstr, tableName); break;
                         case "schema" when !string.IsNullOrEmpty(schema): dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, schema), arg1); break;
                         case "columnName": entityCtorBuilderIL.Emit(OpCodes.Ldstr, propertyInfo.SchemaName); break;
                         case "nullable" when (propertyInfo.IsPrimaryKey ?? false):
-                        case "nullable" when options.RequiredSupport && ((propertyInfo.Required ?? false) || (propertyInfo.IsRequired ?? false)):
+                        case "nullable" when options.RequiredSupport && ((propertyInfo.AttributeType.Required ?? false) || (propertyInfo.IsRequired ?? false)):
                         case "nullable" when (propertyInfo.IsRowVersion):
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldc_I4_0), arg1);
                             break;
@@ -885,8 +885,8 @@ namespace EAVFramework.Shared.V2
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, "nvarchar(max)"), arg1);
                             break;
 
-                        case "type" when string.Equals(propertyInfo.AttributeType.Type, "text", StringComparison.OrdinalIgnoreCase) && !propertyInfo.MaxLength.HasValue:
-                        case "type" when string.Equals(propertyInfo.AttributeType.Type, "string", StringComparison.OrdinalIgnoreCase) && !propertyInfo.MaxLength.HasValue:
+                        case "type" when string.Equals(propertyInfo.AttributeType.Type, "text", StringComparison.OrdinalIgnoreCase) && !propertyInfo.AttributeType.MaxLength.HasValue:
+                        case "type" when string.Equals(propertyInfo.AttributeType.Type, "string", StringComparison.OrdinalIgnoreCase) && !propertyInfo.AttributeType.MaxLength.HasValue:
                             dynamicCodeService.EmitPropertyService.EmitNullable(entityCtorBuilderIL, () => entityCtorBuilderIL.Emit(OpCodes.Ldstr, $"nvarchar({((propertyInfo.IsPrimaryField) ? 255 : 100)})"), arg1);
                             break;
                         case "rowVersion" when propertyInfo.IsRowVersion:
@@ -1067,6 +1067,7 @@ namespace EAVFramework.Shared.V2
 
                 var entityKey = pair.Key;
                 var entity = pair.Value;
+                var entityMigration = migration.GetEntityMigration(entityKey);
 
                 foreach (var field in GetFields(entity).Where(v => IsAttributeLookup(v.Value)))
                 {
@@ -1156,20 +1157,20 @@ namespace EAVFramework.Shared.V2
                     else
                     {
 
-                        var entityMigration = migration.GetEntityMigration(entityKey);
+                       
                         var migrationStrategy = entityMigration.MappingStrategyChange();
 
 
 
                         foreach (var newField in entityMigration.GetNewAttributes().OfType<AttributeObjectDefinition>())
                         {
-                            var required = (newField.IsRequired ?? false) || (newField.IsRequired ?? false);
+                            var required = (newField.IsRequired ?? false) || (newField.AttributeType.Required ?? false);
 
                             //We cant add a required column to existing table, rely on it being altered after data is set.
                             //this is a case when we are changing from TPT to TPC 
-                            newField.IsRequired = newField.Required = false;
+                            newField.IsRequired = newField.AttributeType.Required = false;
                             EmitAddColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, newField);
-                            newField.IsRequired = newField.Required = required;
+                            newField.IsRequired = newField.AttributeType.Required = required;
 
                             if (IsFieldLookup(newField))
                             {
@@ -1227,36 +1228,32 @@ namespace EAVFramework.Shared.V2
                         foreach (var existingField in entityMigration.GetExistingFields())
                         {
 
-                            //if (!existingField.Target.IsRowVersion && IsBaseMember(migration.Entities, entity, existingField.Key, out var parent) && migrationStrategy == MappingStrategyChangeEnum.TPT2TPC)
-                            //{
-                            //    var upSql1 = $@"UPDATE
-                            //    [{schema}].[{entity.CollectionSchemaName}]
-                            //    SET
-                            //        [{schema}].[{entity.CollectionSchemaName}].[{existingField.Target.SchemaName}] = BaseRecords.[{existingField.Target.SchemaName}]
-                            //    FROM
-                            //        [{schema}].[{entity.CollectionSchemaName}] Records
-                            //    INNER JOIN
-                            //        [{schema}].[{parent.CollectionSchemaName}] BaseRecords
-                            //    ON 
-                            //        records.Id = BaseRecords.Id;";
-
-                            //    EmitSQLUp(migrationBuilder.UpMethodIL, upSql1);
-
-                            //    // see comment above for why we alter the column to required.
-                            //    if (IsFieldRequired(existingField.Source))
-                            //    {
-                            //        EmitAlterColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, existingField.Target);
-                            //    }
-
-                            //}
-
-                            if (IsFieldLookup(existingField.Target)
-                                && !string.IsNullOrEmpty(existingField.Target.AttributeType.ReferenceType) && migration.Entities[existingField.Target.AttributeType.ReferenceType] is EntityDefinition referenceType
-                                && (referenceType.Abstract ?? false)
-                                && migration.GetEntityMigration(existingField.Target.AttributeType.ReferenceType).MappingStrategyChange() == MappingStrategyChangeEnum.TPT2TPC)
+                            if (existingField.HasChanged())
                             {
+                                EmitAlterColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, existingField.Target);
+                                
+                            }
+
+                            if (IsFieldLookup(existingField.Target) && existingField.HasCascadeChanges())
+                            {
+                                var referenceType = migration.Entities[existingField.Target.AttributeType.ReferenceType];
                                 migrationBuilder.DropForeignKey(entity.CollectionSchemaName, schema,
-                                     $"FK_{entity.CollectionSchemaName}_{referenceType.CollectionSchemaName}_{existingField.Target.SchemaName}".Replace(" ", ""));
+                                    $"FK_{entity.CollectionSchemaName}_{referenceType.CollectionSchemaName}_{existingField.Target.SchemaName}".Replace(" ", ""));
+                                AddForeignKey(entity.CollectionSchemaName, schema, migrationBuilder.UpMethodIL, existingField.Target,
+                                 referenceType);
+                            }
+
+                            {
+
+                                if (IsFieldLookup(existingField.Target)
+                                    && !string.IsNullOrEmpty(existingField.Target.AttributeType.ReferenceType) && migration.Entities[existingField.Target.AttributeType.ReferenceType] is EntityDefinition referenceType
+                                    && (referenceType.Abstract ?? false)
+                                    && migration.GetEntityMigration(existingField.Target.AttributeType.ReferenceType).MappingStrategyChange() == MappingStrategyChangeEnum.TPT2TPC)
+                                {
+                                    migrationBuilder.DropForeignKey(entity.CollectionSchemaName, schema,
+                                         $"FK_{entity.CollectionSchemaName}_{referenceType.CollectionSchemaName}_{existingField.Target.SchemaName}".Replace(" ", ""));
+                                }
+
                             }
 
                         }
@@ -1267,7 +1264,19 @@ namespace EAVFramework.Shared.V2
 
                     }
 
+               
+                    // var fields = entity.GetAllProperties(migration.Entities).Values.OfType<AttributeObjectDefinition>().ToArray();
+                    foreach (var key in entityMigration.GetNewKeys())
+                    { 
 
+                        var props = key.Value;
+                        var name = key.Key;
+                    
+                        var colums = props.Select(p => entity.GetField(p,migration.Entities).SchemaName).ToArray();
+                        migrationBuilder.CreateIndex(entity.CollectionSchemaName,entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo",
+                            name, true, colums);
+
+                    }
 
 
 
@@ -1308,7 +1317,7 @@ namespace EAVFramework.Shared.V2
 
         private bool IsFieldRequired(AttributeObjectDefinition source)
         {
-            return source.IsRequired ?? source.Required ?? false;
+            return source.IsRequired ?? source.AttributeType.Required ?? false;
         }
 
         public bool IsFieldLookup(AttributeObjectDefinition source)
@@ -1555,6 +1564,23 @@ namespace EAVFramework.Shared.V2
             return null;
         }
 
+        public static AttributeObjectDefinition GetField(this EntityDefinition entity,string key, Dictionary<string, EntityDefinition> entities)
+        {
+           
+            
+            while (entity != null)
+            {
+                if (entity.Attributes.ContainsKey(key) && entity.Attributes[key] is AttributeObjectDefinition attr)
+                    return attr;
+
+                entity = entity.GetParentEntity(entities);
+            }
+
+            throw new KeyNotFoundException($"Field {key} not found in entity {entity.CollectionSchemaName} or its parent entities.");
+
+
+        }
+
         public static Dictionary<string, AttributeDefinitionBase> GetAllProperties(this EntityDefinition entity, Dictionary<string, EntityDefinition> entities)
         {
 
@@ -1598,14 +1624,24 @@ namespace EAVFramework.Shared.V2
             return targetAttributes.Where(e => !sourceAttributes.ContainsKey(e.Key) && !target.Attributes.ContainsKey(e.Key)).Select(c => c.Value);
         }
 
-        public static Dictionary<string, AttributeDefinitionBase> GetProperties(this EntityDefinition entity,
+        public static Dictionary<string, AttributeObjectDefinition> GetProperties(this EntityDefinition entity,
             Dictionary<string, EntityDefinition> entities)
         {
-            return (entity.GetMappingStrategy(entities) == MappingStrategy.TPC ?
-                               entity.GetAllProperties(entities) : entity.Attributes);
+            return  (entity.GetMappingStrategy(entities) == MappingStrategy.TPC ?
+                               entity.GetAllProperties(entities) : entity.Attributes)
+                               .OfType<string,AttributeDefinitionBase,AttributeObjectDefinition>()
+                               .OrderByDescending(c => c.Value.IsPrimaryKey)
+                               .ThenByDescending(c => c.Value.IsPrimaryField)
+                               .ThenBy(c => c.Value.LogicalName)
+                               .ToDictionary(k=>k.Key,v=>v.Value);
 
         }
-
+        public static Dictionary<string, string[]> GetNewKeys(this MigrationEntityDefinition migrationEntity)
+        {    
+            return migrationEntity.Target?.Keys?
+                .Where(kv=> !(migrationEntity.Source?.Keys?.ContainsKey(kv.Key) ??false))
+                .ToDictionary(k=>k.Key,v=>v.Value) ?? new Dictionary<string, string[]>();
+        }
         public static MappingStrategyChangeEnum MappingStrategyChange(this MigrationEntityDefinition migrationEntity)
         {
 

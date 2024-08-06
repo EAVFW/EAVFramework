@@ -87,6 +87,7 @@ namespace EAVFramework.UnitTest.ManifestTests
             //onconfig(o);
 
             var o =new DynamicCodeServiceFactory().CreateOptions(onconfig);
+            o.GenerateAbstractClasses = false;
             return new DynamicCodeService(o);
         }
     

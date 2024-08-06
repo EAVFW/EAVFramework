@@ -39,6 +39,11 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonProperty("wizards")]
         public Dictionary<string, WizardDefinition> Wizards { get; set; }
 
+        [JsonPropertyName("keys")]
+        [JsonProperty("keys")]
+        public Dictionary<string, string[]> Keys { get; set; }
+
+
         /// <summary>
         /// Exclusively used to capture non-spec items
         /// </summary>

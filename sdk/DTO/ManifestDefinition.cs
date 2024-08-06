@@ -40,6 +40,60 @@ namespace EAVFW.Extensions.Manifest.SDK
         public AttributeObjectDefinition Target { get; set; }
         public string Key { get; set; }
         public MigrationEntityDefinition Entity { get; set; }
+        
+        public bool HasCascadeChanges()
+        {
+
+            if (Source.AttributeType.Cascades == null && Target.AttributeType.Cascades != null)
+                return true;
+            if (Source.AttributeType.Cascades != null && Target.AttributeType.Cascades == null)
+                return true;
+            if (Source.AttributeType.Cascades != null && !Source.AttributeType.Cascades.Equals(Target.AttributeType.Cascades))
+                return true;
+
+            return false;
+        }
+        public bool HasChanged()
+        {
+            if ((Source.IsRequired??false) != (Target.IsRequired??false))
+                return true;
+            if(Source.AttributeType.Type != Target.AttributeType.Type)
+                return true;
+            if (Source.AttributeType.MaxLength != Target.AttributeType.MaxLength)
+                return true;
+
+
+            //if (Source.AttributeType.Cascades == null && Target.AttributeType.Cascades != null)
+            //    return true;
+            //if (Source.AttributeType.Cascades != null && Target.AttributeType.Cascades == null)
+            //    return true;
+            //if (Source.AttributeType.Cascades != null && !Source.AttributeType.Cascades.Equals(Target.AttributeType.Cascades))
+            //    return true;
+
+
+            if (Source.AttributeType.SqlOptions == null && Target.AttributeType.SqlOptions != null)
+                return true;
+            if (Source.AttributeType.SqlOptions != null && Target.AttributeType.SqlOptions == null)
+                return true;
+
+            if (Source.AttributeType.SqlOptions != null)
+            {
+                if (Source.AttributeType.SqlOptions.Count != Target.AttributeType.SqlOptions.Count)
+                    return true;
+                if (Source.AttributeType.SqlOptions.Keys.Except(Target.AttributeType.SqlOptions.Keys).Any())
+                    return true;
+                if (Target.AttributeType.SqlOptions.Keys.Except(Source.AttributeType.SqlOptions.Keys).Any())
+                    return true;
+                if (Target.AttributeType.SqlOptions.Any(kv => Source.AttributeType.SqlOptions[kv.Key].Equals(kv.Value)))
+                    return true;
+            }
+          
+
+
+            
+             
+            return false;
+        }
     }
 
     public enum MappingStrategyChangeEnum
@@ -115,7 +169,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             return new MigrationEntityDefinition
             {
                 MigrationDefinition = this,
-                Source = Source.Entities[entityKey],
+                Source = (Source?.Entities.ContainsKey(entityKey) ??false) ? Source.Entities[entityKey] : null,
                 
                 Target = Target.Entities[entityKey]
             };

@@ -10,7 +10,9 @@ namespace EAVFramework.Shared.V2
     }
     public class CodeGenerationOptions
     {
-        
+
+        public bool GenerateAbstractClasses { get; set; } = true;
+
         /// <summary>
         /// The constructor used for the Newtonsoft JsonPropertyAttribute when setting DTO Property Attributes.
         /// </summary>

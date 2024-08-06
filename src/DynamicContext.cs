@@ -246,7 +246,7 @@ namespace EAVFramework
                 foreach (var migration in test.Migrations)
                 {
 
-                    var name = $"{modelOptions.Value.Schema}_{migration.Target.Version.Replace(".", "_") ?? MigrationDefaultName}";
+                    var name = $"{modelOptions.Value.Schema}_{migration.Target.Version?.Replace(".", "_") ?? MigrationDefaultName}";
 
                     var model = manager.CreateMigration(name, migration, this.modelOptions.Value);
 

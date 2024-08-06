@@ -113,7 +113,14 @@ namespace EAVFramework.UnitTest
         {
             foreach (var file in code)
             {
-                Assert.AreEqual(RemoveWhitespace(File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt")), RemoveWhitespace(file.Value), file.Key);
+                var a = File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt");
+                var b = file.Value;
+                if (RemoveWhitespace(a) != RemoveWhitespace(file.Value))
+                {
+
+                }
+                Assert.AreEqual(
+                    RemoveWhitespace(File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt")), RemoveWhitespace(file.Value), file.Key);
             }
         }
 
