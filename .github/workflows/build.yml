@@ -10,7 +10,7 @@ on:
 jobs: 
   test:
     runs-on: ubuntu-latest
-    name: Building
+    name: Testing
     steps:
       - name: Checkout code base
         uses: actions/checkout@v2
@@ -39,39 +39,4 @@ jobs:
 
       - name: Test Generation
         run: dotnet test
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-    name: Building
-    steps:
-      - name: Checkout code base
-        uses: actions/checkout@v2
-
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
-        with:
-          global-json-file: global.json
-
-      - name: Cleaning
-        run: dotnet clean
-
-      - name: Restore NuGet packages
-        run: dotnet restore EAVFramework.sln -p:TargetFramework=net6.0
-
-      - name: Build solution
-        run: dotnet build -o ../build/net6.0/ -f net6.0 -c Release --no-restore -m:1
-
-      - name: Restore NuGet packages
-        run: dotnet restore EAVFramework.sln -p:TargetFramework=net8.0
-
-      - name: Build solution
-        run: dotnet build -o ../build/net8.0/ -f net8.0 -c Release --no-restore -m:1
          
-      - name: Archive build to artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: build
-          path: |
-            build/*
-          retention-days: 5
