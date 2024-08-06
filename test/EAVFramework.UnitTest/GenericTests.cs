@@ -133,7 +133,7 @@ namespace EAVFramework.UnitTest
                 };
             });
 
-            var manifest = new ManifestService(new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+            var manifest = new ManifestService(codeMigratorV2,new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
 
             var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/manifest.payments.json")));
             var code = codeMigratorV2.GenerateCodeFiles();

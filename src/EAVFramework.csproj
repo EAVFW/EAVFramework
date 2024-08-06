@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <LangVersion>11</LangVersion>
     <PackageId>EAVFramework</PackageId>
     <Authors>Poul Kjeldager</Authors>
     <Company>EAVFW</Company>
@@ -23,6 +24,7 @@
    
      <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.1.1" />
      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+     <PackageReference Include="Semver" Version="2.2.0" />
       
     </ItemGroup>
 

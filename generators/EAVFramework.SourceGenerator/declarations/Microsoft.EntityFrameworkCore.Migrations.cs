@@ -1,4 +1,4 @@
-﻿using EAVFramework;
+using EAVFramework;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Newtonsoft.Json.Linq;
@@ -196,6 +196,16 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         public virtual CreateTableBuilder<TColumns> CreateTable<TColumns>([NotNullAttribute] string name, [NotNullAttribute] Func<ColumnsBuilder, TColumns> columns, [CanBeNullAttribute] string schema = null, [CanBeNullAttribute] Action<CreateTableBuilder<TColumns>> constraints = null, [CanBeNullAttribute] string comment = null) => throw new NotImplementedException();
         public virtual OperationBuilder<DropIndexOperation> DropIndex([NotNullAttribute] string name, [CanBeNullAttribute] string table = null, [CanBeNullAttribute] string schema = null) => throw new NotImplementedException();
         public virtual OperationBuilder<CreateIndexOperation> CreateIndex([NotNullAttribute] string name, [NotNullAttribute] string table, [NotNullAttribute] string[] columns, [CanBeNullAttribute] string schema = null, bool unique = false, [CanBeNullAttribute] string filter = null) => throw new NotImplementedException();
+        public virtual OperationBuilder<CreateIndexOperation> CreateIndex(
+     string name,
+     string table,
+     string column,
+     string? schema = null,
+     bool unique = false,
+     string? filter = null,
+     bool[]? descending = null) => throw new NotImplementedException();
+
+
         public virtual OperationBuilder<AddColumnOperation> AddColumn<T>([NotNullAttribute] string name, [NotNullAttribute] string table, [NotNullAttribute] string type = null, bool? unicode = null, int? maxLength = null, bool rowVersion = false, [NotNullAttribute] string schema = null, bool nullable = false, [NotNullAttribute] object defaultValue = null, [NotNullAttribute] string defaultValueSql = null, [NotNullAttribute] string computedColumnSql = null, bool? fixedLength = null, [NotNullAttribute] string comment = null, [NotNullAttribute] string collation = null, int? precision = null, int? scale = null, bool? stored = null) => throw new NotImplementedException();
         public virtual OperationBuilder<AddForeignKeyOperation> AddForeignKey(
             [NotNull] string name,

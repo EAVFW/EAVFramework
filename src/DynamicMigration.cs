@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EAVFW.Extensions.Manifest.SDK;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
+using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -36,57 +38,33 @@ namespace EAVFramework
     }
 
 
+    
     public class DynamicMigration : Migration
     {
        
-        private readonly JToken model;
+      //  private readonly JToken model;
         private readonly IDynamicTable[] tables;
 
         public DynamicMigration(JToken model, IDynamicTable[] tables)
         {
-            this.model = model;
+        //    this.model = model;
+            this.tables = tables;
+        }
+        public DynamicMigration(MigrationDefinition migration, IDynamicTable[] tables)
+        {
+           
             this.tables = tables;
         }
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            //    var model = JToken.Parse("{}");
-           
-            //migrationBuilder.CreateTable(
-            //              name: "test",
-            //              columns: (c) => new Test(),
-            //              schema: "hello",
-            //              constraints: null,
-            //              comment: "generated");
-
             foreach (var dynamicEntity in tables)
             {
 
                dynamicEntity.Up(migrationBuilder);
-
-               // var dynamicTable  = new MigrationManager(null,null).buildColumns(entity);
-                //migrationBuilder.CreateTable(
-                //              name: "test",
-                //              columns: columns => dynamicEntity.Columns(columns),
-                //              schema: dynamicEntity.Schema,
-                //              constraints: dynamicEntity.Constraints,
-                //              comment: "generated");
-
-                // migrationBuilder.CreateTable(
-                //name: "PKSTests",
-                //columns: table => new
-                //{
-                //    Id = table.Column<Guid>(nullable: false),
-                //    EntityId=table.Column<Guid>(nullable:false)
-                //},
-                //constraints: table =>
-                //{
-                //    table.PrimaryKey("PK_PKSTests", x => x.Id);
-                //    table.ForeignKey("FK_TEST",x=>x.EntityId,"principalTable","principalColumn","principalSchema", onUpdate:null,onDelete: null)//
-                //});
+                 
 
             }
-
-            //migrationBuilder.AddForeignKey()
+             
         }
 
 

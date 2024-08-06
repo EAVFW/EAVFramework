@@ -113,7 +113,14 @@ namespace EAVFramework.UnitTest
         {
             foreach (var file in code)
             {
-                Assert.AreEqual(RemoveWhitespace(File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt")), RemoveWhitespace(file.Value), file.Key);
+                var a = File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt");
+                var b = file.Value;
+                if (RemoveWhitespace(a) != RemoveWhitespace(file.Value))
+                {
+
+                }
+                Assert.AreEqual(
+                    RemoveWhitespace(File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt")), RemoveWhitespace(file.Value), file.Key);
             }
         }
 
@@ -170,7 +177,7 @@ namespace EAVFramework.UnitTest
                 };
             });
 
-            var manifest = new ManifestService(new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+            var manifest = new ManifestService(codeMigratorV2,new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
 
             var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/oidcclient.json")));
             var code = codeMigratorV2.GenerateCodeFiles();

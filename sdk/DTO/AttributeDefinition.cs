@@ -48,6 +48,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     [JsonConverter(typeof(AttributeConverter))]
     public abstract class AttributeDefinitionBase
     {
+         
     }
 
     public class AttributeStringDefinition : AttributeDefinitionBase
@@ -58,8 +59,12 @@ namespace EAVFW.Extensions.Manifest.SDK
 
     public class AttributeObjectDefinition : AttributeDefinitionBase
     {
+        
+
         [JsonPropertyName("isPrimaryField")] public bool IsPrimaryField { get; set; }
         [JsonPropertyName("logicalName")] public string LogicalName { get; set; }
+        [JsonPropertyName("schemaName")] public string SchemaName { get; set; }
+        [JsonPropertyName("description")] public string Description { get; set; }
 
         [JsonPropertyName("moduleSource")] public string ModuleSource { get; set; }
 
@@ -72,6 +77,20 @@ namespace EAVFW.Extensions.Manifest.SDK
         /// </summary>
         [JsonExtensionData]
         public Dictionary<string, JsonElement> AdditionalFields { get; set; }
+
+        
+        
+        [JsonPropertyName("isPrimaryKey")]
+        public bool? IsPrimaryKey { get; set; }
+
+        [JsonPropertyName("isRequired")]
+        
+        public bool? IsRequired { get; set; }
+       
+    
+
+        [JsonPropertyName("isRowVersion")]
+        public bool IsRowVersion { get; set; }
     }
 
 
@@ -112,10 +131,67 @@ namespace EAVFW.Extensions.Manifest.SDK
             jsonNode?.WriteTo(writer, options);
         }
     }
-    
-   // [JsonConverter(typeof(TypeDefinitionConverter))]
-    
-    public class TypeDefinition 
+
+    // [JsonConverter(typeof(TypeDefinitionConverter))]
+     
+    public class CascadeOptions
+    {
+        [JsonPropertyName("delete")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public CascadeAction? OnDelete { get; set; }
+
+        [JsonPropertyName("update")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public CascadeAction? OnUpdate { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is CascadeOptions cascadeOptions)
+            {
+                return OnDelete == cascadeOptions.OnDelete && OnUpdate == cascadeOptions.OnUpdate;
+            }
+            
+            return base.Equals(obj);
+        }
+    }
+
+    public enum CascadeAction
+    {
+        /// <summary>
+        ///     Do nothing. That is, just ignore the constraint.
+        /// </summary>
+        NoAction,
+
+        /// <summary>
+        ///     Don't perform the action if it would result in a constraint violation and instead generate an error.
+        /// </summary>
+        Restrict,
+
+        /// <summary>
+        ///     Cascade the action to the constrained rows.
+        /// </summary>
+        Cascade,
+
+        /// <summary>
+        ///     Set null on the constrained rows so that the constraint is not violated after the action completes.
+        /// </summary>
+        SetNull,
+
+        /// <summary>
+        ///     Set a default value on the constrained rows so that the constraint is not violated after the action completes.
+        /// </summary>
+        SetDefault
+    }
+    public class IndexInfo
+    {
+        [JsonPropertyName("unique")]
+        public bool Unique { get; set; } = true;
+      
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+    }
+
+    public class TypeDefinition
     {
         [JsonPropertyName("type")] public string Type { get; set; }
 
@@ -123,6 +199,20 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("referenceType")] public string ReferenceType { get; set; }
 
         [JsonPropertyName("options")] public Dictionary<string, JsonElement> Options { get; set; }
+
+        [JsonPropertyName("sql")] public Dictionary<string, JsonElement> SqlOptions { get; set; }
+
+        [JsonPropertyName("cascade")]
+        public CascadeOptions Cascades {get;set;}
+
+        [JsonPropertyName("index")]
+        public IndexInfo IndexInfo { get; set; }
+
+        [JsonPropertyName("required")]
+
+        public bool? Required { get; set; }
+        [JsonPropertyName("maxLength")]
+        public int? MaxLength { get; set; }
 
         /// <summary>
         /// Exclusively used to capture non-spec items

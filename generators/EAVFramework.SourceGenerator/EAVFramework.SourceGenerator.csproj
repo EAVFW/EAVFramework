@@ -17,11 +17,22 @@
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
 		<GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
-		<LangVersion>8.0</LangVersion>
+		<LangVersion>12.0</LangVersion>
 
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Include="..\..\sdk\DTO\ActionDefinition.cs" Link="ActionDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\AttributeDefinition.cs" Link="AttributeDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\EntityDefinition.cs" Link="EntityDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\ManifestDefinition.cs" Link="ManifestDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\MappingStrategy.cs" Link="MappingStrategy.cs" />
+		<Compile Include="..\..\sdk\DTO\MessageDefinition.cs" Link="MessageDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\StringOrBoolean.cs" Link="StringOrBoolean.cs" />
+		<Compile Include="..\..\sdk\DTO\TabDefinition.cs" Link="TabDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\TransitionDefinition.cs" Link="TransitionDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\TriggerDefinition.cs" Link="TriggerDefinition.cs" />
+		<Compile Include="..\..\sdk\DTO\WizardDefinition.cs" Link="WizardDefinition.cs" />
 		<Compile Include="..\..\src\Constants.cs" Link="Constants.cs" />
 		<Compile Include="..\..\src\Extensions\HashExtensions.cs" Link="HashExtensions.cs" />
 		<Compile Include="..\..\src\Extensions\StringExtensions.cs" Link="StringExtensions.cs" />
@@ -57,7 +68,7 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0" GeneratePathProperty="true" PrivateAssets="all" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" GeneratePathProperty="true" PrivateAssets="all" />
 		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" GeneratePathProperty="true" PrivateAssets="all" />
-		<PackageReference Include="System.Text.Json" Version="5.0.2" GeneratePathProperty="true" PrivateAssets="all" />
+		<PackageReference Include="System.Text.Json" Version="8.0.4" GeneratePathProperty="true" PrivateAssets="all" />
 	</ItemGroup>
 
 	<PropertyGroup>

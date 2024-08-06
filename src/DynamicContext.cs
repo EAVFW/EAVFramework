@@ -3,11 +3,14 @@ using EAVFramework.Endpoints.Query;
 using EAVFramework.Endpoints.Query.OData;
 using EAVFramework.Extensions;
 using EAVFramework.Shared;
+using EAVFramework.Shared.V2;
 using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK.DTO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
 using Microsoft.AspNetCore.OData.Extensions;
+using Microsoft.AspNetCore.OData.Formatter.Serialization;
 using Microsoft.AspNetCore.OData.Formatter.Value;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Container;
@@ -23,6 +26,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
@@ -36,28 +40,23 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Reflection.PortableExecutable;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace EAVFramework
 {
+   
 
     public static class DynamicContextExtensions
     {
         private static OdatatConverterFactory _factory = new OdatatConverterFactory();
 
-        private static object ToPoco(object item)
-        {
-            if (item == null)
-                return null;
-
-            var converter = _factory.CreateConverter(item.GetType());
-            return converter.Convert(item);
-
-
-
-        }
+       
 
         public static  Task<PageResult<object>> ExecuteHttpRequest<TContext>(this EAVDBContext<TContext> context, string entityCollectionSchemaName, string sql, HttpRequest request, params object[] sqlparams) where TContext : DynamicContext
         {
@@ -113,8 +112,8 @@ namespace EAVFramework
                 metadataQuerySet = queryInspector.ApplyTo(metadataQuerySet, queryContext).Cast(type) ?? metadataQuerySet;
 
 
-
-
+            
+           
             if (request != null)
             {
                 if (!request.Query.ContainsKey("$select") && !request.Query.ContainsKey("$apply"))
@@ -137,11 +136,9 @@ namespace EAVFramework
 
             }
 
-
+            
             var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
-            //Console.WriteLine(metadataQuerySet.ToQueryString());
-            //logger.LogTrace(metadataQuerySet.ToQueryString());
-
+             
 
             //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
             //annoying that we have to serialize them ourself.
@@ -156,7 +153,8 @@ namespace EAVFramework
                 else
                 {
                     var converter = _factory.CreateConverter(item.GetType());
-                    resultList.Add(converter.Convert(item));
+                    var result = converter.Convert(item);
+                    resultList.Add(result.Value);
                 }
 
 
@@ -229,36 +227,50 @@ namespace EAVFramework
             };
             var factories = new Dictionary<TypeInfo, Func<Migration>>();
 
-            //if(modelOptions.Value.Manifests.Any())
-            //{
-            //    var migration = modelOptions.Value.Manifests.First();
-            //    var name = $"{modelOptions.Value.PublisherPrefix}_{migration.SelectToken("$.version") ?? MigrationDefaultName}";
-            //    var model = manager.CreateModel(name, migration, this.modelOptions.Value);
-
-            //    types.Add(name, model.Item1);
-            //    factories.Add(model.Item1, model.Item2);
-            //}
+            
             var latestManifest = modelOptions.Value.Manifests.First();
-            //  var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
-
+             
             manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
-                int i = 0;
-                foreach (var migration in modelOptions.Value.Manifests
-                    .Select((m, i) => (target: m, source: i + 1 == modelOptions.Value.Manifests.Length ? new JObject() : modelOptions.Value.Manifests[i + 1]))
 
-                    .Reverse())
+                var test = new ManifestDefinitionCollection();
+                foreach(var manifest in modelOptions.Value.Manifests.Reverse())
+                {
+                    test.Add(System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString()));
+                }
+
+
+                int i = 0;
+                foreach (var migration in test.Migrations)
                 {
 
-                    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName}";
+                    var name = $"{modelOptions.Value.Schema}_{migration.Target.Version?.Replace(".", "_") ?? MigrationDefaultName}";
 
-                    var model = manager.CreateMigration(name, migration.target, migration.source, this.modelOptions.Value);
+                    var model = manager.CreateMigration(name, migration, this.modelOptions.Value);
 
                     types.Add($"{++i:D16}{name}", model.Type);
                     factories.Add(model.Type, model.MigrationFactory);
                 }
+
+                
+
+
+                //int i = 0;
+                //foreach (var migration in modelOptions.Value.Manifests
+                //    .Select((m, i) => (target: m, source: i + 1 == modelOptions.Value.Manifests.Length ? new JObject() : modelOptions.Value.Manifests[i + 1]))
+
+                //    .Reverse())
+                //{
+
+                //    var name = $"{modelOptions.Value.Schema}_{migration.target.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName}";
+
+                //    var model = manager.CreateMigration(name, migration.target, migration.source, this.modelOptions.Value);
+
+                //    types.Add($"{++i:D16}{name}", model.Type);
+                //    factories.Add(model.Type, model.MigrationFactory);
+                //}
             }
             return new MigrationsInfo { Factories = factories, Types = types };
 

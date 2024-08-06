@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+
+      <Title>EAVFramework.Extensions.Aspire.Hosting</Title>
+      <Authors>Poul Kjeldager</Authors>
+      <Description>Aspire Hosting package for EAVFramework</Description>
+      <PackageReadmeFile>README.md</PackageReadmeFile>
+      <RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
+      <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Link="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+    
+  <ItemGroup>
+
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="8.1.0" />
+
+    <PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.6.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="8.0.7" />
+    <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="8.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EAVFramework.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+</Project>

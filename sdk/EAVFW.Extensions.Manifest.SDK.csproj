@@ -11,6 +11,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <LangVersion>9.0</LangVersion>
 
 	</PropertyGroup>
 
@@ -20,7 +21,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="System.Text.Json" Version="8.0.0"/>
+		<PackageReference Include="System.Text.Json" Version="8.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="3.0.26" />
 	</ItemGroup>

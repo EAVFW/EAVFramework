@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EAVFW.Extensions.Manifest.SDK;
+using System;
 using System.Reflection;
 
 namespace EAVFramework.Shared.V2
@@ -9,7 +10,9 @@ namespace EAVFramework.Shared.V2
     }
     public class CodeGenerationOptions
     {
-        
+
+        public bool GenerateAbstractClasses { get; set; } = true;
+
         /// <summary>
         /// The constructor used for the Newtonsoft JsonPropertyAttribute when setting DTO Property Attributes.
         /// </summary>
@@ -41,6 +44,8 @@ namespace EAVFramework.Shared.V2
         public string EntityConfigurationConfigureName { get; set; }
         public Type EntityTypeBuilderType { get; set; }
         public MethodInfo EntityTypeBuilderToTable { get; set; }
+        public MethodInfo UseTpcMappingStrategy { get; set; }
+        
 
         /// <summary>
         /// Global schema to use when not specified per entity
@@ -75,7 +80,7 @@ namespace EAVFramework.Shared.V2
         public MethodInfo MigrationsBuilderAlterColumn { get; set; }
         public MethodInfo MigrationsBuilderDropForeignKey { get; set; }
         public Type ReferentialActionType { get; set; }
-        public int ReferentialActionNoAction { get; set; }
+        public CascadeAction ReferentialActionNoAction { get; set; }
         public MethodInfo LambdaBase { get; set; }
         public InversePropertyCollectionNamePattern InversePropertyCollectionName { get; set; } = InversePropertyCollectionNamePattern.ConcatWhenMultipleLookups;
 
