@@ -176,7 +176,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The services.</param>
         /// <param name="configuration">The configuration.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddIdentityServer<TContext>(this IServiceCollection services, IConfiguration configuration)
+        public static IEAVFrameworkBuilder AddEAVFramework<TContext>(this IServiceCollection services, IConfiguration configuration)
              where TContext : DynamicContext
         {
             services.Configure<EAVFrameworkOptions>(configuration);
@@ -391,12 +391,13 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static AuthenticatedEAVFrameworkBuilder AddAuthentication(
-            this IEAVFrameworkBuilder builder,
+            this IEAVFrameworkBuilder builder, Action<EAVFramework.Configuration.AuthenticationOptions> configure,
             AuthenticationProperties properties = null)
         {
             var props = properties ?? new AuthenticationProperties();
             builder.Services.AddTransient<AuthenticationProperties>(_ => props);
             builder.AddCookieAuthentication();
+            builder.Services.Configure<EAVFrameworkOptions>(options => configure?.Invoke(options.Authentication));
             return new AuthenticatedEAVFrameworkBuilder(builder);
         }
 

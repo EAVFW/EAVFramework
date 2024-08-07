@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,6 +55,7 @@ namespace EAVFramework.Configuration
         public UserInteractionOptions UserInteraction { get; set; } = new UserInteractionOptions();
         public string Schema { get; internal set; }
         public string ConnectionString { get; internal set; }
+        public ClaimsPrincipal SystemAdministratorIdentity { get;  set; }
     }
 
 }

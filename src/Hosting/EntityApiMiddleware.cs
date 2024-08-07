@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Builder;
 namespace EAVFramework.Hosting
 {
 
-    
+
 
     public interface IRecordValidator<T>
     {
@@ -29,11 +29,12 @@ namespace EAVFramework.Hosting
     }
 
 
- 
+
     public static class EndpointsMapping
     {
- 
-        public static void MapEAVFrameworkRoutes<TContext>(this IEndpointRouteBuilder config, bool addAuth=true) where TContext : DynamicContext
+
+        public static void MapEAVFrameworkRoutesWithoutAuth<TContext>(this IEndpointRouteBuilder config)
+           where TContext : DynamicContext
         {
             var options = config.ServiceProvider.GetService<EAVFrameworkOptions>();
             var endpoints = config.ServiceProvider.GetService<IEnumerable<Endpoint<TContext>>>();
@@ -66,15 +67,23 @@ namespace EAVFramework.Hosting
                 //   .WithMetadata(endpoint);
             }
 
-            if (addAuth)
-            {
-                var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
 
-                config.AddEasyAuth(authProps ?? new AuthenticationProperties());
-            }
+        }
+
+        public static void MapEAVFrameworkRoutes<TContext, TIdentity>(this IEndpointRouteBuilder config)
+            where TContext : DynamicContext
+            where TIdentity : DynamicEntity
+        {
+            config.MapEAVFrameworkRoutesWithoutAuth<TContext>();
+
+
+            var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
+
+            config.AddEasyAuth<TIdentity>(authProps ?? new AuthenticationProperties());
+
         }
     }
 
 
-   
+
 }

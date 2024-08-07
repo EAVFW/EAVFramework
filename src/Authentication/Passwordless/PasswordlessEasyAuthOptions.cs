@@ -20,11 +20,7 @@ namespace EAVFramework.Authentication.Passwordless
         /// </summary>
         public string Sender { get; set; }
 
-        /// <summary>
-        /// Function for taking an email address and looking up the unique ID for the corresponding user.
-        /// If this function returns null, the OnNotFound delegate will be executed.
-        /// </summary>
-        public Func<HttpContext, IServiceProvider, string, Task<string>> FetchUserIdByEmailAsync { get; set; }
+       
 
         /// <summary>
         /// Function for taking the generated magic link and interpolating it into the desired sign-in email response
@@ -38,16 +34,7 @@ namespace EAVFramework.Authentication.Passwordless
         /// </summary>
         public Action<HttpContext> OnNotFound { get; set; } = context => { context.Response.StatusCode = 404; };
 
-        /// <summary>
-        /// Persist the ticket information
-        /// </summary>
-        public Func<HttpContext,string,string, byte[],string,Task> PersistTicketAsync { get; set; }
-
-        /// <summary>
-        /// Get the ticket information
-        /// </summary>
-        public Func<HttpContext,string, Task<(byte[], string)>> GetTicketInfoAsync { get; set; }
-
+     
         public Func<HttpContext, Task> ResponseSuccessFullAsync { get; set; } = DefaultResponse;
 
         private static async Task DefaultResponse(HttpContext httpcontext)

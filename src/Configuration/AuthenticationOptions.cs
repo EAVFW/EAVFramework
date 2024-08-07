@@ -1,4 +1,5 @@
 using EAVFramework.Authentication;
+using EAVFramework.Extensions;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -7,11 +8,109 @@ using System.Threading.Tasks;
 
 namespace EAVFramework.Configuration
 {
+
+    public class PersistTicketRequest
+    {
+        /// <summary>
+        /// The unique id for the signin session, handleid
+        /// </summary>
+        public Guid HandleId { get; set; }
+
+        /// <summary>
+        /// The httpcontext for which the signin sesion is in progress where applicable
+        /// </summary>
+        public HttpContext HttpContext { get; set; }
+
+        public IServiceProvider ServiceProvider { get; set; }
+
+        /// <summary>
+        /// The identity id of the current signin session user if known
+        /// </summary>
+        public Guid? IdentityId { get; set; }
+
+        /// <summary>
+        /// The data to persist
+        /// </summary>
+        public byte[] Ticket { get; set; }
+
+        /// <summary>
+        /// The redirect url to use when the signin session is completed
+        /// </summary>
+        public string RedirectUrl { get; set; }
+        public string AuthProvider { get;  set; }
+        public ClaimsPrincipal OwnerIdentity { get;  set; }
+    }
+    public class TicketInformation
+    {
+        /// <summary>
+        /// The data to persist
+        /// </summary>
+        public byte[] Ticket { get; set; }
+
+        /// <summary>
+        /// The redirect url to use when the signin session is completed
+        /// </summary>
+        public string RedirectUrl { get; set; }
+        public Guid IdentityId { get;  set; }
+    }
+
+    public class UserDiscoveryRequest
+    {
+        /// <summary>
+        /// The httpcontext for which the signin sesion is in progress where applicable
+        /// </summary>
+        public HttpContext HttpContext { get; set; }
+
+        public IServiceProvider ServiceProvider { get; set; }   
+
+        public string Email { get; set; }
+
+    }
+    public class EmailDiscoveryRequest
+    {
+        /// <summary>
+        /// The httpcontext for which the signin sesion is in progress where applicable
+        /// </summary>
+        public HttpContext HttpContext { get; set; }
+
+        public IServiceProvider ServiceProvider { get; set; }
+
+        public Guid IdentityId { get; set; }
+
+    }
+
+    public class UnPersistTicketReuqest
+    {
+        public Guid HandleId { get; set; }
+        public IServiceProvider ServiceProvider { get; set; }
+    }
+
     /// <summary>
     /// Configures the login and logout views and behavior.
     /// </summary>
     public class AuthenticationOptions
     {
+
+        /// <summary>
+        /// Persist the ticket information
+        /// </summary>
+        public Func<PersistTicketRequest, Task> PersistTicketAsync { get; set; }
+        /// <summary>
+        /// Persist the ticket information
+        /// </summary>
+        public Func<UnPersistTicketReuqest, Task<TicketInformation>> UnPersistTicketAsync { get; set; }
+
+
+        /// <summary>
+        /// Function for taking an email address and looking up the unique ID for the corresponding user.
+        /// If this function returns null, the OnNotFound delegate will be executed.
+        /// </summary>
+        public Func<UserDiscoveryRequest, Task<Guid?>> FindIdentity { get; set; }
+
+   
+        public Func<EmailDiscoveryRequest, Task<string>> FindEmailFromIdentity { get; set; }
+
+
         /// <summary>
         /// Sets the cookie authentication scheme configured by the host used for interactive users. If not set, the scheme will inferred from the host's default authentication scheme.
         /// This setting is typically used when AddPolicyScheme is used in the host as the default scheme.
@@ -43,9 +142,9 @@ namespace EAVFramework.Configuration
 
         public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
 
-        public Func<HttpContext, ValueTask<string>> GenerateHandleId { get; set; } = DefaultHandleIdGenerator;
+        public Func<HttpContext, ValueTask<Guid>> GenerateHandleId { get; set; } = DefaultHandleIdGenerator;
 
-        private static ValueTask<string> DefaultHandleIdGenerator(HttpContext httpcontext) => new ValueTask<string>( CryptographyHelpers.CreateCryptographicallySecureGuid().ToString("N"));
+        private static ValueTask<Guid> DefaultHandleIdGenerator(HttpContext httpcontext) => new ValueTask<Guid>( CryptographyHelpers.CreateCryptographicallySecureGuid());
      
 
         public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> OnAuthenticatedAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
