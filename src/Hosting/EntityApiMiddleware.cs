@@ -33,7 +33,7 @@ namespace EAVFramework.Hosting
     public static class EndpointsMapping
     {
 
-        public static void MapEAVFrameworkRoutesWithoutAuth<TContext>(this IEndpointRouteBuilder config)
+        public static void MapEAVFrameworkRoutes<TContext>(this IEndpointRouteBuilder config)
            where TContext : DynamicContext
         {
             var options = config.ServiceProvider.GetService<EAVFrameworkOptions>();
@@ -74,7 +74,7 @@ namespace EAVFramework.Hosting
             where TContext : DynamicContext
             where TIdentity : DynamicEntity
         {
-            config.MapEAVFrameworkRoutesWithoutAuth<TContext>();
+            config.MapEAVFrameworkRoutes<TContext>();
 
 
             var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
