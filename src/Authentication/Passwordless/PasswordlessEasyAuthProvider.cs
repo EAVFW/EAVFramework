@@ -68,9 +68,8 @@ namespace EAVFramework.Authentication.Passwordless
 
         public PasswordlessEasyAuthProvider(
             ILogger<PasswordlessEasyAuthProvider> logger,
-            EAVMetrics metrics,
             SmtpClient smtpClient,
-            IOptions<PasswordlessEasyAuthOptions> options) : this()
+            IOptions<PasswordlessEasyAuthOptions> options, EAVMetrics metrics=null) : this()
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _metrics = metrics;
@@ -85,15 +84,16 @@ namespace EAVFramework.Authentication.Passwordless
         {
             // return async (httpcontext) =>
             {
+                var email = authenticateRequest.Email;
 
-                if (!authenticateRequest.IdentityId.HasValue || authenticateRequest.IdentityId.Value == default)
+                if (string.IsNullOrEmpty(email) && !authenticateRequest.IdentityId.HasValue || authenticateRequest.IdentityId.Value == default)
                 {    
-                      return new OnAuthenticateResult { ErrorMessage = $"User not found for email",
+                      return new OnAuthenticateResult { ErrorMessage = $"User not found",
                           ErrorCode= "access_denied", ErrorSubCode = "user_not_found", Success=false };
                 }
 
                 
-                var email = await authenticateRequest.Options.FindEmailFromIdentity(
+                email ??= await authenticateRequest.Options?.FindEmailFromIdentity(
                     new EmailDiscoveryRequest
                     {
                         HttpContext = authenticateRequest.HttpContext,
@@ -101,8 +101,15 @@ namespace EAVFramework.Authentication.Passwordless
                         ServiceProvider = authenticateRequest.ServiceProvider
                     });
 
+                if (string.IsNullOrEmpty(email))
+                {
+                    return new OnAuthenticateResult
+                    {
+                        ErrorMessage = $"User not found",
+                        ErrorCode = "access_denied", ErrorSubCode = "user_not_found", Success = false
+                    };
+                }
 
-               
 
                 //  var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
                 //      Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
@@ -138,9 +145,12 @@ namespace EAVFramework.Authentication.Passwordless
                 _logger.LogInformation("Sending sigin email to {email} with handleId {handleId} from {sender}",
                     MaskEmail(email), authenticateRequest.HandleId, _options.Value.Sender);
 
-                await _smtp.SendMailAsync(mailMessage);
 
 
+                await SendEmailWithRetryAsync(mailMessage);
+               
+
+              
                 await _options.Value.ResponseSuccessFullAsync(authenticateRequest.HttpContext);
 
                 return new OnAuthenticateResult { Success = true };
@@ -149,6 +159,41 @@ namespace EAVFramework.Authentication.Passwordless
 
             };
         }
+
+        private async Task SendEmailWithRetryAsync(MailMessage mailMessage)
+        {
+            const int maxRetries = 5;
+            int retryCount = 0;
+            int delay = 40; // Initial delay in milliseconds 
+
+            while (retryCount < maxRetries)
+            {
+                try
+                {
+                    await _smtp.SendMailAsync(mailMessage);
+
+                    return;
+                    
+                }
+                catch (Exception ex)  when (ex.Message.Contains("Service not available, closing transmission channel"))
+                {
+                   
+                    _logger.LogWarning(ex, "Failed to send email. Attempt {retryCount} of {maxRetries}", retryCount + 1, maxRetries);
+
+                    if (retryCount == maxRetries - 1)
+                    {
+                        throw;
+                    }
+
+                    await Task.Delay(delay);
+                    delay *= 2; // Exponential backoff
+                    retryCount++;
+                }
+            }
+
+            
+        }
+
         private string MaskEmail(string email)
         {
             if (string.IsNullOrEmpty(email))
@@ -178,6 +223,17 @@ namespace EAVFramework.Authentication.Passwordless
 
 
             var ticket = request.Ticket;
+
+            if(!request.IdentityId.HasValue || request.IdentityId.Value == default)
+            {
+                 request.IdentityId = await request.Options?.FindIdentity(
+                          new UserDiscoveryRequest { 
+                                        
+                            Email = ticket["email"].ToString(),
+                            HttpContext = request.HttpContext,
+                            ServiceProvider = request.HttpContext.RequestServices
+                    });
+            }
 
             var identity = new ClaimsIdentity(
                 [new Claim("sub",request.IdentityId.ToString()), ..

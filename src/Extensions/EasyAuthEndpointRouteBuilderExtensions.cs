@@ -35,6 +35,7 @@ namespace EAVFramework.Extensions
         public Guid? IdentityId { get;  set; }
         
         public Configuration.AuthenticationOptions Options { get; set; }
+        public string Email { get;  set; }
     }
     public class OnCallbackRequest
     {
@@ -86,7 +87,7 @@ namespace EAVFramework.Extensions
                 {
                     var logger = loggerFactory.CreateLogger($"EAVFW.Auth.{auth.AuthenticationName}");
                     
-                    metrics.StartSignup(auth.AuthenticationName);
+                    metrics?.StartSignup(auth.AuthenticationName);
 
                     var handleId = await options.Authentication.GenerateHandleId(httpcontext);
 
@@ -118,7 +119,8 @@ namespace EAVFramework.Extensions
                          HttpContext = httpcontext, 
                         CallbackUrl = callbackUrl,
                         HandleId = handleId,
-                        IdentityId = identityId
+                        IdentityId = identityId,
+                        Email = email,
                     });
 
 
@@ -231,14 +233,14 @@ namespace EAVFramework.Extensions
 
                 if (!string.IsNullOrEmpty(error))
                 {
-                    metrics.SigninFailed(provider);
+                    metrics?.SigninFailed(provider);
                     throw new Exception("External authentication error");
                 }
 
                 var result = await httpcontext.AuthenticateAsync(Constants.ExternalCookieAuthenticationScheme);
                 if (result?.Succeeded != true)
                 {
-                    metrics.SigninFailed(provider);
+                    metrics?.SigninFailed(provider);
                     throw new Exception("External authentication error");
                 }
 
@@ -246,7 +248,7 @@ namespace EAVFramework.Extensions
                 var externalUser = result.Principal;
                 if (externalUser == null)
                 {
-                    metrics.SigninFailed(provider);
+                    metrics?.SigninFailed(provider);
                     throw new Exception("External authentication error");
                 }
 
@@ -292,7 +294,7 @@ namespace EAVFramework.Extensions
 
                 await httpcontext.SignOutAsync(Constants.ExternalCookieAuthenticationScheme);
 
-                metrics.SigninSuccess(provider);
+                metrics?.SigninSuccess(provider);
 
                 if (!string.IsNullOrWhiteSpace(result.Properties.RedirectUri))
                 {
