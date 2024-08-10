@@ -60,8 +60,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                 // These states are terminal but we need a better way to detect that
                 static bool IsKnownTerminalState(CustomResourceSnapshot snapshot) =>
-                    snapshot.State == "FailedToStart" ||
-                    snapshot.State == "Exited" ||
+                    snapshot.State.Text == KnownResourceStates.FailedToStart ||
+                    snapshot.State.Text == KnownResourceStates.Running ||
+                    snapshot.State.Text == KnownResourceStates.Finished ||
                     snapshot.ExitCode is not null;
 
                 // Watch for global resource state changes
@@ -142,6 +143,13 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                             foreach (var waitOn in group)
                             {
+                               // await resourceNotificationService.PublishUpdateAsync(waitOn.Resource, s => s with { Properties = [.. s.Properties] });
+
+                                if(waitOn.Resource.TryGetLastAnnotation<NeedsCompletedAnnotation>(out var alreadyCompleed))
+                                {
+                                    continue;
+                                }
+
                                 var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
                                 async Task Wait()

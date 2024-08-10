@@ -2,13 +2,18 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Lifecycle;
 using EAVFW.Extensions.Manifest.SDK;
 using EAVFW.Extensions.Manifest.SDK.Migrations;
+using Grpc.Core;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,15 +25,333 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public bool Success { get; set; }
     }
 
-    public record  EAVFWMigrationdAnnotation() : IResourceAnnotation
+    public record EAVFWMigrationdAnnotation() : IResourceAnnotation
     {
         public bool Success { get; set; }
         public int Attempt { get; set; } = 1;
     }
 
+    public record EAVFWBuildAnnotation() : IResourceAnnotation
+    {
+        public ProjectResource ProjectResource { get; set; }
+    }
+
+    public class EavBuildResource : Resource
+    {
+        public EavBuildResource(string name, string command, string workingdirectory, params string[] arguments) : base(name)
+        {
+            Command = command;
+            Workingdirectory = workingdirectory;
+            Arguments = arguments;
+        }
+
+        public string Command { get; }
+        public string Workingdirectory { get; }
+        public string[] Arguments { get; }
+        public ProjectResource Project { get;  set; }
+    }
+    internal sealed class ProcessResult
+    {
+        public ProcessResult(int exitCode)
+        {
+            ExitCode = exitCode;
+        }
+
+        public int ExitCode { get; }
+    }
+    internal sealed class ProcessSpec
+    {
+        public string ExecutablePath { get; }
+        public string? WorkingDirectory { get; init; }
+        public IDictionary<string, string> EnvironmentVariables { get; init; } = new Dictionary<string, string>();
+        public bool InheritEnv { get; init; } = true;
+        public string? Arguments { get; init; }
+        public Action<string>? OnOutputData { get; init; }
+        public Action<string>? OnErrorData { get; init; }
+        public Action<int>? OnStart { get; init; }
+        public Action<int>? OnStop { get; init; }
+        public bool KillEntireProcessTree { get; init; } = true;
+        public bool ThrowOnNonZeroReturnCode { get; init; } = true;
+
+        public ProcessSpec(string executablePath)
+        {
+            ExecutablePath = executablePath;
+        }
+    }
+    internal static partial class ProcessUtil
+    {
+        #region Native Methods
+
+        [LibraryImport("libc", SetLastError = true, EntryPoint = "kill")]
+        private static partial int sys_kill(int pid, int sig);
+
+        #endregion
+
+        private static readonly TimeSpan s_processExitTimeout = TimeSpan.FromSeconds(5);
+
+        public static (Task<ProcessResult>, IAsyncDisposable) Run(ProcessSpec processSpec)
+        {
+            var process = new System.Diagnostics.Process()
+            {
+                StartInfo =
+            {
+                FileName = processSpec.ExecutablePath,
+                WorkingDirectory = processSpec.WorkingDirectory ?? string.Empty,
+                Arguments = processSpec.Arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                WindowStyle = ProcessWindowStyle.Hidden,
+            },
+                EnableRaisingEvents = true
+            };
+
+            if (!processSpec.InheritEnv)
+            {
+                process.StartInfo.Environment.Clear();
+            }
+
+            foreach (var (key, value) in processSpec.EnvironmentVariables)
+            {
+                process.StartInfo.Environment[key] = value;
+            }
+
+            // Use a reset event to prevent output processing and exited events from running until OnStart is complete.
+            // OnStart might have logic that sets up data structures that then are used by these events.
+            var startupComplete = new ManualResetEventSlim(false);
+
+            // Note: even though the child process has exited, its children may be alive and still producing output.
+            // See https://github.com/dotnet/runtime/issues/29232#issuecomment-1451584094 for how this might affect waiting for process exit.
+            // We are going to discard that (grandchild) output by checking process.HasExited.
+
+            if (processSpec.OnOutputData != null)
+            {
+                process.OutputDataReceived += (_, e) =>
+                {
+                    startupComplete.Wait();
+
+                    if (String.IsNullOrEmpty(e.Data))
+                    {
+                        return;
+                    }
+
+                    processSpec.OnOutputData.Invoke(e.Data);
+                };
+            }
+
+            if (processSpec.OnErrorData != null)
+            {
+                process.ErrorDataReceived += (_, e) =>
+                {
+                    startupComplete.Wait();
+                    if (String.IsNullOrEmpty(e.Data))
+                    {
+                        return;
+                    }
+
+                    processSpec.OnErrorData.Invoke(e.Data);
+                };
+            }
+
+            var processLifetimeTcs = new TaskCompletionSource<ProcessResult>();
+
+            try
+            {
+#if ASPIRE_EVENTSOURCE
+            AspireEventSource.Instance.ProcessLaunchStart(processSpec.ExecutablePath, processSpec.Arguments ?? "");
+#endif
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                processSpec.OnStart?.Invoke(process.Id);
+
+                process.WaitForExitAsync().ContinueWith(t =>
+                {
+                    startupComplete.Wait();
+
+                    processSpec.OnStop?.Invoke(process.ExitCode);
+
+                    if (processSpec.ThrowOnNonZeroReturnCode && process.ExitCode != 0)
+                    {
+                        processLifetimeTcs.TrySetException(new InvalidOperationException(
+                            $"Command {processSpec.ExecutablePath} {processSpec.Arguments} returned non-zero exit code {process.ExitCode}"));
+                    }
+                    else
+                    {
+                        processLifetimeTcs.TrySetResult(new ProcessResult(process.ExitCode));
+                    }
+                }, TaskScheduler.Default);
+            }
+            finally
+            {
+                startupComplete.Set(); // Allow output/error/exit handlers to start processing data.
+#if ASPIRE_EVENTSOURCE
+            AspireEventSource.Instance.ProcessLaunchStop(processSpec.ExecutablePath, processSpec.Arguments ?? "");
+#endif
+            }
+
+            return (processLifetimeTcs.Task, new ProcessDisposable(process, processLifetimeTcs.Task, processSpec.KillEntireProcessTree));
+        }
+
+        private sealed class ProcessDisposable : IAsyncDisposable
+        {
+            private readonly System.Diagnostics.Process _process;
+            private readonly Task _processLifetimeTask;
+            private readonly bool _entireProcessTree;
+
+            public ProcessDisposable(System.Diagnostics.Process process, Task processLifetimeTask, bool entireProcessTree)
+            {
+                _process = process;
+                _processLifetimeTask = processLifetimeTask;
+                _entireProcessTree = entireProcessTree;
+            }
+
+            public async ValueTask DisposeAsync()
+            {
+                if (_process.HasExited)
+                {
+                    return; // nothing to do
+                }
+
+                if (OperatingSystem.IsWindows())
+                {
+                    if (!_process.CloseMainWindow())
+                    {
+                        _process.Kill(_entireProcessTree);
+                    }
+                }
+                else
+                {
+                    sys_kill(_process.Id, sig: 2); // SIGINT
+                }
+
+                await _processLifetimeTask.WaitAsync(s_processExitTimeout).ConfigureAwait(false);
+                if (!_process.HasExited)
+                {
+                    // Always try to kill the entire process tree here if all of the above has failed.
+                    _process.Kill(entireProcessTree: true);
+                }
+            }
+        }
+    }
+
+    public class BuildEAVFWAppsLifecycleHook : IDistributedApplicationLifecycleHook
+    {
+        private readonly ResourceLoggerService _resourceLoggerService;
+        private readonly ResourceNotificationService _resourceNotificationService;
+
+        public BuildEAVFWAppsLifecycleHook(ResourceLoggerService resourceLoggerService, ResourceNotificationService resourceNotificationService)
+        {
+            _resourceLoggerService = resourceLoggerService;
+            _resourceNotificationService = resourceNotificationService;
+        }
+        public static string CreateMd5ForFolder(string path)
+        {
+            // assuming you want to include nested folders
+            var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories)
+                                 .OrderBy(p => p).ToList();
+
+            MD5 md5 = MD5.Create();
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                string file = files[i];
+
+                // hash path
+                string relativePath = file.Substring(path.Length + 1);
+                byte[] pathBytes = Encoding.UTF8.GetBytes(relativePath.ToLower());
+                md5.TransformBlock(pathBytes, 0, pathBytes.Length, pathBytes, 0);
+
+                // hash contents
+                byte[] contentBytes = File.ReadAllBytes(file);
+                if (i == files.Count - 1)
+                    md5.TransformFinalBlock(contentBytes, 0, contentBytes.Length);
+                else
+                    md5.TransformBlock(contentBytes, 0, contentBytes.Length, contentBytes, 0);
+            }
+
+            return BitConverter.ToString(md5.Hash).Replace("-", "").ToLower();
+        }
+
+
+        public async Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken = default)
+        {
+            foreach (var resource in appModel.Resources)
+            {
+
+                //REVIEW - annotation vs resources. resources show up in dashboard and has its own logging.
+
+                if (resource.TryGetLastAnnotation(out EAVFWBuildAnnotation buildAnnotation))
+                {
+                    var metadata = buildAnnotation.ProjectResource.GetProjectMetadata();
+                    var hash = CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
+                    var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
+                        File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
+                    if (hash != oldhash)
+                    {
+
+                    }
+                }
+
+                
+                if (resource is EavBuildResource eavBuildResource)
+                {
+                    var metadata = eavBuildResource.Project.GetProjectMetadata();
+                    var hash = CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
+
+                    var logger = _resourceLoggerService.GetLogger(eavBuildResource);
+                     
+                    var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
+                        File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
+                    
+                    if (hash != oldhash)
+                    {
+
+                        var test = ProcessUtil.Run(new ProcessSpec("cmd")
+                        {
+                            WorkingDirectory = eavBuildResource.Workingdirectory,
+                            Arguments = $"/c \"{eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments) + "\"",
+                            InheritEnv = true,
+                            OnOutputData = (data) => logger.LogInformation(data),
+                            OnErrorData = (data) => logger.LogError(data),
+                            OnStart = (pid) =>
+                            {
+                                logger.LogInformation($"Started process with pid {pid}");
+                                _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                    state => state with { State = state.State with { Text = "Building", Style = KnownResourceStateStyles.Info } });
+                            },
+                            OnStop = (exitcode) =>
+                            {
+                                logger.LogInformation($"Process exited with code {exitcode}");
+                                _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                   state => state with { State = state.State with { Text = KnownResourceStates.Exited, Style = KnownResourceStateStyles.Success } });
+
+                              
+
+                                File.WriteAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt"), hash);
+                            }
+
+                        });
+                    }
+                    else
+                    {
+                        await _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                state => state with { State = state.State with { Text = KnownResourceStates.Finished, Style = KnownResourceStateStyles.Success } });
+
+                    }
+
+                }
+            }
+
+           
+        }
+    }
+
     /// <summary>
     /// The lifecycle hook that monitors the EAVFW Model Project resources and publishes updates to the resource state.
     /// </summary>
+
 
     public class PublishEAVFWProjectLifecycleHook : IDistributedApplicationLifecycleHook
     {
@@ -61,13 +384,13 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             var logger = _resourceLoggerService.GetLogger(modelResource);
 
                             var modelProjectPath = modelResource.GetModelPath();
-                            
+
                             var targetDatabaseResourceName = modelResource.Annotations.OfType<TargetDatabaseResourceAnnotation>().Single().TargetDatabaseResourceName;
                             var targetDatabaseResource = application.Resources.OfType<SqlServerDatabaseResource>().Single(r => r.Name == targetDatabaseResourceName);
                             var targetSQLServerResource = targetDatabaseResource.Parent;
-                           
 
-                            if(!modelResource.TryGetLastAnnotation(out DatabaseCreatedAnnotation createdatabaseannovation))
+
+                            if (!modelResource.TryGetLastAnnotation(out DatabaseCreatedAnnotation createdatabaseannovation))
                             {
                                 modelResource.Annotations.Add(createdatabaseannovation = new DatabaseCreatedAnnotation());
                             }
@@ -110,7 +433,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     createdatabaseannovation.Attempt++;
                                     logger.LogWarning(invalid, "Transient error, properly due to endpoints not up yet. We are backing off and trying again.");
                                     throw;
-                                }catch (SqlException sqlexception)
+                                }
+                                catch (SqlException sqlexception)
                                 {
                                     createdatabaseannovation.Attempt++;
                                     logger.LogWarning(sqlexception, "Transient error, properly due to sql server not ready yet. We are backing off and trying again");
@@ -168,7 +492,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.FailedToStart, KnownResourceStateStyles.Error) });
 
-                                 
+
                                 }
                             }
                         }

@@ -26,5 +26,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public bool WaitUntilCompleted { get; set; }
     }
 
+    public class NeedsCompletedAnnotation : IResourceAnnotation
+    {
+
+    }
    
 }

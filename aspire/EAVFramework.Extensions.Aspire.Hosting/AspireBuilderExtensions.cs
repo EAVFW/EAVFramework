@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -31,11 +33,25 @@ namespace EAVFramework.Extensions.Aspire.Hosting
     public record TargetKeyVaultResourceAnnotation(AzureKeyVaultResource resource) : IResourceAnnotation
     {
     }
+    internal static class PathNormalizer
+    {
+        public static string NormalizePathForCurrentPlatform(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
 
+            // Fix slashes
+            path = path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+
+            return Path.GetFullPath(path);
+        }
+    }
     public static class AspireBuilderExtensions
     {
 
-       
+
 
         public static IResourceBuilder<CertificateResource> PublishTo(this IResourceBuilder<CertificateResource> builder, IResourceBuilder<AzureKeyVaultResource> target)
         {
@@ -67,7 +83,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             public async Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
             {
                 // We don't need to execute any of this logic in publish mode
-            
+
                 var stoppingToken = _cts.Token;
 
                 var waitingResources = new ConcurrentDictionary<IResource, ConcurrentDictionary<TargetKeyVaultResourceAnnotation, TaskCompletionSource>>();
@@ -82,7 +98,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         continue;
                     }
 
-                  //  var dependencies = new List<Task>();
+                    //  var dependencies = new List<Task>();
 
                     foreach (var group in resourcesToWaitOn)
                     {
@@ -105,7 +121,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                             pendingAnnotations[waitOn] = tcs;
 
-                          //  dependencies.Add(Wait());
+                            //  dependencies.Add(Wait());
                         }
 
                     }
@@ -113,7 +129,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                     {
                         State = new("Waiting on keyvault", KnownResourceStateStyles.Info)
                     });
-                 //   await Task.WhenAll(dependencies).WaitAsync(cancellationToken);
+                    //   await Task.WhenAll(dependencies).WaitAsync(cancellationToken);
 
                 }
 
@@ -128,7 +144,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             {
 
                                 var snapshot = resourceEvent.Snapshot;
-                                if(snapshot.State.Text == KnownResourceStates.Running)
+                                if (snapshot.State.Text == KnownResourceStates.Running)
                                 {
                                     var logger = loggerService.GetLogger(waitOn.resource);
                                     var vaultUri = await waitOn.resource.VaultUri.GetValueAsync();
@@ -164,19 +180,19 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     }
 
                                     var certClient = new CertificateClient(new Uri(vaultUri), credential);
-                                   
-                                    foreach(var cert in appModel.Resources.OfType<CertificateResource>()
-                                        .Where(r=> r.TryGetAnnotationsOfType<TargetKeyVaultResourceAnnotation>(out var sources) && sources.Any(s=>s.resource == resourceEvent.Resource)))
+
+                                    foreach (var cert in appModel.Resources.OfType<CertificateResource>()
+                                        .Where(r => r.TryGetAnnotationsOfType<TargetKeyVaultResourceAnnotation>(out var sources) && sources.Any(s => s.resource == resourceEvent.Resource)))
                                     {
                                         try
                                         {
-                                            var a =  certClient.GetPropertiesOfCertificatesAsync().ToBlockingEnumerable()
+                                            var a = certClient.GetPropertiesOfCertificatesAsync().ToBlockingEnumerable()
                                             .Any(c => c.Name == cert.Name);
 
                                             if (!a || (await certClient.GetCertificateAsync(cert.Name)).Value.Properties.ExpiresOn < DateTimeOffset.UtcNow.AddDays(14))
                                             {
                                                 await certClient.ImportCertificateAsync(
-                                                    new ImportCertificateOptions(cert.Name, Convert.FromBase64String( cert.Value))
+                                                    new ImportCertificateOptions(cert.Name, Convert.FromBase64String(cert.Value))
                                                     {
                                                         Enabled = true,
                                                         Tags = { { "CreatedBy", "Aspire" } }
@@ -249,6 +265,57 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             return builder.WithX509Exension(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, critical: true));
 
         }
+        public static IResourceBuilder<ProjectResource> WithHostname(this IResourceBuilder<ProjectResource> builder, string host)
+        {
+
+            builder.ApplicationBuilder.Services.AddLifecycleHook((sp) => new EndpointUpdaterHook(
+              sp.GetRequiredService<ResourceNotificationService>(),
+                 sp.GetRequiredService<ResourceLoggerService>(),
+                 builder.Resource, host));
+
+            return builder;
+        }
+        private sealed class EndpointUpdaterHook(
+           ResourceNotificationService resourceNotificationService,
+           ResourceLoggerService loggerService,
+           ProjectResource project, string host) : IDistributedApplicationLifecycleHook
+        {
+
+            public async Task AfterResourcesCreatedAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
+            {
+                var _ = Task.Run(async () =>
+                {
+
+                    await foreach (var update in resourceNotificationService.WatchAsync(cancellationToken))
+                    {
+                        try
+                        {
+                            if (update.Resource == project && update.Snapshot.Urls.Any(x => new Uri(x.Url).Host == "localhost"))
+                            {
+                                var endpoints = project.Annotations.OfType<EndpointAnnotation>().ToImmutableArray();
+                                
+                                await resourceNotificationService.PublishUpdateAsync(project,
+                                        state => state = state with
+                                        {
+                                            Urls = state.Urls.Select(url => url with
+                                            {
+                                                Url = url.Url.Replace("localhost", host)
+                                            }).ToImmutableArray()
+
+                                        });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    }
+                });
+
+
+            }
+        }
+
 
         public static IResourceBuilder<CertificateResource> AddCertificate(this IDistributedApplicationBuilder builder, string subject)
         {
@@ -374,9 +441,36 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             return builder.AddEAVFWModel(name).WithAnnotation(new TProject());
 
- 
+
         }
 
+        
+
+        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name)
+             where TProject : IProjectMetadata, new()
+        {
+            builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
+            var project = builder.AddProject<TProject>(name);
+
+            var workingDirectory = PathNormalizer.NormalizePathForCurrentPlatform(Path.Combine(builder.AppHostDirectory, "../.."));
+
+            var metadata = project.Resource.GetProjectMetadata();
+            var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
+            var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
+                File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
+
+
+            var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", "build-app") { Project = project.Resource })
+                .WithInitialState(new CustomResourceSnapshot { ResourceType = "EAV Build",
+                    State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
+                    Properties = [] });
+            
+            if(hash == oldhash)
+                build.WithAnnotation(new NeedsCompletedAnnotation());
+            
+            return project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource })
+                .Needs(build);
+        }
 
 
         /// <summary>
@@ -393,12 +487,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             var state = new CustomResourceSnapshot()
             {
                 ResourceType = "Data Model",
-                
+
                 // hide parameters by default
-                State = new ResourceStateSnapshot( "Generating", KnownResourceStateStyles.Info), 
-                Urls = [new UrlSnapshot("manifest.json",$"file://manifest.json",false)],
+                State = new ResourceStateSnapshot("Generating", KnownResourceStateStyles.Info),
+                Urls = [new UrlSnapshot("manifest.json", $"file://manifest.json", false)],
                 Properties = []
-                 
+
             };
 
 
