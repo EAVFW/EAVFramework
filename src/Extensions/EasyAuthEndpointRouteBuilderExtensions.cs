@@ -14,43 +14,127 @@ using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
 using EAVFramework.Configuration;
 using System.Net;
+using EAVFramework.OpenTelemetry;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
+
 
 namespace EAVFramework.Extensions
 {
+    
+   
+    public class OnAuthenticateRequest
+    {
+        public string CallbackUrl { get; set; } 
+        public HttpContext HttpContext { get; set; }
+        public IServiceProvider ServiceProvider { get; set; }
+        public Guid HandleId { get; set; }
+        public Guid? IdentityId { get;  set; }
+        
+        public Configuration.AuthenticationOptions Options { get; set; }
+        public string Email { get;  set; }
+    }
+    public class OnCallbackRequest
+    {
+        public HttpContext HttpContext { get; set; }
+        public Configuration.AuthenticationOptions Options { get; set; }
+        public Guid HandleId { get;  set; }
+       
+        public string RedirectUri { get;  set; }
+        public Dictionary<string, StringValues> Ticket { get;  set; }
+        public Guid? IdentityId { get;  set; }
+        public Dictionary<string, StringValues> Props { get;  set; }
+    }
+
+
+    /// <summary>
+    /// Redirect URL is the url within the application that the user initiated signin from.
+    /// Callback URL is the url that the external provider will redirect to after signin.
+    /// </summary>
+
     public static class EasyAuthEndpointRouteBuilderExtensions
     {
-        public static IEndpointRouteBuilder AddEasyAuth(
+        public static IEndpointRouteBuilder AddEasyAuth<TIdentity>(
             this IEndpointRouteBuilder endpoints,
             AuthenticationProperties authenticationProperties = null)
+            where TIdentity : DynamicEntity
         {
             var authProps = authenticationProperties ?? new AuthenticationProperties();
-            return MapAuthEndpoints(endpoints, authProps);
+            return MapAuthEndpoints<TIdentity>(endpoints, authProps);
         }
 
-        private static IEndpointRouteBuilder MapAuthEndpoints(
+        private static IEndpointRouteBuilder MapAuthEndpoints<TIdentity>(
             IEndpointRouteBuilder endpoints,
             AuthenticationProperties authProps)
+            where TIdentity : DynamicEntity
         {
             var sp = endpoints.ServiceProvider;
+            var metrics = sp.GetService<EAVMetrics>();
             var options = endpoints.ServiceProvider.GetService<EAVFrameworkOptions>();
             using var scope = sp.CreateScope();
             var authProviders = scope.ServiceProvider.GetServices<IEasyAuthProvider>().ToList();
+            var loggerFactory = sp.GetService<ILoggerFactory>();
 
             foreach (var auth in authProviders.Where(x => x.AutoGenerateRoutes))
             {
                 //https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
                 var authUrl = $"/.auth/login/{auth.AuthenticationName}";
 
-                endpoints.MapGet(authUrl, async (httpcontext) =>
+                endpoints.MapGet(authUrl, async (HttpContext httpcontext, [FromQuery] string redirectUri, [FromQuery] string email) =>
                 {
-                  
+                    var logger = loggerFactory.CreateLogger($"EAVFW.Auth.{auth.AuthenticationName}");
+                    
+                    metrics?.StartSignup(auth.AuthenticationName);
 
                     var handleId = await options.Authentication.GenerateHandleId(httpcontext);
 
-                    var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
-                    var callbackUrl = $"{baseUrl}{httpcontext.Request.PathBase}/.auth/login/{auth.AuthenticationName}/callback?token={handleId}";
+                    var identityId = await options.Authentication.FindIdentity(new UserDiscoveryRequest { Email = email,  HttpContext = httpcontext, ServiceProvider = httpcontext.RequestServices });
 
-                    await auth.OnAuthenticate(httpcontext,handleId, callbackUrl);
+                    var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
+                            Encoding.UTF8.GetBytes( httpcontext.Request.QueryString.Value?.TrimStart('?')));
+
+                    await options.Authentication.PersistTicketAsync(new PersistTicketRequest
+                    {
+                        HandleId = handleId,
+                        HttpContext = httpcontext,
+                        IdentityId = identityId == default ? null : identityId,
+                        Ticket = ticket,
+                        RedirectUrl = redirectUri,
+                        ServiceProvider = httpcontext.RequestServices,
+                        AuthProvider = auth.AuthenticationName,
+                        OwnerIdentity = options.SystemAdministratorIdentity
+                    });
+
+
+                    var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
+                    var callbackUrl = $"{baseUrl}{httpcontext.Request.PathBase}/.auth/login/{auth.AuthenticationName}/callback?token={handleId.ToString("N")}";
+
+                    var result = await auth.OnAuthenticate(new OnAuthenticateRequest
+                    {
+                        Options = options.Authentication,
+                        ServiceProvider = httpcontext.RequestServices,
+                         HttpContext = httpcontext, 
+                        CallbackUrl = callbackUrl,
+                        HandleId = handleId,
+                        IdentityId = identityId,
+                        Email = email,
+                    });
+
+
+                    if (!result.Success)
+                    {
+                       
+
+                        var redirectUrl = callbackUrl + $"{(callbackUrl.Contains('?') ? "&" : "?")}error={result.ErrorCode}&error_message={result.ErrorMessage}&error_subcode={result.ErrorSubCode}";
+
+                        logger.LogWarning("Login Failed, {errorMessage}, redirecting to {redirectUrl}", result.ErrorMessage, redirectUrl);
+
+                        httpcontext.Response.Redirect(redirectUrl);
+                    }
+
                   //  await requestDelegate(httpcontext);
                 }).WithMetadata(new AllowAnonymousAttribute());
 
@@ -59,23 +143,61 @@ namespace EAVFramework.Extensions
                     new[] { auth.CallbackHttpMethod.ToString().ToUpperInvariant() },
                     async (httpcontext) =>
                     {
-                       
-                        var (claimsPrincipal, redirectUri, handleId) = await auth.OnCallback(httpcontext);
+                        var request = new OnCallbackRequest{
+                            HttpContext = httpcontext,
+                            Options = options.Authentication,
+                            Props = new Dictionary<string, StringValues>( httpcontext.Request.Query, StringComparer.OrdinalIgnoreCase)
+                        };
 
+                        await auth.PopulateCallbackRequest(request);
+                        
+                        if(request.HandleId != default)
+                        {
+                            var ticketinfo = await options.Authentication.UnPersistTicketAsync(new UnPersistTicketReuqest
+                            {
+                                HandleId = request.HandleId,
+                                ServiceProvider = httpcontext.RequestServices
+                            });
+
+                            request.Ticket = QueryHelpers.ParseNullableQuery
+                                 (Encoding.UTF8.GetString(CryptographyHelpers.Decrypt(request.HandleId.ToString("N").Sha512(), request.HandleId.ToString("N").Sha1(), ticketinfo.Ticket)));
+                            request.IdentityId = ticketinfo.IdentityId;
+                            request.RedirectUri = ticketinfo.RedirectUrl;
+
+
+                        }
+                         
+                        var result = await auth.OnCallback(request);
+
+                        if (!result.Success)
+                        {
+
+                            httpcontext.Response.Redirect(
+                                $"{httpcontext.Request.PathBase}/account/login/callback?provider={auth.AuthenticationName}&error={result.ErrorCode}&error_message={result.ErrorMessage}&error_subcode={result.ErrorSubCode}");
+
+                           
+                            return;
+                        }
+
+                      
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
-                            claimsPrincipal, new AuthenticationProperties(
+                            result.Principal, new AuthenticationProperties(
                                 
                                 new Dictionary<string, string>
                                 {
-                                    ["handleId"] = handleId,
-                                    ["callbackUrl"] = redirectUri,
+                                    ["handleId"] = request.HandleId.ToString(),
+                                    ["callbackUrl"] = request.RedirectUri,
                                     ["schema"] = auth.AuthenticationName
                                 })
                             { 
-                                 RedirectUri = redirectUri 
+                                 RedirectUri = request.RedirectUri
                             });
 
-                        httpcontext.Response.Redirect($"{httpcontext.Request.PathBase}/account/login/callback");
+                        httpcontext.Response.Redirect($"{httpcontext.Request.PathBase}/account/login/callback?provider{auth.AuthenticationName}");
+
+                     
+
+
                     }).WithMetadata(new AllowAnonymousAttribute());
             }
 
@@ -104,13 +226,21 @@ namespace EAVFramework.Extensions
 
             //The idp must set the expected claims at least.
             //when signed in, check cookie for the redirect uri
-            endpoints.MapGet(Constants.UIConstants.DefaultRoutePaths.LoginCallback, async httpcontext =>
+            endpoints.MapGet(Constants.UIConstants.DefaultRoutePaths.LoginCallback,
+                async (HttpContext httpcontext, [FromQuery] string error, [FromQuery] string provider) =>
             {
                 //http://docs.identityserver.io/en/latest/topics/signin_external_providers.html
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    metrics?.SigninFailed(provider);
+                    throw new Exception("External authentication error");
+                }
 
                 var result = await httpcontext.AuthenticateAsync(Constants.ExternalCookieAuthenticationScheme);
                 if (result?.Succeeded != true)
                 {
+                    metrics?.SigninFailed(provider);
                     throw new Exception("External authentication error");
                 }
 
@@ -118,6 +248,7 @@ namespace EAVFramework.Extensions
                 var externalUser = result.Principal;
                 if (externalUser == null)
                 {
+                    metrics?.SigninFailed(provider);
                     throw new Exception("External authentication error");
                 }
 
@@ -127,7 +258,7 @@ namespace EAVFramework.Extensions
                     handleId=result.Properties.Items["handleId"];
                 }
 
-                var provider = string.Empty;
+                
 
                 if (result.Properties.Items.ContainsKey("schema"))
                 {
@@ -162,6 +293,8 @@ namespace EAVFramework.Extensions
                 await options.Authentication.OnAuthenticatedAsync(httpcontext, principal, claims, provider, handleId);
 
                 await httpcontext.SignOutAsync(Constants.ExternalCookieAuthenticationScheme);
+
+                metrics?.SigninSuccess(provider);
 
                 if (!string.IsNullOrWhiteSpace(result.Properties.RedirectUri))
                 {

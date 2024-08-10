@@ -1,12 +1,10 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Lifecycle;
-using EAVFramework.Infrastructure.HealthChecks;
 using EAVFW.Extensions.Manifest.SDK;
 using EAVFW.Extensions.Manifest.SDK.Migrations;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Polly.CircuitBreaker;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -146,61 +144,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                 {
 
                                     var connectionString = await targetDatabaseResource.ConnectionStringExpression.GetValueAsync(cancellationToken);
-
-                                    var variablegenerator = new SQLClientParameterGenerator();
-                                    var migrator = new SQLMigrationGenerator(variablegenerator, new ManifestPermissionGenerator(variablegenerator));
-
-                                    var sqls = await migrator.GenerateSQL(Path.GetDirectoryName(modelProjectPath), true, "SystemUsers",
-                                        o =>
-                                        {
-                                            o.UseNetTopologySuite();
-                                        });
-
-                                    var replacements = new Dictionary<string, string>
+                                    var migrationCount = await GetMigrationsCountAsync(targetDatabaseResource, connectionString);
+                                    if (migrationCount == 0)
                                     {
-                                        ["DBName"] = targetDatabaseResource.DatabaseName,
-                                        ["DBSchema"] = "dbo",
-                                        ["SystemAdminSecurityGroupId"] = "1b714972-8d0a-4feb-b166-08d93c6ae328",
-                                        ["UserGuid"] = "A0461D73-E979-449C-B24F-A3B3D6711D61",
-                                        ["UserName"] = "Poul Kjeldager",
-                                        ["UserEmail"] = "poul@kjeldager.com",
-                                        ["UserPrincipalName"] = "PoulKjeldagerSorensen"
-
-                                    };
-
-                                    using (SqlConnection conn = new SqlConnection(connectionString))
-                                    {
-                                        var files = new[] { sqls.SQL, sqls.Permissions };
-                                        await conn.OpenAsync();
-                                        foreach (var file in files)
-                                        {
-                                            var cmdText = variablegenerator.DoReplacements(file, replacements);
-
-                                            foreach (var sql in cmdText.Split("GO"))
-                                            {
-                                                using var cmd = conn.CreateCommand();
-
-                                                cmd.CommandText = sql.Trim();
-                                                //  await context.Context.Database.ExecuteSqlRawAsync(sql);
-
-                                                if (!string.IsNullOrEmpty(cmd.CommandText))
-                                                {
-                                                   // logger.LogInformation("Executing Migration SQL:\n{mig}", cmd.CommandText);
-                                                    var r = await cmd.ExecuteNonQueryAsync();
-                                                   // Console.WriteLine("Rows changed: " + r);
-                                                }
-                                            }
-
-
-
-
-
-
-                                        }
-
+                                        await DoMigrationAsync(modelProjectPath, targetDatabaseResource, connectionString);
                                     }
 
-                                   
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                          state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Running, KnownResourceStateStyles.Success) });
                                     migrationannotation.Success = true;
@@ -245,6 +194,87 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             }, cancellationToken);
 
+        }
+
+        private static async Task DoMigrationAsync(string modelProjectPath, SqlServerDatabaseResource targetDatabaseResource, string connectionString)
+        {
+            var variablegenerator = new SQLClientParameterGenerator();
+            var migrator = new SQLMigrationGenerator(variablegenerator, new ManifestPermissionGenerator(variablegenerator));
+
+            var sqls = await migrator.GenerateSQL(Path.GetDirectoryName(modelProjectPath), true, "SystemUsers",
+                o =>
+                {
+                    o.UseNetTopologySuite();
+                });
+
+            var replacements = new Dictionary<string, string>
+            {
+                ["DBName"] = targetDatabaseResource.DatabaseName,
+                ["DBSchema"] = "dbo",
+                ["SystemAdminSecurityGroupId"] = "1b714972-8d0a-4feb-b166-08d93c6ae328",
+                ["UserGuid"] = "A0461D73-E979-449C-B24F-A3B3D6711D61",
+                ["UserName"] = "Poul Kjeldager",
+                ["UserEmail"] = "poul@kjeldager.com",
+                ["UserPrincipalName"] = "PoulKjeldagerSorensen"
+
+            };
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                var files = new[] { sqls.SQL, sqls.Permissions };
+                await conn.OpenAsync();
+                foreach (var file in files)
+                {
+                    var cmdText = variablegenerator.DoReplacements(file, replacements);
+
+                    foreach (var sql in cmdText.Split("GO"))
+                    {
+                        using var cmd = conn.CreateCommand();
+
+                        cmd.CommandText = sql.Trim();
+                        //  await context.Context.Database.ExecuteSqlRawAsync(sql);
+
+                        if (!string.IsNullOrEmpty(cmd.CommandText))
+                        {
+                            // logger.LogInformation("Executing Migration SQL:\n{mig}", cmd.CommandText);
+                            var r = await cmd.ExecuteNonQueryAsync();
+                            // Console.WriteLine("Rows changed: " + r);
+                        }
+                    }
+
+
+
+
+
+
+                }
+
+            }
+        }
+
+        private static async Task<int> GetMigrationsCountAsync(SqlServerDatabaseResource targetDatabaseResource, string connectionString)
+        {
+            var migrationCount = 0;
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"""
+                                       IF (EXISTS (SELECT *  FROM INFORMATION_SCHEMA.TABLES  WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = '__MigrationsHistory'))
+                                       BEGIN
+                                          select count(*) from dbo.__MigrationsHistory
+                                       END
+                                       ELSE
+                                       BEGIN
+                                          select 0
+                                       END
+                                   """;
+                migrationCount = (int) await cmd.ExecuteScalarAsync();
+
+            }
+
+            return migrationCount;
         }
 
         public Task AfterResourcesCreatedAsync(DistributedApplicationModel application, CancellationToken cancellationToken)

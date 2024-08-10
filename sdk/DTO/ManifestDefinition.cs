@@ -1,4 +1,5 @@
 using EAVFW.Extensions.Manifest.SDK.DTO;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,8 +9,11 @@ namespace EAVFW.Extensions.Manifest.SDK
 {
     public class ManifestDefinition
     {
-        [JsonPropertyName("entities")] 
+        [JsonPropertyName("entities")]
+        [JsonProperty("entities")]
         public Dictionary<string, EntityDefinition> Entities { get; set; }
+       
+        [JsonProperty("version")]
         [JsonPropertyName("version")]
         public string Version { get; set; }
     }

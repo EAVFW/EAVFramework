@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-    <LangVersion>11</LangVersion>
+    <LangVersion>12</LangVersion>
     <PackageId>EAVFramework</PackageId>
     <Authors>Poul Kjeldager</Authors>
     <Company>EAVFW</Company>
@@ -23,8 +23,8 @@
      <FrameworkReference Include="Microsoft.AspNetCore.App" />
    
      <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.1.1" />
-     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-     <PackageReference Include="Semver" Version="2.2.0" />
+     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+     <PackageReference Include="Semver" Version="2.3.0" />
       
     </ItemGroup>
 
@@ -39,8 +39,8 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
   </ItemGroup>
 
   <ItemGroup>
