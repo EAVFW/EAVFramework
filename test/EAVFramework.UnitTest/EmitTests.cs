@@ -344,7 +344,7 @@ namespace EAVFramework.UnitTest
     [EntityInterface(EntityKey = "Identity")]
     public interface IIdentity
     {
-
+        public Guid Id { get; set; }
     }
 
 

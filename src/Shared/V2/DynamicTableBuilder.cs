@@ -1,6 +1,7 @@
 using EAVFW.Extensions.Manifest.SDK;
 using EAVFW.Extensions.Manifest.SDK.DTO;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -676,6 +677,56 @@ namespace EAVFramework.Shared.V2
 
             return properties.GetOrAdd(propertyName, (_) => new DynamicPropertyBuilder(dynamicCodeService, this, attributeKey, propertyName, logicalName, type));
         }
+        public PropertyInfo GetParentPropertyGetMethod(string prop)
+        {
+            var test = this;
+            while (test != null)
+            {
+              
+
+                if(test.Parent == null && test.ClrParentType != null)
+                {
+                    var type = test.ClrParentType;
+                    while (type != null)
+                    {
+                        if (type.GetProperties().Any(p => p.Name == prop))
+                        {
+                            return type.GetProperties().Where(p => p.Name == prop).First();
+
+                        }
+
+                        type = type.BaseType;
+                    }
+                }
+
+                test = test.Parent;
+                
+            }
+            return null;
+        }
+        public static bool IsBuilder(Type type) => type is TypeBuilder || type is EnumBuilder || type is GenericTypeParameterBuilder;
+        public static bool IsTypeBuilderInstantiation(Type type)
+        {
+            bool isTypeBuilderInstantiation = false;
+            if (type.IsGenericType && !(IsBuilder(type)))
+            {
+                foreach (var genericTypeArg in type.GetGenericArguments())
+                {
+                    if (isTypeBuilderInstantiation = (IsBuilder(genericTypeArg) ||
+                        IsTypeBuilderInstantiation(genericTypeArg)))
+                        break;
+                }
+                isTypeBuilderInstantiation |= type.GetGenericTypeDefinition() is TypeBuilder;
+            }
+            return isTypeBuilderInstantiation;
+        }
+
+        public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType)
+        {
+            interfaceType = Interfaces.Where(i =>!IsTypeBuilderInstantiation (i) && i.GetProperties().Any(p => p.Name == propertyName)).ToArray()  ?? Array.Empty<Type>();
+            return interfaceType.Any();
+          
+        }
         public bool ContainsParentProperty(string propertyName)
         {
             if ((Parent?.ContainsProperty(propertyName) ?? false))
@@ -751,7 +802,9 @@ namespace EAVFramework.Shared.V2
 
             BuildInverseProperties();
 
-            foreach (var prop in properties.Values.Where(p => !p.HasParentProperty).OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName))
+            AddInterfaces();
+
+            foreach (var prop in properties.Values.OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName))
             {
 #if DEBUG
                 //       File.AppendAllLines("test1.txt", new[] { $"Building Prop {prop.SchemaName} {PrintTypeName( prop.PropertyType)} {PrintTypeName(prop.DTOPropertyType)}" });
@@ -759,7 +812,7 @@ namespace EAVFramework.Shared.V2
                 prop.Build();
             }
 
-            AddInterfaces();
+
 
             BuildDTOConfiguration();
 #if DEBUG
