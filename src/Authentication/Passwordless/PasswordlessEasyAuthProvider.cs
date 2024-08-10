@@ -86,31 +86,12 @@ namespace EAVFramework.Authentication.Passwordless
             {
                 var email = authenticateRequest.Email;
 
-                if (string.IsNullOrEmpty(email) && !authenticateRequest.IdentityId.HasValue || authenticateRequest.IdentityId.Value == default)
+                if (!authenticateRequest.IdentityId.HasValue || authenticateRequest.IdentityId.Value == default)
                 {    
                       return new OnAuthenticateResult { ErrorMessage = $"User not found",
                           ErrorCode= "access_denied", ErrorSubCode = "user_not_found", Success=false };
                 }
-
-                
-                email ??= await authenticateRequest.Options?.FindEmailFromIdentity(
-                    new EmailDiscoveryRequest
-                    {
-                        HttpContext = authenticateRequest.HttpContext,
-                        IdentityId = authenticateRequest.IdentityId.Value,
-                        ServiceProvider = authenticateRequest.ServiceProvider
-                    });
-
-                if (string.IsNullOrEmpty(email))
-                {
-                    return new OnAuthenticateResult
-                    {
-                        ErrorMessage = $"User not found",
-                        ErrorCode = "access_denied", ErrorSubCode = "user_not_found", Success = false
-                    };
-                }
-
-
+                 
                 //  var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
                 //      Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
 

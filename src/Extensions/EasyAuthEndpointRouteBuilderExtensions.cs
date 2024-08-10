@@ -141,8 +141,19 @@ namespace EAVFramework.Extensions
                 endpoints.MapMethods(
                     $"{authUrl}/callback",
                     new[] { auth.CallbackHttpMethod.ToString().ToUpperInvariant() },
-                    async (httpcontext) =>
+                    async (HttpContext httpcontext, [FromQuery] string error, [FromQuery] string error_message, [FromQuery]string error_subcode) =>
                     {
+
+                        if (!string.IsNullOrEmpty(error))
+                        {
+
+                            httpcontext.Response.Redirect(
+                                $"{httpcontext.Request.PathBase}/account/login/callback?provider={auth.AuthenticationName}&error={error}&error_message={error_message}&error_subcode={error_subcode}");
+
+
+                            return;
+                        }
+
                         var request = new OnCallbackRequest{
                             HttpContext = httpcontext,
                             Options = options.Authentication,
@@ -156,7 +167,8 @@ namespace EAVFramework.Extensions
                             var ticketinfo = await options.Authentication.UnPersistTicketAsync(new UnPersistTicketReuqest
                             {
                                 HandleId = request.HandleId,
-                                ServiceProvider = httpcontext.RequestServices
+                                ServiceProvider = httpcontext.RequestServices,
+                                HttpContext = httpcontext
                             });
 
                             request.Ticket = QueryHelpers.ParseNullableQuery

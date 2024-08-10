@@ -83,6 +83,7 @@ namespace EAVFramework.Configuration
     {
         public Guid HandleId { get; set; }
         public IServiceProvider ServiceProvider { get; set; }
+        public HttpContext HttpContext { get; set; }
     }
 
     /// <summary>
