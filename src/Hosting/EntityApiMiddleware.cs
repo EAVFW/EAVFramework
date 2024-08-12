@@ -34,7 +34,7 @@ namespace EAVFramework.Hosting
     public static class EndpointsMapping
     {
 
-        public static void MapEAVFrameworkRoutes<TContext>(this IEndpointRouteBuilder config)
+        public static void MapEAVFrameworkRoutes<TContext>(this IEndpointRouteBuilder config, bool withAuth=true)
            where TContext : DynamicContext
         {
             var options = config.ServiceProvider.GetService<EAVFrameworkOptions>();
@@ -68,7 +68,7 @@ namespace EAVFramework.Hosting
                 //   .WithMetadata(endpoint);
             }
 
-            if (options.Authentication.EnableEasyAuth)
+            if (options.Authentication.EnableEasyAuth && withAuth)
             {
                 var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
                 config.AddEasyAuth();
