@@ -446,11 +446,11 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         
 
-        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name)
+        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name, string launchProfile)
              where TProject : IProjectMetadata, new()
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
-            var project = builder.AddProject<TProject>(name);
+            var project = builder.AddProject<TProject>(name, launchProfile);
 
             var workingDirectory = PathNormalizer.NormalizePathForCurrentPlatform(Path.Combine(builder.AppHostDirectory, "../.."));
 
