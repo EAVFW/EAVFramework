@@ -446,6 +446,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         
 
+
         public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name, string launchProfile)
              where TProject : IProjectMetadata, new()
         {
