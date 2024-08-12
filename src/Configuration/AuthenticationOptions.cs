@@ -173,6 +173,8 @@ namespace EAVFramework.Configuration
         /// </summary>
         public bool RequireCspFrameSrcForSignout { get; set; } = true;
         public CookieSecurePolicy CookieSecurePolicy { get; set; } = CookieSecurePolicy.Always;
+
+        public bool EnableEasyAuth { get; set; } = true;
     }
 
 }

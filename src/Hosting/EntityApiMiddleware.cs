@@ -17,6 +17,7 @@ using EAVFramework.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace EAVFramework.Hosting
 {
@@ -67,21 +68,16 @@ namespace EAVFramework.Hosting
                 //   .WithMetadata(endpoint);
             }
 
+            if (options.Authentication.EnableEasyAuth)
+            {
+                var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
+                config.AddEasyAuth();
+            }
+
 
         }
 
-        public static void MapEAVFrameworkRoutes<TContext, TIdentity>(this IEndpointRouteBuilder config)
-            where TContext : DynamicContext
-            where TIdentity : DynamicEntity
-        {
-            config.MapEAVFrameworkRoutes<TContext>();
-
-
-            var authProps = config.ServiceProvider.GetService<AuthenticationProperties>();
-
-            config.AddEasyAuth<TIdentity>(authProps ?? new AuthenticationProperties());
-
-        }
+       
     }
 
 

@@ -57,19 +57,19 @@ namespace EAVFramework.Extensions
 
     public static class EasyAuthEndpointRouteBuilderExtensions
     {
-        public static IEndpointRouteBuilder AddEasyAuth<TIdentity>(
+        public static IEndpointRouteBuilder AddEasyAuth(
             this IEndpointRouteBuilder endpoints,
             AuthenticationProperties authenticationProperties = null)
-            where TIdentity : DynamicEntity
+          //  where TIdentity : DynamicEntity
         {
             var authProps = authenticationProperties ?? new AuthenticationProperties();
-            return MapAuthEndpoints<TIdentity>(endpoints, authProps);
+            return MapAuthEndpoints(endpoints, authProps);
         }
 
-        private static IEndpointRouteBuilder MapAuthEndpoints<TIdentity>(
+        private static IEndpointRouteBuilder MapAuthEndpoints(
             IEndpointRouteBuilder endpoints,
             AuthenticationProperties authProps)
-            where TIdentity : DynamicEntity
+          //  where TIdentity : DynamicEntity
         {
             var sp = endpoints.ServiceProvider;
             var metrics = sp.GetService<EAVMetrics>();
