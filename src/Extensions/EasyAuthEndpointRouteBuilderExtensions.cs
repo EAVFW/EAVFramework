@@ -20,6 +20,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
+using Sprache;
+using Microsoft.Extensions.Options;
+using System.Net.Http;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 
 namespace EAVFramework.Extensions
@@ -50,6 +54,85 @@ namespace EAVFramework.Extensions
     }
 
 
+    public class LinkResult
+    {
+        public Guid HandleId { get; set; }
+        public string Link { get; set; }
+        public bool IsNew { get;  set; }
+    }
+
+    public interface IPasswordLessLinkGenerator
+    {
+        Task<LinkResult> GenerateLink(Guid identityId, string state, string targetUrlOrPath, Guid handleId = default);
+    }
+    public class PasswordLessLinkGenerator<TContext,TSignin> : IPasswordLessLinkGenerator
+          where TContext : DynamicContext
+         where TSignin : DynamicEntity, ISigninRecord, new()
+
+    {
+        private readonly IOptions<EAVFrameworkOptions> _option;
+        private readonly IEAVFrameworkTicketStore<TContext, TSignin> _ticketStore;
+        private readonly IServiceProvider _serviceProvider;
+
+        public PasswordLessLinkGenerator(IOptions<EAVFrameworkOptions> option,
+            IEAVFrameworkTicketStore<TContext, TSignin> ticketStore,
+            IServiceProvider serviceProvider)
+        {
+            _option = option;
+            _ticketStore = ticketStore;
+            _serviceProvider = serviceProvider;
+        }
+        public async Task<LinkResult> GenerateLink(Guid identityId, string state, string targetUrlOrPath, Guid handleId=default)
+        {
+            if (handleId != default)
+            {
+                var old = await _ticketStore.GetTicketInfoAsync(new UnPersistTicketReuqest
+                {
+                    HandleId = handleId,
+                    ServiceProvider = _serviceProvider
+                });
+
+                if (old != null)
+                {
+                    return new LinkResult { Link = CreateCallabckUrl(handleId), HandleId = handleId, IsNew = false };
+                }
+            }
+
+
+            if (handleId == default)
+            {
+                handleId = await _option.Value.Authentication.GenerateHandleId(_serviceProvider);
+            }
+
+            var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
+                           Encoding.UTF8.GetBytes(state));
+
+
+            await _ticketStore.PersistTicketAsync(new PersistTicketRequest
+            {
+                HandleId = handleId,
+                //  HttpContext = httpcontext,
+                IdentityId = identityId == default ? null : identityId,
+                Ticket = ticket,
+                RedirectUrl = targetUrlOrPath,
+                ServiceProvider = _serviceProvider,
+                AuthProvider = "passwordless",
+                OwnerIdentity = _option.Value.SystemAdministratorIdentity
+            });
+
+          
+
+            return new LinkResult { Link = CreateCallabckUrl(handleId), HandleId = handleId, IsNew = true };
+        }
+
+        private string CreateCallabckUrl(Guid handleId)
+        {
+            var baseUrl = _option.Value.Host?.TrimEnd('/');
+            var callbackUrl = $"{baseUrl}{_option.Value.PathBase?.TrimEnd('/')}/.auth/login/passwordless/callback?token={handleId.ToString("N")}";
+            return callbackUrl;
+        }
+    }
+
     /// <summary>
     /// Redirect URL is the url within the application that the user initiated signin from.
     /// Callback URL is the url that the external provider will redirect to after signin.
@@ -69,7 +152,6 @@ namespace EAVFramework.Extensions
         private static IEndpointRouteBuilder MapAuthEndpoints(
             IEndpointRouteBuilder endpoints,
             AuthenticationProperties authProps)
-          //  where TIdentity : DynamicEntity
         {
             var sp = endpoints.ServiceProvider;
             var metrics = sp.GetService<EAVMetrics>();
@@ -83,20 +165,20 @@ namespace EAVFramework.Extensions
                 //https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
                 var authUrl = $"/.auth/login/{auth.AuthenticationName}";
 
-                endpoints.MapGet(authUrl, async (HttpContext httpcontext, [FromQuery] string redirectUri, [FromQuery] string email) =>
+                endpoints.MapGet(authUrl, async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore,[FromQuery] string redirectUri, [FromQuery] string email) =>
                 {
                     var logger = loggerFactory.CreateLogger($"EAVFW.Auth.{auth.AuthenticationName}");
                     
                     metrics?.StartSignup(auth.AuthenticationName);
 
-                    var handleId = await options.Authentication.GenerateHandleId(httpcontext);
+                    var handleId = await options.Authentication.GenerateHandleId(httpcontext.RequestServices);
 
                     var identityId = await options.Authentication.FindIdentity(new UserDiscoveryRequest { Email = email,  HttpContext = httpcontext, ServiceProvider = httpcontext.RequestServices });
 
                     var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
                             Encoding.UTF8.GetBytes( httpcontext.Request.QueryString.Value?.TrimStart('?')));
 
-                    await options.Authentication.PersistTicketAsync(new PersistTicketRequest
+                    await ticketStore.PersistTicketAsync(new PersistTicketRequest
                     {
                         HandleId = handleId,
                         HttpContext = httpcontext,
@@ -141,7 +223,7 @@ namespace EAVFramework.Extensions
                 endpoints.MapMethods(
                     $"{authUrl}/callback",
                     new[] { auth.CallbackHttpMethod.ToString().ToUpperInvariant() },
-                    async (HttpContext httpcontext, [FromQuery] string error, [FromQuery] string error_message, [FromQuery]string error_subcode) =>
+                    async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore, [FromQuery] string error, [FromQuery] string error_message, [FromQuery]string error_subcode) =>
                     {
 
                         if (!string.IsNullOrEmpty(error))
@@ -164,7 +246,7 @@ namespace EAVFramework.Extensions
                         
                         if(request.HandleId != default)
                         {
-                            var ticketinfo = await options.Authentication.UnPersistTicketAsync(new UnPersistTicketReuqest
+                            var ticketinfo = await ticketStore.GetTicketInfoAsync(new UnPersistTicketReuqest
                             {
                                 HandleId = request.HandleId,
                                 ServiceProvider = httpcontext.RequestServices,

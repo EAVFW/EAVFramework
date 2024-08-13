@@ -34,6 +34,7 @@ using System.Linq.Expressions;
 using System.Linq;
 using EAVFramework.Shared;
 using EAVFramework.Endpoints.Query.OData;
+using EAVFramework.Authentication.Passwordless;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -295,6 +296,11 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddScoped(typeof(EAVDBContext<>),typeof(EAVDBContext<>));
             builder.Services.AddSingleton<IODataConverterFactory, OdatatConverterFactory>();
             builder.Services.AddCodeServices();
+            builder.Services.AddScoped(typeof(PasswordLessLinkGenerator<,>));
+           // builder.Services.AddScoped(typeof(EAVFrameworkTicketStore<,>));
+            builder.Services.AddScoped(typeof(IEAVFrameworkTicketStore<,>), typeof(EAVFrameworkTicketStore<,>));
+
+            builder.Services.AddScoped<EAVEMailService>();
             //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }

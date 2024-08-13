@@ -92,14 +92,14 @@ namespace EAVFramework.Configuration
     public class AuthenticationOptions
     {
 
-        /// <summary>
-        /// Persist the ticket information
-        /// </summary>
-        public Func<PersistTicketRequest, Task> PersistTicketAsync { get; set; }
-        /// <summary>
-        /// Persist the ticket information
-        /// </summary>
-        public Func<UnPersistTicketReuqest, Task<TicketInformation>> UnPersistTicketAsync { get; set; }
+        ///// <summary>
+        ///// Persist the ticket information
+        ///// </summary>
+        //public Func<PersistTicketRequest, Task> PersistTicketAsync { get; set; }
+        ///// <summary>
+        ///// Persist the ticket information
+        ///// </summary>
+        //public Func<UnPersistTicketReuqest, Task<TicketInformation>> UnPersistTicketAsync { get; set; }
 
 
         /// <summary>
@@ -143,9 +143,9 @@ namespace EAVFramework.Configuration
 
         public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
 
-        public Func<HttpContext, ValueTask<Guid>> GenerateHandleId { get; set; } = DefaultHandleIdGenerator;
+        public Func<IServiceProvider, ValueTask<Guid>> GenerateHandleId { get; set; } = DefaultHandleIdGenerator;
 
-        private static ValueTask<Guid> DefaultHandleIdGenerator(HttpContext httpcontext) => new ValueTask<Guid>( CryptographyHelpers.CreateCryptographicallySecureGuid());
+        private static ValueTask<Guid> DefaultHandleIdGenerator(IServiceProvider serviceProvider) => new ValueTask<Guid>( CryptographyHelpers.CreateCryptographicallySecureGuid());
      
 
         public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> OnAuthenticatedAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;

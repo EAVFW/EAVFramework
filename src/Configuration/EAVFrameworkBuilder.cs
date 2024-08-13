@@ -12,8 +12,8 @@ namespace EAVFramework.Configuration
     public class EAVFrameworkBuilder<TContext> : IEAVFrameworkBuilder
         where TContext : DynamicContext
     {
-        private string schema;
-        private string connectionString;
+        private string _schema;
+        private string _connectionString;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IdentityServerBuilder"/> class.
@@ -29,15 +29,15 @@ namespace EAVFramework.Configuration
 
         public EAVFrameworkBuilder(IServiceCollection services, string schema, string connectionString) : this(services)
         {
-            this.schema = schema;
-            this.connectionString = connectionString;
+            this._schema = schema;
+            this._connectionString = connectionString;
         }
 
         public void WithDBContext()
         {
             Services.AddDbContext<TContext>((sp, optionsBuilder) =>
             {
-                optionsBuilder.UseSqlServer(connectionString, x => x.MigrationsHistoryTable("__MigrationsHistory", schema));
+                optionsBuilder.UseSqlServer(_connectionString, x => x.MigrationsHistoryTable("__MigrationsHistory", _schema));
                 optionsBuilder.EnableSensitiveDataLogging();
                 optionsBuilder.EnableDetailedErrors();
 

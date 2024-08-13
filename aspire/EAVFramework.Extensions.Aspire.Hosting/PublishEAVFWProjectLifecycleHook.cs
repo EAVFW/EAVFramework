@@ -325,7 +325,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             {
                                 logger.LogInformation($"Process exited with code {exitcode}");
                                 _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
-                                   state => state with { State = state.State with { Text = KnownResourceStates.Exited, Style = KnownResourceStateStyles.Success } });
+                                   state => state with { ExitCode = exitcode, State = state.State with { Text = exitcode == 0 ? KnownResourceStates.Finished: KnownResourceStates.Exited, Style = exitcode == 0? KnownResourceStateStyles.Success:KnownResourceStateStyles.Error } });
 
                               
 
@@ -475,7 +475,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     }
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
-                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Running, KnownResourceStateStyles.Success) });
+                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success) });
                                     migrationannotation.Success = true;
 
                                 }

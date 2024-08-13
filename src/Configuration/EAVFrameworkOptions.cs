@@ -53,9 +53,20 @@ namespace EAVFramework.Configuration
         /// The user interaction options.
         /// </value>
         public UserInteractionOptions UserInteraction { get; set; } = new UserInteractionOptions();
-        public string Schema { get; internal set; }
-        public string ConnectionString { get; internal set; }
+        public string Schema { get;  set; }
+        public string ConnectionString { get;  set; }
         public ClaimsPrincipal SystemAdministratorIdentity { get;  set; }
+
+        /// <summary>
+        /// The Host (BaseURL) that the application is running on
+        /// </summary>
+        public string Host { get; set; }
+
+        /// <summary>
+        /// If the application is running behinad a proxy an dsetting a pathbase.
+        /// </summary>
+        public string PathBase { get; set; }
+
     }
 
 }

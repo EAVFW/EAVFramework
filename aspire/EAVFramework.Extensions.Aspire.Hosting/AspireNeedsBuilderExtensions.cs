@@ -10,6 +10,14 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
     public static class AspireNeedsBuilderExtensions
     {
+
+        public static IResourceBuilder<T> Needs<T>(this IResourceBuilder<T> builder, IResourceBuilder<IResource> other, params string[]  states)
+            where T : IResource
+        {
+            builder.ApplicationBuilder.AddDependencies();
+            return builder.WithAnnotation(new NeedsAnnotation(other.Resource) {  States=states});
+        }
+
         /// <summary>
         /// Mark the given resource as a dependency for the current resource. 
         /// The current resource will wait for the dependency to be in the "Running" state before starting.
