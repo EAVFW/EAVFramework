@@ -1,7 +1,10 @@
+using EAVFramework.Configuration;
+using EAVFramework.Endpoints;
 using EAVFramework.Shared;
 using EAVFramework.Shared.V2;
 using EAVFramework.UnitTest.ManifestTests;
 using EAVFW.Extensions.Manifest.SDK;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using System;
@@ -99,7 +102,48 @@ namespace EAVFramework.UnitTest
                 .ToArray());
         }
 
+        public static void TestType<T>() where T : DynamicEntity, ISigninRecord, new()
+        {
+            var test = new T { };
+            var p = test.Properties;
+            test.Provider = "da";
+            //var a = test.Test;
+            var t = test.Id;
+            test.Id = Guid.NewGuid();
+        }
+
         [TestMethod]
+        [DeploymentItem(@"Specs/mc-crm.json", "Specs")]
+        [DeploymentItem(@"Specs/mc-crm.sql", "Specs")]
+
+        public async Task TestCRMModule()
+        {
+            //Arrange
+            var manifest = JToken.Parse(File.ReadAllText(@"Specs/mc-crm.json"));
+
+
+            //Act
+            var (sql, sp) = RunDBWithSchema("cmr", o=>
+            {
+
+                o.DTOBaseInterfaces = new Type[] {
+                    typeof(IHaveName),
+                    typeof(IIdentity),
+                     typeof(ISigninRecord)
+                };
+                o.DTOBaseClasses = new[] { typeof(FullBaseIdEntity<>), typeof(FullBaseOwnerEntity<>) };
+            },manifest);
+
+            var ctx = sp.GetService<DynamicContext>();
+            var t = ctx.GetEntityType("Signins");
+            this.GetType().GetMethod("TestType").MakeGenericMethod(t).Invoke(this, null);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/mc-crm.sql");
+
+            MigrationAssert.AreEqual(expectedSQL, sql);
+
+        }
+            [TestMethod]
         [DeploymentItem(@"Specs/manifest.payments.json", "Specs")]
         [DeploymentItem(@"Specs/manifest.payments.sql", "Specs")]
 
@@ -110,7 +154,7 @@ namespace EAVFramework.UnitTest
             
 
             //Act
-            var sql = RunDBWithSchema("payments", manifest);
+            var (sql,_) = RunDBWithSchema("payments", manifest);
 
 
             //Assure

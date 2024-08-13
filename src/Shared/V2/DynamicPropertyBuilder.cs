@@ -3,6 +3,7 @@ using EAVFW.Extensions.Manifest.SDK;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.PortableExecutable;
@@ -116,53 +117,55 @@ namespace EAVFramework.Shared.V2
             return this;
         }
         public PropertyInfo GetMethod => TypeBuilder.GetProperty(SchemaName);
-        public PropertyBuilder PropertyBuilder { get;private set; }
+        public PropertyBuilder PropertyBuilder { get; private set; }
         public FieldBuilder FieldBuilder { get; private set; }
         public void Build()
         {
             if (PropertyType == null)
                 return;
-            
-            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes) 
+
+            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes)
                 && this.dynamicTableBuilder.GetParentPropertyGetMethod(SchemaName) is PropertyInfo property)
             {
                 foreach (var interfaceType in interfaceTypes)
                 {
+                    {
+                        var base_get = TypeBuilder.DefineMethod($"get_{LogicalName}",
+                            MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.Final | MethodAttributes.SpecialName | MethodAttributes.NewSlot | MethodAttributes.HideBySig,
+                            property.PropertyType, System.Type.EmptyTypes);
+                        var il = base_get.GetILGenerator();
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.EmitCall(OpCodes.Call, property.GetGetMethod(), null);
+                        il.Emit(OpCodes.Ret);
+                        TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
+                    }
+                    {
+                        var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
 
-                    //{
-                    //    var base_get = TypeBuilder.DefineMethod($"get_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Private,
-                    //        property.PropertyType, System.Type.EmptyTypes);
-                    //    var il = base_get.GetILGenerator();
-                    //    il.Emit(OpCodes.Ldarg_0);
-                    //    il.EmitCall(OpCodes.Callvirt, property.GetGetMethod(), null);
-                    //    il.Emit(OpCodes.Ret);
-                    //    TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
+                           null, new[] { property.PropertyType });
+                        var il = base_set.GetILGenerator();
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldarg_1);
+                        il.Emit(OpCodes.Call, property.GetSetMethod());
 
-                    //}
-                    //{
-                    //    var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Private,
+                        il.Emit(OpCodes.Ret);
+                        TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
 
-                    //       null, new[] { property.PropertyType });
-                    //    var il = base_set.GetILGenerator();
-                    //    il.Emit(OpCodes.Ldarg_0);
-                    //    il.Emit(OpCodes.Ldarg_1);
-                    //    il.EmitCall(OpCodes.Callvirt, property.GetSetMethod(), null);
 
-                    //    il.Emit(OpCodes.Ret);
-                    //    TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
-                    //}
+                    }
                 }
             }
 
 
             if (dynamicTableBuilder.ContainsParentProperty(SchemaName))
                 return;
-             
 
 
-            var (PropertyBuilder, FieldBuilder) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, DTOPropertyType ?? PropertyType);
 
-            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(PropertyBuilder, LogicalName,AttributeKey);
+            var (PropertyBuilder, FieldBuilder) = dynamicCodeService.EmitPropertyService
+                    .CreateProperty(this.TypeBuilder, SchemaName, DTOPropertyType ?? PropertyType);
+
+            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(PropertyBuilder, LogicalName, AttributeKey);
 
             dynamicCodeService.EmitPropertyService.CreateJsonSerializationAttribute(PropertyBuilder, LogicalName);
 
@@ -203,7 +206,7 @@ namespace EAVFramework.Shared.V2
             if (enumbuilder != null)
             {
                 foreach (var values in Choices)
-                    enumbuilder.DefineLiteral(string.IsNullOrWhiteSpace( values.Key) ? "Empty": values.Key, values.Value);
+                    enumbuilder.DefineLiteral(string.IsNullOrWhiteSpace(values.Key) ? "Empty" : values.Key, values.Value);
 
                 DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder.CreateTypeInfo()); ;
                 //                }
@@ -218,6 +221,7 @@ namespace EAVFramework.Shared.V2
 
                 PropertyBuilder.SetCustomAttribute(ForeignKeyAttributeBuilder);
             }
+
         }
         public TypeBuilder TypeBuilder => this.dynamicTableBuilder.Builder;
 

@@ -1,24 +1,16 @@
+using EAVFramework.Shared.V2;
+using EAVFW.Extensions.Manifest.SDK;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
-using Microsoft.EntityFrameworkCore;
-using EAVFramework.Shared.V2;
-using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
-using Newtonsoft.Json;
 using System;
-using static EAVFramework.Shared.TypeHelper;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
-using System.Reflection;
-using System.Linq.Expressions;
-using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using EAVFW.Extensions.Manifest.SDK;
 
 namespace EAVFramework.UnitTest.ManifestTests
 {
@@ -87,6 +79,7 @@ namespace EAVFramework.UnitTest.ManifestTests
             //onconfig(o);
 
             var o =new DynamicCodeServiceFactory().CreateOptions(onconfig);
+          
             o.GenerateAbstractClasses = false;
             return new DynamicCodeService(o);
         }
@@ -240,7 +233,7 @@ namespace EAVFramework.UnitTest.ManifestTests
                 }
             };
         }
-        protected string RunDBWithSchema(string schema, Func<IServiceProvider, Task<JToken[]>> manifestProvider)
+        protected (string,IServiceProvider) RunDBWithSchema(string schema, Func<IServiceProvider, Task<JToken[]>> manifestProvider, Action<DynamicContextOptions> configure=null)
         {
             var configuration = new ConfigurationBuilder()
               .AddEnvironmentVariables()
@@ -260,7 +253,9 @@ namespace EAVFramework.UnitTest.ManifestTests
                 o.EnableDynamicMigrations = true;
                 o.Namespace = "DummyNamespace";
 
-                o.DTOBaseInterfaces = new[] { typeof(IAgreement<,>), typeof(IPaymentProvider<>), typeof(IPaymentProviderType) }; 
+                o.DTOBaseInterfaces = new[] { typeof(IAgreement<,>), typeof(IPaymentProvider<>), typeof(IPaymentProviderType) };
+
+                configure?.Invoke(o);
 
             });
             //services.AddEntityFrameworkSqlServer();
@@ -275,6 +270,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             });
+          
 
             var sp = services.BuildServiceProvider();
             var ctx = sp.GetRequiredService<DynamicContext>();
@@ -284,12 +280,17 @@ namespace EAVFramework.UnitTest.ManifestTests
             var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
             //migrator.Migrate("0");
             //migrator.Migrate();
-            return sql;
+            return (sql,sp);
         }
          
-        protected string RunDBWithSchema(string schema, params JToken[] manifests)
+        protected (string, IServiceProvider) RunDBWithSchema(string schema, params JToken[] manifests)
         {
             return RunDBWithSchema(schema, (sp) => Task.FromResult( manifests));
+
+        }
+        protected (string, IServiceProvider) RunDBWithSchema(string schema, Action<DynamicContextOptions> configure,params JToken[] manifests)
+        {
+            return RunDBWithSchema(schema, (sp) => Task.FromResult(manifests), configure);
 
         }
     }

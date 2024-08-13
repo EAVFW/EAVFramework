@@ -54,7 +54,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
 
-          var sql=  RunDBWithSchema("manifest_binary", manifest);
+          var (sql, _) =  RunDBWithSchema("manifest_binary", manifest);
 
             //Assure
 

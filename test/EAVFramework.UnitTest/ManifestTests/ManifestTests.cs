@@ -45,7 +45,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             //Act
-            var sql = RunDBWithSchema("oidc", manifest);
+            var (sql, _) = RunDBWithSchema("oidc", manifest);
 
 
             //Assure
@@ -68,7 +68,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             //Act
-            var sql = RunDBWithSchema("tests",async (_serviceProvider) => new[] { JToken.Parse((await _serviceProvider.GetRequiredService<IManifestEnricher>().LoadJsonDocumentAsync(JToken.Parse(File.ReadAllText(@"Specs/manifest.cdm.json")), "", NullLogger.Instance)).RootElement.ToString()) });
+            var (sql, _) = RunDBWithSchema("tests",async (_serviceProvider) => new[] { JToken.Parse((await _serviceProvider.GetRequiredService<IManifestEnricher>().LoadJsonDocumentAsync(JToken.Parse(File.ReadAllText(@"Specs/manifest.cdm.json")), "", NullLogger.Instance)).RootElement.ToString()) });
 
 
             //Assure
@@ -93,7 +93,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             //Act
-            var sql = RunDBWithSchema("manifest_migrations", manifest);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifest);
 
 
             //Assure
@@ -125,7 +125,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             //Act
-            var sql = RunDBWithSchema("manifest_migrations", manifest);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifest);
 
 
             //Assure
@@ -164,7 +164,7 @@ namespace EAVFramework.UnitTest.ManifestTests
             });
  
 
-            var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddEntity.sql");
 
@@ -221,7 +221,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             });
 
-            var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_ChangePropertyTextLength.sql");
 
@@ -301,7 +301,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             });
 
-            var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
 
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_ChangePropertyTextLengthTwice.sql");
 
@@ -346,7 +346,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             });
 
-            var sql = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
 
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddLookup.sql");
 
@@ -419,7 +419,7 @@ namespace EAVFramework.UnitTest.ManifestTests
                
             });
 
-            var sql = RunDBWithSchema("manifest_migrations", manifestC,manifestB, manifestA);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestC,manifestB, manifestA);
 
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddLookup_WithCascade.sql");
 
@@ -466,7 +466,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
             });
 
-            var sql = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestC, manifestB, manifestA);
            
             string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_AddAttribute.sql");
 

@@ -546,8 +546,6 @@ namespace EAVFramework.Shared.V2
         public TypeBuilder Builder { get; }
         public TypeBuilder ConfigurationBuilder { get; }
 
-        //  public TypeBuilder MigrationBuilder { get; }
-
         public string CollectionSchemaName { get; }
         public string LogicalName { get; }
         public bool IsBaseEntity { get; }
@@ -691,6 +689,12 @@ namespace EAVFramework.Shared.V2
                     {
                         if (type.GetProperties().Any(p => p.Name == prop))
                         {
+                            if (type.IsGenericType)
+                            {
+                                return type.MakeGenericType(
+                                    typeArguments: type.GetGenericArguments().Select(a=>a.GetGenericParameterConstraints().First()).ToArray())
+                                    .GetProperty(prop);
+                            }
                             return type.GetProperties().Where(p => p.Name == prop).First();
 
                         }
@@ -720,7 +724,7 @@ namespace EAVFramework.Shared.V2
             }
             return isTypeBuilderInstantiation;
         }
-
+        
         public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType)
         {
             interfaceType = Interfaces.Where(i =>!IsTypeBuilderInstantiation (i) && i.GetProperties().Any(p => p.Name == propertyName)).ToArray()  ?? Array.Empty<Type>();

@@ -1,0 +1,16 @@
+﻿using MC.Models;
+using System;
+using EAVFramework.Shared;
+namespace MC.Models
+{
+	[Serializable()]
+	[EntityDTO(LogicalName="contact",Schema="dbo")]
+	[Entity(LogicalName="contact",SchemaName="Contact",CollectionSchemaName="Contracts",IsBaseClass=false,EntityKey="Contact")]
+	public partial class Contact : Identity
+	{
+		public Contact()
+		{
+		} 
+
+	}
+}

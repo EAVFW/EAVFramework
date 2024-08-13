@@ -30,13 +30,13 @@ using static EAVFramework.Shared.TypeHelper;
 
 namespace EAVFramework.UnitTest
 {
-    public class SuperSuper : DynamicEntity
+    public class SuperSuper<T> : DynamicEntity
     {
         public Guid Id { get; set; }
         public Guid Test { get; set; }
     }
 
-    public class Super : SuperSuper
+    public class Super : SuperSuper<TestIdentity>
     {
         
     }
@@ -352,69 +352,217 @@ namespace EAVFramework.UnitTest
             test.Id = Guid.NewGuid();
         }
 
+        public (System.Reflection.Emit.PropertyBuilder, FieldBuilder) CreateProperty(TypeBuilder builder, string name, Type type, PropertyAttributes props = PropertyAttributes.None,
+           MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Virtual)
+        {
+            try
+            {
+                // options.EntityDTOsBuilders
+                var proertyBuilder = builder.DefineProperty(name, props, type, Type.EmptyTypes);
+
+                FieldBuilder customerNameBldr = builder.DefineField($"_{name}",
+                                                           type,
+                                                           FieldAttributes.Private);
+
+                // The property set and property get methods require a special
+                // set of attributes.
+
+
+
+
+                // Define the "get" accessor method for CustomerName.
+                MethodBuilder custNameGetPropMthdBldr =
+                    builder.DefineMethod($"get_{name}",
+                                               methodAttributes,
+                                               type,
+                                               Type.EmptyTypes);
+
+                ILGenerator custNameGetIL = custNameGetPropMthdBldr.GetILGenerator();
+
+                custNameGetIL.Emit(OpCodes.Ldarg_0);
+                custNameGetIL.Emit(OpCodes.Ldfld, customerNameBldr);
+                custNameGetIL.Emit(OpCodes.Ret);
+
+                // Define the "set" accessor method for CustomerName.
+                MethodBuilder custNameSetPropMthdBldr =
+                    builder.DefineMethod($"set_{name}",
+                                               methodAttributes,
+                                               null,
+                                               new Type[] { type });
+
+                ILGenerator custNameSetIL = custNameSetPropMthdBldr.GetILGenerator();
+
+                custNameSetIL.Emit(OpCodes.Ldarg_0);
+                custNameSetIL.Emit(OpCodes.Ldarg_1);
+                custNameSetIL.Emit(OpCodes.Stfld, customerNameBldr);
+                custNameSetIL.Emit(OpCodes.Ret);
+
+                // Last, we must map the two methods created above to our PropertyBuilder to
+                // their corresponding behaviors, "get" and "set" respectively.
+                proertyBuilder.SetGetMethod(custNameGetPropMthdBldr);
+                proertyBuilder.SetSetMethod(custNameSetPropMthdBldr);
+
+                //foreach (var a in dynamicPropertyBuilder.TypeBuilder.GetInterfaces().Where(n => n.Name.Contains("IAuditOwnerFields")))
+                //{
+
+                //    try
+                //    {
+                //        var p = a.GetGenericTypeDefinition().GetProperties().FirstOrDefault(k => k.Name == name);
+                //        if (p != null)
+                //        {
+                //            dynamicPropertyBuilder.TypeBuilder.DefineMethodOverride(custNameGetPropMthdBldr, p.GetMethod);
+                //        }
+                //    }
+                //    catch (NotSupportedException)
+                //    {
+
+                //    }
+
+                //}
+
+                return (proertyBuilder, customerNameBldr);
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception($"Failed to create Property: {builder.Name}.{name}", ex);
+            }
+        }
+        
+        public class EmitBaseTestClass<T> : DynamicEntity where T:DynamicEntity
+        {
+
+            [DataMember(Name = "id")]
+            [JsonProperty("id")]
+            [JsonPropertyName("id")]
+            public Guid Id { get; set; }
+
+
+        }
+
         [TestMethod]
         public void TestSomething()
         {
-            // Assuming Super and ITest are defined elsewhere
-            Type superType = typeof(Super);
-            Type iTestType = typeof(IIdentity);
+
+
+            /*
+             * 
+             * We will generate 
+             * 
+             * class Identity : FullBaseIdEntity<Identity>, IHaveName, IIdentity
+             * { 
+             *     public string Name {get;set;}
+             *     
+             *     //System.TypeLoadException: Method 'get_Id' in type 'Identity' from assembly 'test, 
+             *     //However this is a property on FullBaseIdEntity<>
+             *     
+             * }
+             * 
+             * and 
+             * 
+             * class Contact : Identity
+             * {
+             * 
+             * }
+             * 
+             * 
+             */
+                       
+            
 
             AssemblyName myAsmName = new AssemblyName("test");
 
-
+            
             var builder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
               AssemblyBuilderAccess.RunAndCollect);
+            
 
-
-
-            ModuleBuilder myModule =
+                        ModuleBuilder myModule =
               builder.DefineDynamicModule("test.dll");
-
-            var typeBuilder = myModule.DefineType($"Identity", TypeAttributes.Public
-                                                                        |   TypeAttributes.Class
+            
+            var identityBuilder = myModule.DefineType($"Identity", TypeAttributes.Public
+                                                                        | TypeAttributes.Class
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
                                                                         | TypeAttributes.Serializable
-                                                                        | TypeAttributes.BeforeFieldInit, superType);
-            //  typeBuilder.SetParent(superType);
+                                                                        | TypeAttributes.BeforeFieldInit);
 
-               typeBuilder.AddInterfaceImplementation(iTestType);
+            identityBuilder.SetParent(typeof(EmitBaseTestClass<>).MakeGenericType(identityBuilder));
 
-            // Define the property to implement ITest.Id explicitly
-        //    System.Reflection.Emit.PropertyBuilder idPropertyBuilder = typeBuilder.DefineProperty("Id", PropertyAttributes.None, typeof(Guid), Type.EmptyTypes);
+            identityBuilder.AddInterfaceImplementation(typeof(IHaveName));
+            identityBuilder.AddInterfaceImplementation(typeof(IIdentity));
+            CreateProperty(identityBuilder, "Name", typeof(string));
 
-            // Implement getter and setter
-            MethodBuilder getterMethodBuilder = typeBuilder.DefineMethod("get_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeof(Guid), Type.EmptyTypes);
-            MethodBuilder setterMethodBuilder = typeBuilder.DefineMethod("set_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new[] { typeof(Guid) });
 
-            // ILGenerator for getter
-            ILGenerator getterIL = getterMethodBuilder.GetILGenerator();
-            getterIL.Emit(OpCodes.Ldarg_0);
-            getterIL.Emit(OpCodes.Call, superType.GetProperty("Id").GetGetMethod());
-            getterIL.Emit(OpCodes.Ret);
+            var propName = "Id";
 
-            // ILGenerator for setter
-            ILGenerator setterIL = setterMethodBuilder.GetILGenerator();
-            setterIL.Emit(OpCodes.Ldarg_0);
-            setterIL.Emit(OpCodes.Ldarg_1);
-            setterIL.Emit(OpCodes.Call, superType.GetProperty("Id").GetSetMethod());
-            setterIL.Emit(OpCodes.Ret);
+            //var idInterfaceOverrider = identityBuilder.DefineProperty($"IIdentity.get_Id",
+            //          PropertyAttributes.None,
+            //          typeof(Guid),
+            //          null);
 
-            // Map the methods to the property
-         //   idPropertyBuilder.SetGetMethod(getterMethodBuilder);
-         //   idPropertyBuilder.SetSetMethod(setterMethodBuilder);
+            // var instane = typeof(FullBaseIdEntity<>).GetProperty(propName);
 
-            // Implement ITest.Id explicitly
+            var propert = identityBuilder.BaseType;
+            var property = typeof(EmitBaseTestClass<DynamicEntity>).GetProperty(propName);
+            {
+                var base_get = identityBuilder.DefineMethod($"get_{propName}",
+                    MethodAttributes.Virtual| MethodAttributes.Private | MethodAttributes.Final| MethodAttributes.SpecialName | MethodAttributes.NewSlot| MethodAttributes.HideBySig,
+                    property.PropertyType, System.Type.EmptyTypes);
+                var il = base_get.GetILGenerator();
 
-            typeBuilder.DefineMethodOverride(getterMethodBuilder, iTestType.GetProperty("Id").GetGetMethod());
-            typeBuilder.DefineMethodOverride(setterMethodBuilder, iTestType.GetProperty("Id").GetSetMethod());
+               // il.DeclareLocal(typeof(Guid));
 
-            // Create the type
-            Type dynamicType =   typeBuilder.CreateType();
+              //  il.Emit(OpCodes.Ldloca_S, 0);
+              //  il.Emit(OpCodes.Initobj, typeof(Guid));
+                il.Emit(OpCodes.Ldarg_0);
+             //   il.EmitWriteLine("The value of 'x' is:");
+              //  il.EmitWriteLine(xField);
+                il.EmitCall(OpCodes.Call, property.GetGetMethod(), null);
+                il.Emit(OpCodes.Ret);
+                identityBuilder.DefineMethodOverride(base_get, typeof(IIdentity).GetProperty(propName).GetGetMethod());
+             //   idInterfaceOverrider.SetGetMethod(base_get);
+                //  
 
-            this.GetType().GetMethod("TestType").MakeGenericMethod(dynamicType).Invoke(this, null);
+            }
+            {
+                var base_set = identityBuilder.DefineMethod($"set_{propName}", 
+                    MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
 
-            Console.WriteLine("Type 'Sub' has been generated.");
+                   null, new[] { property.PropertyType });
+                var il = base_set.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Call, property.GetSetMethod());
+
+                il.Emit(OpCodes.Ret);
+                identityBuilder.DefineMethodOverride(base_set, typeof(IIdentity).GetProperty(propName).GetSetMethod());
+             //   idInterfaceOverrider.SetSetMethod(base_set);
+
+            }
+
+
+            var contactBuilder = myModule.DefineType($"Contact", TypeAttributes.Public
+                                                                        | TypeAttributes.Class
+                                                                        | TypeAttributes.AutoClass
+                                                                        | TypeAttributes.AnsiClass
+                                                                        | TypeAttributes.Serializable
+                                                                        | TypeAttributes.BeforeFieldInit);
+
+            contactBuilder.SetParent(identityBuilder);
+          
+
+
+
+            var identityType = identityBuilder.CreateType();
+            var contactType = contactBuilder.CreateType();
+          
+
+            this.GetType().GetMethod("TestType").MakeGenericMethod(contactType).Invoke(this, null);
+
+             
+
+
         }
 
         [TestMethod]
@@ -423,10 +571,14 @@ namespace EAVFramework.UnitTest
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOBaseInterfaces = new[] { typeof(IHaveName),  typeof(IIdentity) };
+                o.DTOBaseInterfaces = new Type[] { 
+                    typeof(IHaveName), 
+                    typeof(IIdentity) 
+                };
                 o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) };
-
+               
                 o.GenerateAbstractClasses = false;
+              
                 
             });
 
@@ -434,16 +586,18 @@ namespace EAVFramework.UnitTest
 
             var identity = assembly.WithTable("Identity", "Identity", "identity", "Identities", "dbo", true);
             var securityGroup = assembly.WithTable("SecurityGroup", "SecurityGroup", "securitygroup", "SecurityGroups", "dbo");
-             
+            var contact = assembly.WithTable("Contact", "Contact", "contact", "Contracts", "dbo");
+
             securityGroup.WithBaseEntity(identity);
+            contact.WithBaseEntity(identity);
 
             identity.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             identity.AddProperty("Name", "Name", "name", "text").PrimaryField();
 
            var a = identity.AddProperty("Awesome User", "AwesomeUserId", "awesomeuserid", "guid").LookupTo(identity);
-             
-            securityGroup.AddProperty("Id", "Id", "id", "guid");
 
+            securityGroup.AddProperty("Id", "Id", "id", "guid");
+            contact.AddProperty("Id", "Id", "id", "guid");
 
 
             //var typeBuilder = identity.Builder;
@@ -468,7 +622,7 @@ namespace EAVFramework.UnitTest
 
             //typeBuilder.DefineMethodOverride(getterMethodBuilder, typeof(IIdentity).GetProperty("Id").GetGetMethod());
             //typeBuilder.DefineMethodOverride(setterMethodBuilder, typeof(IIdentity).GetProperty("Id").GetSetMethod());
-
+            contact.BuildType();
             securityGroup.BuildType();
             identity.BuildType();
 
@@ -485,7 +639,7 @@ namespace EAVFramework.UnitTest
 
             var securityGroupType = securityGroup.CreateTypeInfo();
             var identitType = identity.CreateTypeInfo();
-
+            var contactType = contact.CreateTypeInfo();
 
             Assert.AreEqual("Identity", identitType.Name);
             Assert.AreEqual("SecurityGroup", securityGroupType.Name);
