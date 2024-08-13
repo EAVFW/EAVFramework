@@ -3,6 +3,7 @@ using EAVFramework.Shared.V2;
 using EAVFramework.UnitTest.ManifestTests;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -20,6 +21,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.PortableExecutable;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -28,7 +30,59 @@ using static EAVFramework.Shared.TypeHelper;
 
 namespace EAVFramework.UnitTest
 {
-  
+    public class SuperSuper : DynamicEntity
+    {
+        public Guid Id { get; set; }
+        public Guid Test { get; set; }
+    }
+
+    public class Super : SuperSuper
+    {
+        
+    }
+
+    
+    public class TestIdentity : DynamicEntity, IIdentity
+    {
+        public Guid Id { get; set; }
+    }
+
+    public interface ITest
+    {
+        Guid Id { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "SecurityGroup")]
+    public interface MyIdentity
+    {
+        Guid Id { get; set; }
+
+    }
+
+    [Serializable()]
+    [EntityDTO(LogicalName = "identity", Schema = "dbo")]
+    [Entity(LogicalName = "identity", SchemaName = "Identity", CollectionSchemaName = "Identities", IsBaseClass = true, EntityKey = "Identity")]
+    public partial class Identity : BaseIdEntity<Identity>, IHaveName, IIdentity
+    {
+        public Identity()
+        {
+        }
+
+        [DataMember(Name = "name")]
+        [EntityField(AttributeKey = "Name")]
+        [JsonProperty("name")]
+        [JsonPropertyName("name")]
+        [PrimaryField()]
+        public String Name { get; set; }
+
+        [DataMember(Name = "identities")]
+        [JsonProperty("identities")]
+        [JsonPropertyName("identities")]
+        [InverseProperty("AwesomeUser")]
+        public ICollection<Identity> Identities { get; set; }
+
+    }
+
     [TestClass]
     public class EmitTests : BaseManifestTests
     {
@@ -291,14 +345,88 @@ namespace EAVFramework.UnitTest
                 var classBType = classB.CreateType();
         }
 
+        public static void TestType<T>() where T : DynamicEntity, IIdentity, new()
+        {
+            var test = new T {  };
+            var t = test.Id;
+            test.Id = Guid.NewGuid();
+        }
+
+        [TestMethod]
+        public void TestSomething()
+        {
+            // Assuming Super and ITest are defined elsewhere
+            Type superType = typeof(Super);
+            Type iTestType = typeof(IIdentity);
+
+            AssemblyName myAsmName = new AssemblyName("test");
+
+
+            var builder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
+              AssemblyBuilderAccess.RunAndCollect);
+
+
+
+            ModuleBuilder myModule =
+              builder.DefineDynamicModule("test.dll");
+
+            var typeBuilder = myModule.DefineType($"Identity", TypeAttributes.Public
+                                                                        |   TypeAttributes.Class
+                                                                        | TypeAttributes.AutoClass
+                                                                        | TypeAttributes.AnsiClass
+                                                                        | TypeAttributes.Serializable
+                                                                        | TypeAttributes.BeforeFieldInit, superType);
+            //  typeBuilder.SetParent(superType);
+
+               typeBuilder.AddInterfaceImplementation(iTestType);
+
+            // Define the property to implement ITest.Id explicitly
+        //    System.Reflection.Emit.PropertyBuilder idPropertyBuilder = typeBuilder.DefineProperty("Id", PropertyAttributes.None, typeof(Guid), Type.EmptyTypes);
+
+            // Implement getter and setter
+            MethodBuilder getterMethodBuilder = typeBuilder.DefineMethod("get_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeof(Guid), Type.EmptyTypes);
+            MethodBuilder setterMethodBuilder = typeBuilder.DefineMethod("set_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new[] { typeof(Guid) });
+
+            // ILGenerator for getter
+            ILGenerator getterIL = getterMethodBuilder.GetILGenerator();
+            getterIL.Emit(OpCodes.Ldarg_0);
+            getterIL.Emit(OpCodes.Call, superType.GetProperty("Id").GetGetMethod());
+            getterIL.Emit(OpCodes.Ret);
+
+            // ILGenerator for setter
+            ILGenerator setterIL = setterMethodBuilder.GetILGenerator();
+            setterIL.Emit(OpCodes.Ldarg_0);
+            setterIL.Emit(OpCodes.Ldarg_1);
+            setterIL.Emit(OpCodes.Call, superType.GetProperty("Id").GetSetMethod());
+            setterIL.Emit(OpCodes.Ret);
+
+            // Map the methods to the property
+         //   idPropertyBuilder.SetGetMethod(getterMethodBuilder);
+         //   idPropertyBuilder.SetSetMethod(setterMethodBuilder);
+
+            // Implement ITest.Id explicitly
+
+            typeBuilder.DefineMethodOverride(getterMethodBuilder, iTestType.GetProperty("Id").GetGetMethod());
+            typeBuilder.DefineMethodOverride(setterMethodBuilder, iTestType.GetProperty("Id").GetSetMethod());
+
+            // Create the type
+            Type dynamicType =   typeBuilder.CreateType();
+
+            this.GetType().GetMethod("TestType").MakeGenericMethod(dynamicType).Invoke(this, null);
+
+            Console.WriteLine("Type 'Sub' has been generated.");
+        }
+
         [TestMethod]
         [DeploymentItem(@"Specs/TestExternalBaseClass", "Specs/TestExternalBaseClass")]
         public void TestExternalBaseClass()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
-                o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) }; 
+                o.DTOBaseInterfaces = new[] { typeof(IHaveName),  typeof(IIdentity) };
+                o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) };
+
+                o.GenerateAbstractClasses = false;
                 
             });
 
@@ -312,14 +440,48 @@ namespace EAVFramework.UnitTest
             identity.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             identity.AddProperty("Name", "Name", "name", "text").PrimaryField();
 
-            identity.AddProperty("Awesome User", "AwesomeUserId", "awesomeuserid", "guid").LookupTo(identity);
+           var a = identity.AddProperty("Awesome User", "AwesomeUserId", "awesomeuserid", "guid").LookupTo(identity);
              
             securityGroup.AddProperty("Id", "Id", "id", "guid");
 
 
 
+            //var typeBuilder = identity.Builder;
+
+            //var superType = typeof(BaseIdEntity<>).MakeGenericType(identity.Builder);
+
+            //MethodBuilder getterMethodBuilder = typeBuilder.DefineMethod("get_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeof(Guid), Type.EmptyTypes);
+            //MethodBuilder setterMethodBuilder = typeBuilder.DefineMethod("set_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new[] { typeof(Guid) });
+
+            //// ILGenerator for getter
+            //ILGenerator getterIL = getterMethodBuilder.GetILGenerator();
+            //getterIL.Emit(OpCodes.Ldarg_0);
+            //getterIL.Emit(OpCodes.Call, typeof(BaseIdEntity<>).GetProperty("Id").GetGetMethod());
+            //getterIL.Emit(OpCodes.Ret);
+
+            //// ILGenerator for setter
+            //ILGenerator setterIL = setterMethodBuilder.GetILGenerator();
+            //setterIL.Emit(OpCodes.Ldarg_0);
+            //setterIL.Emit(OpCodes.Ldarg_1);
+            //setterIL.Emit(OpCodes.Call, typeof(BaseIdEntity<>).GetProperty("Id").GetSetMethod());
+            //setterIL.Emit(OpCodes.Ret);
+
+            //typeBuilder.DefineMethodOverride(getterMethodBuilder, typeof(IIdentity).GetProperty("Id").GetGetMethod());
+            //typeBuilder.DefineMethodOverride(setterMethodBuilder, typeof(IIdentity).GetProperty("Id").GetSetMethod());
+
             securityGroup.BuildType();
             identity.BuildType();
+
+
+            // Map the methods to the property
+            //   idPropertyBuilder.SetGetMethod(getterMethodBuilder);
+            //   idPropertyBuilder.SetSetMethod(setterMethodBuilder);
+
+            // Implement ITest.Id explicitly
+
+           
+
+
 
             var securityGroupType = securityGroup.CreateTypeInfo();
             var identitType = identity.CreateTypeInfo();
@@ -327,6 +489,8 @@ namespace EAVFramework.UnitTest
 
             Assert.AreEqual("Identity", identitType.Name);
             Assert.AreEqual("SecurityGroup", securityGroupType.Name);
+
+            this.GetType().GetMethod("TestType").MakeGenericMethod(identitType).Invoke(this, null);
 
             var code = codeMigratorV2.GenerateCodeFiles();
             AssertFiles(code, nameof(TestExternalBaseClass));

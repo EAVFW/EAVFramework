@@ -16,9 +16,19 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Options;
+using EAVFramework.Shared;
 
 namespace EAVFramework.UnitTest
 {
+
+    [EntityInterface(EntityKey = "Car")]
+    public interface ICar
+    {
+        Guid Id { get; set; }
+
+    }
+
+
     [TestClass]
     public class MigrationsTest : BaseManifestTests
     {
@@ -44,9 +54,9 @@ namespace EAVFramework.UnitTest
 
             services.AddCodeServices();
             services.AddEAVFramework<DynamicContext>();
-                
 
-            
+
+
 
             services.AddOptions<DynamicContextOptions>().Configure((o) =>
             {
@@ -65,6 +75,7 @@ namespace EAVFramework.UnitTest
 
                 o.EnableDynamicMigrations = true;
                 o.Namespace = "DummyNamespace";
+                o.DTOBaseInterfaces = new Type[] { typeof(ICar) };
                 //o.DTOBaseClasses = new[] { typeof(BaseOwnerEntity<Model.Identity>), typeof(BaseIdEntity<Model.Identity>) };
                 o.DTOAssembly = typeof(UnitTest1).Assembly;
 
@@ -87,21 +98,21 @@ namespace EAVFramework.UnitTest
 
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                
 
-                    using (SqlConnection connection =
-                        new SqlConnection(configuration.GetConnectionString("ApplicationDBMaster")))
-                    {
+
+                using (SqlConnection connection =
+                    new SqlConnection(configuration.GetConnectionString("ApplicationDBMaster")))
+                {
 
                     connection.Open();
-                  
-                        await ExecuteCommand(connection, "DROP DATABASE [DynManifest]");
-                       
-                        await ExecuteCommand(connection, "CREATE DATABASE [DynManifest];ALTER DATABASE [DynManifest] SET RECOVERY SIMPLE;");
 
-                    }
+                    await ExecuteCommand(connection, "DROP DATABASE [DynManifest]");
 
-            
+                    await ExecuteCommand(connection, "CREATE DATABASE [DynManifest];ALTER DATABASE [DynManifest] SET RECOVERY SIMPLE;");
+
+                }
+
+
 
             }
 
@@ -110,7 +121,7 @@ namespace EAVFramework.UnitTest
                                    new Claim("sub", principalId.ToString())
                                 }, EAVFramework.Constants.DefaultCookieAuthenticationScheme));
 
-          
+
 
 
             return (rootServiceProvider, principalId, prinpal);
@@ -121,51 +132,51 @@ namespace EAVFramework.UnitTest
             try
             {
 
-           
-            var command = new SqlCommand(cmd, connection);
 
-          
-            SqlDataReader reader = await command.ExecuteReaderAsync();
-            try
-            {
-                while (reader.Read())
+                var command = new SqlCommand(cmd, connection);
+
+
+                SqlDataReader reader = await command.ExecuteReaderAsync();
+                try
                 {
+                    while (reader.Read())
+                    {
 
 
+                    }
                 }
-            }
-            finally
-            {
-                // Always call Close when done reading.
-                reader.Close();
-            }
+                finally
+                {
+                    // Always call Close when done reading.
+                    reader.Close();
+                }
             }
             catch (Exception ex)
             {
 
             }
         }
-        
+
         [TestMethod]
         public async Task Test()
         {
             var (rootServiceProvider, principalId, prinpal) = await Setup();
 
-          
 
-                using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
+
+            using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
                 var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
-                
+
                 await ctx.MigrateAsync();
 
-                
 
-             
+
+
 
             }
-         
+
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
@@ -182,7 +193,7 @@ namespace EAVFramework.UnitTest
             {
                 var sp = scope.ServiceProvider;
                 var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
-               
+
                 var o = sp.GetService<IOptions<DynamicContextOptions>>();
                 o.Value.Manifests = new[]
                 {
@@ -199,8 +210,8 @@ namespace EAVFramework.UnitTest
                 }.Concat(o.Value.Manifests).ToArray();
 
                 ctx.ResetMigrationsContext();
-               
-               
+
+
                 await ctx.MigrateAsync();
 
 
@@ -211,12 +222,25 @@ namespace EAVFramework.UnitTest
                 var sp = scope.ServiceProvider;
                 var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
 
+                ctx.Context.GetEntityType("Cars");
+
+                this.GetType().GetMethod("TestType").MakeGenericMethod(ctx.Context.GetEntityType("Cars")).Invoke(this, null);
+
                 ctx.Add("Trucks", JObject.FromObject(new { name = "a" }));
 
                 await ctx.SaveChangesAsync(prinpal);
 
             }
 
-            }
         }
+
+        public static void TestType<T>() where T:DynamicEntity, ICar, new ()
+        {
+            var test = new T { Id = Guid.NewGuid() };
+        }
+    }
+
+
+
+
 }

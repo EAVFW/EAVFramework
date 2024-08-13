@@ -578,7 +578,7 @@ namespace EAVFramework.Shared.V2
 
 
             Builder = myModule.DefineType($"{dynamicAssemblyBuilder.Namespace}.{SchemaName}", TypeAttributes.Public
-                                                                        | (isAbstract ? TypeAttributes.Abstract : TypeAttributes.Class)
+                                                                        | (isAbstract && dynamicCodeService.Options.GenerateAbstractClasses ? TypeAttributes.Abstract : TypeAttributes.Class)
                                                                         | TypeAttributes.AutoClass
                                                                         | TypeAttributes.AnsiClass
                                                                         | TypeAttributes.Serializable

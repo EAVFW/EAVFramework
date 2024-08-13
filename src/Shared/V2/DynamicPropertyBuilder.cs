@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 
 namespace EAVFramework.Shared.V2
@@ -127,29 +128,29 @@ namespace EAVFramework.Shared.V2
             {
                 foreach (var interfaceType in interfaceTypes)
                 {
-                     
-                    {
-                        var base_get = TypeBuilder.DefineMethod($"get_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Private,
-                            property.PropertyType, System.Type.EmptyTypes);
-                        var il = base_get.GetILGenerator();
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.EmitCall(OpCodes.Callvirt,property.GetGetMethod(), null);
-                        il.Emit(OpCodes.Ret);
-                        TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
 
-                    }
-                    {
-                        var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Private,
+                    //{
+                    //    var base_get = TypeBuilder.DefineMethod($"get_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Private,
+                    //        property.PropertyType, System.Type.EmptyTypes);
+                    //    var il = base_get.GetILGenerator();
+                    //    il.Emit(OpCodes.Ldarg_0);
+                    //    il.EmitCall(OpCodes.Callvirt, property.GetGetMethod(), null);
+                    //    il.Emit(OpCodes.Ret);
+                    //    TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
 
-                           null, new[] { property.PropertyType});
-                        var il = base_set.GetILGenerator();
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldarg_1);
-                        il.EmitCall(OpCodes.Callvirt,property.GetSetMethod(), null);
-                        
-                        il.Emit(OpCodes.Ret);
-                        TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
-                    }
+                    //}
+                    //{
+                    //    var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Private,
+
+                    //       null, new[] { property.PropertyType });
+                    //    var il = base_set.GetILGenerator();
+                    //    il.Emit(OpCodes.Ldarg_0);
+                    //    il.Emit(OpCodes.Ldarg_1);
+                    //    il.EmitCall(OpCodes.Callvirt, property.GetSetMethod(), null);
+
+                    //    il.Emit(OpCodes.Ret);
+                    //    TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
+                    //}
                 }
             }
 
