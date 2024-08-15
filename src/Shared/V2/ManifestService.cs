@@ -412,6 +412,15 @@ namespace EAVFramework.Shared.V2
                             if (type == "choices")
                                 continue;
 
+                            if (attributeDefinition.Value.SelectToken("$.metadataOnly")?.ToObject<bool>() == true)
+                            {
+                                /*
+                                 * When the poly lookup is split, then there is generted additional 
+                                 * reference tabels to link things together and migrations is set to false indicating that it can be skipped
+                                 */
+                                continue;
+                            }
+
                             var propertyInfo = table
                                 .AddProperty(attributeKey, schemaName, logicalName, type)
                                 .WithExternalHash(HashExtensions.Sha256(attributeDefinition.Value.ToString()))
@@ -474,7 +483,7 @@ namespace EAVFramework.Shared.V2
                         }
                         catch (Exception ex)
                         {
-                            throw new InvalidOperationException($"Failed to generate field {attributeDefinition.Name}:{ex.ToString()}", ex);
+                            throw new InvalidOperationException($"Failed to generate field {entityDefinition.Name}:{attributeDefinition.Name}:{ex.ToString()}", ex);
                         }
                     }
                 }
