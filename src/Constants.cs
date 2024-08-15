@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,6 +37,7 @@ namespace EAVFramework
        
         public const string DefaultCookieAuthenticationScheme = "eavfw";
         public const string ExternalCookieAuthenticationScheme = "eavfw.external";
+        public const string ImpersonatorCookieAuthenticationSchema = "eavfw.impersonator";
         public const string DefaultCheckSessionCookieName = "eavfw.session";
         public const string DefaultLoginRedirectCookie = "eavauth.login";
 

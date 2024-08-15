@@ -24,6 +24,9 @@ using Sprache;
 using Microsoft.Extensions.Options;
 using System.Net.Http;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.IO;
 
 
 namespace EAVFramework.Extensions
@@ -143,7 +146,7 @@ namespace EAVFramework.Extensions
         public static IEndpointRouteBuilder AddEasyAuth(
             this IEndpointRouteBuilder endpoints,
             AuthenticationProperties authenticationProperties = null)
-          //  where TIdentity : DynamicEntity
+         
         {
             var authProps = authenticationProperties ?? new AuthenticationProperties();
             return MapAuthEndpoints(endpoints, authProps);
@@ -152,6 +155,7 @@ namespace EAVFramework.Extensions
         private static IEndpointRouteBuilder MapAuthEndpoints(
             IEndpointRouteBuilder endpoints,
             AuthenticationProperties authProps)
+             
         {
             var sp = endpoints.ServiceProvider;
             var metrics = sp.GetService<EAVMetrics>();
@@ -464,20 +468,47 @@ namespace EAVFramework.Extensions
             endpoints.MapGet("/.auth/logout", async httpcontext =>
             {
                 await httpcontext.SignOutAsync(Constants.DefaultCookieAuthenticationScheme);
-                var impersonator = await httpcontext.AuthenticateAsync("eavfw.impersonator");
+                
+                var impersonator = await httpcontext.AuthenticateAsync(Constants.ImpersonatorCookieAuthenticationSchema);
                 if (impersonator.Succeeded)
                 {
                     await httpcontext.SignInAsync("eavfw",
-                    new ClaimsPrincipal(new ClaimsIdentity(impersonator.Principal.Claims, "eavfw")),
+                    new ClaimsPrincipal(new ClaimsIdentity(impersonator.Principal.Claims, Constants.DefaultCookieAuthenticationScheme)),
                     new AuthenticationProperties());
 
-                    await httpcontext.SignOutAsync("eavfw.impersonator");
+                    await httpcontext.SignOutAsync(Constants.ImpersonatorCookieAuthenticationSchema);
                 }
 
                 httpcontext.Response.Redirect(httpcontext.Request.Query["post_logout_redirect_uri"]);
             });
 
+            endpoints.MapPost("/.auth/signin/impersonate", async ctx =>
+            {
+                var body = JToken.ReadFrom(new JsonTextReader(new StreamReader(ctx.Request.BodyReader.AsStream())));
 
+                var old = await ctx.AuthenticateAsync("eavfw");
+
+
+
+                await ctx.SignInAsync("eavfw.impersonator",
+          new ClaimsPrincipal(new ClaimsIdentity(old.Principal.Claims, Constants.ImpersonatorCookieAuthenticationSchema)),
+          new AuthenticationProperties());
+
+
+                var claims = new List<Claim>() { new Claim("sub", body.SelectToken("$.id").ToObject<Guid>().ToString()) };
+
+                var a = ctx.RequestServices.GetRequiredService<IOptions<EAVFrameworkOptions>>();
+                var user = new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme));
+                await a.Value.Authentication.PopulateAuthenticationClaimsAsync(ctx, user, claims, "impersonate", Guid.NewGuid().ToString());
+
+                await ctx.SignInAsync(Constants.DefaultCookieAuthenticationScheme,
+                    new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme)),
+                    new AuthenticationProperties());
+
+
+
+            }).RequireAuthorization("ImpersonatedSigninPolicy");
+       
 
                 return endpoints;
         }

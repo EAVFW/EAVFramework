@@ -256,6 +256,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
 
                 })
+                .AddCookie(Constants.ImpersonatorCookieAuthenticationSchema)
                 .AddCookie(Constants.ExternalCookieAuthenticationScheme)
                 .AddCookie(Constants.DefaultLoginRedirectCookie);
           
