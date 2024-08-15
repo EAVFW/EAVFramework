@@ -63,7 +63,7 @@ namespace EAVFramework.Extensions
 
     public interface IPasswordLessLinkGenerator
     {
-        Task<LinkResult> GenerateLink(Guid identityId, string state, string targetUrlOrPath, Guid handleId = default);
+        Task<LinkResult> GenerateLink(Guid identityId, IDictionary<string, StringValues> state, string targetUrlOrPath, Guid handleId = default);
     }
     public class PasswordLessLinkGenerator<TContext,TSignin> : IPasswordLessLinkGenerator
           where TContext : DynamicContext
@@ -82,7 +82,7 @@ namespace EAVFramework.Extensions
             _ticketStore = ticketStore;
             _serviceProvider = serviceProvider;
         }
-        public async Task<LinkResult> GenerateLink(Guid identityId, string state, string targetUrlOrPath, Guid handleId=default)
+        public async Task<LinkResult> GenerateLink(Guid identityId, IDictionary<string,StringValues> state, string targetUrlOrPath, Guid handleId=default)
         {
             if (handleId != default)
             {
@@ -105,7 +105,7 @@ namespace EAVFramework.Extensions
             }
 
             var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
-                           Encoding.UTF8.GetBytes(state));
+                           Encoding.UTF8.GetBytes(string.Join("&", state.SelectMany(k=> k.Value.Select(v=> $"{k.Key}={v}")))));
 
 
             await _ticketStore.PersistTicketAsync(new PersistTicketRequest
@@ -226,6 +226,10 @@ namespace EAVFramework.Extensions
                     async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore, [FromQuery] string error, [FromQuery] string error_message, [FromQuery]string error_subcode) =>
                     {
 
+                        /**
+                         * If there is an error on the querystring, we will short cut out to the
+                         * acount callback endpoint to propergate the error to endusers.
+                         */
                         if (!string.IsNullOrEmpty(error))
                         {
 
@@ -236,14 +240,29 @@ namespace EAVFramework.Extensions
                             return;
                         }
 
+                        /**
+                         * Create a callback request object to pass to the auth provider
+                         * 
+                         */
                         var request = new OnCallbackRequest{
                             HttpContext = httpcontext,
                             Options = options.Authentication,
                             Props = new Dictionary<string, StringValues>( httpcontext.Request.Query, StringComparer.OrdinalIgnoreCase)
                         };
-
+                        /**
+                         * The authprovider will by default populate the handleid from the
+                         * querystring passed as props in the request.
+                         * 
+                         * Providers can override this method to populate the handleid from alternative places.
+                         */
                         await auth.PopulateCallbackRequest(request);
                         
+
+                        /**
+                         * If the handleid is not set, we will not populate redirect, 
+                         * identity from ticket store and go directly to the oncallback
+                         * on the provider.
+                         */
                         if(request.HandleId != default)
                         {
                             var ticketinfo = await ticketStore.GetTicketInfoAsync(new UnPersistTicketReuqest
@@ -263,6 +282,10 @@ namespace EAVFramework.Extensions
                          
                         var result = await auth.OnCallback(request);
 
+                        /**
+                         * If the auth provider returns an error, we will redirect to the account callback
+                         * endpoint to propogate the error to the end user.
+                         */
                         if (!result.Success)
                         {
 
@@ -273,6 +296,12 @@ namespace EAVFramework.Extensions
                             return;
                         }
 
+                        /**
+                         * 
+                         * If the auth provider returns success, we will sign in the external auth cookie.
+                         * this is the the state stored for the account callback endpoint to retrieve and finally 
+                         * sign in the user properly.
+                         */
                       
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
                             result.Principal, new AuthenticationProperties(
