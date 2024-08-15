@@ -17,5 +17,12 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("onTransitionIn")] public TransitionDefinition OnTransitionIn { get; set; }
 
         [JsonPropertyName("actions")] public Dictionary<string, ActionDefinition> Actions { get; set; }
+
+        /// <summary>
+        /// Exclusively used to capture non-spec items
+        /// </summary>
+        [System.Text.Json.Serialization.JsonExtensionData]
+        [Newtonsoft.Json.JsonExtensionData]
+        public Dictionary<string, object> AdditionalFields { get; set; }
     }
 }
