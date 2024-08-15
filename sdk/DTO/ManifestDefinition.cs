@@ -16,6 +16,13 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonProperty("version")]
         [JsonPropertyName("version")]
         public string Version { get; set; }
+
+        /// <summary>
+        /// Exclusively used to capture non-spec items
+        /// </summary>
+        [System.Text.Json.Serialization.JsonExtensionData]
+        [Newtonsoft.Json.JsonExtensionData]
+        public Dictionary<string, object> AdditionalFields { get; set; }
     }
 
 
