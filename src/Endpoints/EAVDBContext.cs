@@ -1,32 +1,30 @@
 using EAVFramework.Plugins;
+using EAVFramework.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Security.Claims;
-using System.Reflection;
-using EAVFramework.Shared;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using System.Linq;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json.Serialization;
-using System.Collections.Concurrent;
-using System.Runtime.Serialization;
-using System.Collections.Generic;
+using System;
 using System.Collections;
-using System.Diagnostics;
-using System.Threading;
-using System.Linq.Expressions;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
+using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EAVFramework.Endpoints
 {
@@ -319,18 +317,19 @@ namespace EAVFramework.Endpoints
              * 1: if the object has no id field but the root object do have propertyname + "id", then it should be partial update
              * 2: if no id and no propertyname + "id" field on root, then its assume that the object should replace the existing as new
              */
-            var relatedProps = record.OfType<JProperty>()
-                .Where(p => p.Value.Type == JTokenType.Object && p.Value is JObject obj && (obj.ContainsKey("id")|| record[p.Name+"id"] !=null )).ToArray();
+            //var relatedProps = record.OfType<JProperty>()
+            //    .Where(p => p.Value.Type == JTokenType.Object && p.Value is JObject obj && (obj.ContainsKey("id") || record[p.Name + "id"] != null)).ToArray();
 
-            foreach (var related in relatedProps.Select(related =>
-                 entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
-            {
-                if (related!=null)
-                {
-                    await related.LoadAsync();
-                }
-            }
+            //foreach (var related in relatedProps.Select(related =>
+            //     entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
+            //{
+            //    if (related != null)
+            //    {
+            //        await related.LoadAsync();
+            //    }
+            //}
 
+            await LoadRelatedDataAsync(record, entity);
 
             var serializer = new JsonSerializer();
 
@@ -343,6 +342,46 @@ namespace EAVFramework.Endpoints
             logger.LogInformation("Patching {EntityName}<{RecordId}>: {Changes}", entityName, recordId, this.Context.ChangeTracker.DebugView.LongView);
 
             return entity;
+        }
+
+        private async Task LoadRelatedDataAsync(JToken record, EntityEntry entity)
+        {
+            foreach (var prop in record.OfType<JProperty>())
+            {
+                if (prop.Value is JObject relatedRecord)
+                {
+
+                    if (relatedRecord.ContainsKey("id") || record[prop.Name + "id"] != null)
+                    {
+                        var related = entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, prop.Name, StringComparison.OrdinalIgnoreCase));
+
+                        await related.LoadAsync(); //TODO, we could cache id+rowrecord to avoid loading from db
+
+                        await LoadRelatedDataAsync(relatedRecord, related.TargetEntry);
+                    }
+
+
+                }
+                else if (prop.Value is JArray relatedArray)
+                {
+                    var relatedcol = entity.Collections.FirstOrDefault(c => string.Equals(c.Metadata.Name, prop.Name, StringComparison.OrdinalIgnoreCase));
+                    //TODO,  relatedcol.Query(). could create where query to load all in one go
+
+                    foreach (var item in relatedArray)
+                    {
+                        if (item is JObject obj && obj.ContainsKey("id"))
+                        {
+                            var relatedEntity = await this.Context.FindAsync(relatedcol.Metadata.TargetEntityType.ClrType, item["id"].ToObject<Guid>());
+                            await LoadRelatedDataAsync(obj, Context.Entry(relatedEntity));
+                        }
+
+                       // var relatedEntity = relatedcol.Query().  (item["id"].ToObject<Guid>());
+
+
+                    }
+
+                }
+            }
         }
 
         private async Task PopulateAsync(JToken record, EntityEntry entity, JsonSerializer serializer)
@@ -418,7 +457,7 @@ namespace EAVFramework.Endpoints
                     else if (prop.Value.Type == JTokenType.Array)
                     {
                         var collectionElementType = method.PropertyType.GetGenericArguments().First();
-                        IList existingCollection = method.GetValue(entity.Entity) as IList;
+                        var existingCollection = method.GetValue(entity.Entity) ;
 
                         if (existingCollection==null)
                         {
@@ -428,11 +467,30 @@ namespace EAVFramework.Endpoints
 
                         foreach (var obj in prop.Value)
                         {
-                            var element = Activator.CreateInstance(collectionElementType);
-                            existingCollection.Add(element);
-                            EntityEntry entry = Attach(serializer, obj, element);
-                            //Populate
-                            await PopulateAsync(obj, entry, serializer);
+                            if (obj is JObject && obj["id"] != null)
+                            {
+                                if (obj["id"]?.ToString()== "f8e993df-18bd-434e-4e88-08dca009904f")
+                                {
+
+                                }
+                                //Populate (The related records are allready loaded to context in the load related records step)
+                                var reference = await Context.FindAsync(collectionElementType, obj["id"].ToObject<Guid>());
+                                Context.ChangeTracker.DetectChanges(); 
+                               var entityReference = Context.Entry(reference);
+                                 
+
+                                await PopulateAsync(obj, entityReference, serializer);
+                            }
+                            else
+                            {
+                                var element = Activator.CreateInstance(collectionElementType);
+
+                                (existingCollection as IList).Add(element);
+                                EntityEntry entry = Attach(serializer, obj, element);
+                                //Populate
+                                await PopulateAsync(obj, entry, serializer);
+                            }
+                            
 
                         }
                     }
