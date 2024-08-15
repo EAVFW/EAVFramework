@@ -689,10 +689,18 @@ namespace EAVFramework.Shared.V2
                     {
                         if (type.GetProperties().Any(p => p.Name == prop))
                         {
-                            if (type.IsGenericType)
+                            if (type.IsGenericTypeDefinition)
                             {
+                                
                                 return type.MakeGenericType(
-                                    typeArguments: type.GetGenericArguments().Select(a=>a.GetGenericParameterConstraints().First()).ToArray())
+                                    typeArguments: type.GetGenericArguments().Select(a=>
+                                    {
+                                        if (a.IsGenericParameter)
+                                            return a.GetGenericParameterConstraints().First();
+                                        return a;
+                                        //throw new Exception($"Not able to build model for {a.Name}, {type.Name}");
+
+                                    }).ToArray())
                                     .GetProperty(prop);
                             }
                             return type.GetProperties().Where(p => p.Name == prop).First();
