@@ -1,11 +1,19 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Lifecycle;
+using Azure.Provisioning;
+using EAVFramework.Configuration;
 using EAVFW.Extensions.Manifest.SDK;
 using EAVFW.Extensions.Manifest.SDK.Migrations;
+using EAVFW.Extensions.SecurityModel;
 using Grpc.Core;
+using IdentityModel;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +24,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Resource = Aspire.Hosting.ApplicationModel.Resource;
 
 namespace EAVFramework.Extensions.Aspire.Hosting
 {
@@ -354,14 +363,17 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
     public class PublishEAVFWProjectLifecycleHook : IDistributedApplicationLifecycleHook
+        
     {
         private readonly ResourceLoggerService _resourceLoggerService;
+        private readonly ILogger<PublishEAVFWProjectLifecycleHook> _aspirelogger;
         private readonly ResourceNotificationService _resourceNotificationService;
 
-        public PublishEAVFWProjectLifecycleHook(ResourceLoggerService resourceLoggerService,
+        public PublishEAVFWProjectLifecycleHook(ResourceLoggerService resourceLoggerService, ILogger<PublishEAVFWProjectLifecycleHook> aspirelogger,
             ResourceNotificationService resourceNotificationService)
         {
             _resourceLoggerService = resourceLoggerService ?? throw new ArgumentNullException(nameof(resourceLoggerService));
+            _aspirelogger = aspirelogger;
             _resourceNotificationService = resourceNotificationService ?? throw new ArgumentNullException(nameof(resourceNotificationService));
         }
 
@@ -385,7 +397,11 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                             var modelProjectPath = modelResource.GetModelPath();
 
-                            var targetDatabaseResourceName = modelResource.Annotations.OfType<TargetDatabaseResourceAnnotation>().Single().TargetDatabaseResourceName;
+                            if (!modelResource.TryGetLastAnnotation<TargetDatabaseResourceAnnotation>(out var targetDatabaseResourceAnnotation)){
+                                return;
+                            }
+
+                            var targetDatabaseResourceName = targetDatabaseResourceAnnotation.TargetDatabaseResourceName;
                             var targetDatabaseResource = application.Resources.OfType<SqlServerDatabaseResource>().Single(r => r.Name == targetDatabaseResourceName);
                             var targetSQLServerResource = targetDatabaseResource.Parent;
 
@@ -471,12 +487,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     var migrationCount = await GetMigrationsCountAsync(targetDatabaseResource, connectionString);
                                     if (migrationCount == 0)
                                     {
-                                        await DoMigrationAsync(modelProjectPath, targetDatabaseResource, connectionString);
+                                        await DoMigrationAsync(modelProjectPath , targetDatabaseResourceAnnotation, targetDatabaseResource, connectionString);
                                     }
 
+                                   migrationannotation.Success = true;
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
-                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success) });
-                                    migrationannotation.Success = true;
+                                      state => state with { State = new ResourceStateSnapshot($"migrations was created", KnownResourceStateStyles.Info) });
 
                                 }
                                 catch (SqlException sqlexception)
@@ -495,6 +511,51 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                                 }
                             }
+
+                            if (modelResource.TryGetLastAnnotation<CreateSigninTokenAnnotation>(out var tokenannotation)){
+                                try
+                                {
+                                    await _resourceNotificationService.PublishUpdateAsync(modelResource,
+                              state => state with { State = new ResourceStateSnapshot("Creating signin link", KnownResourceStateStyles.Info) });
+
+                                    foreach(var target in modelResource.Annotations.OfType<CreateSigninUrlAnnotation>())
+                                    {
+                                        var link = await tokenannotation.GenerateLink(target,cancellationToken);
+
+                                        await _resourceNotificationService.PublishUpdateAsync(target.Target,
+                                            state => state with
+                                            {   
+                                                Properties = [.. state.Properties, new ResourcePropertySnapshot("signinlink", link.Link)  ],
+                                                 Urls = [.. state.Urls, new UrlSnapshot("signinlink", link.Link,true), new UrlSnapshot("signinlink", link.Link, false)],
+                                                
+                                            });
+
+                                        if (target.Project.TryGetEndpoints(out var endpoints))
+                                        {
+                                            var targetlogger = _resourceLoggerService.GetLogger(target.Target);
+
+                                            targetlogger.LogInformation("Sign in with: {singinlink}", endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString+ link.Link);
+                                            _aspirelogger.LogInformation("Sign in to {project}: {singinlink}", target.Target.Name, endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString + link.Link);
+
+                                        }
+                                    }
+
+
+                                    await _resourceNotificationService.PublishUpdateAsync(modelResource,
+                                        state => state with { State = new ResourceStateSnapshot("signin link crated", KnownResourceStateStyles.Info) });  
+
+
+
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+
+                            await _resourceNotificationService.PublishUpdateAsync(modelResource,
+                                      state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success) });
+                            return;
                         }
                         catch (Exception ex)
                         {
@@ -519,8 +580,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             }, cancellationToken);
 
         }
-
-        private static async Task DoMigrationAsync(string modelProjectPath, SqlServerDatabaseResource targetDatabaseResource, string connectionString)
+        
+        private static async Task DoMigrationAsync(string modelProjectPath, TargetDatabaseResourceAnnotation targetDatabaseResourceAnnotation, SqlServerDatabaseResource targetDatabaseResource, string connectionString)
         {
             var variablegenerator = new SQLClientParameterGenerator();
             var migrator = new SQLMigrationGenerator(variablegenerator, new ManifestPermissionGenerator(variablegenerator));
@@ -534,12 +595,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             var replacements = new Dictionary<string, string>
             {
                 ["DBName"] = targetDatabaseResource.DatabaseName,
-                ["DBSchema"] = "dbo",
-                ["SystemAdminSecurityGroupId"] = "1b714972-8d0a-4feb-b166-08d93c6ae328",
-                ["UserGuid"] = "A0461D73-E979-449C-B24F-A3B3D6711D61",
-                ["UserName"] = "Poul Kjeldager",
-                ["UserEmail"] = "poul@kjeldager.com",
-                ["UserPrincipalName"] = "PoulKjeldagerSorensen"
+                ["DBSchema"] = targetDatabaseResourceAnnotation.Schema,
+                ["SystemAdminSecurityGroupId"] = targetDatabaseResourceAnnotation.InitialSystemSecurityGroupId,
+                ["UserGuid"] = targetDatabaseResourceAnnotation.InitialIdentity.ToString(),
+                ["UserName"] = targetDatabaseResourceAnnotation.InitialUsername ?? "Poul Kjeldager",
+                ["UserEmail"] = targetDatabaseResourceAnnotation.InitialEmail,
+                ["UserPrincipalName"] = targetDatabaseResourceAnnotation.UserPrincipalName ?? "PoulKjeldagerSorensen"
 
             };
 

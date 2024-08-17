@@ -17,7 +17,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         /// <summary>
         /// The states to wait for. If null, it will wait for the resource to be in the "Running" state.
         /// </summary>
-        public string[]? States { get; set; }
+        public string[] States { get; set; }
         
         /// <summary>
         /// Indicates if it should wait until the resource has run to completion.

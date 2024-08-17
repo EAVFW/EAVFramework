@@ -5,6 +5,9 @@ using Aspire.Hosting.Lifecycle;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Certificates;
+using EAVFramework.Configuration;
+using EAVFW.Extensions.SecurityModel;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -523,10 +526,37 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         /// <param name="target">An <see cref="IResourceBuilder{T}"/> representing the target <see cref="SqlServerDatabaseResource"/> to publish the model to.</param>
         /// <returns>An <see cref="IResourceBuilder{T}"/> that can be used to further customize the resource.</returns>
         public static IResourceBuilder<EAVFWModelProjectResource> PublishTo(
-            this IResourceBuilder<EAVFWModelProjectResource> builder, IResourceBuilder<SqlServerDatabaseResource> target)
+            this IResourceBuilder<EAVFWModelProjectResource> builder,
+            IResourceBuilder<SqlServerDatabaseResource> target,
+            string administratorEmail, Guid initialAdministratorUserId, string Username, string schema = "dbo"
+            )
         {
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
-            builder.WithAnnotation(new TargetDatabaseResourceAnnotation(target.Resource.Name, target.Resource), ResourceAnnotationMutationBehavior.Replace);
+            builder.WithAnnotation(new TargetDatabaseResourceAnnotation(target.Resource.Name, target.Resource)
+            {
+                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ","")
+            }, ResourceAnnotationMutationBehavior.Replace);
+            return builder;
+        }
+        public static IResourceBuilder<T> WithSigninUrl<T>(this IResourceBuilder<T> builder, IResourceBuilder<EAVFWModelProjectResource> model, IResourceBuilder<ProjectResource> project=null)
+            where T:Resource
+        {
+            model.WithAnnotation(new CreateSigninUrlAnnotation(builder.Resource,project?.Resource??builder.Resource as IResource));
+            return builder;
+        }
+        public static IResourceBuilder<EAVFWModelProjectResource> WithSinginToken<TContext, TIdentity, TSignin>(
+          
+            this IResourceBuilder<EAVFWModelProjectResource> builder, Action<IServiceCollection> services = null, Action<SqlServerDbContextOptionsBuilder> sql=null)
+            where TContext : DynamicContext
+            where TIdentity : DynamicEntity, IIdentity
+            where TSignin : DynamicEntity, ISigninRecord, new()
+        {
+            builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
+            builder.WithAnnotation< CreateSigninTokenAnnotation>(new CreateSigninTokenAnnotation<TContext, TIdentity, TSignin>(builder.Resource)
+            {
+                ServiceCollectionExtender = services,
+                SqlExtender = sql,
+            }, ResourceAnnotationMutationBehavior.Replace);
             return builder;
         }
 

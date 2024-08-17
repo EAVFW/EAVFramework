@@ -7,6 +7,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 {
     public sealed class EAVFWModelProjectResource(string name) : Resource(name)
     {
+      
+
         public string GetModelPath()
         {
             var projectMetadata = Annotations.OfType<IProjectMetadata>().FirstOrDefault();
