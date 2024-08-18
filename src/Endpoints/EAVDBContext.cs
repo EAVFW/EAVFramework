@@ -87,6 +87,7 @@ namespace EAVFramework.Endpoints
         public abstract Task SaveChangesAsync(ClaimsPrincipal user);
         public abstract ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys);
         public abstract EntityEntry Add(string entityName, JToken record);
+        public abstract Type GetEntityType(string entityCollectionName);
     }
 
     public record EntityRef([property: JsonProperty("$type")] string Type, [property: JsonProperty("id")] Guid Id);
@@ -128,6 +129,10 @@ namespace EAVFramework.Endpoints
             }
         }
 
+        public override Type GetEntityType(string entityCollectionName)
+        {
+            return this.Context.GetEntityType(entityCollectionName);
+        }
         public virtual EntityEntry Remove(object obj)
         {
             return this.Context.Remove(obj);
@@ -762,6 +767,7 @@ namespace EAVFramework.Endpoints
 
 
         }
+
 
         public IQueryable<T> Set<T>(string name)
         {
