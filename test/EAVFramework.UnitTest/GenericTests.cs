@@ -37,12 +37,12 @@ namespace EAVFramework.UnitTest
     [EntityInterface(EntityKey = "Agreement")]
     [ConstraintMapping(EntityKey = "Payment Provider", ConstraintName = nameof(TProvider))]
     [ConstraintMapping(EntityKey = "Payment Provider Type", ConstraintName = nameof(TType))]
-    public interface IAgreement<TProvider,TType>
+    public interface IAgreement<TProvider, TType>
        where TProvider : DynamicEntity, IPaymentProvider<TType>
        where TType : DynamicEntity, IPaymentProviderType
-       
+
     {
-          TProvider Provider { get; set; }
+        TProvider Provider { get; set; }
     }
 
     [TestClass]
@@ -66,7 +66,7 @@ namespace EAVFramework.UnitTest
 
             //Arrage (Build IAgreement above)
             var baseTypeInterfacesbuilders = new ConcurrentDictionary<string, InterfaceShadowBuilder>();
-            var IPaymentProviderType = baseTypeInterfacesbuilders.GetOrAdd("Test.IPaymentProviderType", name=> new InterfaceShadowBuilder(myModule, baseTypeInterfacesbuilders, name));
+            var IPaymentProviderType = baseTypeInterfacesbuilders.GetOrAdd("Test.IPaymentProviderType", name => new InterfaceShadowBuilder(myModule, baseTypeInterfacesbuilders, name));
             var IPaymentProvider = baseTypeInterfacesbuilders.GetOrAdd("Test.IPaymentProvider", name => new InterfaceShadowBuilder(myModule, baseTypeInterfacesbuilders, name));
             var IAgreement = baseTypeInterfacesbuilders.GetOrAdd("Test.IAgreement", name => new InterfaceShadowBuilder(myModule, baseTypeInterfacesbuilders, name));
 
@@ -78,7 +78,7 @@ namespace EAVFramework.UnitTest
             IAgreement.AddContraint("TProvider", IPaymentProvider);
             IAgreement.AddContraint("TType", typeof(DynamicEntity));
             IAgreement.AddContraint("TType", IPaymentProviderType);
-           
+
 
             var IPaymentProviderTypeCompiledType = IPaymentProviderType.CreateType();
             var IPaymentProviderCompiledType = IPaymentProvider.CreateType();
@@ -89,7 +89,7 @@ namespace EAVFramework.UnitTest
             var c = InterfaceShadowBuilder.DumpInterface(IAgreementCompiledType);
 
             Assert.AreEqual(
-              RemoveWhitespace("Test.IAgreement<TProvider,TType>\r\n      where TProvider : DynamicEntity, IPaymentProvider<TType>  \r\n where TType : DynamicEntity, IPaymentProviderType "),RemoveWhitespace( c));
+              RemoveWhitespace("Test.IAgreement<TProvider,TType>\r\n      where TProvider : DynamicEntity, IPaymentProvider<TType>  \r\n where TType : DynamicEntity, IPaymentProviderType "), RemoveWhitespace(c));
 
             //Test.IAgreement<TProvider,TType>whereTType:DynamicEntity,IPaymentProviderTypewhereTProvider:DynamicEntity,IPaymentProvider<TType>>
             //Test.IAgreement<TProvider,TType>whereTProvider:DynamicEntity,IPaymentProvider<TType>whereTType:DynamicEntity,IPaymentProviderType>. 
@@ -123,7 +123,7 @@ namespace EAVFramework.UnitTest
 
 
             //Act
-            var (sql, sp) = RunDBWithSchema("cmr", o=>
+            var (sql, sp) = RunDBWithSchema("cmr", o =>
             {
 
                 o.DTOBaseInterfaces = new Type[] {
@@ -132,7 +132,7 @@ namespace EAVFramework.UnitTest
                      typeof(ISigninRecord)
                 };
                 o.DTOBaseClasses = new[] { typeof(FullBaseIdEntity<>), typeof(FullBaseOwnerEntity<>) };
-            },manifest);
+            }, manifest);
 
             var ctx = sp.GetService<DynamicContext>();
             var t = ctx.GetEntityType("Signins");
@@ -143,45 +143,150 @@ namespace EAVFramework.UnitTest
             MigrationAssert.AreEqual(expectedSQL, sql);
 
         }
-            [TestMethod]
-        [DeploymentItem(@"Specs/manifest.payments.json", "Specs")]
-        [DeploymentItem(@"Specs/manifest.payments.sql", "Specs")]
 
-        public async Task TestInherienceLevel2()
+
+        [TestMethod]
+        [DeploymentItem(@"Specs/mc-padel.json", "Specs")]
+        [DeploymentItem(@"Specs/mc-padel.sql", "Specs")]
+
+        public async Task TestPadelModule()
         {
             //Arrange
-            var manifest = JToken.Parse(File.ReadAllText(@"Specs/manifest.payments.json")); 
-            
+            var manifest = JToken.Parse(File.ReadAllText(@"Specs/mc-padel.json"));
+
 
             //Act
-            var (sql,_) = RunDBWithSchema("payments", manifest);
+            var (sql, sp) = RunDBWithSchema("padel", o =>
+            {
+
+                o.DTOBaseInterfaces = new Type[] {
+                    typeof(IIdentity),  typeof(IIdentity),
+                  typeof(IContact),typeof(IWebsite),typeof(IContactInformation<>)
+
+                };
+                o.DTOBaseClasses = new[] { typeof(FullBaseIdEntity<>), typeof(FullBaseOwnerEntity<>) };
+            }, manifest);
+
+            var ctx = sp.GetService<DynamicContext>();
 
 
-            //Assure
-
-            string expectedSQL = System.IO.File.ReadAllText(@"Specs/manifest.payments.sql");
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/mc-padel.sql");
 
             MigrationAssert.AreEqual(expectedSQL, sql);
 
         }
 
         [TestMethod]
-        [DeploymentItem(@"Specs/manifest.payments.json", "Specs")]
-        public async Task TestInherienceLevel2Code()
+        [DeploymentItem(@"Specs/mc-oidc.json", "Specs")]
+        [DeploymentItem(@"Specs/mc-oidc.sql", "Specs")]
+
+        public async Task TestOIDCModule()
         {
-            DynamicCodeService codeMigratorV2 = CreateOptions(o =>
+            //Arrange
+            var manifest = JToken.Parse(File.ReadAllText(@"Specs/mc-oidc.json"));
+
+
+            //Act
+            var (sql, sp) = RunDBWithSchema("oidc", o =>
             {
-                o.Schema = "dbo";               
-                o.DTOBaseInterfaces = new[] {
-                   typeof(IAgreement<,>), typeof(IPaymentProvider<>), typeof(IPaymentProviderType)
-                };
-            });
 
-            var manifest = new ManifestService(codeMigratorV2,new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+            o.DTOBaseInterfaces = new Type[] {
+                    typeof(IIdentity),  typeof(IIdentity),
+                  typeof(IContact),typeof(IWebsite),typeof(IContactInformation<>),
+                   typeof(IOpenIdConnectClient<,>),
+            typeof(IOpenIdConnectAuthorization<,,>),
+            typeof(IOpenIdConnectToken<,,,>),
+            typeof(IAllowedGrantType<>),
+            typeof(IOpenIdConnectAuthorizationScope<>),
+            typeof(IOpenIdConnectScopeResource<,>),
+            typeof(IOpenIdConnectScope<>),
+            typeof(IOpenIdConnectIdentityResource),
+            typeof(IOpenIdConnectResource),
+            typeof(IOpenIdConnectSecret),
 
-            var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/manifest.payments.json")));
-            var code = codeMigratorV2.GenerateCodeFiles();
+        };
+        o.DTOBaseClasses = new[] { typeof(FullBaseIdEntity<>), typeof(FullBaseOwnerEntity<>)
+    };
+}, manifest);
+
+var ctx = sp.GetService<DynamicContext>();
+
+
+string expectedSQL = System.IO.File.ReadAllText(@"Specs/mc-oidc.sql");
+
+MigrationAssert.AreEqual(expectedSQL, sql);
 
         }
+
+        [TestMethod]
+[DeploymentItem(@"Specs/manifest.payments.json", "Specs")]
+[DeploymentItem(@"Specs/manifest.payments.sql", "Specs")]
+
+public async Task TestInherienceLevel2()
+{
+    //Arrange
+    var manifest = JToken.Parse(File.ReadAllText(@"Specs/manifest.payments.json"));
+
+
+    //Act
+    var (sql, _) = RunDBWithSchema("payments", manifest);
+
+
+    //Assure
+
+    string expectedSQL = System.IO.File.ReadAllText(@"Specs/manifest.payments.sql");
+
+    MigrationAssert.AreEqual(expectedSQL, sql);
+
+}
+
+[TestMethod]
+[DeploymentItem(@"Specs/manifest.payments.json", "Specs")]
+public async Task TestInherienceLevel2Code()
+{
+    DynamicCodeService codeMigratorV2 = CreateOptions(o =>
+    {
+        o.Schema = "dbo";
+        o.DTOBaseInterfaces = new[] {
+                   typeof(IAgreement<,>), typeof(IPaymentProvider<>), typeof(IPaymentProviderType)
+        };
+    });
+
+    var manifest = new ManifestService(codeMigratorV2, new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+
+    var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/manifest.payments.json")));
+    var code = codeMigratorV2.GenerateCodeFiles();
+
+}
     }
+
+
+    [EntityInterface(EntityKey = "Contact")]
+public interface IContact
+{
+    Guid Id { get; set; }
+    string Name { get; set; }
+
+}
+[EntityInterface(EntityKey = "Website")]
+public interface IWebsite
+{
+    Guid Id { get; set; }
+    Guid? AccountId { get; set; }
+
+    string Domain { get; set; }
+
+
+}
+[EntityInterface(EntityKey = "Contact Information")]
+[ConstraintMapping(AttributeKey = "Type", ConstraintName = nameof(TContactInformationType))]
+public interface IContactInformation<TContactInformationType>
+   where TContactInformationType : struct, IConvertible
+{
+
+
+    string Value { get; set; }
+
+    TContactInformationType? Type { get; set; }
+}
 }

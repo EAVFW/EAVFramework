@@ -310,7 +310,7 @@ namespace EAVFramework.Shared.V2
 
         public virtual void AddInterfaces(DynamicTableBuilder dynamicTableBuilder)
         {
-            var interfaces = options.DTOBaseInterfaces
+            var interfaces = options.DTOBaseInterfaces.Distinct()
               .Where(c => c.GetCustomAttributes<EntityInterfaceAttribute>(false).Any(attr => attr.EntityKey == dynamicTableBuilder.EntityKey ||
               (attr.EntityKey == "*")))
               .ToList();

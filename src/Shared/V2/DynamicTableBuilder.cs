@@ -733,12 +733,37 @@ namespace EAVFramework.Shared.V2
             return isTypeBuilderInstantiation;
         }
         
-        public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType)
+        public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType, bool build=false)
         {
-            interfaceType = Interfaces.Where(i =>!IsTypeBuilderInstantiation (i) && i.GetProperties().Any(p => p.Name == propertyName)).ToArray()  ?? Array.Empty<Type>();
+            interfaceType = Interfaces.Where(i => 
+                (!IsTypeBuilderInstantiation (i) && i.GetProperties().Any(p => p.Name == propertyName)) 
+                ||i.IsGenericType && i.GetGenericTypeDefinition().GetProperties().Any(p => p.Name == propertyName))
+                .Select( t=> build && t.IsGenericType ?
+                    t.GetGenericTypeDefinition().MakeGenericType(t.GenericTypeArguments.Select(tt =>
+                    {
+                        return tt switch
+                        {
+                            TypeBuilder foo => foo.CreateTypeInfo(),
+                            EnumBuilder foo => foo.CreateTypeInfo(),
+                            _ => tt
+                        };
+                    }).ToArray()) : t )
+                .ToArray()  ?? Array.Empty<Type>();
             return interfaceType.Any();
           
         }
+        //public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType)
+        //{
+        //    interfaceType = Interfaces.Where(i =>
+        //        (!IsTypeBuilderInstantiation(i) && i.GetProperties().Any(p => p.Name == propertyName))
+        //        || i.IsGenericType && i.GetGenericTypeDefinition().GetProperties().Any(p => p.Name == propertyName))
+        //        .Select(t => IsTypeBuilderInstantiation(t) && t.IsGenericType ?
+        //            t.GetGenericTypeDefinition().MakeGenericType(t.GenericTypeArguments.Select(c => (c is TypeBuilder foo ? foo.CreateTypeInfo)).ToArray())
+        //            : t)
+        //        .ToArray() ?? Array.Empty<Type>();
+        //    return interfaceType.Any();
+
+        //}
         public bool ContainsParentProperty(string propertyName)
         {
             if ((Parent?.ContainsProperty(propertyName) ?? false))
@@ -1668,6 +1693,23 @@ namespace EAVFramework.Shared.V2
         {
             SQLUpStatements.Add(upSql);
             return this;
+        }
+
+        internal void FinalizeType()
+        {
+
+            foreach (var prop in properties.Values.OrderByDescending(c => c.IsPrimaryKey).ThenByDescending(c => c.IsPrimaryField).ThenBy(c => c.LogicalName))
+            {
+                prop.AddInterfaceOverrides();
+            }
+        }
+
+        internal void DeppendsOn(Type dependency)
+        {
+             if(this.DynamicAssemblyBuilder.Tables.Any(other => other.Value.Builder == dependency))
+            {
+                this.AddAsDependency(this.DynamicAssemblyBuilder.Tables.Values.First(other => other.Builder == dependency));
+            }
         }
     }
 

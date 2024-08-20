@@ -119,16 +119,19 @@ namespace EAVFramework.Shared.V2
         public PropertyInfo GetMethod => TypeBuilder.GetProperty(SchemaName);
         public PropertyBuilder PropertyBuilder { get; private set; }
         public FieldBuilder FieldBuilder { get; private set; }
-        public void Build()
+
+
+        public void AddInterfaceOverrides()
         {
             if (PropertyType == null)
                 return;
 
-            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes)
+            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes,true)
                 && this.dynamicTableBuilder.GetParentPropertyGetMethod(SchemaName) is PropertyInfo property)
             {
                 foreach (var interfaceType in interfaceTypes)
                 {
+
                     {
                         var base_get = TypeBuilder.DefineMethod($"get_{LogicalName}",
                             MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.Final | MethodAttributes.SpecialName | MethodAttributes.NewSlot | MethodAttributes.HideBySig,
@@ -157,7 +160,29 @@ namespace EAVFramework.Shared.V2
             }
 
 
-            if (dynamicTableBuilder.ContainsParentProperty(SchemaName))
+        }
+        public void Build()
+        {
+            if (PropertyType == null)
+                return;
+
+
+            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes)
+              && this.dynamicTableBuilder.GetParentPropertyGetMethod(SchemaName) is PropertyInfo property)
+            {
+                foreach (var interfaceType in interfaceTypes)
+                {
+                    if (interfaceType.IsGenericType)
+                    {
+                        foreach(var dependency in interfaceType.GenericTypeArguments)
+                        {
+                            dynamicTableBuilder.DeppendsOn(dependency);
+                        }
+                    }
+                }
+
+            }
+                    if (dynamicTableBuilder.ContainsParentProperty(SchemaName))
                 return;
 
 

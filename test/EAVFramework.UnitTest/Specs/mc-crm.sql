@@ -360,19 +360,6 @@ GO
 
 IF NOT EXISTS(SELECT * FROM [cmr].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
-    CREATE TABLE [tests].[SystemUsers] (
-        [Id] uniqueidentifier NOT NULL,
-        [Email] nvarchar(100) NULL,
-        CONSTRAINT [PK_SystemUsers] PRIMARY KEY ([Id])
-    );
-    DECLARE @description AS sql_variant;
-    SET @description = N'comment';
-    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'SystemUsers';
-END;
-GO
-
-IF NOT EXISTS(SELECT * FROM [cmr].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
-BEGIN
     CREATE TABLE [tests].[SecurityGroups] (
         [Id] uniqueidentifier NOT NULL,
         [ExternalId] nvarchar(100) NULL,
@@ -388,6 +375,19 @@ GO
 IF NOT EXISTS(SELECT * FROM [cmr].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
 BEGIN
     EXEC(N'CREATE UNIQUE INDEX [ExternalId] ON [tests].[SecurityGroups] ([ExternalId]) WHERE [ExternalId] IS NOT NULL');
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [cmr].[__MigrationsHistory] WHERE [MigrationId] = N'tests_1_0_1')
+BEGIN
+    CREATE TABLE [tests].[SystemUsers] (
+        [Id] uniqueidentifier NOT NULL,
+        [Email] nvarchar(100) NULL,
+        CONSTRAINT [PK_SystemUsers] PRIMARY KEY ([Id])
+    );
+    DECLARE @description AS sql_variant;
+    SET @description = N'comment';
+    EXEC sp_addextendedproperty 'MS_Description', @description, 'SCHEMA', N'tests', 'TABLE', N'SystemUsers';
 END;
 GO
 

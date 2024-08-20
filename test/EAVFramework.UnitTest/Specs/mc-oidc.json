@@ -1,0 +1,4263 @@
+{
+	"variables": {
+		"LogoutSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Logout"
+		},
+		"TokenSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Tokens"
+		},
+		"LoginSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Logins"
+		},
+		"Miscellaneous": {
+			"tab": "TAB_Miscellaneous",
+			"column": "COLUMN_First",
+			"section": "Section_Miscellaneous"
+		},
+		"PrimaryInformation_Description": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "Section_General",
+			"control": "RichTextEditorControl"
+		},
+		"LifetimeSection": {
+			"tab": "TAB_General",
+			"column": "COLUMN_Second",
+			"section": "Section_Lifetimes"
+		},
+		"LifetimeSection_TimespanControl": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "Section_General",
+			"control": "@eavfw/TimespanControl"
+		},
+		"Miscellaneous_Properties": {
+			"tab": "TAB_Miscellaneous",
+			"column": "COLUMN_First",
+			"section": "Section_Miscellaneous",
+			"showCellLabel": false
+		},
+		"sitemaps": {
+			"OpenIdConnect": {
+				"app": "Kjeldager CRM",
+				"area": "OpenId Connect",
+				"group": "OpenId Connect"
+			},
+			"quickforms": {
+				"app": "DefaultAPP",
+				"area": "CRM",
+				"group": "QuickForms"
+			},
+			"tournaments": {
+				"order": 10,
+				"app": "Default APP",
+				"area": "CRM",
+				"group": "Tournaments"
+			},
+			"CRM": {
+				"order": 0,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "CRM"
+			},
+			"CRMAdmin": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"Administration": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			}
+		},
+		"layouts": {
+			"OneColumnTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			},
+			"TwoColumnsTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				},
+				"COLUMN_Second": {
+					"sections": {
+						"SECTION_Additional": {}
+					}
+				}
+			}
+		},
+		"PrimaryInformation": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"TAB_General": {
+			"title": "General Information",
+			"locale": {
+				"1030": {
+					"title": "General Information"
+				}
+			},
+			"columns": "[variables('layouts').TwoColumnsTemplate]"
+		},
+		"TAB_Administrative": {
+			"title": "Administrative",
+			"locale": {
+				"1030": {
+					"title": "Administrative"
+				}
+			},
+			"columns": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			}
+		},
+		"TAB_Administrative_Columns": {
+			"Created On": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Created By": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Modified On": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Modified By": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			},
+			"Owner": {
+				"[merge()]": "[variables('Administrative')]",
+				"readonly": true
+			}
+		},
+		"Administrative": {
+			"tab": "TAB_Administrative",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"audit": {
+			"Modified On": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Created On": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Owner": {
+				"locale": {
+					"1030": {
+						"displayName": "Ejer"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Modified By": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Created By": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Row Version": {
+				"type": {
+					"type": "binary"
+				},
+				"isRowVersion": true
+			}
+		},
+		"translations": {
+			"Name": {
+				"1030": {
+					"displayName": "Navn"
+				}
+			},
+			"Description": {
+				"1030": {
+					"displayName": "Beskrivelse"
+				}
+			}
+		}
+	},
+	"entities": {
+		"OpenId Connect Client": {
+			"pluralName": "OpenId Connect Clients",
+			"description": "Models an OpenId Connect or OAuth2 client",
+			"TPT": "Identity",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').OpenIdConnect]",
+				"title": "Clients"
+			},
+			"keys": {
+				"Client Id": [
+					"Client Id"
+				]
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {},
+											"SECTION_Logins": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {},
+											"SECTION_Logout": {},
+											"SECTION_Lifetimes": {},
+											"SECTION_Tokens": {}
+										}
+									}
+								}
+							},
+							"TAB_Miscellaneous": {
+								"title": "Miscellaneous",
+								"locale": {
+									"1030": {
+										"title": "Andet"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_Miscellaneous": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]",
+							"TAB_Secrets": {
+								"title": "Secrets",
+								"locale": {
+									"1030": {
+										"title": "Nøgler"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_SecurityGroups": {
+								"title": "Security Groups",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsgrupper"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							}
+						}
+					},
+					"columns": {
+						"Client Id": "[variables('PrimaryInformation')]",
+						"Name": "[variables('PrimaryInformation')]",
+						"Type": "[variables('PrimaryInformation')]",
+						"Description": "[variables('PrimaryInformation_Description')]",
+						"Client Uri": "[variables('PrimaryInformation')]",
+						"Logo Uri": "[variables('PrimaryInformation')]",
+						"Protocol Type": "[variables('PrimaryInformation')]",
+						"Require Client Secret": "[variables('PrimaryInformation')]",
+						"Client Secret": "[variables('PrimaryInformation')]",
+						"Require Consent": "[variables('PrimaryInformation')]",
+						"Allow Remember Consent": "[variables('PrimaryInformation')]",
+						"Allowed Grant Types": "[variables('PrimaryInformation')]",
+						"Require PKCE": "[variables('PrimaryInformation')]",
+						"Allow Plain Text PKCE": "[variables('PrimaryInformation')]",
+						"Post Logout Redirect URIs": {
+							"[merge()]": "[variables('LogoutSection')]",
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "[concat(customizationprefix(),'_',toLogicalName(propertyName(parent(parent()))))]",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Post Logout Redirect URIs",
+										"x-description": "Specifies allowed URIs to redirect to after logout",
+										"x-add-label": "Add URI",
+										"items": {
+											"type": "string",
+											"format": "uri",
+											"x-aria-label": "Redirect URI",
+											"x-label": "Redirect URI",
+											"x-placeholder": "Redirect URI",
+											"x-help-text": "Specifies allowed URIs to return tokens or authorization codes to"
+										}
+									}
+								}
+							}
+						},
+						"Front Channel Logout URI": "[variables('LogoutSection')]",
+						"Front Channel Logout Session Required": "[variables('LogoutSection')]",
+						"Back Channel Logout URI": "[variables('LogoutSection')]",
+						"Back Channel Logout Session Required": "[variables('LogoutSection')]",
+						"Identity Token Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Access Token Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Authorization Code Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Absolute Refresh Token Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Sliding Refresh Token Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Consent Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"User SSO Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Device Code Lifetime": "[variables('LifetimeSection_TimespanControl')]",
+						"Refresh Token Expiration": "[variables('LifetimeSection')]",
+						"Allow Access Tokens Via Browser": "[variables('TokenSection')]",
+						"Refresh Token Usage": "[variables('TokenSection')]",
+						"Access Token Type": "[variables('TokenSection')]",
+						"Include JWT Id": "[variables('TokenSection')]",
+						"Always Include User Claims In Id Token": "[variables('TokenSection')]",
+						"Claims": {
+							"[merge()]": "[variables('TokenSection')]",
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "[concat(customizationprefix(),'_',toLogicalName(propertyName(parent(parent()))))]",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Claims",
+										"x-description": "Specifies claims that is included in the access token for the client",
+										"x-add-label": "Add claim",
+										"items": {
+											"type": "object",
+											"properties": {
+												"type": {
+													"type": "string",
+													"x-label": "Claim Type",
+													"x-aria-label": "Claim Type",
+													"x-placeholder": "Claim type"
+												},
+												"value": {
+													"type": "string",
+													"x-label": "Claim Value",
+													"x-aria-label": "Claim Value",
+													"x-placeholder": "Claim value"
+												}
+											},
+											"x-aria-label": "Claims",
+											"x-label": "Claims",
+											"x-help-text": "Specifies claims that is included in the access token for the client"
+										}
+									}
+								}
+							}
+						},
+						"Always Send Client Claims": "[variables('TokenSection')]",
+						"Client CLaims Prefix": "[variables('TokenSection')]",
+						"Update Access Token Claims On Refresh": "[variables('TokenSection')]",
+						"Enable Local Login": "[variables('LoginSection')]",
+						"Identity Provider Restrictions": "[variables('LoginSection')]",
+						"Pair Wise Subject Salt": "[variables('LoginSection')]",
+						"Allow Offline Access": "[variables('LoginSection')]",
+						"Redirect Uris": {
+							"[merge()]": "[variables('LoginSection')]",
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "[concat(customizationprefix(),'_',toLogicalName(propertyName(parent(parent()))))]",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Redirect URIs",
+										"x-description": "The URIs we will accept as destinations when returning authentication responses (tokens) after successfully authenticating users. Also referred to as reply URLs.",
+										"x-add-label": "Add URI",
+										"items": {
+											"type": "string",
+											"format": "uri",
+											"x-aria-label": "Redirect URI",
+											"x-label": "Redirect URI",
+											"x-placeholder": "Redirect URI",
+											"x-help-text": "Specifies allowed URIs to return tokens or authorization codes to"
+										}
+									}
+								}
+							}
+						},
+						"User Code Type": "[variables('Miscellaneous')]",
+						"Allowed CORS Origins": {
+							"[merge()]": "[variables('Miscellaneous')]",
+							"showCellLabel": false,
+							"control": "ka_Kjeldager.Controls.SimpleListControl.SimpleListControl",
+							"parameters": {
+								"textField": "[concat(customizationprefix(),'_',toLogicalName(propertyName(parent(parent()))))]",
+								"jsonSchema": {
+									"type": "Multiple",
+									"static": true,
+									"value": {
+										"$schema": "http://json-schema.org/draft-04/schema#",
+										"type": "array",
+										"x-label": "Allowed CORS Origins",
+										"x-description": "Specifies the allowed CORS origins for JavaScript clients",
+										"x-add-label": "Add Origin",
+										"items": {
+											"type": "string",
+											"format": "uri",
+											"x-aria-label": "Origin",
+											"x-label": "Origin",
+											"x-placeholder": "Origin",
+											"x-help-text": "Specifies the allowed CORS origins for JavaScript clients"
+										}
+									}
+								}
+							}
+						},
+						"Properties": "[variables('Miscellaneous_Properties')]",
+						"Allowed Scopes": "[variables('Miscellaneous')]",
+						"Require Request Object": "[variables('Miscellaneous')]",
+						"Created On": "[variables('Administrative')]",
+						"Created By": "[variables('Administrative')]",
+						"Modified On": "[variables('Administrative')]",
+						"Modified By": "[variables('Administrative')]",
+						"Owner": "[variables('Administrative')]"
+					}
+				}
+			},
+			"views": {
+				"[concat('Active ', entity().pluralName)]": {
+					"columns": {
+						"Client Id": {},
+						"Name": {},
+						"Client Uri": {},
+						"Status": {},
+						"Require Consent": {}
+					}
+				}
+			},
+			"attributes": {
+				"Description": {
+					"type": "MultilineText",
+					"description": "The description of the client"
+				},
+				"Client Uri": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "URI to further information about the client (used on consent screen)"
+				},
+				"Logo Uri": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "URI to client logo (used on consent screen)"
+				},
+				"Require Consent": {
+					"type": "boolean",
+					"description": "Specifies whether a consent screen is required"
+				},
+				"Allow Remember Consent": {
+					"type": "boolean",
+					"description": "Specifies whether user can choose to store consent decisions",
+					"default": true
+				},
+				"Enable Local Login": {
+					"type": "boolean",
+					"description": "Specifies if local login is enabled for this client",
+					"default": true
+				},
+				"Allowed Grant Types": {
+					"description": "Specifies the allowed grant types (legal combinations of AuthorizationCode, Implicit, Hybrid, ResourceOWner, ClientCredentials)",
+					"type": {
+						"name": "Allowed Grant Type",
+						"pluralName": "Allowed Grant Types",
+						"type": "Choices",
+						"options": {
+							"Authorization Code": 1,
+							"Implicit": 2,
+							"Resource Owner": 3,
+							"Client Credentials": 4,
+							"Hybrid": 5,
+							"Device Flow": 6,
+							"Refresh Token": 7
+						}
+					}
+				},
+				"Identity Provider Restrictions": {
+					"type": "MultilineText",
+					"description": "Specifies which external IdPs can be used with this client"
+				},
+				"Allow Offline Access": {
+					"type": "boolean"
+				},
+				"Pair Wise Subject Salt": {
+					"type": "Text",
+					"description": "Specifies a salt value used in pair-wise subjectId generation for users of this client"
+				},
+				"Require PKCE": {
+					"type": "boolean",
+					"description": "Specifies whether a proof key is required for authorization code based token requests",
+					"default": true
+				},
+				"Allow Plain Text PKCE": {
+					"type": "boolean",
+					"description": "Specifies whether a proof key can be sent using plain method (not recommended)"
+				},
+				"Require Request Object": {
+					"type": "boolean",
+					"description": "Specifies whether the client must use a request object on authorization requests"
+				},
+				"Allow Access Tokens Via Browser": {
+					"type": "boolean",
+					"description": "Controls whether accesss tokens are transmitted via the browser for this client. This can prevent accidential leakage of access tokens when multiple resposne types are allowed."
+				},
+				"Status": {
+					"description": "Specifies if the client is enabled",
+					"default": 2,
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Client Status",
+						"options": {
+							"Inactive": 0,
+							"Enabled": 1,
+							"Draft": 2
+						}
+					}
+				},
+				"Protocol Type": {
+					"description": "The protocol type",
+					"default": 0,
+					"type": {
+						"type": "Choice",
+						"name": "Protocol Types",
+						"options": {
+							"OpenIdConnect": 0
+						}
+					}
+				},
+				"Require Client Secret": {
+					"type": "boolean",
+					"description": "If set to false, no client secret is needed to request tokens at the token endpoint",
+					"default": true
+				},
+				"Client Id": {
+					"type": "Text",
+					"description": "Unique ID of the client",
+					"required": true
+				},
+				"Client Secret": {
+					"type": "Text",
+					"description": "Unique ID of the client",
+					"required": true
+				},
+				"Consent Type": {
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Client Consent Types",
+						"options": {
+							"Explicit ": 0,
+							"External": 1,
+							"Implicit": 2,
+							"Systematic": 3
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "Choice",
+						"required": true,
+						"name": "OpenId Connect Client Types",
+						"options": {
+							"Confidential": 0,
+							"Public": 1
+						}
+					}
+				},
+				"Redirect Uris": {
+					"type": "MultilineText",
+					"description": "Specifies allowed URIs to return tokens or authorization codes to"
+				},
+				"Post Logout Redirect URIs": {
+					"type": "MultilineText",
+					"description": "Specifies allowed URIs to redirect to after logout"
+				},
+				"Front Channel Logout URI": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "Specifies logout URI at client for HTTP front-channel based logout"
+				},
+				"Include JWT Id": {
+					"type": "boolean",
+					"description": "Specifies if JWT access token should include an identifier",
+					"default": true
+				},
+				"Claims": {
+					"type": "MultilineText",
+					"description": "Specifies claims that is included in the access token for the client"
+				},
+				"Always Send Client Claims": {
+					"type": "boolean",
+					"description": "Specifies if Client Claims always should be included in accesss token, or only for client credentials flow"
+				},
+				"Client CLaims Prefix": {
+					"type": "Text",
+					"default": "client_",
+					"description": "Specifies a value to prefix client claim types"
+				},
+				"User SSO Lifetime": {
+					"description": "The maximum duration (in seconds) since the last time the user authenticated (defaults no expiration)",
+					"type": "integer"
+				},
+				"User Code Type": {
+					"type": "Text",
+					"description": "Specifies the type of device flow user code"
+				},
+				"Device Code Lifetime": {
+					"type": "integer",
+					"description": "The device code lifetime",
+					"default": 300
+				},
+				"Allowed CORS Origins": {
+					"type": "MultilineText",
+					"description": "Specifies the allowed CORS origins for JavaScript clients"
+				},
+				"Front Channel Logout Session Required": {
+					"type": "boolean",
+					"default": true,
+					"description": "Specifies if the users sessions id should be sent to FrontChannelLogoutUri"
+				},
+				"Back Channel Logout URI": {
+					"type": {
+						"type": "Text",
+						"format": "Url"
+					},
+					"description": "Specifies logout URI at client for HTTP back-channel based logout."
+				},
+				"Back Channel Logout Session Required": {
+					"type": "boolean",
+					"description": "Specifies if the users sessions id should be sent to BackChannelLogoutUri",
+					"default": true
+				},
+				"Allowed Scopes": {
+					"type": "MultilineText",
+					"description": "Specifies the API scopes that the client is allowed to request, if empty, the client cant access any scopes"
+				},
+				"Always Include User Claims In Id Token": {
+					"type": "boolean",
+					"description": "When requesting both an id token and access token, should the user claims always be added to the id token instead of requiring the client to use the userinfo endpoint"
+				},
+				"Identity Token Lifetime": {
+					"type": "integer",
+					"description": "Lifetime of the identity token in seconds",
+					"default": 300
+				},
+				"Allowed Identity Token Signing Algorithms": {
+					"type": {
+						"type": "Choices",
+						"name": "Allowed Identity Token Signing Algorithm",
+						"pluralName": "Allowed Identity Token Signing Algorithm",
+						"options": {
+							"ES256": 1
+						}
+					}
+				},
+				"Access Token Lifetime": {
+					"type": "integer",
+					"default": 3600,
+					"description": "Lifetime of access token in seconds"
+				},
+				"Authorization Code Lifetime": {
+					"type": "integer",
+					"description": "Lifetime of authorization code in secords",
+					"default": 300
+				},
+				"Absolute Refresh Token Lifetime": {
+					"type": "integer",
+					"description": "Maximum lifetime of a refresh token in secords",
+					"default": 2419200
+				},
+				"Sliding Refresh Token Lifetime": {
+					"type": "integer",
+					"description": "Sliding lifetime of a refresh token in secords",
+					"default": 1209600
+				},
+				"Consent Lifetime": {
+					"type": "integer",
+					"description": "Lifetime of a user consent in seconds (defaults no expiration)"
+				},
+				"Refresh Token Usage": {
+					"type": {
+						"name": "Refresh Token Usage Types",
+						"type": "Choice",
+						"options": {
+							"Re Use": 0,
+							"One Time": 1
+						}
+					},
+					"default": 0,
+					"description": "Specify if the refresh handle will be updated when refreshing tokens"
+				},
+				"Update Access Token Claims On Refresh": {
+					"type": "boolean",
+					"description": "Specifies if access token and claims should be updated on a refresh token request"
+				},
+				"Refresh Token Expiration": {
+					"type": {
+						"type": "Choice",
+						"name": "Refresh Token Expiration Types",
+						"options": {
+							"Absolute": 1,
+							"Sliding": 0
+						}
+					},
+					"description": "Specifies if using absolute expiration or sliding expiration",
+					"default": 1
+				},
+				"Access Token Type": {
+					"type": {
+						"name": "Access Token Types",
+						"type": "Choice",
+						"options": {
+							"JWT": 0,
+							"Reference": 1
+						}
+					},
+					"description": "Specifies wheter the access token is a reference token or a self contained JWT token",
+					"default": 0
+				},
+				"Properties": {
+					"type": "MultilineText",
+					"description": "Specifies custom properties for the client"
+				}
+			}
+		},
+		"OpenId Connect Resource": {
+			"pluralName": "OpenId Connect Resources",
+			"description": "Models API, Identity and Scope Resources of OAuth2 Spec",
+			"abstract": true,
+			"keys": {
+				"IX_Name": [
+					"Name"
+				]
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"type": "Text",
+					"description": "The unique name of the resource"
+				},
+				"Display Name": {
+					"isPrimaryField": true,
+					"description": "The displayname of the resource"
+				},
+				"Description": {
+					"description": "The description of the resource",
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					}
+				},
+				"Show In Discovery Document": {
+					"description": "Specifies whether this scope is shown in the discovery document",
+					"type": "boolean",
+					"default": true
+				},
+				"Properties": {
+					"type": "MultilineText",
+					"description": "Specifies custom properties for the client"
+				},
+				"User Claims": {
+					"description": "List of associated user claims that should be included when this resource is requested",
+					"type": "MultilineText"
+				}
+			}
+		},
+		"OpenId Connect API Resource": {
+			"pluralName": "OpenId Connect API Resources",
+			"TPT": "OpenId Connect Resource",
+			"description": "Models an OpenId Connect or OAuth2 Resource Scope",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').OpenIdConnect]",
+				"title": "APIs"
+			},
+			"attributes": {
+				"Required": {
+					"description": "Specifies whether the user can de-select the scope on the consent screen",
+					"type": "boolean"
+				},
+				"Emphasize": {
+					"description": "Specifies whether the consent screen will emphasize this scope. Used for sensitive or important scopes",
+					"type": "boolean"
+				},
+				"Require Resource Indicator": {
+					"description": "Indicates if this API resource requires the resource indicator to resquest it, and expects access tokens issues to it will only ever contain this API resource as the audience.",
+					"type": "boolean"
+				}
+			}
+		},
+		"OpenId Connect Secret": {
+			"pluralName": "OpenId Connect Secrets",
+			"description": "Models a client secret with identifier and expiration",
+			"keys": {
+				"IX_APISecret": [
+					"Api",
+					"Value"
+				],
+				"IX_ClientSecret": [
+					"Client",
+					"Value"
+				]
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Description": {
+					"isPrimaryField": true,
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					}
+				},
+				"Value": {
+					"type": "Text",
+					"description": "The value",
+					"required": true
+				},
+				"Value Hint": {
+					"description": "The hint for UI",
+					"type": "Text"
+				},
+				"Expiration": {
+					"type": "DateTime",
+					"description": "The expiration"
+				},
+				"Secret Type Code": {
+					"description": "The type of the secret",
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Secret Type Codes",
+						"options": {
+							"Shared Secret": 0,
+							"X509 Certificate Thumbprint": 1,
+							"X509 Certificate Name": 2,
+							"X509 Certificate Base65": 3,
+							"Json Web Key": 4
+						}
+					}
+				},
+				"Api": {
+					"description": "The API Resource that this secret belongs to",
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect API Resource",
+						"behavior": "referential",
+						"cascade": {
+							"delete": "restrict"
+						},
+						"forms": {
+							"Main Information": {
+								"name": "Main Information",
+								"form": "main",
+								"tab": "TAB_Secrets",
+								"tabOrder": 1,
+								"column": "COLUMN_First",
+								"section": "SECTION_Secrets",
+								"view": "[concat('Active ', entity().pluralName)]"
+							}
+						}
+					}
+				},
+				"Client": {
+					"description": "The OAuth Client that this secret belongs to",
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Client",
+						"behavior": "referential",
+						"cascade": {
+							"delete": "restrict"
+						},
+						"forms": {
+							"Main Information": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Secrets",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('Active ', entity().pluralName)]"
+							}
+						}
+					}
+				}
+			}
+		},
+		"OpenId Connect Authorization": {
+			"pluralName": "OpenId Connect Authorizations",
+			"description": "Models an OpenId Connect or OAuth2 Authorization",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').OpenIdConnect]",
+				"title": "Authorizations"
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Subject": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Authorization Status",
+						"required": true,
+						"options": {
+							"Inactive": 0,
+							"Valid": 1,
+							"Redeemed": 2,
+							"Rejected": 3,
+							"Revoked": 4
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Authorization Type",
+						"required": true,
+						"options": {
+							"Permanent": 0,
+							"AdHoc": 1
+						}
+					}
+				},
+				"Client": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Client",
+						"index": {
+							"unique": false
+						}
+					}
+				},
+				"Properties": {
+					"type": "MultilineText",
+					"description": "Specifies custom properties for the client"
+				}
+			}
+		},
+		"OpenId Connect Token": {
+			"pluralName": "OpenId Connect Tokens",
+			"description": "Models an OpenId Connect or OAuth2 Token",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').OpenIdConnect]",
+				"title": "Tokens"
+			},
+			"keys": {
+				"IX_ReferenceId": [
+					"Reference Id"
+				]
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Client": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Client"
+					}
+				},
+				"Authorization": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Authorization"
+					}
+				},
+				"Subject": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Token Status",
+						"required": true,
+						"options": {
+							"Inactive": 0,
+							"Valid": 1,
+							"Redeemed": 2,
+							"Rejected": 3,
+							"Revoked": 4
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "Choice",
+						"name": "OpenId Connect Token Type",
+						"required": true,
+						"options": {
+							"Access Token": 0,
+							"Identity Token": 1
+						}
+					}
+				},
+				"Expiration Date": {
+					"type": "DateTime"
+				},
+				"Redemption Date": {
+					"type": "DateTime"
+				},
+				"Payload": {
+					"type": {
+						"type": "MultilineText"
+					}
+				},
+				"Reference Id": {
+					"type": "guid"
+				},
+				"Properties": {
+					"type": "MultilineText",
+					"description": "Specifies custom properties for the client"
+				}
+			}
+		},
+		"OpenId Connect Identity Resource": {
+			"pluralName": "OpenId Connect Identity Resources",
+			"TPT": "OpenId Connect Resource",
+			"description": "Models an OpenId Connect or OAuth2 Resource Scope",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').OpenIdConnect]",
+				"title": "Identity Scopes"
+			},
+			"data": {
+				"OpenId": {
+					"Name": "openid",
+					"Display Name": "Your user identifier",
+					"Required": true,
+					"Type Code": 0,
+					"Show In Discovery Document": true
+				},
+				"Profile": {
+					"Name": "profile",
+					"Display Name": "User profile",
+					"Description": "Your user profile infomation (first name, last name, etc.)",
+					"Emphasize": true,
+					"Type Code": 0,
+					"Show In Discovery Document": true
+				},
+				"Email": {
+					"Name": "email",
+					"Display Name": "Your email address",
+					"Emphasize": true,
+					"Type Code": 0,
+					"Show In Discovery Document": true
+				},
+				"Phone": {
+					"Name": "phone",
+					"Display Name": "Your phone number",
+					"Emphasize": true,
+					"Type Code": 0,
+					"Show In Discovery Document": true
+				},
+				"Address": {
+					"Name": "address",
+					"Display Name": "Your postal address",
+					"Emphasize": true,
+					"Type Code": 0,
+					"Show In Discovery Document": true
+				}
+			},
+			"attributes": {
+				"Required": {
+					"description": "Specifies whether the user can de-select the scope on the consent screen",
+					"type": "boolean"
+				},
+				"Emphasize": {
+					"description": "Specifies whether the consent screen will emphasize this scope. Used for sensitive or important scopes",
+					"type": "boolean"
+				}
+			}
+		},
+		"OpenId Connect Scope": {
+			"pluralName": "OpenId Connect Scopes",
+			"TPT": "OpenId Connect Resource",
+			"description": "Models an OpenId Connect or OAuth2 Resource Scope",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').OpenIdConnect]",
+				"title": "Scopes"
+			},
+			"attributes": {
+				"Required": {
+					"description": "Specifies whether the user can de-select the scope on the consent screen",
+					"type": "boolean"
+				},
+				"Emphasize": {
+					"description": "Specifies whether the consent screen will emphasize this scope. Used for sensitive or important scopes",
+					"type": "boolean"
+				}
+			}
+		},
+		"OpenId Connect Authorization Scope": {
+			"pluralName": "OpenId Connect Authorization Scopes",
+			"keys": {
+				"IX_AuthorizationScope": [
+					"Authorization",
+					"Scope"
+				]
+			},
+			"attributes": {
+				"Authorization": {
+					"type": {
+						"type": "lookup",
+						"required": true,
+						"referenceType": "OpenId Connect Authorization"
+					}
+				},
+				"Scope": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Identity Resource",
+						"required": true,
+						"index": {
+							"unique": false
+						}
+					}
+				}
+			}
+		},
+		"OpenId Connect Scope Resource": {
+			"pluralName": "OpenId Connect Scope Resources",
+			"keys": {
+				"IX_ScopeResource": [
+					"Scope",
+					"Resource"
+				]
+			},
+			"attributes": {
+				"Resource": {
+					"type": {
+						"type": "lookup",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"referenceType": "OpenId Connect Resource"
+					}
+				},
+				"Scope": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "OpenId Connect Identity Resource",
+						"required": true
+					}
+				}
+			}
+		},
+		"QuickForm": {
+			"pluralName": "QuickForms",
+			"sitemap": "[variables('sitemaps').quickforms]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"QuickForm Definition": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Document"
+					}
+				},
+				"Version": {
+					"type": "Text"
+				},
+				"Status": {
+					"default": 0,
+					"type": {
+						"type": "Choice",
+						"name": "Quotation Form Template Status",
+						"options": {
+							"Active": 0,
+							"Inactive": 400
+						}
+					}
+				},
+				"Slug": {
+					"type": "Text"
+				}
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_QuickFormDefinition": {
+								"title": "QuickForm Definition",
+								"locale": {
+									"1030": {
+										"title": "QuickForm Definition"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"[merge()]": "[variables('TAB_Administrative_Columns')]",
+						"Name": "[variables('PrimaryInformation')]",
+						"Status": "[variables('PrimaryInformation')]",
+						"Slug": "[variables('PrimaryInformation')]",
+						"Version": "[variables('PrimaryInformation')]",
+						"QuickForm Definition": {
+							"tab": "TAB_QuickFormDefinition",
+							"column": "COLUMN_First",
+							"section": "SECTION_General",
+							"control": "QuickFormDesigner",
+							"label": false
+						}
+					}
+				}
+			},
+			"views": {
+				"Active Quotation Form Templates": {
+					"filter": "status ne 400",
+					"columns": {
+						"Name": {},
+						"Version": {},
+						"Slug": {},
+						"Status": {},
+						"Created On": {
+							"sorted": "descending"
+						}
+					}
+				}
+			}
+		},
+		"User Agent": {
+			"pluralName": "User Agents",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Value": {
+					"type": "MultilineText",
+					"isPrimaryField": true
+				},
+				"Browser Name": {
+					"isPrimaryField": true
+				},
+				"Browser Major": {
+					"type": {
+						"type": "Text",
+						"maxLength": 8
+					}
+				},
+				"Browser Version": {
+					"type": {
+						"type": "Text",
+						"maxLength": 16
+					}
+				},
+				"OS Name": {
+					"type": "Text"
+				},
+				"OS Version": {
+					"type": {
+						"type": "Text",
+						"maxLength": 16
+					}
+				},
+				"Device Name": {
+					"type": "Text"
+				},
+				"Device Version": {
+					"type": {
+						"type": "Text",
+						"maxLength": 16
+					}
+				}
+			}
+		},
+		"QuickForm Answer": {
+			"pluralName": "QuickForm Answers",
+			"sitemap": "[variables('sitemaps').quickforms]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Title": {
+					"isPrimaryField": true
+				},
+				"External Id": {
+					"type": "Text"
+				},
+				"Quickform": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "QuickForm"
+					}
+				},
+				"Status": {
+					"default": 0,
+					"type": {
+						"type": "Choice",
+						"name": "QuickForm Answer Status",
+						"options": {
+							"New": 0,
+							"Sent": 10,
+							"Opened": 20,
+							"Filled": 30,
+							"Processing": 33,
+							"Processed": 35,
+							"Approved": 40,
+							"Signed": 50
+						}
+					}
+				},
+				"Filled On": {
+					"type": "DateTime"
+				},
+				"Processed On": {
+					"type": "DateTime"
+				},
+				"Message Type": {
+					"type": "Text"
+				},
+				"Answer Type": {
+					"type": "Text"
+				},
+				"Payload": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Document"
+					}
+				},
+				"Quick Form Definition": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Document"
+					}
+				},
+				"Filled From IP": {
+					"description": "A field for storing the IP that the data was filled from, either ipv4 or IPv6",
+					"type": {
+						"type": "Text",
+						"maxLength": 39
+					}
+				},
+				"Filled From Geo City": {
+					"type": "Text"
+				},
+				"Filled From Geo Country": {
+					"type": {
+						"type": "Text",
+						"maxLength": 3
+					}
+				},
+				"Filled From Geo Latitude": {
+					"type": "decimal"
+				},
+				"Filled From Geo Longitude": {
+					"type": "decimal"
+				},
+				"Filled From Geo Region": {
+					"type": {
+						"type": "Text",
+						"maxLength": 10
+					}
+				},
+				"Encoding": {
+					"type": {
+						"type": "Text",
+						"maxLength": 16
+					}
+				},
+				"Is Bot": {
+					"type": "boolean"
+				},
+				"Filled From UserAgent": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "User Agent"
+					}
+				}
+			}
+		},
+		"Tournament Signup": {
+			"pluralName": "Tournament Signups",
+			"attributes": {
+				"Display Value": {
+					"isPrimaryField": true
+				},
+				"Answer": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "QuickForm Answer"
+					}
+				},
+				"Tournament Participant": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Participant"
+					}
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament"
+					}
+				}
+			}
+		},
+		"Venue": {
+			"pluralName": "Venues",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Spillesteder",
+					"displayName": "Spillested"
+				}
+			},
+			"views": {
+				"All Venues": {
+					"columns": {
+						"Name": {},
+						"Location": {}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Courts": {
+								"title": "Courts",
+								"locale": {
+									"1030": {
+										"title": "Baner"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Location": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Location": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account"
+					}
+				}
+			}
+		},
+		"Court": {
+			"pluralName": "Courts",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"views": {
+				"All Courts": {
+					"columns": {
+						"Name": {},
+						"Venue": {},
+						"Type": {},
+						"Size": {}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"ribbon": {},
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Matches": {
+								"title": "Matches",
+								"locale": {
+									"1030": {
+										"title": "Kampe"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Bookings": {
+								"title": "Bookings",
+								"locale": {
+									"1030": {
+										"title": "Bookinger"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Venue": "[variables('PrimaryInformation')]",
+						"Type": "[variables('PrimaryInformation')]",
+						"Size": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Venue": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Venue",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Courts",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "Choice",
+						"name": "Court Types",
+						"options": {
+							"Indoor": 0,
+							"Outdoor": 1
+						}
+					}
+				},
+				"Size": {
+					"type": {
+						"type": "Choice",
+						"name": "Court Size",
+						"options": {
+							"Single": 2,
+							"Double": 4
+						}
+					}
+				}
+			}
+		},
+		"Tournament Serie": {
+			"pluralName": "Tournament Series",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringsserier",
+					"displayName": "Turneringsserie"
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"ribbon": {},
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Tournaments": {
+								"title": "Tournaments",
+								"locale": {
+									"1030": {
+										"title": "Turneringer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Sponsors": {
+								"title": "Sponsors",
+								"locale": {
+									"1030": {
+										"title": "Sponsore"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"External Id": "[variables('PrimaryInformation')]",
+						"Publish Not Before": "[variables('PrimaryInformation')]",
+						"Publish Not After": "[variables('PrimaryInformation')]",
+						"Slug": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"views": {
+				"All Series": {
+					"columns": {
+						"Name": {},
+						"Publish Not Before": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Publish Not Before": {
+					"type": "DateTime"
+				},
+				"Publish Not After": {
+					"type": "DateTime"
+				},
+				"Slug": {
+					"type": "Text"
+				},
+				"External Id": {
+					"type": "Text"
+				}
+			}
+		},
+		"Tournament Serie Sponsor": {
+			"pluralName": "Tournament Serie Sponsors",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringsserie Sponsorer",
+					"displayName": "Turneringsserie Sponsor"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Public Name": {
+					"isPrimaryField": true
+				},
+				"Serie": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Serie",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Sponsors",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Sponsor": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account"
+					}
+				},
+				"Sponsor Type": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Sponsor Type"
+					}
+				},
+				"Publish Not Before": {
+					"type": "DateTime"
+				},
+				"Publish Not After": {
+					"type": "DateTime"
+				}
+			}
+		},
+		"Tournament": {
+			"pluralName": "Tournaments",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringer",
+					"displayName": "Turnering"
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"ribbon": {},
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Plan": {
+								"title": "Plan",
+								"control": "ResourceScheduling"
+							},
+							"TAB_EntryFees": {
+								"title": "Entry Fees",
+								"locale": {
+									"1030": {
+										"title": "Adgansgebyrer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Classes": {
+								"title": "Classes",
+								"locale": {
+									"1030": {
+										"title": "Klasser"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Participants": {
+								"title": "Participants",
+								"locale": {
+									"1030": {
+										"title": "Deltagere"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Sponsors": {
+								"title": "Sponsors",
+								"locale": {
+									"1030": {
+										"title": "Sponsorer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Courts": {
+								"title": "Courts",
+								"locale": {
+									"1030": {
+										"title": "Baner"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Matches": {
+								"title": "Matches",
+								"locale": {
+									"1030": {
+										"title": "Kampe"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]",
+							"TAB_Stats": {
+								"title": "Stats",
+								"control": "StatsRecorder"
+							}
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"External Id": "[variables('PrimaryInformation')]",
+						"Start Time": "[variables('PrimaryInformation')]",
+						"End Time": "[variables('PrimaryInformation')]",
+						"Publish Not Before": "[variables('PrimaryInformation')]",
+						"Publish Not After": "[variables('PrimaryInformation')]",
+						"Venue": "[variables('PrimaryInformation')]",
+						"Slug": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"views": {
+				"All Tournaments": {
+					"columns": {
+						"Name": {},
+						"Start Time": {
+							"sorted": "descending"
+						},
+						"End Time": {},
+						"Publish Not Before": {},
+						"Modified On": {}
+					}
+				},
+				"Public Tournaments": {
+					"filter": "PublishNotBefore ne null and PublishNotBefore le now()",
+					"columns": {
+						"Name": {},
+						"Start Time": {
+							"sorted": "descending"
+						},
+						"End Time": {},
+						"Publish Not Before": {},
+						"Modified On": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"External Id": {
+					"type": "string"
+				},
+				"Start Time": {
+					"type": "DateTime"
+				},
+				"End Time": {
+					"type": "DateTime"
+				},
+				"Publish Not Before": {
+					"type": "DateTime"
+				},
+				"Publish Not After": {
+					"type": "DateTime"
+				},
+				"Venue": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Venue"
+					}
+				},
+				"Slug": {
+					"type": {
+						"type": "Text",
+						"maxLength": 256
+					}
+				},
+				"Tournament Serie": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Serie",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Tournaments",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				}
+			}
+		},
+		"Tournament Class Type": {
+			"pluralName": "Tournament Class Types",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringsklassetyper",
+					"displayName": "Turneringsklasse type"
+				}
+			},
+			"views": {
+				"All Class Types": {
+					"columns": {
+						"Name": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				}
+			}
+		},
+		"Tournament Class": {
+			"pluralName": "Tournament Classes",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringsklasser",
+					"displayName": "Turneringsklasse"
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"ribbon": {},
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Plan": {
+								"title": "Plan",
+								"control": "ResourceScheduling"
+							},
+							"TAB_Participants": {
+								"title": "Participants",
+								"locale": {
+									"1030": {
+										"title": "Deltagere"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Sponsors": {
+								"title": "Sponsors",
+								"locale": {
+									"1030": {
+										"title": "Sponsorer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"External Id": "[variables('PrimaryInformation')]",
+						"Tournament": "[variables('PrimaryInformation')]",
+						"Type": "[variables('PrimaryInformation')]",
+						"Start Time": "[variables('PrimaryInformation')]",
+						"End Time": "[variables('PrimaryInformation')]",
+						"Publish Not Before": "[variables('PrimaryInformation')]",
+						"Publish Not After": "[variables('PrimaryInformation')]",
+						"Slug": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"views": {
+				"All Classes": {
+					"columns": {
+						"Name": {},
+						"Type": {},
+						"Start Time": {},
+						"End Time": {},
+						"Publish Not Before": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"External Id": {
+					"type": "Text"
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Classes",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Class Type"
+					}
+				},
+				"Start Time": {
+					"type": "DateTime"
+				},
+				"End Time": {
+					"type": "DateTime"
+				},
+				"Publish Not Before": {
+					"type": "DateTime"
+				},
+				"Publish Not After": {
+					"type": "DateTime"
+				},
+				"Slug": {
+					"type": {
+						"type": "Text",
+						"maxLength": 256
+					}
+				}
+			}
+		},
+		"Tournament Entry Fee": {
+			"pluralName": "Tournament Entry Fees",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringspriser",
+					"displayName": "Turneringspris"
+				}
+			},
+			"views": {
+				"All Entry Fees": {
+					"columns": {
+						"Name": {},
+						"Amount": {},
+						"Team Fee": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Discount Amount": {
+					"type": "decimal"
+				},
+				"Amount": {
+					"type": "decimal"
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_EntryFees",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Team Fee": {
+					"type": "boolean"
+				}
+			}
+		},
+		"Sponsor Type": {
+			"pluralName": "Sponsor Types",
+			"locale": {
+				"1030": {
+					"pluralName": "Sponsortyper",
+					"displayName": "Sponsortype"
+				}
+			},
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"views": {
+				"All Sponsor Types": {
+					"columns": {
+						"Type": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Type": {
+					"isPrimaryField": true
+				}
+			}
+		},
+		"Tournament Sponsor": {
+			"pluralName": "Tournament Sponsors",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringssponsorer",
+					"displayName": "Turneringssponsor"
+				}
+			},
+			"views": {
+				"All Sponsors": {
+					"columns": {
+						"Public Name": {},
+						"Sponsor": {},
+						"Sponsor Type": {},
+						"Publish Not Before": {}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Items": {
+								"title": "Sponsorator",
+								"locale": {
+									"1030": {
+										"title": "Sponsorator"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Public Name": "[variables('PrimaryInformation')]",
+						"Tournament": "[variables('PrimaryInformation')]",
+						"Sponsor": "[variables('PrimaryInformation')]",
+						"Sponsor Type": "[variables('PrimaryInformation')]",
+						"Publish Not Before": "[variables('PrimaryInformation')]",
+						"Publish Not After": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Public Name": {
+					"isPrimaryField": true
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Sponsors",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Sponsor": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account"
+					}
+				},
+				"Sponsor Type": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Sponsor Type"
+					}
+				},
+				"Publish Not Before": {
+					"type": "DateTime"
+				},
+				"Publish Not After": {
+					"type": "DateTime"
+				}
+			}
+		},
+		"Tournament Sponsor Item": {
+			"pluralName": "Tournament Sponsor Items",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringssponsorpræmier",
+					"displayName": "Turneringssponsorpræmie"
+				}
+			},
+			"views": {
+				"All Items": {
+					"ribbon": {
+						"IMPORT_RECORDS": {}
+					},
+					"columns": {
+						"Value": {},
+						"External Id": {},
+						"Status": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Value": {
+					"isPrimaryField": true
+				},
+				"External Id": {
+					"type": "string"
+				},
+				"Regarding Id": {
+					"type": "guid"
+				},
+				"Regarding Type": {
+					"type": "Text"
+				},
+				"Sponsor": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Sponsor",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Items",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Status": {
+					"default": 1,
+					"type": {
+						"type": "Choice",
+						"name": "Tournament Sponsor Item Status",
+						"options": {
+							"Recieved": 1,
+							"Used": 10
+						}
+					}
+				}
+			}
+		},
+		"Tournament Type": {
+			"pluralName": "Tournament Types",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringstyper",
+					"displayName": "Turneringstype"
+				}
+			},
+			"views": {
+				"All Tournament Types": {
+					"columns": {
+						"Type": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Type": {
+					"isPrimaryField": true
+				}
+			}
+		},
+		"Tournament Participant Purpose": {
+			"pluralName": "Tournament Participant Purposes",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringsdeltagerformål",
+					"displayName": "Turneringsdeltagerformål"
+				}
+			},
+			"views": {
+				"All Purposes": {
+					"columns": {
+						"Purpose": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Purpose": {
+					"isPrimaryField": true
+				}
+			}
+		},
+		"Tournament Team": {
+			"pluralName": "Tournament Teams",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringshold",
+					"displayName": "Turneringshold"
+				}
+			},
+			"views": {
+				"All Teams": {
+					"columns": {
+						"Name": {}
+					}
+				}
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"ribbon": {
+						"EAVFW_IMPERSONATE": {
+							"roles": {
+								"allowed": [
+									"System Administrator"
+								]
+							}
+						}
+					},
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Participants": {
+								"title": "Team Participants",
+								"locale": {
+									"1030": {
+										"title": "Holddeltagerer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Tournaments": {
+								"title": "Tournaments",
+								"locale": {
+									"1030": {
+										"title": "Turneringer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"External Id": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"External Id": {
+					"type": "Text"
+				}
+			}
+		},
+		"Tournament Participant": {
+			"pluralName": "Tournament Participants",
+			"locale": {
+				"1030": {
+					"pluralName": "Deltagere",
+					"displayName": "Deltager"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Player": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Tournaments",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Team": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Team",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Participants",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Purpose": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Participant Purpose"
+					}
+				},
+				"Class": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Class",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Participants",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Participants",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Entry Time": {
+					"type": "DateTime"
+				},
+				"Entry Reason": {
+					"type": {
+						"type": "Choice",
+						"name": "Tournament Entry Reasons",
+						"options": {
+							"Joined By Player": 0,
+							"Added by Sponsor": 10,
+							"Added by Administrator": 20,
+							"Added by Crawler": 30
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Tournament Entry Status",
+						"options": {
+							"Inactive": 0,
+							"Invited": 10,
+							"Entered": 20,
+							"Payment Request Sent": 25,
+							"Payment Recieved": 30,
+							"Approved": 40,
+							"Checked In": 50,
+							"Declined": 100,
+							"Injured": 400,
+							"Kicked Without Refund": 200,
+							"Refunded": 300
+						}
+					}
+				}
+			},
+			"views": {
+				"All Participants": {
+					"columns": {
+						"Status": {},
+						"Player": {},
+						"Entry Time": {},
+						"Entry Reason": {},
+						"Class": {},
+						"Team": {},
+						"Purpose": {}
+					}
+				}
+			}
+		},
+		"Tournament Participant Payment": {
+			"pluralName": "Tournament Participant Payments",
+			"locale": {
+				"1030": {
+					"pluralName": "Betalinger",
+					"displayName": "Betaling"
+				}
+			},
+			"views": {
+				"All Payments": {
+					"columns": {
+						"Name": {},
+						"Payment Type": {},
+						"Tournament Entry Fee": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Payment Type": {
+					"type": {
+						"type": "Choice",
+						"name": "Tournament Participant Payment Types",
+						"options": {
+							"Paid By Player": 0,
+							"Paid By Team": 1,
+							"Paid By Other": 2
+						}
+					}
+				},
+				"Tournament Entry Fee": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Entry Fee"
+					}
+				},
+				"Tournament Participant": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament Participant"
+					}
+				}
+			}
+		},
+		"Tournament Court": {
+			"pluralName": "Tournament Courts",
+			"locale": {
+				"1030": {
+					"pluralName": "Baner",
+					"displayName": "Bane"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"External Id": {
+					"type": "Text"
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Courts",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Start Time": {
+					"type": "DateTime"
+				},
+				"End Time": {
+					"type": "DateTime"
+				}
+			}
+		},
+		"Prize": {
+			"pluralName": "Prizes",
+			"sitemap": "[variables('sitemaps').tournaments]",
+			"locale": {
+				"1030": {
+					"pluralName": "Præmier",
+					"displayName": "Præmie"
+				}
+			},
+			"views": {
+				"All Prizes": {
+					"columns": {
+						"Name": {},
+						"Sponsor": {},
+						"Amount": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Amount": {
+					"type": "decimal"
+				},
+				"Description": {
+					"type": "MultilineText"
+				},
+				"Sponsor": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account"
+					}
+				},
+				"External Id": {
+					"type": "Text"
+				},
+				"External Url": {
+					"type": {
+						"type": "Text",
+						"maxLength": 256
+					}
+				}
+			}
+		},
+		"Tournament Prize": {
+			"pluralName": "Tournament Prizes",
+			"locale": {
+				"1030": {
+					"pluralName": "Turneringspræmier",
+					"displayName": "Turneringspræmie"
+				}
+			},
+			"views": {
+				"All Prizes": {
+					"columns": {
+						"Name": {},
+						"Prize": {},
+						"Quantity": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Prize": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Prize"
+					}
+				},
+				"Quantity": {
+					"type": "decimal"
+				},
+				"Tournament": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Tournament",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Prices",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				}
+			}
+		},
+		"Contact": {
+			"pluralName": "Contacts",
+			"locale": {
+				"1030": {
+					"pluralName": "Kontaktpersoner",
+					"displayName": "Kontaktperson"
+				}
+			},
+			"TPT": "Identity",
+			"sitemap": "[variables('sitemaps').CRM]",
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Status": {
+					"description": "The status of the contact - inactive contacts are not used, nor showed in lists",
+					"default": 0,
+					"type": {
+						"type": "Choice",
+						"name": "Contact Status",
+						"options": {
+							"Active": 0,
+							"Inactive": 400
+						}
+					}
+				},
+				"Primary Email": {
+					"description": "The primary email used for communicating with the contact",
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact Information",
+						"constraint": "type eq 2"
+					}
+				},
+				"Primary Mobile Phone": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact Information",
+						"constraint": "type eq 1"
+					}
+				},
+				"Primary Landline Phone": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact Information",
+						"constraint": "type eq 0"
+					}
+				},
+				"Birthday": {
+					"type": "DateTime"
+				},
+				"Password": {
+					"type": "Text"
+				},
+				"Last Logon": {
+					"type": "DateTime"
+				},
+				"First Logon": {
+					"type": "DateTime"
+				},
+				"Should Reset Password": {
+					"type": "boolean"
+				}
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_ContactInformation": {
+								"title": "Contact Info",
+								"locale": {
+									"1030": {
+										"title": "Kontaktinformation"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Customers": {
+								"title": "Customers",
+								"locale": {
+									"1030": {
+										"title": "Kunder"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"[merge()]": "[variables('TAB_Administrative_Columns')]",
+						"Name": "[variables('PrimaryInformation')]",
+						"Status": "[variables('PrimaryInformation')]",
+						"Primary Email": "[variables('PrimaryInformation')]",
+						"Primary Mobile Phone": "[variables('PrimaryInformation')]",
+						"Primary Landline Phone": "[variables('PrimaryInformation')]"
+					}
+				}
+			},
+			"views": {
+				"Active Contacts": {
+					"filter": "status ne 400",
+					"columns": {
+						"Name": {},
+						"Primary Email": {},
+						"Primary Mobile Phone": {},
+						"Primary Landline Phone": {}
+					}
+				}
+			}
+		},
+		"Country": {
+			"pluralName": "Countries",
+			"description": "List of countries",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"displayName": "Land",
+					"pluralName": "Lande"
+				}
+			},
+			"views": {
+				"All Countries": {
+					"columns": {
+						"Name": {},
+						"Name (ISO3166)": {},
+						"Alpha2 Code": {},
+						"Alpha3 Code": {},
+						"Numeric Code": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"description": "Display Name",
+					"isPrimaryField": true,
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Name (ISO3166)": {
+					"description": "The ISO 3166 name",
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"locale": {
+						"1030": {
+							"displayName": "ISO3166 Navn"
+						}
+					}
+				},
+				"Alpha2 Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 2
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Alpha2 kode"
+						}
+					}
+				},
+				"Alpha3 Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 3
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Alpha3 kode"
+						}
+					}
+				},
+				"Numeric Code": {
+					"type": "integer",
+					"locale": {
+						"1030": {
+							"displayName": "Lande kode"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Addresses": {
+								"title": "Addresses",
+								"locale": {
+									"1030": {
+										"title": "Adresser"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Name (ISO3166)": "[variables('PrimaryInformation')]",
+						"Alpha2 Code": "[variables('PrimaryInformation')]",
+						"Alpha3 Code": "[variables('PrimaryInformation')]",
+						"Numeric Code": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			}
+		},
+		"Address": {
+			"pluralName": "Addresses",
+			"locale": {
+				"1030": {
+					"displayName": "Adresse",
+					"pluralName": "Adresser"
+				}
+			},
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"views": {
+				"All Countries": {
+					"columns": {
+						"Address Line": {},
+						"City": {},
+						"ZipCode": {},
+						"Country": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Address Line": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Adresse"
+						}
+					},
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"x-public": true
+				},
+				"Address Line 2": {
+					"locale": {
+						"1030": {
+							"displayName": "Adresselinje 2"
+						}
+					},
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"x-public": true
+				},
+				"City": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					},
+					"locale": {
+						"1030": {
+							"displayName": "By"
+						}
+					},
+					"x-public": true
+				},
+				"ZipCode": {
+					"type": "integer",
+					"locale": {
+						"1030": {
+							"displayName": "Postnummer"
+						}
+					},
+					"x-public": true
+				},
+				"Country": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Country",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Addresses",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('All ', entity().pluralName)]"
+							}
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Accounts": {
+								"title": "Accounts",
+								"locale": {
+									"1030": {
+										"title": "Selskaber"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"Address Line": "[variables('PrimaryInformation')]",
+						"Address Line 2": "[variables('PrimaryInformation')]",
+						"City": "[variables('PrimaryInformation')]",
+						"Zip Code": "[variables('PrimaryInformation')]",
+						"Country": "[variables('PrimaryInformation')]",
+						"[merge()]": "[variables('TAB_Administrative_Columns')]"
+					}
+				}
+			}
+		},
+		"Account Type": {
+			"description": "Munipacility and Water Company",
+			"pluralName": "Account Types",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabstyper",
+					"displayName": "Selskabstype"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"x-public": true,
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				}
+			}
+		},
+		"Account": {
+			"pluralName": "Accounts",
+			"description": "Companies",
+			"sitemap": {
+				"Accounts": {
+					"[merge()]": "[variables('sitemaps').CRM]",
+					"locale": {
+						"1030": {
+							"displayName": "Selskab",
+							"pluralName": "Selskaber"
+						}
+					},
+					"viewName": "All Accounts"
+				}
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Firmaer",
+					"displayName": "Firma"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Primary Email": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact Information",
+						"constraint": "type eq 2"
+					}
+				},
+				"Primary Mobile Phone": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact Information",
+						"constraint": "type eq 1"
+					}
+				},
+				"Primary Landline Phone": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact Information",
+						"constraint": "type eq 0"
+					}
+				},
+				"Account Type": {
+					"x-public": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account Type"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Type"
+						}
+					}
+				},
+				"Address": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Address",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_WaterCompanies",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('All ', entity().pluralName)]"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Adresse"
+						}
+					},
+					"x-public": true
+				},
+				"Billing Address": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Address",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_WaterCompanies",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "[concat('All ', entity().pluralName)]"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Faktureringsadresse"
+						}
+					},
+					"x-public": true
+				},
+				"EAN Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 15
+					},
+					"locale": {
+						"1030": {
+							"displayName": "EAN Nummer"
+						}
+					},
+					"x-public": true
+				},
+				"Homepage": {
+					"type": {
+						"type": "Text",
+						"maxLength": 255,
+						"format": "Url"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Hjemmeside"
+						}
+					},
+					"x-public": true
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Account Statuses",
+						"options": {
+							"Active": 1,
+							"CVR Validation Missing": 2,
+							"Validation data on next login": 3,
+							"Inactive": 0
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Status"
+						}
+					}
+				},
+				"Primary Company Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 8
+					},
+					"locale": {
+						"1030": {
+							"displayName": "CVR nr."
+						}
+					},
+					"x-public": true
+				},
+				"External Id": {
+					"type": "string"
+				}
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_ContactInformation": {
+								"title": "Contact Info",
+								"locale": {
+									"1030": {
+										"title": "Kontaktinformation"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Contacts": {
+								"title": "Contacts",
+								"locale": {
+									"1030": {
+										"title": "Personer"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Websites": {
+								"title": "Websites",
+								"locale": {
+									"1030": {
+										"title": "Websites"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							},
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"[merge()]": "[variables('TAB_Administrative_Columns')]",
+						"Name": "[variables('PrimaryInformation')]",
+						"CVR": "[variables('PrimaryInformation')]",
+						"Status": "[variables('PrimaryInformation')]",
+						"Primary Email": "[variables('PrimaryInformation')]",
+						"Primary Mobile Phone": "[variables('PrimaryInformation')]",
+						"Primary Landline Phone": "[variables('PrimaryInformation')]"
+					}
+				}
+			},
+			"views": {
+				"Active Customers": {
+					"filter": "status ne 400",
+					"columns": {
+						"Name": {},
+						"CVR": {},
+						"Primary Email": {},
+						"Primary Mobile Phone": {},
+						"Primary Landline Phone": {}
+					}
+				}
+			},
+			"wizards": {
+				"New Account": {
+					"title": "Create Account",
+					"triggers": {
+						"New Form Loaded": {
+							"form": "Main Information"
+						},
+						"New Ribbon": {
+							"ribbon": "NEW"
+						}
+					},
+					"tabs": {
+						"Create Customer": {
+							"columns": {
+								"OneColumn": {
+									"sections": {
+										"Intro": {
+											"html": "<div>Create Account:<div>"
+										},
+										"Customer": {
+											"logicalName": "customer",
+											"schema": {
+												"$schema": "http://json-schema.org/draft-04/schema#",
+												"type": "object",
+												"properties": {
+													"customer_name": {
+														"title": "Customer Name",
+														"type": "string"
+													},
+													"cvr": {
+														"title": "CVR",
+														"type": "string"
+													}
+												},
+												"required": [
+													"customer_name"
+												]
+											}
+										}
+									}
+								}
+							}
+						},
+						"Create Contact": {
+							"columns": {
+								"OneColumn": {
+									"sections": {
+										"Intro": {
+											"html": "<div>Create a contact for the customer:<div>"
+										},
+										"Contact": {
+											"logicalName": "contact",
+											"schema": {
+												"$schema": "http://json-schema.org/draft-04/schema#",
+												"type": "object",
+												"properties": {
+													"contact_name": {
+														"title": "Contact Name",
+														"type": "string"
+													},
+													"contact_email": {
+														"title": "Primary Email",
+														"type": "string"
+													}
+												},
+												"required": [
+													"contact_name"
+												]
+											}
+										}
+									}
+								}
+							}
+						},
+						"Set website": {
+							"columns": {
+								"OneColumn": {
+									"sections": {
+										"Intro": {
+											"html": "<div>Select website for the customer<div>"
+										},
+										"Website": {
+											"logicalName": "website",
+											"schema": {
+												"$schema": "http://json-schema.org/draft-04/schema#",
+												"type": "object",
+												"properties": {
+													"website": {
+														"title": "Website",
+														"type": "string",
+														"format": "url"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"Summary": {
+							"columns": {
+								"OneColumn": {
+									"sections": {
+										"Outro": {
+											"html": "<div>You will be created a new customer.... summary page</div>"
+										}
+									}
+								}
+							},
+							"onTransitionOut": {
+								"workflow": "CreateCustomerWorkflow"
+							},
+							"actions": {
+								"Cancel": {
+									"text": "Cancel"
+								},
+								"Create": {
+									"workflow": "CreateCustomerWorkflow",
+									"text": "Create"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"Account Role": {
+			"pluralName": "Account Roles",
+			"description": "The roles a person can have with the account. (Billing, Primary, Aministrator) ",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').CRMAdmin]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabsroller",
+					"displayName": "Selskabsrolle"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Localized Name (1030)": {
+					"type": "string",
+					"locale": {
+						"1030": {
+							"displayName": "Dansk Navn"
+						}
+					}
+				},
+				"Is Public": {
+					"locale": {
+						"1030": {
+							"displayName": "Offentlig"
+						}
+					},
+					"type": "boolean",
+					"description": "Controls if external users may use / assign this role"
+				},
+				"External Role": {
+					"type": "string",
+					"locale": {
+						"1030": {
+							"displayName": "Ekstern Rolle"
+						}
+					}
+				},
+				"Auto Provision Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role"
+					}
+				}
+			}
+		},
+		"Account Role Assignment": {
+			"pluralName": "Account Role Assignments",
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabsrolle Tildelinger",
+					"displayName": "Selskabrolle Tildeling"
+				}
+			},
+			"views": {
+				"Associated Contacts": {
+					"columns": {
+						"Role": {},
+						"Contact": {}
+					}
+				},
+				"Associated Accounts": {
+					"columns": {
+						"Role": {},
+						"Account": {}
+					}
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account Role"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Rolle"
+						}
+					}
+				},
+				"Contact": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Accounts",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "Associated Accounts"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Bruger"
+						}
+					}
+				},
+				"Account": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Contacts",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "Associated Contacts"
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Selskab"
+						}
+					}
+				}
+			}
+		},
+		"Contact Information": {
+			"pluralName": "Contact Informations",
+			"description": "The way of contacting a contact or account",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Value": {
+					"isPrimaryField": true
+				},
+				"Relation": {
+					"type": {
+						"type": "polylookup",
+						"split": true,
+						"referenceTypes": [
+							"Contact",
+							"Account"
+						],
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_ContactInformation",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Type": {
+					"type": {
+						"type": "Choice",
+						"name": "Contact Information Type",
+						"options": {
+							"Landline": 0,
+							"Mobile": 1,
+							"Email": 2
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"[merge()]": "[variables('TAB_Administrative_Columns')]",
+						"Type": "[variables('PrimaryInformation')]",
+						"Value": "[variables('PrimaryInformation')]",
+						"Relation": "[variables('PrimaryInformation')]"
+					}
+				}
+			},
+			"views": {
+				"All Contact Informations": {
+					"columns": {
+						"Type": {},
+						"Value": {},
+						"Relation": {}
+					}
+				}
+			}
+		},
+		"Website": {
+			"pluralName": "Websites",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Domain": {
+					"description": "The homepage domain name / host where the customer can have quotation forms embeded",
+					"isPrimaryField": true
+				},
+				"Account": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Websites",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Administrative": "[variables('TAB_Administrative')]"
+						}
+					},
+					"columns": {
+						"[merge()]": "[variables('TAB_Administrative_Columns')]",
+						"Domain": "[variables('PrimaryInformation')]",
+						"Account": "[variables('PrimaryInformation')]"
+					}
+				}
+			},
+			"views": {
+				"All Websites": {
+					"columns": {
+						"Domain": {},
+						"Account": {}
+					}
+				}
+			}
+		},
+		"Server": {
+			"pluralName": "Servers",
+			"locale": {
+				"1030": {
+					"pluralName": "Servers",
+					"displayName": "Server"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Heartbeat": {
+					"type": "DateTime"
+				}
+			}
+		},
+		"Environment Variable": {
+			"pluralName": "Environment Variables",
+			"locale": {
+				"1030": {
+					"pluralName": "Miljø Variabler",
+					"displayName": "Miljø Variable"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Server": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Server"
+					}
+				},
+				"Application Name": {
+					"type": "string"
+				},
+				"Value": {
+					"type": "MultilineText"
+				}
+			}
+		},
+		"Document": {
+			"pluralName": "Documents",
+			"locale": {
+				"1030": {
+					"pluralName": "Dokumenter",
+					"displayName": "Dokument"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Size": {
+					"type": "integer"
+				},
+				"Container": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					}
+				},
+				"Path": {
+					"type": {
+						"type": "Text",
+						"maxLength": 512
+					}
+				},
+				"ContentType": {
+					"type": "Text"
+				},
+				"Compressed": {
+					"type": "boolean"
+				},
+				"Data": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					}
+				}
+			}
+		},
+		"Identity": {
+			"pluralName": "Identities",
+			"abstract": true,
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Permission": {
+			"pluralName": "Permissions",
+			"keys": {
+				"IX_Name": [
+					"Name"
+				]
+			},
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').Administration]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Tilladelse",
+					"displayName": "Tilladelser"
+				}
+			},
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Description": {
+					"type": "MultilineText",
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							}
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Description": "[variables('PrimaryInformation')]"
+					}
+				}
+			}
+		},
+		"Security Role": {
+			"pluralName": "Security Roles",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').Administration]"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle",
+					"displayName": "Sikkerhedsroller"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Description": {
+					"type": "MultilineText",
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"[merge()]": "[variables('audit')]"
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": "[variables('TAB_General')]",
+							"TAB_Permissions": {
+								"title": "Permissions",
+								"locale": {
+									"1030": {
+										"title": "Permissions"
+									}
+								},
+								"columns": "[variables('layouts').OneColumnTemplate]"
+							}
+						}
+					},
+					"columns": {
+						"Name": "[variables('PrimaryInformation')]",
+						"Description": "[variables('PrimaryInformation')]"
+					}
+				}
+			}
+		},
+		"Security Role Permission": {
+			"pluralName": "Security Role Permissions",
+			"description": "The Many to Many relationship between security roles and permissions",
+			"sitemap": {
+				"[merge()]": "[variables('sitemaps').Administration]"
+			},
+			"keys": {
+				"IX_RolePermission": [
+					"Security Role",
+					"Permission"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tilladelse",
+					"displayName": "Sikkerhedsrolle tilladelser"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": "[variables('translations')[propertyName(attribute())]]"
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Permission",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true,
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Permissions",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Security Role Assignment": {
+			"pluralName": "Security Role Assignments",
+			"sitemap": "[variables('sitemaps').Administration]",
+			"keys": {
+				"IX_IdentityRole": [
+					"Security Role",
+					"Identity"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tildeling",
+					"displayName": "Sikkerhedsrolle tildelinger"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Security Group": {
+			"TPT": "Identity",
+			"pluralName": "Security Groups",
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppe",
+					"displayName": "Sikkerhedsgrupper"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"keys": {
+				"ExternalId": [
+					"External Id"
+				]
+			},
+			"attributes": {
+				"External Id": {
+					"type": "string"
+				},
+				"Is Business Unit": {
+					"type": "boolean"
+				}
+			}
+		},
+		"Security Group Member": {
+			"pluralName": "Security Group Members",
+			"sitemap": "[variables('sitemaps').Administration]",
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppemedlem",
+					"displayName": "Sikkerhedsgruppemedlemmer"
+				}
+			},
+			"keys": {
+				"IX_SecurityGroupIdentity": [
+					"Security Group",
+					"Identity"
+				]
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityGroups",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Security Group": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Group",
+						"required": true
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Record Share": {
+			"sitemap": "[variables('sitemaps').Administration]",
+			"pluralName": "Record Shares",
+			"locale": {
+				"1030": {
+					"pluralName": "Række Deling",
+					"displayName": "Række Delinger"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"isPrimaryField": true
+				},
+				"EntityName": {
+					"type": {
+						"type": "Text",
+						"required": true
+					}
+				},
+				"RecordId": {
+					"type": {
+						"type": "guid",
+						"required": true
+					}
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"index": {
+							"unique": false
+						},
+						"referenceType": "Permission",
+						"required": true
+					}
+				},
+				"[merge()]": "[variables('audit')]"
+			}
+		},
+		"Signin": {
+			"pluralName": "Signins",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Identity": {
+					"readonly": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Signins",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Signin Status",
+						"options": {
+							"Approved": {
+								"value": 0,
+								"locale": {
+									"1030": {
+										"displayName": "Godkendt"
+									}
+								}
+							},
+							"Rejected": {
+								"value": 1,
+								"locale": {
+									"1030": {
+										"displayName": "Afvist"
+									}
+								}
+							},
+							"Used": {
+								"value": 2,
+								"locale": {
+									"1030": {
+										"displayName": "Brugt"
+									}
+								}
+							}
+						}
+					}
+				},
+				"Properties": {
+					"type": "MultilineText",
+					"readonly": true
+				},
+				"Claims": {
+					"type": "MultilineText",
+					"readonly": true
+				},
+				"SessionId": {
+					"type": {
+						"type": "Text",
+						"maxLength": 64
+					}
+				},
+				"Provider": {
+					"type": {
+						"type": "Text"
+					}
+				}
+			}
+		},
+		"System User": {
+			"TPT": "Identity",
+			"pluralName": "System Users",
+			"attributes": {
+				"Email": {
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					}
+				}
+			}
+		},
+		"Workflow": {
+			"pluralName": "Workflows",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces",
+					"displayName": "Arbejdsproces"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"Manifest": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Document"
+					}
+				},
+				"Version": {
+					"type": "Text"
+				}
+			}
+		},
+		"Workflow Run": {
+			"pluralName": "Workflow Runs",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces k�rsler",
+					"displayName": "Arbejdsproces k�rsel"
+				}
+			},
+			"sitemap": "[variables('sitemaps').Administration]",
+			"attributes": {
+				"[merge()]": "[variables('audit')]",
+				"Name": {
+					"isPrimaryField": true
+				},
+				"State": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					}
+				}
+			}
+		}
+	},
+	"apps": {
+		"DefaultApp": {
+			"sitemap": {
+				"groups": {
+					"CRM": {
+						"title": "CRM",
+						"order": 0,
+						"locale": {
+							"1030": {
+								"title": "CRM"
+							}
+						}
+					},
+					"Configuration": {
+						"title": "CRM Configuration",
+						"order": 10,
+						"locale": {
+							"1030": {
+								"title": "CRM Konfiguration"
+							}
+						}
+					}
+				}
+			},
+			"title": "MC"
+		}
+	},
+	"config": {
+		"SVG_LOGO_PATH": "/logo.svg"
+	},
+	"errorMessages": {},
+	"version": "1.0.2"
+}

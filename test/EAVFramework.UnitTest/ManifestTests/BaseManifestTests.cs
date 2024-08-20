@@ -6,9 +6,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -290,7 +292,8 @@ namespace EAVFramework.UnitTest.ManifestTests
         }
         protected (string, IServiceProvider) RunDBWithSchema(string schema, Action<DynamicContextOptions> configure,params JToken[] manifests)
         {
-            return RunDBWithSchema(schema, (sp) => Task.FromResult(manifests), configure);
+            return RunDBWithSchema(schema, async (sp) => await Task.WhenAll(
+                manifests.Select(async manifest => JToken.Parse(( await sp.GetRequiredService<IManifestEnricher>().LoadJsonDocumentAsync(manifest, "", NullLogger.Instance)).RootElement.ToString()))), configure);
 
         }
     }

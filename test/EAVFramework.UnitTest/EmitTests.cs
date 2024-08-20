@@ -224,7 +224,7 @@ namespace EAVFramework.UnitTest
                 o.DTOBaseClasses = new[] { typeof(FullBaseOwnerEntity<>), typeof(FullBaseIdEntity<>) };
                 o.DTOBaseInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
-                    typeof(IOpenIdConnectResource<>),
+                    typeof(IOpenIdConnectResource),
                     typeof(IOpenIdConnectClient<,>),
                     typeof(IAllowedGrantType<>),
                     typeof(IOpenIdConnectScopeResource<,>)
@@ -272,7 +272,7 @@ namespace EAVFramework.UnitTest
                 o.DTOBaseInterfaces = new[] {  
                     typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
-                    typeof(IOpenIdConnectResource<>),
+                    typeof(IOpenIdConnectResource),
                     
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
@@ -680,39 +680,39 @@ namespace EAVFramework.UnitTest
         [DataMember(Name = "modifiedbyid")]
         [JsonProperty("modifiedbyid")]
         [JsonPropertyName("modifiedbyid")]
-        public Guid? ModifiedById { get; set; }
+        public virtual Guid? ModifiedById { get; set; }
 
         [ForeignKey("ModifiedById")]
         [JsonProperty("modifiedby")]
         [JsonPropertyName("modifiedby")]
         [DataMember(Name = "modifiedby")]
-        public TIdentity ModifiedBy { get; set; }
+        public virtual TIdentity ModifiedBy { get; set; }
 
         [DataMember(Name = "createdbyid")]
         [JsonProperty("createdbyid")]
         [JsonPropertyName("createdbyid")]
-        public Guid? CreatedById { get; set; }
+        public virtual Guid? CreatedById { get; set; }
 
         [ForeignKey("CreatedById")]
         [JsonProperty("createdby")]
         [JsonPropertyName("createdby")]
         [DataMember(Name = "createdby")]
-        public TIdentity CreatedBy { get; set; }
+        public virtual TIdentity CreatedBy { get; set; }
 
         [DataMember(Name = "modifiedon")]
         [JsonProperty("modifiedon")]
         [JsonPropertyName("modifiedon")]
-        public DateTime? ModifiedOn { get; set; }
+        public virtual DateTime? ModifiedOn { get; set; }
 
         [DataMember(Name = "createdon")]
         [JsonProperty("createdon")]
         [JsonPropertyName("createdon")]
-        public DateTime? CreatedOn { get; set; }
+        public virtual DateTime? CreatedOn { get; set; }
 
         [DataMember(Name = "rowversion")]
         [JsonProperty("rowversion")]
         [JsonPropertyName("rowversion")]
-        public byte[] RowVersion { get; set; }
+        public virtual byte[] RowVersion { get; set; }
 
     }
     [BaseEntity]
@@ -796,7 +796,133 @@ namespace EAVFramework.UnitTest
 
       //  public ICollection<TAllowedGrantType> AllowedGrantTypes { get; set; }
     }
-       
+
+    [EntityInterface(EntityKey = "OpenId Connect Authorization")]
+    // [ConstraintMapping(EntityKey = "Allowed Grant Type", AttributeKey = "Allowed Grant Type Value", ConstraintName = nameof(TAllowedGrantTypeValue))]
+    [ConstraintMapping(AttributeKey = "Type", ConstraintName = nameof(TOpenIdConnectAuthorizationType))]
+    [ConstraintMapping(AttributeKey = "Status", ConstraintName = nameof(TOpenIdConnectAuthorizationStatus))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Client", ConstraintName = nameof(TOpenIdConnectClient))]
+    // [ConstraintMapping(EntityKey = "OpenId Connect Token", ConstraintName = nameof(TOpenIdConnectToken))]
+    //   [ConstraintMapping(EntityKey = "OpenId Connect Authorization Scope", ConstraintName = nameof(TOpenIdConnectAuthorizationScope))]
+    public interface IOpenIdConnectAuthorization<TOpenIdConnectClient, TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType>
+      where TOpenIdConnectClient : DynamicEntity
+      // where TOpenIdConnectToken : DynamicEntity
+      // where TOpenIdConnectAuthorizationScope : DynamicEntity
+      where TOpenIdConnectAuthorizationStatus : struct, IConvertible
+      where TOpenIdConnectAuthorizationType : struct, IConvertible
+
+        //<TOpenIdConnectClient, TAllowedGrantType,TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TOpenIdConnectAuthorizationScope, TOpenIdConnectAuthorization, 
+        //TOpenIdConnectToken, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectAuthorization : DynamicEntity, IOpenIdConnectAuthorization<TOpenIdConnectClient, TAllowedGrantType, TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TOpenIdConnectAuthorizationScope, 
+        //    TOpenIdConnectAuthorization, TOpenIdConnectToken,TOpenIdConnectTokenStatus, TOpenIdConnectTokenType,TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectClient : DynamicEntity, IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue>
+        //
+        //where TAllowedGrantType : DynamicEntity, IAllowedGrantType<TAllowedGrantTypeValue>
+        //where TOpenIdConnectAuthorizationScope : DynamicEntity, IOpenIdConnectAuthorizationScope<TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectToken : DynamicEntity, IOpenIdConnectToken<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType,
+        //    TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType,TAllowedGrantType, TOpenIdConnectAuthorizationScope, TOpenIdConnectToken, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectTokenStatus : struct, IConvertible
+        //where TOpenIdConnectTokenType : struct, IConvertible
+        //where TOpenIdConnectClientTypes : struct, IConvertible
+        //where TOpenIdConnectClientConsentTypes : struct, IConvertible
+        //where TAllowedGrantTypeValue : struct, IConvertible
+        //where TOpenIdConnectIdentityResource : DynamicEntity, IOpenIdConnectIdentityResource
+        //where TOpenIdConnectAuthorizationType : struct, IConvertible
+    {
+        public TOpenIdConnectAuthorizationStatus? Status { get; set; }
+        public TOpenIdConnectAuthorizationType? Type { get; set; }
+
+        public Guid Id { get; set; }
+        public Guid? ClientId { get; set; }
+        public Guid? SubjectId { get; set; }
+        public TOpenIdConnectClient Client { get; set; }
+        public DateTime? CreatedOn { get; set; }
+        //public ICollection<TOpenIdConnectToken> OpenIdConnectTokens { get; set; }
+        //public ICollection<TOpenIdConnectAuthorizationScope> OpenIdConnectAuthorizationScopes { get; set; }
+
+        public string Properties { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "OpenId Connect Token")]
+    [ConstraintMapping(AttributeKey = "Status", ConstraintName = nameof(TOpenIdConnectTokenStatus))]
+    [ConstraintMapping(AttributeKey = "Type", ConstraintName = nameof(TOpenIdConnectTokenType))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Client", ConstraintName = nameof(TOpenIdConnectClient))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Authorization", ConstraintName = nameof(TOpenIdConnectAuthorization))]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Authorization", AttributeKey = "Status", ConstraintName = "TOpenIdConnectAuthorizationStatus")]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Client", AttributeKey = "Type", ConstraintName = "TOpenIdConnectClientTypes")]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Client", AttributeKey = "Consent Type", ConstraintName = "TOpenIdConnectClientConsentTypes")]
+    //[ConstraintMapping(EntityKey = "Allowed Grant Type", AttributeKey = "Allowed Grant Type Value", ConstraintName = nameof(TAllowedGrantTypeValue))]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Authorization", AttributeKey = "Type", ConstraintName = "TOpenIdConnectAuthorizationType")]
+    ////[EntityChoice(AttributeKey= "Status")]
+    //[GenericTypeArgument(ArgumentName = "TOpenIdConnectClient", ManifestKey = "OpenId Connect Client")]
+    public interface IOpenIdConnectToken<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType>
+       where TOpenIdConnectClient : DynamicEntity
+       where TOpenIdConnectAuthorization : DynamicEntity
+       where TOpenIdConnectTokenStatus : struct, IConvertible
+       where TOpenIdConnectTokenType : struct, IConvertible
+        //<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType, [EntityChoice(AttributeKey = "Status")] TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType,
+        //TAllowedGrantType, TOpenIdConnectAuthorizationScope, TOpenIdConnectToken, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectToken : DynamicEntity, IOpenIdConnectToken<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType,
+        //    TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TAllowedGrantType, TOpenIdConnectAuthorizationScope, TOpenIdConnectToken, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectClient : DynamicEntity, IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue>
+        //where TOpenIdConnectAuthorization: DynamicEntity, IOpenIdConnectAuthorization<TOpenIdConnectClient, TAllowedGrantType,TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TOpenIdConnectAuthorizationScope,
+        //    TOpenIdConnectAuthorization, TOpenIdConnectToken, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectTokenStatus : struct,IConvertible
+        //where TOpenIdConnectTokenType : struct, IConvertible
+        //where  TOpenIdConnectAuthorizationStatus : struct, IConvertible
+        //where TAllowedGrantType : DynamicEntity, IAllowedGrantType<TAllowedGrantTypeValue>
+        //where TOpenIdConnectAuthorizationScope : DynamicEntity, IOpenIdConnectAuthorizationScope<TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectClientTypes : struct, IConvertible
+        //where TOpenIdConnectClientConsentTypes : struct, IConvertible
+        //  where TAllowedGrantTypeValue : struct, IConvertible
+        //  where TOpenIdConnectIdentityResource : DynamicEntity, IOpenIdConnectIdentityResource
+        // where TOpenIdConnectAuthorizationType : struct, IConvertible
+    {
+        public Guid Id { get; set; }
+        public Guid? ClientId { get; set; }
+        public String Payload { get; set; }
+        public DateTime? CreatedOn { get; set; }
+        public DateTime? ExpirationDate { get; set; }
+        public String Properties { get; set; }
+        public TOpenIdConnectClient Client { get; set; }
+        public DateTime? RedemptionDate { get; set; }
+        public Guid? ReferenceId { get; set; }
+
+        public Guid? AuthorizationId { get; set; }
+
+
+        public TOpenIdConnectAuthorization Authorization { get; set; }
+
+        public Guid? SubjectId { get; set; }
+        public TOpenIdConnectTokenStatus? Status { get; set; }
+        public TOpenIdConnectTokenType? Type { get; set; }
+
+        //[ForeignKey("SubjectId")]
+        //[JsonProperty("subject")]
+        //[JsonPropertyName("subject")]
+        //[DataMember(Name = "subject")]
+        //public Identity Subject { get; set; }
+    }
+    [EntityInterface(EntityKey = "OpenId Connect Secret")]
+    public interface IOpenIdConnectSecret
+    {
+        public string Value { get; set; }
+        public DateTime? Expiration { get; set; }
+
+        public Guid? ClientId { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "OpenId Connect Authorization Scope")]
+    [ConstraintMapping(EntityKey = "OpenId Connect Identity Resource", ConstraintName = nameof(TOpenIdConnectIdentityResource))]
+
+    public interface IOpenIdConnectAuthorizationScope<TOpenIdConnectIdentityResource>
+       where TOpenIdConnectIdentityResource : DynamicEntity
+    {
+        public TOpenIdConnectIdentityResource Scope { get; set; }
+        public Guid? AuthorizationId { get; set; }
+        public Guid? ScopeId { get; set; }
+    }
+
     [EntityInterface(EntityKey = "OpenId Connect Identity Resource")]
     public interface IOpenIdConnectIdentityResource
 
@@ -820,10 +946,21 @@ namespace EAVFramework.UnitTest
 
 
     [EntityInterface(EntityKey = "OpenId Connect Resource")]
-    public interface IOpenIdConnectResource<TOpenIdConnectScopeResource> where TOpenIdConnectScopeResource : DynamicEntity
+    // [ConstraintMapping(EntityKey = "OpenId Connect Scope Resource", ConstraintName = nameof(TOpenIdConnectScopeResource))]
+    public interface IOpenIdConnectResource
     {
 
-        //  public ICollection<TOpenIdConnectScopeResource> OpenIdConnectScopeResources { get; set; }
+        // public Guid Id { get; set; }
+        public string Name { get; set; }
+        //  public string DisplayName { get; set; }
+        //  public string Description { get; set; }
+
+        //  public Boolean? ShowInDiscoveryDocument { get; set; }
+
+        //  public string Properties { get; set; }
+
+
+        //  public ICollection<TOpenIdConnectScopeResource> Resources { get; set; }
     }
 
 
@@ -861,9 +998,9 @@ namespace EAVFramework.UnitTest
     {
 
     }
-    public class OIDCResource : DynamicEntity ,
-        IOpenIdConnectResource<OIDCScopeResource>
+    public class OIDCResource : DynamicEntity ,     IOpenIdConnectResource
     {
+        public string Name { get; set; }
         public ICollection<OIDCScopeResource> OpenIdConnectScopeResources { get; set; }
     }
 
