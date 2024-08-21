@@ -735,7 +735,23 @@ namespace EAVFramework.Shared.V2
         
         public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType, bool build=false)
         {
-            interfaceType = Interfaces.Where(i => 
+            Type[] GetInterfaceChain()
+            {
+                var result = new List<Type>();
+                var queue = new Queue<Type>(Interfaces);
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+                    result.Add(current);
+                    foreach (var i in IsTypeBuilderInstantiation(current) ? current.GetGenericTypeDefinition().GetInterfaces()   : current.GetInterfaces())
+                    {
+                        queue.Enqueue(i);
+                    }
+                }
+                return result.Distinct().ToArray();
+            }
+
+            interfaceType = GetInterfaceChain().Where(i => 
                 (!IsTypeBuilderInstantiation (i) && i.GetProperties().Any(p => p.Name == propertyName)) 
                 ||i.IsGenericType && i.GetGenericTypeDefinition().GetProperties().Any(p => p.Name == propertyName))
                 .Select( t=> build && t.IsGenericType ?

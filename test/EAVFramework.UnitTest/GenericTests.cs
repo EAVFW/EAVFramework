@@ -191,7 +191,7 @@ namespace EAVFramework.UnitTest
             {
 
             o.DTOBaseInterfaces = new Type[] {
-                    typeof(IIdentity),  typeof(IIdentity),
+                    typeof(IIdentity),  typeof(IIdentity),typeof(IAuditFields), //typeof(IAuditOwnerFields<>),
                   typeof(IContact),typeof(IWebsite),typeof(IContactInformation<>),
                    typeof(IOpenIdConnectClient<,>),
             typeof(IOpenIdConnectAuthorization<,,>),
@@ -278,15 +278,54 @@ public interface IWebsite
 
 
 }
-[EntityInterface(EntityKey = "Contact Information")]
+
+    public interface IAuditOwnerFields
+    {
+        public DateTime? CreatedOn { get; set; }
+        public DateTime? ModifiedOn { get; set; }
+
+        public Guid? CreatedById { get; set; }
+        public Guid? OwnerId { get; set; }
+
+        public Guid? ModifiedById { get; set; }
+        public byte[] RowVersion { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "*")]
+
+    public interface IAuditOwnerFields<T> : IAuditOwnerFields
+       where T : IIdentity
+    {
+        public T CreatedBy { get; set; }
+        public T ModifiedBy { get; set; }
+
+    }
+
+    public interface IContactInformation
+    {
+        Guid Id { get; set; }
+        public string Value { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "Contact Information")]
 [ConstraintMapping(AttributeKey = "Type", ConstraintName = nameof(TContactInformationType))]
-public interface IContactInformation<TContactInformationType>
+public interface IContactInformation<TContactInformationType> : IContactInformation
    where TContactInformationType : struct, IConvertible
 {
 
 
-    string Value { get; set; }
+    
 
     TContactInformationType? Type { get; set; }
 }
+
+    [EntityInterface(EntityKey = "*")]
+    public interface IAuditFields
+    {
+        public Guid? ModifiedById { get; set; }
+        public Guid? CreatedById { get; set; }
+        public DateTime? CreatedOn { get; set; }
+        public DateTime? ModifiedOn { get; set; }
+        public byte[] RowVersion { get; set; }
+    }
 }
