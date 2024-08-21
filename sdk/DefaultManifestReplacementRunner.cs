@@ -187,6 +187,8 @@ namespace EAVFW.Extensions.Manifest.SDK
                             {
                                 var parentObj = prop.Parent as JObject;
                                 var obj = prop.Value;
+                                var mergeIndex = Array.IndexOf(parentObj.Properties().ToArray(), prop);
+                                var parentObjKeys = parentObj.Properties().Select(k => k.Name).ToArray();
 
                                 if (obj.Type == JTokenType.String && ShouldEvaluate(obj.ToString()))
                                 {
@@ -211,9 +213,12 @@ namespace EAVFW.Extensions.Manifest.SDK
                                     }
                                     else
                                     {
-                                         
-                                            parentObj.Add(childProp);
+
+                                        if (!parentObj.ContainsKey(childProp.Name) || Array.IndexOf(parentObjKeys,childProp.Name) < mergeIndex)
+                                        {
+                                            parentObj[childProp.Name] = childProp.Value;
                                             q.Enqueue(childProp);
+                                        }
                                         
                                     }
 
