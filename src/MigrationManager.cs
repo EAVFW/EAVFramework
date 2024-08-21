@@ -431,7 +431,7 @@ namespace EAVFramework
          
         private ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options, bool fromMigration)
         {
-            return _cache.GetOrAdd(migrationName, (migrationName) => new Lazy<ModelDefinition>(() =>
+            var test= _cache.GetOrAdd(migrationName, (migrationName) => new Lazy<ModelDefinition>(() =>
             {
 
                 try
@@ -470,7 +470,9 @@ namespace EAVFramework
                     //  _modules.Remove(options.Namespace, out var _);
                     throw;
                 }
-            })).Value;
+            }));
+
+            return test.Value;
         }
 
 

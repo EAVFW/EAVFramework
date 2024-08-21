@@ -1,4 +1,4 @@
-﻿using EAVFramework.Plugins;
+using EAVFramework.Plugins;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -73,12 +73,11 @@ namespace EAVFramework.Endpoints
                 var entity = queue_for_preval.Dequeue();
                 foreach (var plugin in plugins
 
-                    .Where(plugin =>        
+                    .Where(plugin =>     
                       
                         plugin.Mode == EntityPluginMode.Sync && 
                         plugin.Operation == entity.Operation && 
-                        plugin.Execution == stage && 
-                        plugin.Type.IsAssignableFrom(entity.Entity.Entity.GetType())))
+                        plugin.Execution == stage && plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity)))
                 {
                     var ctx = await plugin.Execute(serviceProvider, user, entity.Entity);
                     operationContext.Errors.AddRange(ctx.Errors);
@@ -225,8 +224,7 @@ namespace EAVFramework.Endpoints
                     foreach (var plugin in plugins.Where(plugin =>
                         plugin.Mode == EntityPluginMode.Async &&
                         plugin.Execution == EntityPluginExecution.PostOperation &&
-                        plugin.Operation == entity.Operation &&
-                        plugin.Type.IsAssignableFrom(entity.Entity.Entity.GetType())))
+                        plugin.Operation == entity.Operation && plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity)))
                     {
                         await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.Entity.Entity);
                     }

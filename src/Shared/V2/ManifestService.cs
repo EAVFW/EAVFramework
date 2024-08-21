@@ -502,13 +502,13 @@ namespace EAVFramework.Shared.V2
 
                 foreach (var table in manifest.SelectToken("$.entities").OfType<JProperty>().Select(t => tables[t.Name]).TSort(d => d.Dependencies))
                 {
-                    try
-                    {
+                 
                         var schema = table.Schema ?? options.Schema ?? "dbo";
                         var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
 
+                    try
+                    {
 
-                        
                         if (result != null)
                         {
                             this.options.EntityDTOs[table.CollectionSchemaName] = result;

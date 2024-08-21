@@ -28,59 +28,6 @@ using System.Threading.Tasks;
 
 namespace EAVFramework.Endpoints
 {
-    public class DataUrlHelper
-    {
-        public string Name { get; set; }
-
-        public string ContentType { get; set; }
-
-        public byte[] Data { get; set; }
-
-        public void Parse(string dataUrl)
-        {
-            if (!dataUrl.StartsWith("data:"))
-            {
-                Data = Convert.FromBase64String(dataUrl);
-                return;
-            }
-
-
-            var matches = Regex.Match(dataUrl, @"data:(?<type>.+?);name=(?<name>.+?);base64,(?<data>.+)");
-
-            if (matches.Groups.Count < 3)
-            {
-                throw new Exception("Invalid DataUrl format");
-            }
-
-            ContentType = matches.Groups["type"].Value;
-            Name= matches.Groups["name"].Value; ;
-            Data =  Convert.FromBase64String(matches.Groups["data"].Value);
-        }
-    }
-
-    public class DataUrlConverter : JsonConverter
-    {
-
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(byte[]);
-        }
-
-
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            var a = new DataUrlHelper();
-            a.Parse(reader.ReadAsString());
-
-            return a.Data;
-        }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            throw new NotImplementedException();
-        }
-    }
 
     public abstract class EAVDBContext 
     {
@@ -97,10 +44,10 @@ namespace EAVFramework.Endpoints
     {
         public TContext Context { get; }
 
-        private readonly PluginsAccesser<TContext> plugins;
-        private readonly ILogger<EAVDBContext<TContext>> logger;
-        private readonly IServiceProvider serviceProvider;
-        private readonly IPluginScheduler<TContext> pluginScheduler;
+        private readonly PluginsAccesser<TContext> _plugins;
+        private readonly ILogger<EAVDBContext<TContext>> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IPluginScheduler<TContext> _pluginScheduler;
 
 
         public T GetContextService<T>() where T : class
@@ -228,10 +175,10 @@ namespace EAVFramework.Endpoints
             IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
-            this.plugins = plugins;
-            this.logger = logger;
-            this.serviceProvider = serviceProvider;
-            this.pluginScheduler = pluginScheduler;
+            this._plugins = plugins;
+            this._logger = logger;
+            this._serviceProvider = serviceProvider;
+            this._pluginScheduler = pluginScheduler;
             context.EnsureModelCreated();
         }
         
@@ -239,7 +186,7 @@ namespace EAVFramework.Endpoints
         {
             var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
             var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
-            logger.LogInformation("Migrating: {SQL}", sqlscript);
+            _logger.LogInformation("Migrating: {SQL}", sqlscript);
            // await migrator.MigrateAsync();
 
             var conn = Context.Database.GetDbConnection();
@@ -265,7 +212,7 @@ namespace EAVFramework.Endpoints
             {
                 var reader = new StreamReader(context.Request.BodyReader.AsStream());
                 var text = await reader.ReadToEndAsync();
-                logger.LogInformation("Reading Payload : {Payload}", text);
+                _logger.LogInformation("Reading Payload : {Payload}", text);
 
                 var record = JToken.Parse(text);
                 if (!string.IsNullOrEmpty(options.RecordId))
@@ -295,12 +242,12 @@ namespace EAVFramework.Endpoints
 
         public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>, Task> onBeforeCommit = null)
         {
-            return this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler, onBeforeCommit);
+            return this.Context.SaveChangesPipeline(_serviceProvider, user, _plugins, _pluginScheduler, onBeforeCommit);
         }
         
         public override async Task SaveChangesAsync(ClaimsPrincipal user)
         {
-            var a= await this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler);
+            var a= await this.Context.SaveChangesPipeline(_serviceProvider, user, _plugins, _pluginScheduler);
 
 
            if(a.Errors.Any())
@@ -344,7 +291,7 @@ namespace EAVFramework.Endpoints
 
             // TraverseDeleteCollections(record, new Lazy<Type>(entity.Entity.GetType()));
 
-            logger.LogInformation("Patching {EntityName}<{RecordId}>: {Changes}", entityName, recordId, this.Context.ChangeTracker.DebugView.LongView);
+            _logger.LogInformation("Patching {EntityName}<{RecordId}>: {Changes}", entityName, recordId, this.Context.ChangeTracker.DebugView.LongView);
 
             return entity;
         }
