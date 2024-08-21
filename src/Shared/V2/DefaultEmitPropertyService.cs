@@ -1,4 +1,4 @@
-﻿using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -406,6 +406,8 @@ namespace EAVFramework.Shared.V2
                     return Nullable.GetUnderlyingType(prop.DTOPropertyType ?? prop.PropertyType) ?? prop.DTOPropertyType ?? prop.PropertyType;
 
                 }
+
+
             }catch(Exception ex)
             {
                 throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name}",ex);
@@ -413,6 +415,7 @@ namespace EAVFramework.Shared.V2
                //     $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
             }
 
+          //  if (constraint.GetGenericParameterConstraints() is Type[] array && array.Length == 2 &&  array.Any(a=>a==))
                 
             //if (!constraint.GetGenericParameterConstraints().Any())
             //{
@@ -467,7 +470,10 @@ namespace EAVFramework.Shared.V2
             //}
             //  File.AppendAllLines("test1.txt", new[] { $"Inteface type: {constraint.DeclaringType.FullName} is Generic<{string.Join(",", constraint.GetGenericParameterConstraints().Select(p => p.Name))}>" });
             var constraints = constraint.GetGenericParameterConstraints().ToArray();
+            if (constraints.Length>1)
+            {
 
+            }
 
             var @interface = constraint.GetGenericParameterConstraints().Single();
 
