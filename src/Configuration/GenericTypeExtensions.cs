@@ -14,7 +14,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var ctx = serviceProvider.GetRequiredService<TContext>();
 
-            var targetType = ResoveType<TContext>(t,ctx);
+            var targetType = ResoveType<TContext>(ctx,t);
 
             return ActivatorUtilities.CreateInstance(serviceProvider, targetType);
 
@@ -24,7 +24,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         }
 
-        private static Type ResoveType<TContext>(Type t, TContext ctx) where TContext : DynamicContext
+        public static Type ResoveType<TContext>( this TContext ctx, Type t) where TContext : DynamicContext
         {
            
 
@@ -143,7 +143,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var targetServiceType = constraints.First();
 
-            return ResoveType(targetServiceType.IsGenericType ? targetServiceType.GetGenericTypeDefinition() : targetServiceType, ctx);
+            return ResoveType(ctx,targetServiceType.IsGenericType ? targetServiceType.GetGenericTypeDefinition() : targetServiceType);
         }
 
         public static Type ResolveGenericArguments<TContext,TModel>(this Type t) where TContext : DynamicContext
