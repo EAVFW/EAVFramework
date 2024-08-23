@@ -528,7 +528,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public static IResourceBuilder<EAVFWModelProjectResource> PublishTo(
             this IResourceBuilder<EAVFWModelProjectResource> builder,
             IResourceBuilder<SqlServerDatabaseResource> target,
-            string administratorEmail, Guid initialAdministratorUserId, string Username, string schema = "dbo", string systemUsersTableName = "SystemUsers",
+            string administratorEmail, Guid initialAdministratorUserId, string Username, string schema = "dbo", string systemUsersTableName = "SystemUsers"
             )
         {
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
