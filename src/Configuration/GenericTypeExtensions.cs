@@ -9,12 +9,15 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class GenericTypeExtensions
     {
-        public static object GetDynamicService<TContext>(this IServiceProvider serviceProvider,Type t) where TContext : DynamicContext
+        public static object GetDynamicService<TContext>(this IServiceProvider serviceProvider,Type t, params (Type, Type)[] contraintResults) where TContext : DynamicContext
         {
-
+            if (!t.IsGenericType)
+            {
+                return serviceProvider.GetRequiredService(t); 
+            }
             var ctx = serviceProvider.GetRequiredService<TContext>();
 
-            var targetType = ResoveType<TContext>(ctx,t);
+            var targetType = ResoveType<TContext>(ctx,t,contraintResults);
 
             return ActivatorUtilities.CreateInstance(serviceProvider, targetType);
 
@@ -24,7 +27,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         }
 
-        public static Type ResoveType<TContext>( this TContext ctx, Type t) where TContext : DynamicContext
+        public static Type ResoveType<TContext>( this TContext ctx, Type t, params (Type, Type)[] contraintResults) where TContext : DynamicContext
         {
            
 
@@ -32,14 +35,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var ttt = t.GetGenericArguments().Select(genericTypeArgument =>
             {
-                return ResolveGenericArgument(t, ctx, genericTypeArgument);
+                return ResolveGenericArgument(t, ctx, genericTypeArgument, contraintResults);
 
             }).ToArray();
             var targetType = t.MakeGenericType(ttt);
             return targetType;
         }
 
-        private static Type ResolveGenericArgument<TContext>(Type t, TContext ctx, Type genericTypeArgument) where TContext : DynamicContext
+        private static Type ResolveGenericArgument<TContext>(Type t, TContext ctx, Type genericTypeArgument, params (Type,Type)[] contraintResults ) where TContext : DynamicContext
         {
             /**
              * genericTypeArguments is the TSomething of class Test<TSomething>
@@ -56,6 +59,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 return typeof(TContext);
             }
 
+         
             /**
              * If Constraint is IConvertible, 
              *  return the type of the property that has the EntityFieldAttribute with the AttributeKey that matches the ConstraintMappingAttribute
@@ -141,7 +145,18 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new InvalidOperationException($"Cant find constraint for {genericTypeArgument.Name} on {t.Name}");
             }
 
+            /**
+             * If nothing is found now, look for default results provided by caller
+             */
+            if (constraints.Any(tta => contraintResults.Any(cr => cr.Item1 == tta)))
+            {
+                return contraintResults.First(cr => constraints.Any(tta => tta == cr.Item1)).Item2;
+            }
+
+
             var targetServiceType = constraints.First();
+
+
 
             return ResoveType(ctx,targetServiceType.IsGenericType ? targetServiceType.GetGenericTypeDefinition() : targetServiceType);
         }

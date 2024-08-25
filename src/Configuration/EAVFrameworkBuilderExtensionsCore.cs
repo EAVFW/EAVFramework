@@ -35,9 +35,44 @@ using System.Linq;
 using EAVFramework.Shared;
 using EAVFramework.Endpoints.Query.OData;
 using EAVFramework.Authentication.Passwordless;
+using System.Reflection.Metadata;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+
+
+    //public class DynamicFactory<T>
+    //{
+    //    private readonly Type _implementation;
+    //    private readonly IServiceProvider _serviceProvider;
+
+    //    public DynamicFactory(Type implementation, IServiceProvider serviceProvider)
+    //    {
+    //        _implementation = implementation;
+    //        _serviceProvider = serviceProvider;
+    //    }
+    //    public async Task<T> CreateAsync()
+    //    {
+    //        var (feat, ctx) = await _serviceProvider.GetCustomerContext();
+
+    //        return (T) _serviceProvider.GetDynamicService<DynamicManifestContext<DynamicContext, CustomerApp, Document>>(_implementation);
+
+
+    //    }
+    //}
+
+    public static class DynamicFactoryExtensionMethods
+    {
+        public static IServiceCollection AddDynamicScoped<TContext,TService>(this IServiceCollection services, Type genericservice)
+            where TContext : DynamicContext
+            where TService : class
+        {
+          //  services.AddScoped(sp => new DynamicFactory<TService>(genericservice, sp));
+
+        return    services.AddScoped<TService>(sp =>(TService) sp.GetDynamicService<TContext>(genericservice));
+        }
+    }
+
 
     public static class DynamicCodeServiceExtensions
     {
