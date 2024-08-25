@@ -450,7 +450,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         
 
 
-        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name, string launchProfile)
+        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name, string npmBuildCommand, string launchProfile)
              where TProject : IProjectMetadata, new()
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
@@ -464,7 +464,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                 File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
 
 
-            var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", "build-app") { Project = project.Resource })
+            var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
                 .WithInitialState(new CustomResourceSnapshot { ResourceType = "EAV Build",
                     State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
                     Properties = [] });
