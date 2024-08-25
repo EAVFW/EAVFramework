@@ -515,7 +515,7 @@ namespace EAVFramework.Shared.V2
 
                         }
                         else {
-                            table.FinalizeType();
+                           // table.FinalizeType();
 
                            
                             this.options.EntityDTOs[table.CollectionSchemaName] = table.CreateTypeInfo();

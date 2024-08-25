@@ -131,30 +131,36 @@ namespace EAVFramework.Shared.V2
             {
                 foreach (var interfaceType in interfaceTypes)
                 {
-
+                    try
                     {
-                        var base_get = TypeBuilder.DefineMethod($"get_{LogicalName}",
-                            MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.Final | MethodAttributes.SpecialName | MethodAttributes.NewSlot | MethodAttributes.HideBySig,
-                            property.PropertyType, System.Type.EmptyTypes);
-                        var il = base_get.GetILGenerator();
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.EmitCall(OpCodes.Call, property.GetGetMethod(), null);
-                        il.Emit(OpCodes.Ret);
-                        TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
+                        {
+                            var base_get = TypeBuilder.DefineMethod($"get_{interfaceType.Name}_{LogicalName}",
+                                MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.Final | MethodAttributes.SpecialName | MethodAttributes.NewSlot | MethodAttributes.HideBySig,
+                                property.PropertyType, System.Type.EmptyTypes);
+                            var il = base_get.GetILGenerator();
+                            il.Emit(OpCodes.Ldarg_0);
+                            il.EmitCall(OpCodes.Call, property.GetGetMethod(), null);
+                            il.Emit(OpCodes.Ret);
+                            TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
+                        }
+                        {
+                            var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
+
+                               null, new[] { property.PropertyType });
+                            var il = base_set.GetILGenerator();
+                            il.Emit(OpCodes.Ldarg_0);
+                            il.Emit(OpCodes.Ldarg_1);
+                            il.Emit(OpCodes.Call, property.GetSetMethod());
+
+                            il.Emit(OpCodes.Ret);
+                            TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
+
+
+                        }
                     }
+                    catch (Exception ex)
                     {
-                        var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
-
-                           null, new[] { property.PropertyType });
-                        var il = base_set.GetILGenerator();
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldarg_1);
-                        il.Emit(OpCodes.Call, property.GetSetMethod());
-
-                        il.Emit(OpCodes.Ret);
-                        TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
-
-
+                       throw new Exception($"Error adding interface overrides for {SchemaName} in {TypeBuilder.Name}", ex);
                     }
                 }
             }
