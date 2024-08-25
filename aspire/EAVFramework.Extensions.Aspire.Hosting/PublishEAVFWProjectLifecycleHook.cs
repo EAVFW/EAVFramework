@@ -586,7 +586,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             var variablegenerator = new SQLClientParameterGenerator();
             var migrator = new SQLMigrationGenerator(variablegenerator, new ManifestPermissionGenerator(variablegenerator));
 
-            var sqls = await migrator.GenerateSQL(Path.GetDirectoryName(modelProjectPath), true, "SystemUsers",
+            var sqls = await migrator.GenerateSQL(Path.GetDirectoryName(modelProjectPath), true, targetDatabaseResourceAnnotation.SystemUsersTableName ?? "SystemUsers",
                 o =>
                 {
                     o.UseNetTopologySuite();

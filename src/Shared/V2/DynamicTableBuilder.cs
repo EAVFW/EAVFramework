@@ -1554,6 +1554,7 @@ namespace EAVFramework.Shared.V2
             //   options.EntityDTOConfigurations[entityCollectionSchemaName] = entityTypeConfiguration.CreateTypeInfo();
 
         }
+        public bool IsCreating { get; private set; }
         public bool IsCreated { get; private set; }
         public TypeInfo CreateTypeInfo()
         {
@@ -1564,10 +1565,17 @@ namespace EAVFramework.Shared.V2
 
 
 
-            if (IsCreated)
+            if (IsCreating)
+            {
+                if (!IsCreated)
+                {
+                    FinalizeType();
+                    IsCreated = true;
+                }
                 return Builder.CreateTypeInfo();
+            }
 
-            IsCreated = true;
+            IsCreating = true;
 #if DEBUG
             // File.AppendAllLines("test1.txt", new[] { $"Creating {SchemaName}" });
 #endif
@@ -1580,13 +1588,19 @@ namespace EAVFramework.Shared.V2
                     dp.CreateTypeInfo();
                 }
 
-                return Builder.CreateTypeInfo();
+                if(!IsCreated)
+                    FinalizeType();
+               
+
+                var result= Builder.CreateTypeInfo();
+                IsCreated = true;
+                return result;
             }
             catch (Exception ex)
             {
 #if DEBUG
                 //  File.AppendAllLines("test1.txt", new[] { $"Failed {SchemaName}" });
-                IsCreated = false;
+                IsCreating = false;
 #endif
                 throw new InvalidOperationException($"Could not build {SchemaName}: {string.Join(",", Builder.GetInterfaces().Select(c => $"{c.Name}<{string.Join(",", c.GetGenericArguments().Select(t => $"{t.Name}<{t.BaseType.Name},{string.Join(",", t.GetInterfaces().Select(i => i.Name))}>"))}>"))}", ex);
             }
@@ -1649,6 +1663,9 @@ namespace EAVFramework.Shared.V2
         public HashSet<DynamicTableBuilder> Dependencies { get; } = new HashSet<DynamicTableBuilder>();
         public DynamicTableBuilder AddAsDependency(DynamicTableBuilder value)
         {
+            if (value == this)
+                return this;
+
             Dependencies.Add(value);
 
             return value;

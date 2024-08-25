@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using Sprache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -282,7 +284,7 @@ namespace EAVFramework.UnitTest.ManifestTests
             var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
             //migrator.Migrate("0");
             //migrator.Migrate();
-            return (sql,sp);
+            return (sql,sp );
         }
          
         protected (string, IServiceProvider) RunDBWithSchema(string schema, params JToken[] manifests)
