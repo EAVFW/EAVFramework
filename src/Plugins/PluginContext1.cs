@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Claims;
@@ -12,7 +12,7 @@ namespace EAVFramework.Plugins
 {
     public static class PluginContextFactory
     {
-        public static PluginContext<TContext,T> CreateContext<TContext,T>(IServiceProvider services,EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user )
+        public static PluginContext<TContext,T> CreateContext<TContext,T>(IServiceProvider services,EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user, EntityPluginOperation operation)
             where TContext : DynamicContext
         {
             var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
@@ -21,6 +21,7 @@ namespace EAVFramework.Plugins
                 Input = (T)entry.Entity,
                 DB = context,
                 User = user,
+                Operation = operation,
                 EntityResource = new EAVResource
                 {
                     EntityType = entry.Entity.GetType(),
@@ -44,7 +45,8 @@ namespace EAVFramework.Plugins
         public EAVDBContext<TContext> DB { get; set; }
         public ClaimsPrincipal User { get; set; }
       
-        public EAVResource EntityResource { get; internal set; }
+        public EAVResource EntityResource { get; set; }
+        public EntityPluginOperation Operation { get; set; }
 
         public PluginContext<TContext, T> AddValidationError<TField>(Expression<Func<T, TField>> propExpression,
             string error, string attributeSchemaName)

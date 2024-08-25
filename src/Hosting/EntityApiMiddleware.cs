@@ -49,7 +49,9 @@ namespace EAVFramework.Hosting
                 var endpointConfig = config.MapMethods($"{(endpoint.RoutePrefixIgnored ? String.Empty : options.RoutePrefix)}{endpoint.Patten}".EnsureLeadingSlash(), endpoint.Methods,
                     context =>
                         context.RequestServices.GetService<IEndpointRouter<TContext>>()
-                        .ProcessAsync(context, context.RequestServices.GetService(endpoint.Handler) as IEndpointHandler<TContext>))
+                        .ProcessAsync(context, (endpoint.Handler.IsGenericTypeDefinition ? 
+                            context.RequestServices.GetDynamicService<TContext>(endpoint.Handler) :
+                            context.RequestServices.GetService(endpoint.Handler)) as IEndpointHandler<TContext>))
                     .WithDisplayName(endpoint.Name)
                     .WithMetadata(endpoint);
 

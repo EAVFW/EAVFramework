@@ -77,10 +77,13 @@ namespace EAVFramework.Endpoints
                       
                         plugin.Mode == EntityPluginMode.Sync && 
                         plugin.Operation == entity.Operation && 
-                        plugin.Execution == stage && plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity)))
+                        plugin.Execution == stage ))
                 {
-                    var ctx = await plugin.Execute(serviceProvider, user, entity.Entity);
-                    operationContext.Errors.AddRange(ctx.Errors);
+                    if (await plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity))
+                    {
+                        var ctx = await plugin.Execute(serviceProvider, user, entity.Entity);
+                        operationContext.Errors.AddRange(ctx.Errors);
+                    }
                 }
 
                 //foreach (var tracked in dynamicContext.ChangeTracker.Entries()
@@ -224,9 +227,10 @@ namespace EAVFramework.Endpoints
                     foreach (var plugin in plugins.Where(plugin =>
                         plugin.Mode == EntityPluginMode.Async &&
                         plugin.Execution == EntityPluginExecution.PostOperation &&
-                        plugin.Operation == entity.Operation && plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity)))
+                        plugin.Operation == entity.Operation ))
                     {
-                        await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.Entity.Entity);
+                        if(await plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity))
+                            await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.Entity.Entity);
                     }
                 }
 

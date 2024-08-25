@@ -2,89 +2,100 @@ using EAVFramework.Endpoints;
 using EAVFramework.Endpoints.Query;
 using EAVFramework.Endpoints.Query.OData;
 using EAVFramework.Extensions;
-using EAVFramework.Shared;
-using EAVFramework.Shared.V2;
 using EAVFW.Extensions.Manifest.SDK;
-using EAVFW.Extensions.Manifest.SDK.DTO;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Abstracts;
 using Microsoft.AspNetCore.OData.Extensions;
-using Microsoft.AspNetCore.OData.Formatter.Serialization;
-using Microsoft.AspNetCore.OData.Formatter.Value;
 using Microsoft.AspNetCore.OData.Query;
-using Microsoft.AspNetCore.OData.Query.Container;
-using Microsoft.AspNetCore.OData.Query.Validator;
-using Microsoft.AspNetCore.OData.Query.Wrapper;
 using Microsoft.AspNetCore.OData.Results;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.OData;
-using Microsoft.OData.Edm;
-using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Reflection.PortableExecutable;
 using System.Runtime.Serialization;
-using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EAVFramework
 {
-   
 
+    public class ODataFakeHttpRequest : HttpRequest
+    {
+        public override HttpContext HttpContext { get; } = new DefaultHttpContext();
+
+        public override string Method { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override string Scheme { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override bool IsHttps { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override HostString Host { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override PathString PathBase { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override PathString Path { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override QueryString QueryString { get; set; }
+        public override IQueryCollection Query { get; set; }
+        public override string Protocol { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public override IHeaderDictionary Headers { get; } = new HeaderDictionary();
+
+        public override IRequestCookieCollection Cookies { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override long? ContentLength { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override string ContentType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override Stream Body { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public override bool HasFormContentType => throw new NotImplementedException();
+
+        public override IFormCollection Form { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public override Task<IFormCollection> ReadFormAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+    }
     public static class DynamicContextExtensions
     {
         private static OdatatConverterFactory _factory = new OdatatConverterFactory();
 
-       
 
-        public static  Task<PageResult<object>> ExecuteHttpRequest<TContext>(this EAVDBContext<TContext> context, string entityCollectionSchemaName, string sql, HttpRequest request, params object[] sqlparams) where TContext : DynamicContext
+
+        public static Task<PageResult<object>> ExecuteHttpRequest<TContext>(this EAVDBContext<TContext> context, string entityCollectionSchemaName, string sql, HttpRequest request, params object[] sqlparams) where TContext : DynamicContext
         {
-            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(request);
+            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(request.HttpContext.RequestServices);
 
             context.Context.EnsureModelCreated();
 
             var type = context.Context.Manager.ModelDefinition.EntityDTOs[entityCollectionSchemaName.Replace(" ", "")];
-  
+
             var metadataQuerySet = context.FromSqlRaw<DynamicEntity>(type, sql, sqlparams) as IQueryable;
-            
+
             return Execute<TContext>(request, type, context.Context, metadataQuerySet);
 
-          
+
         }
 
-        private static List<IQueryExtender<TContext>> GetQueryInspectors<TContext>(HttpRequest request) where TContext : DynamicContext
+        private static List<IQueryExtender<TContext>> GetQueryInspectors<TContext>(IServiceProvider serviceProvider) where TContext : DynamicContext
         {
             var t1 = typeof(IQueryExtender<>).MakeGenericType(typeof(TContext));
             var t2 = typeof(IEnumerable<>).MakeGenericType(t1);
-            var queryInspectors = (request.HttpContext.RequestServices.GetService(t2) as IEnumerable).Cast<IQueryExtender<TContext>>()
+            var queryInspectors = (serviceProvider.GetService(t2) as IEnumerable).Cast<IQueryExtender<TContext>>()
                 .ToList();
             return queryInspectors;
         }
 
         public static Task<PageResult<object>> ExecuteHttpRequest<TContext>(this TContext context, string entityCollectionSchemaName, HttpRequest request) where TContext : DynamicContext
         {
-           
+
 
             context.EnsureModelCreated();
 
@@ -92,12 +103,12 @@ namespace EAVFramework
 
             var metadataQuerySet = context.Set(type);
 
-            return Execute<TContext>(request,type,context,metadataQuerySet);
-           
+            return Execute<TContext>(request, type, context, metadataQuerySet);
+
         }
         public static async Task<PageResult<object>> Execute<TContext>(HttpRequest request, Type type, TContext context, IQueryable metadataQuerySet) where TContext : DynamicContext
         {
-            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(request);
+            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(request.HttpContext.RequestServices);
 
             var queryContext = new QueryContext<TContext>
             {
@@ -112,8 +123,8 @@ namespace EAVFramework
                 metadataQuerySet = queryInspector.ApplyTo(metadataQuerySet, queryContext).Cast(type) ?? metadataQuerySet;
 
 
-            
-           
+
+
             if (request != null)
             {
                 if (!request.Query.ContainsKey("$select") && !request.Query.ContainsKey("$apply"))
@@ -136,9 +147,9 @@ namespace EAVFramework
 
             }
 
-            
-            var items = await ((IQueryable<object>)metadataQuerySet).ToListAsync();
-             
+
+            var items = await ((IQueryable<object>) metadataQuerySet).ToListAsync();
+
 
             //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
             //annoying that we have to serialize them ourself.
@@ -169,6 +180,93 @@ namespace EAVFramework
             //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
             //  return Set<Type2>();
         }
+
+        public static async Task<PageResult<object>> ExecuteOData<TContext>(IServiceProvider serviceProvider, IODataFeature odataFeature, string query, Type type, TContext context, IQueryable metadataQuerySet) where TContext : DynamicContext
+        {
+            List<IQueryExtender<TContext>> queryInspectors = GetQueryInspectors<TContext>(serviceProvider);
+            var queryCol = QueryHelpers.ParseNullableQuery(query);
+
+            var request = new ODataFakeHttpRequest()
+            {
+                Query = new QueryCollection(queryCol),
+                QueryString = new QueryString("?" + query.TrimStart('?')),
+                HttpContext =
+                {
+                     RequestServices = serviceProvider
+                }
+            };
+            request.HttpContext.Features.Set<IODataFeature>(odataFeature);
+
+            var queryContext = new QueryContext<TContext>
+            {
+                Type = type,
+                Request = request,
+                SkipQueryExtenders = queryInspectors.ToDictionary(x => x, v => false),
+                Context = context
+            };
+
+
+
+            foreach (var queryInspector in queryInspectors.Where(q => !queryContext.SkipQueryExtenders[q]))
+                metadataQuerySet = queryInspector.ApplyTo(metadataQuerySet, queryContext).Cast(type) ?? metadataQuerySet;
+
+
+
+            if (!queryCol.ContainsKey("$select") && !queryCol.ContainsKey("$apply"))
+            {
+
+                request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
+                request.Query=new QueryCollection(QueryHelpers.ParseNullableQuery(request.QueryString.Value));
+            }
+            var odataContext = new ODataQueryContext(context.Manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
+            //  IODataFeature odataFeature = request.HttpContext.ODataFeature();
+            odataFeature.RoutePrefix = "/api/";
+
+            odataContext.DefaultQueryConfigurations.EnableFilter = true;
+            odataContext.DefaultQueryConfigurations.EnableExpand = true;
+            odataContext.DefaultQueryConfigurations.EnableSelect = true;
+            odataContext.DefaultQueryConfigurations.EnableCount = true;
+            odataContext.DefaultQueryConfigurations.EnableSkipToken = true;
+
+            var odata = new ODataQueryOptions(odataContext, request);
+
+            metadataQuerySet = odata.ApplyTo(metadataQuerySet);
+
+
+
+
+            var items = await ((IQueryable<object>) metadataQuerySet).ToListAsync();
+
+
+            //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
+            //annoying that we have to serialize them ourself.
+            var resultList = new List<object>();
+
+            foreach (var item in items)
+            {
+                if (item is DynamicEntity)
+                {
+                    resultList.Add(item);
+                }
+                else
+                {
+                    var converter = _factory.CreateConverter(item.GetType());
+                    var result = converter.Convert(item);
+                    resultList.Add(result.Value);
+                }
+
+
+            }
+
+
+            return new PageResult<object>(resultList, null, odataFeature.TotalCount);
+
+
+            // return metadataQuerySet;
+            // var setMethod=typeof(DbContext).GetMethod("Set", new Type[] { });
+            //  return setMethod.MakeGenericMethod(type.dto).Invoke(this,new object[] { }) as IQueryable;
+            //  return Set<Type2>();
+        }
     }
     public interface IHasModelCacheKey
     {
@@ -179,7 +277,7 @@ namespace EAVFramework
         public object Create(DbContext context, bool designTime)
            => context is IHasModelCacheKey dynamicContext
                ? (context.GetType(), dynamicContext.ModelCacheKey, designTime)
-               : (object)context.GetType();
+               : (object) context.GetType();
 
         public object Create(DbContext context)
             => Create(context, false);
@@ -227,16 +325,16 @@ namespace EAVFramework
             };
             var factories = new Dictionary<TypeInfo, Func<Migration>>();
 
-            
+
             var latestManifest = modelOptions.Value.Manifests.First();
-             
+
             manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
 
                 var test = new ManifestDefinitionCollection();
-                foreach(var manifest in modelOptions.Value.Manifests.Reverse())
+                foreach (var manifest in modelOptions.Value.Manifests.Reverse())
                 {
                     test.Add(System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString()));
                 }
@@ -254,7 +352,7 @@ namespace EAVFramework
                     factories.Add(model.Type, model.MigrationFactory);
                 }
 
-                
+
 
 
                 //int i = 0;
@@ -331,7 +429,7 @@ namespace EAVFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
+
             var sw = Stopwatch.StartNew();
 
             //  EnsureModelCreated();
@@ -428,7 +526,7 @@ namespace EAVFramework
 
         public IQueryable Set(Type type)
         {
-            return (IQueryable)this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
+            return (IQueryable) this.GetType().GetMethod("Set", new Type[0]).MakeGenericMethod(type).Invoke(this, null);
         }
 
 
@@ -450,7 +548,7 @@ namespace EAVFramework
             if (manager.ModelDefinition.Entities.ContainsKey(entityName))
             {
                 var entity = manager.ModelDefinition.Entities[entityName];
-                foreach(var poly in entity.Attributes.Where(a=>a.Value is AttributeObjectDefinition typeobj && typeobj.AttributeType.Type == "polylookup" && typeobj.AttributeType.Split))
+                foreach (var poly in entity.Attributes.Where(a => a.Value is AttributeObjectDefinition typeobj && typeobj.AttributeType.Type == "polylookup" && typeobj.AttributeType.Split))
                 {
                     var attr = poly.Value as AttributeObjectDefinition;
                     var reference = data[attr.LogicalName]?.ToString();
@@ -458,7 +556,7 @@ namespace EAVFramework
                     if (!string.IsNullOrEmpty(reference))
                     {
                         var referenceType = reference.Substring(0, reference.IndexOf(':'));
-                        var referenceId = reference.Substring(referenceType.Length+1);
+                        var referenceId = reference.Substring(referenceType.Length + 1);
                         data[$"{entity.LogicalName}{referenceType}references"] = new JArray(
                             new JObject(
                                 new JProperty($"{referenceType}id", referenceId)

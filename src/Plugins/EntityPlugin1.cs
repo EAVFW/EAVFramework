@@ -140,11 +140,11 @@ namespace EAVFramework.Plugins
        // where T : DynamicEntity
     {
          
-        public override bool ShouldPluginBeExecued<T>(T context, TrackedPipelineItem entity)
+        public override ValueTask<bool> ShouldPluginBeExecued<T>(T context, TrackedPipelineItem entity)
          
         {
             var type = GetPluginType(context as TContext);
-            return type.IsAssignableFrom(entity.Entity.Entity.GetType());
+            return ValueTask.FromResult(type.IsAssignableFrom(entity.Entity.Entity.GetType()));
           
 
           
@@ -184,7 +184,7 @@ namespace EAVFramework.Plugins
             var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
             foreach (var entity in collectionEntry.CurrentValue)
             {
-
+             //   var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal);
                 var plugincontext = new PluginContext<TContext, T>
                 {
                     Input = entity as T,
@@ -226,7 +226,7 @@ namespace EAVFramework.Plugins
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
 
-            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal);
+            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal, this.Operation);
 
             var handler = services.GetDynamicService<TContext>(Handler) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
@@ -283,7 +283,7 @@ namespace EAVFramework.Plugins
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
            
-            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services,db, entity, principal);
+            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services,db, entity, principal,this.Operation);
            
             var handler = services.GetService(Handler) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
