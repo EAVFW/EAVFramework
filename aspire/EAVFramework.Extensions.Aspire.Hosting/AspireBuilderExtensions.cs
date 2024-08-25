@@ -528,13 +528,13 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public static IResourceBuilder<EAVFWModelProjectResource> PublishTo(
             this IResourceBuilder<EAVFWModelProjectResource> builder,
             IResourceBuilder<SqlServerDatabaseResource> target,
-            string administratorEmail, Guid initialAdministratorUserId, string Username, string schema = "dbo"
+            string administratorEmail, Guid initialAdministratorUserId, string Username, string schema = "dbo", string systemUsersTableName = "SystemUsers"
             )
         {
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
             builder.WithAnnotation(new TargetDatabaseResourceAnnotation(target.Resource.Name, target.Resource)
             {
-                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ","")
+                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, SystemUsersTableName = systemUsersTableName, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ","")
             }, ResourceAnnotationMutationBehavior.Replace);
             return builder;
         }

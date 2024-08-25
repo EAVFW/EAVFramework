@@ -1,4 +1,4 @@
-﻿using EAVFramework.Infrastructure.HealthChecks;
+using EAVFramework.Infrastructure.HealthChecks;
 using EAVFramework.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace EAVFramework.Configuration
             var autoPlugins = typeof(T).Assembly.GetTypes().Where(type => type.GetCustomAttributes<PluginRegistrationAttribute>().Any())
                 .ToArray();
 
-            foreach (var plugin in autoPlugins)
+            foreach (var plugin in autoPlugins.Where(t=>!t.ContainsGenericParameters))
             {
                 builder.AddPlugin(plugin);
             }

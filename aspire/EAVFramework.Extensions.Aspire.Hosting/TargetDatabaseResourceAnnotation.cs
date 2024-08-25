@@ -28,6 +28,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public string InitialEmail { get;  set; }
         public string UserPrincipalName { get;  set; }
         public string InitialUsername { get;  set; }
+        public string SystemUsersTableName{get;set;} = "SystemUsers";
         public string InitialSystemSecurityGroupId { get;  set; } = "1b714972-8d0a-4feb-b166-08d93c6ae328";
     }
     public record CreateSigninUrlAnnotation(IResource Target, IResource Project) : IResourceAnnotation
