@@ -93,7 +93,8 @@ namespace EAVFramework.Authentication.Passwordless
             return $"{maskedLocalPart}{domain}";
         }
 
-        public async Task SendEmailAsync(Guid emailId, string subject, string sender, string to_emails, string msgHtml, string msgPlain, string sender_displayname=null)
+        public async Task SendEmailAsync(Guid emailId, string subject, string sender, string to_emails, string msgHtml, string msgPlain,
+            string sender_displayname=null, string to_cc_emails=null, Action<MailMessage> configure=null, bool opentrack=false, bool clicktrack=false)
         {
             var options = JToken.FromObject(new
             {
@@ -103,8 +104,8 @@ namespace EAVFramework.Authentication.Passwordless
                 },
                 filters = new
                 {
-                    opentrack = new { settings = new { enable = 0 } },
-                    clicktrack = new { settings = new { enable = 0 } }
+                    opentrack = new { settings = new { enable = opentrack?1: 0 } },
+                    clicktrack = new { settings = new { enable = clicktrack?1:0 } }
                 }
             });
 
@@ -116,7 +117,13 @@ namespace EAVFramework.Authentication.Passwordless
             {
                 mailMessage.To.Add(new MailAddress(email));
             }
-
+            if(!string.IsNullOrEmpty(to_cc_emails))
+            {
+                foreach (var email in to_cc_emails.Split(',', ';'))
+                {
+                    mailMessage.CC.Add(new MailAddress(email));
+                }
+            }   
             mailMessage.From = new MailAddress(sender,sender_displayname,Encoding.UTF8);
          
             var view = AlternateView.CreateAlternateViewFromString(msgHtml, null, MediaTypeNames.Text.Html);
@@ -126,6 +133,8 @@ namespace EAVFramework.Authentication.Passwordless
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = msgHtml;
             mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
+
+            configure?.Invoke(mailMessage);
 
             _logger.LogInformation("Sending email to {email} with emailid {emailid} from {sender}",
                string.Join(",", to_emails.Split(',', ';').Select(email=>  MaskEmail(email))),
