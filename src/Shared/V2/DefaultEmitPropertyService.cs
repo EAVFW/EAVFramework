@@ -472,7 +472,7 @@ namespace EAVFramework.Shared.V2
             var constraints = constraint.GetGenericParameterConstraints().ToArray();
             if (constraints.Length>1)
             {
-
+                throw new Exception($"Multiple contraints found for {constraint?.ReflectedType?.Name}");
             }
 
             var @interface = constraint.GetGenericParameterConstraints().Single();

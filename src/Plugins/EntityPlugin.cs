@@ -37,9 +37,6 @@ namespace EAVFramework.Plugins
         public abstract Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity);
         public abstract Task Execute(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry entity);
 
-        public virtual Task InitializePluginJobRunnerAsync(IServiceProvider serviceProvider, string entityType)
-        {
-            return Task.CompletedTask;
-        }
+      
     }
 }

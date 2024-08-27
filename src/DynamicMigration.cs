@@ -1,4 +1,4 @@
-﻿using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -34,11 +34,11 @@ namespace EAVFramework
     [Serializable]
     public class DynamicEntity
     {
-        
+       
     }
 
 
-    
+
     public class DynamicMigration : Migration
     {
        

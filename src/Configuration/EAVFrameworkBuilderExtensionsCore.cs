@@ -263,7 +263,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddRequiredPlatformServices(this IEAVFrameworkBuilder builder)
         {
-           
+            builder.Services.TryAddScoped<MultiTenantContext>();
+            builder.Services.TryAddScoped<IContextInitializer, DefaultContextInitializer>();
             builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             builder.Services.AddOptions();
             builder.Services.AddSingleton(

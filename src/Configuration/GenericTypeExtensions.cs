@@ -79,8 +79,13 @@ namespace Microsoft.Extensions.DependencyInjection
                     if (otherConstraint != null)
                     {
                         var targetInterface = otherConstraint.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);
+                      
+                        var position = Array.IndexOf(targetInterface.GenericTypeArguments, genericTypeArgument);
+                        var targetName = targetInterface.GetGenericTypeDefinition().GetGenericArguments()[position].Name;
                         constraintMapping = targetInterface
-                            .GetCustomAttributes<ConstraintMappingAttribute>().SingleOrDefault(c => c.ConstraintName == genericTypeArgument.Name);
+                            .GetCustomAttributes<ConstraintMappingAttribute>()
+                            .Where((c) => c.ConstraintName == targetName)
+                            .SingleOrDefault();
                         constraintMapping.EntityKey ??= targetInterface.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey;
                     }
 

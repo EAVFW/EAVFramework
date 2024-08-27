@@ -139,7 +139,9 @@ namespace EAVFramework.Plugins
         where TContext : DynamicContext
        // where T : DynamicEntity
     {
-         
+
+       
+
         public override ValueTask<bool> ShouldPluginBeExecued<T>(T context, TrackedPipelineItem entity)
          
         {
