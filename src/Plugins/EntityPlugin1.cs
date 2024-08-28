@@ -145,6 +145,19 @@ namespace EAVFramework.Plugins
         public override ValueTask<bool> ShouldPluginBeExecued<T>(T context, TrackedPipelineItem entity)
          
         {
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+            if (entity.Entity is null)
+            {
+                throw new ArgumentNullException("Entry");
+            }
+            if (entity.Entity.Entity is null)
+            {
+                throw new ArgumentNullException("Entity");
+            }
+
             var type = GetPluginType(context as TContext);
             return ValueTask.FromResult(type.IsAssignableFrom(entity.Entity.Entity.GetType()));
           
