@@ -60,6 +60,23 @@ namespace Microsoft.Extensions.DependencyInjection
 
     //    }
     //}
+    public interface ICustomerAppContextFeatureOptionInterfaceRegistration
+    {
+        Type Interface { get; }
+    }
+    public class CustomerAppContextFeatureOptionInterfaceRegistration<T> : ICustomerAppContextFeatureOptionInterfaceRegistration
+    {
+        public Type Interface { get; } = typeof(T);
+    }
+    public class CustomerAppContextFeatureOptionInterfaceRegistration : ICustomerAppContextFeatureOptionInterfaceRegistration
+    {
+        public CustomerAppContextFeatureOptionInterfaceRegistration(Type @interface)
+        {
+            Interface = @interface;
+        }
+
+        public Type Interface { get; }
+    }
 
     public static class DynamicFactoryExtensionMethods
     {
@@ -147,6 +164,17 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.Configure(setupAction);
             return services.AddEAVFramework<TContext>();
+        }
+
+        public static void AddDynamicInterface<T>(this IServiceCollection services)
+        {
+            services.AddSingleton<ICustomerAppContextFeatureOptionInterfaceRegistration, CustomerAppContextFeatureOptionInterfaceRegistration<T>>();
+
+        }
+        public static void AddDynamicInterface(this IServiceCollection services, Type @interface)
+        {
+            services.AddSingleton<ICustomerAppContextFeatureOptionInterfaceRegistration>(new CustomerAppContextFeatureOptionInterfaceRegistration(@interface));
+
         }
 
         /// <summary>
