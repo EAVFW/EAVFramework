@@ -159,7 +159,9 @@ namespace EAVFramework.Plugins
             }
 
             var type = GetPluginType(context as TContext);
-            return ValueTask.FromResult(type.IsAssignableFrom(entity.Entity.Entity.GetType()));
+        
+
+            return ValueTask.FromResult(type?.IsAssignableFrom(entity.Entity.Entity.GetType())??false);
           
 
           
