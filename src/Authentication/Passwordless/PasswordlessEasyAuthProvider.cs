@@ -113,9 +113,12 @@ namespace EAVFramework.Authentication.Passwordless
             {
                 Subject = subject
             };
-            foreach (var email in to_emails.Split(',', ';'))
+            if (!string.IsNullOrEmpty(to_emails))
             {
-                mailMessage.To.Add(new MailAddress(email));
+                foreach (var email in to_emails.Split(',', ';'))
+                {
+                    mailMessage.To.Add(new MailAddress(email));
+                }
             }
             if(!string.IsNullOrEmpty(to_cc_emails))
             {
