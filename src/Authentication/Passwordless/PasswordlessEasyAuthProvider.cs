@@ -139,9 +139,18 @@ namespace EAVFramework.Authentication.Passwordless
 
             configure?.Invoke(mailMessage);
 
-            _logger.LogInformation("Sending email to {email} with emailid {emailid} from {sender}",
-               string.Join(",", to_emails.Split(',', ';').Select(email=>  MaskEmail(email))),
-               emailId, sender);
+            _logger.LogInformation(
+                """
+                Sending email '{subject}'
+                ID: {id}
+                To: {to}
+                CC:{cc}
+                From: {sender}
+                """,
+                mailMessage.Subject,emailId,
+               string.Join(",", mailMessage.To.Select(email=>  MaskEmail(email.Address))),
+               string.Join(",", mailMessage.CC.Select(email => MaskEmail(email.Address))),
+               sender);
 
 
 
