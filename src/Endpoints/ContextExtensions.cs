@@ -123,123 +123,137 @@ namespace EAVFramework.Endpoints
         {
             var strategy = dynamicContext.Database.CreateExecutionStrategy();
 
-            var _operation = await strategy.ExecuteAsync(async () =>
+            var operation = await strategy.ExecuteAsync(async () =>
             {
               //  using var scope = scopeFactory.CreateScope();
 
-                var _operation = new OperationContext<TContext>
+                var innerOperation = new OperationContext<TContext>
                 {
                     Context = dynamicContext
                 };
 
-
-              
-
-                
-                var discovered_prevalitems = new HashSet<TrackedPipelineItem>();
-
-                var newItems_preval = true;
-                do
+                try
                 {
-                    newItems_preval=   await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
-                } while (newItems_preval);
 
 
-                if (_operation.Errors.Any())
-                    return _operation;
+                    var discovered_prevalitems = new HashSet<TrackedPipelineItem>();
 
-
-
-                var trans = await _operation.Context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadUncommitted);
-
-                var discovered_preoperation = new HashSet<TrackedPipelineItem>();
-
-                var newItems_preop = true;
-                do
-                {
-                    newItems_preop= await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreOperation, discovered_preoperation);
-
+                    var newItems_preval = true;
                     do
                     {
-                        newItems_preval=   await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
-                    } while (newItems_preval);
-                     
-                } while (newItems_preop || newItems_preval);
-
-
-                _operation.PreOperationChanges = dynamicContext.ChangeTracker.DebugView.ShortView;
-                await dynamicContext.SaveChangesAsync();
-
-
-
-
-
-                var discovered_postoperation = new HashSet<TrackedPipelineItem>();
-                var newItems_postop = true;
-
-                do
-                {
-                    newItems_postop = await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PostOperation, discovered_postoperation, discovered_preoperation);
-
-                    do
-                    {
-                        newItems_preval=   await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+                        newItems_preval = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
                     } while (newItems_preval);
 
+
+                    if (innerOperation.Errors.Any())
+                        return innerOperation;
+
+
+
+                    var trans = await innerOperation.Context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadUncommitted);
+
+                    var discovered_preoperation = new HashSet<TrackedPipelineItem>();
+
+                    var newItems_preop = true;
                     do
                     {
-                        newItems_preop= await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreOperation, discovered_preoperation);
+                        newItems_preop = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PreOperation, discovered_preoperation);
 
                         do
                         {
-                            newItems_preval=   await EmptyPreValQueue(serviceProvider, dynamicContext, _operation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+                            newItems_preval = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
                         } while (newItems_preval);
 
                     } while (newItems_preop || newItems_preval);
 
- 
- 
-                } while (newItems_preop || newItems_preval || newItems_postop);
 
-                _operation.PostOperationChanges = dynamicContext.ChangeTracker.DebugView.ShortView;
-                await _operation.Context.SaveChangesAsync();
+                    innerOperation.PreOperationChanges = dynamicContext.ChangeTracker.DebugView.ShortView;
+                    await dynamicContext.SaveChangesAsync();
 
 
 
-                if (onBeforeCommit != null)
-                    await onBeforeCommit(_operation);
-
-                
-                if (_operation.Errors.Any())
-                    return _operation;
-
-                //await onBeforeCommit?.Invoke() ?? Task.CompletedTask;
-
-                await trans.CommitAsync();
 
 
-         
+                    var discovered_postoperation = new HashSet<TrackedPipelineItem>();
+                    var newItems_postop = true;
 
-
-                foreach (var entity in discovered_prevalitems)
-                {
-                    
-                    foreach (var plugin in plugins.Where(plugin =>
-                        plugin.Mode == EntityPluginMode.Async &&
-                        plugin.Execution == EntityPluginExecution.PostOperation &&
-                        plugin.Operation == entity.Operation ))
+                    do
                     {
-                        if(await plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity))
-                            await pluginScheduler.ScheduleAsync(plugin,user.FindFirstValue("sub"), entity.Entity.Entity);
+                        newItems_postop = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PostOperation, discovered_postoperation, discovered_preoperation);
+
+                        if (innerOperation.Errors.Any())
+                            return innerOperation;
+
+                        do
+                        {
+                            newItems_preval = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+
+                            if (innerOperation.Errors.Any())
+                                return innerOperation;
+
+
+                        } while (newItems_preval);
+
+
+
+                        do
+                        {
+                            newItems_preop = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PreOperation, discovered_preoperation);
+
+                            if (innerOperation.Errors.Any())
+                                return innerOperation;
+
+                            do
+                            {
+                                newItems_preval = await EmptyPreValQueue(serviceProvider, dynamicContext, innerOperation, plugins, user, EntityPluginExecution.PreValidate, discovered_prevalitems);
+
+                                if (innerOperation.Errors.Any())
+                                    return innerOperation;
+
+                            } while (newItems_preval);
+
+                        } while (newItems_preop || newItems_preval);
+
+
+                        innerOperation.PostOperationChanges += dynamicContext.ChangeTracker.DebugView.ShortView;
+                        await innerOperation.Context.SaveChangesAsync();
+
+                    } while (newItems_preop || newItems_preval || newItems_postop);
+
+                    if (innerOperation.Errors.Any())
+                        return innerOperation;
+
+                    if (onBeforeCommit != null)
+                        await onBeforeCommit(innerOperation);
+
+
+                    await trans.CommitAsync();
+
+
+
+                    foreach (var entity in discovered_prevalitems)
+                    {
+
+                        foreach (var plugin in plugins.Where(plugin =>
+                            plugin.Mode == EntityPluginMode.Async &&
+                            plugin.Execution == EntityPluginExecution.PostOperation &&
+                            plugin.Operation == entity.Operation))
+                        {
+                            if (await plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity))
+                                await pluginScheduler.ScheduleAsync(plugin, user.FindFirstValue("sub"), entity.Entity.Entity);
+                        }
                     }
+                }finally
+                {
+                    //when exceptions are thrown, the context is in an invalid state and should be cleared
+                    innerOperation.Context.ChangeTracker.Clear();
                 }
+                 
 
-                _operation.Context.ChangeTracker.Clear();
-
-                return _operation;
+                return innerOperation;
             });
 
-            return _operation;
+            return operation;
 
         }
 
