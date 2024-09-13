@@ -447,10 +447,11 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         }
 
-        
 
 
-        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder, string name, string npmBuildCommand, string launchProfile)
+
+        public static IResourceBuilder<ProjectResource> AddEAVFWApp<TProject>(this IDistributedApplicationBuilder builder,
+            string name, string npmBuildCommand, string launchProfile)
              where TProject : IProjectMetadata, new()
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
@@ -459,21 +460,29 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             var workingDirectory = PathNormalizer.NormalizePathForCurrentPlatform(Path.Combine(builder.AppHostDirectory, "../.."));
 
             var metadata = project.Resource.GetProjectMetadata();
-            var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
-            var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
-                File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
+           
+            if (!string.IsNullOrEmpty(npmBuildCommand))
+            {
+                var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
+                var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
+                    File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
 
 
-            var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
-                .WithInitialState(new CustomResourceSnapshot { ResourceType = "EAV Build",
-                    State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
-                    Properties = [] });
-            
-            if(hash == oldhash)
-                build.WithAnnotation(new NeedsCompletedAnnotation());
-            
-            return project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource })
+                var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
+                    .WithInitialState(new CustomResourceSnapshot { ResourceType = "EAV Build",
+                        State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
+                        Properties = [] });
+
+                if (hash == oldhash)
+                    build.WithAnnotation(new NeedsCompletedAnnotation());
+
+                project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource })
                 .Needs(build);
+            }
+
+
+
+            return project;
         }
 
 
