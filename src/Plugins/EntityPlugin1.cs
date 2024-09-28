@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
@@ -157,7 +158,19 @@ namespace EAVFramework.Plugins
             {
                 throw new ArgumentNullException("Entity");
             }
+            /**
+             * A plugin that is registered with a interface against all entities with * matching can be catched here first.
+             */
+            if (Type.IsGenericTypeParameter)
+            { 
+                var interfaceType = Type.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);               
 
+                if (interfaceType.IsAssignableFrom(entity.Entity.Entity.GetType()) || entity.Entity.Entity.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType)){
+                    return ValueTask.FromResult(true);
+                }
+            }
+
+                
             var type = GetPluginType(context as TContext);
         
 
@@ -231,10 +244,10 @@ namespace EAVFramework.Plugins
         public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity)
 
         {
-            var type = GetPluginType(services.GetRequiredService<TContext>());
+            //var type =  GetPluginType(services.GetRequiredService<TContext>());
 
             var task = this.GetType().GetMethod(nameof(Execute), 1,
-              new Type[] { typeof(IServiceProvider), typeof(ClaimsPrincipal), typeof(EntityEntry) }).MakeGenericMethod(type)
+              new Type[] { typeof(IServiceProvider), typeof(ClaimsPrincipal), typeof(EntityEntry) }).MakeGenericMethod(entity.Entity.GetType())
               .Invoke(this, new object[] { services, principal, entity }) as Task<PluginContext>;
             return await task;
         }
@@ -245,7 +258,7 @@ namespace EAVFramework.Plugins
 
             var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal, this.Operation);
 
-            var handler = services.GetDynamicService<TContext>(Handler) as IPlugin<TContext, T>;
+            var handler = services.GetDynamicService<TContext>(Handler, Type.IsGenericTypeParameter ? new[] { (Type,typeof(T))} : new (Type,Type)[0] ) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
 
             return plugincontext;

@@ -137,7 +137,11 @@ namespace Microsoft.Extensions.DependencyInjection
                         t.GetInterfaces().Any(c => c == @interface)).ToArray();
                 if (result.Length > 1)
                 {
-                    result= result.Where(r => !result.Any(rr => rr == r.BaseType)).ToArray();
+                    result= result.Where(r => !result.Any(rr => rr == r.BaseType) 
+                        //If constraints are provided, the item2 is the type that is expected.
+                        //This case is for generic wildcard entity types
+                        && (!contraintResults.Any() || contraintResults.Any(c=>c.Item2 == r)))
+                        .ToArray();
                 }
                 return result.SingleOrDefault() ?? throw new InvalidOperationException($"No type that has interface {@interface}"); ;
             }

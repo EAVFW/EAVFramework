@@ -644,8 +644,13 @@ namespace EAVFramework
         public EntityEntry Update(string entityName, JToken data)
         {
             var type = manager.ModelDefinition.EntityDTOs[entityName];
+
+
+             
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
+
+
 
 
             var entity = this.Update(record);
