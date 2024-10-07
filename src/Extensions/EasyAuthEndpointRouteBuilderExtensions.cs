@@ -176,23 +176,26 @@ namespace EAVFramework.Extensions
                     metrics?.StartSignup(auth.AuthenticationName);
 
                     var handleId = await options.Authentication.GenerateHandleId(httpcontext.RequestServices);
+                    var identityId = await options.Authentication.FindIdentity(new UserDiscoveryRequest { Email = email, HttpContext = httpcontext, ServiceProvider = httpcontext.RequestServices });
 
-                    var identityId = await options.Authentication.FindIdentity(new UserDiscoveryRequest { Email = email,  HttpContext = httpcontext, ServiceProvider = httpcontext.RequestServices });
-
-                    var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
+                    if (auth.UseTicketStore)
+                    {    
+                        var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
                             Encoding.UTF8.GetBytes( httpcontext.Request.QueryString.Value?.TrimStart('?')));
 
-                    await ticketStore.PersistTicketAsync(new PersistTicketRequest
-                    {
-                        HandleId = handleId,
-                        HttpContext = httpcontext,
-                        IdentityId = identityId == default ? null : identityId,
-                        Ticket = ticket,
-                        RedirectUrl = redirectUri,
-                        ServiceProvider = httpcontext.RequestServices,
-                        AuthProvider = auth.AuthenticationName,
-                        OwnerIdentity = options.SystemAdministratorIdentity
-                    });
+                   
+                        await ticketStore.PersistTicketAsync(new PersistTicketRequest
+                        {
+                            HandleId = handleId,
+                            HttpContext = httpcontext,
+                            IdentityId = identityId.HasValue && identityId.Value != default ? identityId : null,
+                            Ticket = ticket,
+                            RedirectUrl = redirectUri,
+                            ServiceProvider = httpcontext.RequestServices,
+                            AuthProvider = auth.AuthenticationName,
+                            OwnerIdentity = options.SystemAdministratorIdentity
+                        });
+                    }
 
 
                     var baseUrl = $"{new Uri(httpcontext.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}";
@@ -202,7 +205,7 @@ namespace EAVFramework.Extensions
                     {
                         Options = options.Authentication,
                         ServiceProvider = httpcontext.RequestServices,
-                         HttpContext = httpcontext, 
+                        HttpContext = httpcontext, 
                         CallbackUrl = callbackUrl,
                         HandleId = handleId,
                         IdentityId = identityId,

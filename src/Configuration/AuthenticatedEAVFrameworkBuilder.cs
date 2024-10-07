@@ -50,7 +50,11 @@ namespace EAVFramework.Configuration
                 });
 
                 var result = await ctx.SaveChangesAsync(request.OwnerIdentity);
-
+                
+                if(result.Errors.Any())
+                {
+                    throw new InvalidOperationException("Error saving signin" + result.Errors.First().Error);
+                }
 
             }
         }

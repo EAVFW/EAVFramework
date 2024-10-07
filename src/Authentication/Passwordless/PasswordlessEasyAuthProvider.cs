@@ -33,6 +33,7 @@ namespace EAVFramework.Authentication.Passwordless
         public string AuthenticationName => _authSchema;
         public virtual HttpMethod CallbackHttpMethod => _httpMethod;
         public virtual bool AutoGenerateRoutes { get; } = true;
+        public bool UseTicketStore { get; protected set; } = true;
 
         public abstract Task<OnAuthenticateResult> OnAuthenticate(OnAuthenticateRequest authenticateRequest);
         public abstract Task<OnCallBackResult> OnCallback(OnCallbackRequest request);

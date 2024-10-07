@@ -31,6 +31,8 @@ namespace EAVFramework.Authentication
         public string AuthenticationName { get; }
         public HttpMethod CallbackHttpMethod { get; }
         public bool AutoGenerateRoutes { get; }
+        bool UseTicketStore { get;  }
+
         Task<OnAuthenticateResult> OnAuthenticate(OnAuthenticateRequest authenticateRequest);
         Task<OnCallBackResult> OnCallback(OnCallbackRequest request);
         public RequestDelegate OnSignout(string callbackUrl);
