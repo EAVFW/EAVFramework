@@ -1,3 +1,4 @@
+using EAVFramework.Configuration;
 using EAVFramework.Plugins;
 using EAVFramework.Shared;
 using Microsoft.AspNetCore.Http;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -47,6 +49,7 @@ namespace EAVFramework.Endpoints
         private readonly PluginsAccesser<TContext> _plugins;
         private readonly ILogger<EAVDBContext<TContext>> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IOptions<EAVFrameworkOptions> _options;
         private readonly IPluginScheduler<TContext> _pluginScheduler;
 
 
@@ -172,12 +175,15 @@ namespace EAVFramework.Endpoints
             TContext context, 
             PluginsAccesser<TContext> plugins, 
             ILogger<EAVDBContext<TContext>> logger, 
-            IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
+            IServiceProvider serviceProvider,
+            IOptions<EAVFrameworkOptions> options,
+            IPluginScheduler<TContext> pluginScheduler)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
             this._plugins = plugins;
             this._logger = logger;
             this._serviceProvider = serviceProvider;
+            _options = options;
             this._pluginScheduler = pluginScheduler;
             context.EnsureModelCreated();
         }
@@ -298,7 +304,7 @@ namespace EAVFramework.Endpoints
 
         private async Task LoadRelatedDataAsync(JToken record, EntityEntry entity)
         {
-            foreach (var prop in record.OfType<JProperty>())
+            foreach (var prop in record.OfType<JProperty>().ToArray())
             {
                 if (prop.Value is JObject relatedRecord)
                 {
@@ -307,6 +313,22 @@ namespace EAVFramework.Endpoints
                     {
                         var related = entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, prop.Name, StringComparison.OrdinalIgnoreCase));
 
+                        if (related == null)
+                        {
+                            if (this._options.Value.Endpoints.PatchEndpointOptions.LogWarningForUnknownData)
+                            {
+                                _logger.LogWarning($"Property {prop.Name} not found on entity {entity.Metadata.GetSchemaQualifiedTableName()}");
+                            }
+
+                            if (this._options.Value.Endpoints.PatchEndpointOptions.AllowUnknownData)
+                            {
+                                prop.Remove();
+                                continue;
+                            }
+
+                            throw new Exception($"Property {prop.Name} not found on entity {entity.Metadata.GetSchemaQualifiedTableName()}");
+                        }
+                        
                         await related.LoadAsync(); //TODO, we could cache id+rowrecord to avoid loading from db
 
                         await LoadRelatedDataAsync(relatedRecord, related.TargetEntry);
