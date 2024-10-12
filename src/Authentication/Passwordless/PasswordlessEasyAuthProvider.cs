@@ -58,15 +58,49 @@ namespace EAVFramework.Authentication.Passwordless
             return Task.CompletedTask;
         }
     }
+    public class EmailFilterOptions
+    {
+        public bool OpenTrack { get;  set; }
+        public bool ClickTrack { get;  set; }
+        public string EmailId { get; internal set; }
+    }
+    public interface IEAVEmailServiceFilter
+    {
+        Task ApplyAsync(MailMessage mailMessage, EmailFilterOptions emailFilterOptions);
+    }
+    public class SendGridEmailFilter : IEAVEmailServiceFilter
+    {
+        public Task ApplyAsync(MailMessage mailMessage, EmailFilterOptions emailFilterOptions)
+        {
+            var options = JToken.FromObject(new
+            {
+                unique_args = new Dictionary<string, string>
+                {
+                    ["email_id"] = emailFilterOptions.EmailId// emailId.ToString().URLSafeHash(),
+                },
+                filters = new
+                {
+                    opentrack = new { settings = new { enable = emailFilterOptions.OpenTrack ? 1 : 0 } },
+                    clicktrack = new { settings = new { enable = emailFilterOptions.ClickTrack ? 1 : 0 } }
+                }
+            });
+
+            mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
+            // mailMessage.Headers.Add("From", sender);
+            return Task.CompletedTask;
+        }
+    }
     public class EAVEMailService
     {
         private readonly SmtpClient _smtp;
         private readonly ILogger<EAVEMailService> _logger;
+        private readonly IEnumerable<IEAVEmailServiceFilter> _emailServiceFilters;
 
-        public EAVEMailService(SmtpClient smtpClient, ILogger<EAVEMailService> logger)
+        public EAVEMailService(SmtpClient smtpClient, ILogger<EAVEMailService> logger, IEnumerable<IEAVEmailServiceFilter> emailServiceFilters)
         {
             _smtp = smtpClient;
             _logger = logger;
+            _emailServiceFilters = emailServiceFilters;
         }
 
         private string MaskEmail(string email)
@@ -97,18 +131,7 @@ namespace EAVFramework.Authentication.Passwordless
         public async Task SendEmailAsync(Guid emailId, string subject, string sender, string to_emails, string msgHtml, string msgPlain,
             string sender_displayname=null, string to_cc_emails=null, Action<MailMessage> configure=null, bool opentrack=false, bool clicktrack=false)
         {
-            var options = JToken.FromObject(new
-            {
-                unique_args = new Dictionary<string, string>
-                {
-                    ["email_id"] = emailId.ToString().URLSafeHash(),
-                },
-                filters = new
-                {
-                    opentrack = new { settings = new { enable = opentrack?1: 0 } },
-                    clicktrack = new { settings = new { enable = clicktrack?1:0 } }
-                }
-            });
+           
 
             MailMessage mailMessage = new MailMessage()
             {
@@ -136,7 +159,13 @@ namespace EAVFramework.Authentication.Passwordless
             mailMessage.AlternateViews.Add(plainView);
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = msgHtml;
-            mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
+
+           
+
+            foreach (var filter in _emailServiceFilters)
+            {             
+                await filter.ApplyAsync(mailMessage,new EmailFilterOptions { ClickTrack=clicktrack, EmailId= emailId.ToString().URLSafeHash(), OpenTrack=opentrack });
+            }
 
             configure?.Invoke(mailMessage);
 

@@ -309,6 +309,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddScoped(typeof(IEAVFrameworkTicketStore<,>), typeof(EAVFrameworkTicketStore<,>));
 
             builder.Services.AddScoped<EAVEMailService>();
+           
             //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }
