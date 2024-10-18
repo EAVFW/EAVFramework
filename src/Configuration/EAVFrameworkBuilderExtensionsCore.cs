@@ -329,6 +329,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
             builder.Services.TryAddTransient(typeof(IPermissionStore<>), typeof(DefaultPermissionStore<>));
             builder.Services.TryAddTransient<IFormContextFeature<DynamicContext>, DefaultFormContextFeature<DynamicContext>>();
+            builder.Services.TryAddTransient(typeof(IEndpointRouter<>), typeof(EndpointRouter<>));
             return builder;
         }
 
@@ -341,7 +342,7 @@ namespace Microsoft.Extensions.DependencyInjection
             where TContext : DynamicContext
         {
 
-            builder.Services.AddTransient<IEndpointRouter<TContext>, EndpointRouter<TContext>>();
+           
          
            
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>, TContext>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
