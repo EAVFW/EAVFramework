@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using EAVFramework.OpenTelemetry;
 using EAVFramework.Configuration;
 using Sprache;
+using EAVFramework.Endpoints;
 
 namespace EAVFramework.Authentication.Passwordless
 {
@@ -62,7 +63,7 @@ namespace EAVFramework.Authentication.Passwordless
     {
         public bool OpenTrack { get;  set; }
         public bool ClickTrack { get;  set; }
-        public string EmailId { get; internal set; }
+        public string EmailId { get;  set; }
     }
     public interface IEAVEmailServiceFilter
     {
@@ -76,7 +77,7 @@ namespace EAVFramework.Authentication.Passwordless
             {
                 unique_args = new Dictionary<string, string>
                 {
-                    ["email_id"] = emailFilterOptions.EmailId// emailId.ToString().URLSafeHash(),
+                    ["email_id"] = emailFilterOptions.EmailId?.URLSafeHash()// emailId.ToString().URLSafeHash(),
                 },
                 filters = new
                 {
@@ -164,7 +165,12 @@ namespace EAVFramework.Authentication.Passwordless
 
             foreach (var filter in _emailServiceFilters)
             {             
-                await filter.ApplyAsync(mailMessage,new EmailFilterOptions { ClickTrack=clicktrack, EmailId= emailId.ToString().URLSafeHash(), OpenTrack=opentrack });
+                await filter.ApplyAsync(mailMessage,
+                    new EmailFilterOptions { 
+                        ClickTrack=clicktrack, 
+                        EmailId= emailId.ToString(),
+                        OpenTrack=opentrack,
+                    });
             }
 
             configure?.Invoke(mailMessage);

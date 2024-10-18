@@ -30,7 +30,7 @@ namespace EAVFramework.Configuration
         }
 
         public string GetMembershipHost()
-        {
+        { 
             return _httpContextAccessor?.HttpContext?.Request?.Host.Value ?? Host.Value;
         }
 
