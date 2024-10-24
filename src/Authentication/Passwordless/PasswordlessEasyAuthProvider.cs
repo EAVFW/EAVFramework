@@ -17,6 +17,7 @@ using EAVFramework.OpenTelemetry;
 using EAVFramework.Configuration;
 using Sprache;
 using EAVFramework.Endpoints;
+using System.Threading;
 
 namespace EAVFramework.Authentication.Passwordless
 {
@@ -193,7 +194,7 @@ namespace EAVFramework.Authentication.Passwordless
             await SendEmailWithRetryAsync(mailMessage);
 
         }
-
+        private SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
         private async Task SendEmailWithRetryAsync(MailMessage mailMessage)
         {
             const int maxRetries = 5;
@@ -202,8 +203,11 @@ namespace EAVFramework.Authentication.Passwordless
 
             while (retryCount < maxRetries)
             {
+               
                 try
                 {
+                    await _gate.WaitAsync();
+
                     await _smtp.SendMailAsync(mailMessage);
 
                     return;
@@ -222,6 +226,10 @@ namespace EAVFramework.Authentication.Passwordless
                     await Task.Delay(delay);
                     delay *= 2; // Exponential backoff
                     retryCount++;
+                }
+                finally
+                {
+                    _gate.Release();
                 }
             }
 
