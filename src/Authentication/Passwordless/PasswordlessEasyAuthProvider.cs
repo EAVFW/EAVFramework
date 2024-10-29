@@ -157,8 +157,8 @@ namespace EAVFramework.Authentication.Passwordless
          
             var view = AlternateView.CreateAlternateViewFromString(msgHtml, null, MediaTypeNames.Text.Html);
             var plainView = AlternateView.CreateAlternateViewFromString(msgPlain, null, MediaTypeNames.Text.Plain);
-            mailMessage.AlternateViews.Add(view);
             mailMessage.AlternateViews.Add(plainView);
+            mailMessage.AlternateViews.Add(view);
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = msgHtml;
 
