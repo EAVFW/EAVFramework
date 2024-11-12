@@ -29,7 +29,7 @@ namespace EAVFramework.Validation
             if (!auth.Succeeded)
             {
                 foreach (var err in auth.Failure.FailedRequirements.OfType<IAuthorizationRequirementError>()) {
-                    context.AddValidationError(err.ToError());
+                    context.AddError(err.ToError());
                         
                         };
               
@@ -59,7 +59,7 @@ namespace EAVFramework.Validation
             {
                 foreach (var err in auth.Failure.FailedRequirements.OfType<IAuthorizationRequirementError>())
                 {
-                    context.AddValidationError(err.ToError());
+                    context.AddError(err.ToError());
 
                 };
 

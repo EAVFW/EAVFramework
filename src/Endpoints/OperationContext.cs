@@ -7,7 +7,7 @@ namespace EAVFramework.Endpoints
     public class OperationContext<TContext>
     {
         public TContext Context { get; set; }
-        public List<ValidationError> Errors { get; set; } = new List<ValidationError>();
+        public List<CoreError> Errors { get; set; } = new List<CoreError>();
         public string PreOperationChanges { get;  set; } = string.Empty;
 
         public string PostOperationChanges { get;  set; } = string.Empty;
