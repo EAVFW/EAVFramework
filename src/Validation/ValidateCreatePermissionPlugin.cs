@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using EAVFramework.Endpoints;
@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace EAVFramework.Validation
 {
-    public class ValidateCreatePermissionPlugin<TContext> : IPlugin<TContext, DynamicEntity> where TContext : DynamicContext
+    [PluginRegistration(EntityPluginExecution.PreValidate, EntityPluginOperation.Create, 0, EntityPluginMode.Sync)]
+    public class ValidateCreatePermissionPlugin<TContext, TEntity> : IPlugin<TContext, TEntity> 
+        where TContext : DynamicContext
+         where TEntity : DynamicEntity
     {
          
         private readonly IAuthorizationService _authorizationService;
@@ -17,7 +20,7 @@ namespace EAVFramework.Validation
         
             this._authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
-        public async Task Execute(PluginContext<TContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<TContext, TEntity> context)
         {
         
 
@@ -33,8 +36,10 @@ namespace EAVFramework.Validation
             }
         }
     }
-
-    public class ValidateUpdatePermissionPlugin<TContext> : IPlugin<TContext, DynamicEntity> where TContext:DynamicContext
+    [PluginRegistration(EntityPluginExecution.PreValidate, EntityPluginOperation.Update,0, EntityPluginMode.Sync)]
+    public class ValidateUpdatePermissionPlugin<TContext,TEntity> : IPlugin<TContext, TEntity>
+        where TContext:DynamicContext
+        where TEntity : DynamicEntity
     {
 
         private readonly IAuthorizationService _authorizationService;
@@ -44,7 +49,7 @@ namespace EAVFramework.Validation
 
             this._authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
-        public async Task Execute(PluginContext<TContext, DynamicEntity> context)
+        public async Task Execute(PluginContext<TContext, TEntity> context)
         {
 
 

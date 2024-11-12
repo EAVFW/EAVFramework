@@ -163,7 +163,13 @@ namespace EAVFramework.Plugins
              */
             if (Type.IsGenericTypeParameter)
             { 
-                var interfaceType = Type.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);               
+               
+                var interfaceType = Type.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);
+
+                if (interfaceType == null && Type.GetGenericParameterConstraints().FirstOrDefault() == typeof(DynamicEntity))
+                {
+                    return ValueTask.FromResult(true);
+                }
 
                 if (interfaceType.IsAssignableFrom(entity.Entity.Entity.GetType()) || entity.Entity.Entity.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType)){
                     return ValueTask.FromResult(true);
