@@ -153,6 +153,16 @@ namespace EAVFW.Extensions.Manifest.SDK
             
             return base.Equals(obj);
         }
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + (OnDelete?.GetHashCode() ?? 0);
+                hash = hash * 23 + (OnUpdate?.GetHashCode() ?? 0);
+                return hash;
+            }
+        }
     }
 
     public enum CascadeAction

@@ -525,7 +525,7 @@ namespace EAVFramework.Shared.V2
 
 
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         throw;
                     }

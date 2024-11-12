@@ -175,7 +175,7 @@ namespace EAVFramework.Generators
 
 
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                 }
@@ -191,7 +191,7 @@ namespace EAVFramework.Generators
             //context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
             var @schema = context.GetMSBuildProperty("CustomizationPrefix");
             var @namespace = context.GetMSBuildProperty("RootNamespace") ?? @schema ?? "EAVFramework.Extensions.Model";
-
+           
             context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.GeneratePoco", out var GeneratePoco);
 
             var compilation = context.Compilation;
@@ -874,7 +874,7 @@ namespace EAVFramework.Generators
                     //}
 
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     throw;
                     //try
@@ -1053,7 +1053,7 @@ namespace EAVFramework.Generators
             {
                 return $"public {GetType(json, p.Value, p.Value.SelectToken("$.type"))} {p.Value.SelectToken("$.schemaName")} {{get;set;}}";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return $"/// {p.Value.SelectToken("$.schemaName")} {{get;set;}}";
             }

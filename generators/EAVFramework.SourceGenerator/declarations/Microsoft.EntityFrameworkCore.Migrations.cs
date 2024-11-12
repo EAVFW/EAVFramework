@@ -200,10 +200,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations
      string name,
      string table,
      string column,
-     string? schema = null,
+     string schema = null,
      bool unique = false,
-     string? filter = null,
-     bool[]? descending = null) => throw new NotImplementedException();
+     string filter = null,
+     bool[] descending = null) => throw new NotImplementedException();
 
 
         public virtual OperationBuilder<AddColumnOperation> AddColumn<T>([NotNullAttribute] string name, [NotNullAttribute] string table, [NotNullAttribute] string type = null, bool? unicode = null, int? maxLength = null, bool rowVersion = false, [NotNullAttribute] string schema = null, bool nullable = false, [NotNullAttribute] object defaultValue = null, [NotNullAttribute] string defaultValueSql = null, [NotNullAttribute] string computedColumnSql = null, bool? fixedLength = null, [NotNullAttribute] string comment = null, [NotNullAttribute] string collation = null, int? precision = null, int? scale = null, bool? stored = null) => throw new NotImplementedException();

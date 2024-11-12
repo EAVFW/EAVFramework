@@ -464,7 +464,7 @@ namespace EAVFramework
                     m.MigrationFactory = () => Activator.CreateInstance(migrationType, manifest, tables) as Migration;
                     return m;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     dynamicCodeService.RemoveNamespace(this.options.Value.Namespace);
                     //  _modules.Remove(options.Namespace, out var _);

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>disable</Nullable>
 
@@ -11,7 +11,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <LangVersion>9.0</LangVersion>
+        <LangVersion>13.0</LangVersion>
 
 	</PropertyGroup>
 
@@ -21,10 +21,10 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="System.Text.Json" Version="8.0.4" />
+		<PackageReference Include="System.Text.Json" Version="9.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="3.0.26" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
 	</ItemGroup>
  
 

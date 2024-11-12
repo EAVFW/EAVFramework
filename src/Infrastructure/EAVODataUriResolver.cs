@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm;
+using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using Microsoft.OData;
 using System;
@@ -72,7 +72,7 @@ namespace EAVFramework.Infrastructure
                           typeType.PrimitiveKind == EdmPrimitiveTypeKind.Int32) && rightNode is ConstantNode)
                 {
                     int value = (int)((ConstantNode)rightNode).Value;
-                    ODataEnumValue val;
+                     
                     IEdmTypeReference typeRef = leftNode.TypeReference;
                     var enumType = typeRef.Definition as IEdmEnumType;
 
@@ -87,7 +87,7 @@ namespace EAVFramework.Infrastructure
                           lefttype.PrimitiveKind == EdmPrimitiveTypeKind.Int32) && leftNode is ConstantNode)
                 {
                     int value = (int)((ConstantNode)leftNode).Value;
-                    ODataEnumValue val;
+                   
                     IEdmTypeReference typeRef = rightNode.TypeReference;
                     var enumType = typeRef.Definition as IEdmEnumType;
 

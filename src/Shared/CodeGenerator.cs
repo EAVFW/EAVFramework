@@ -354,7 +354,7 @@ namespace EAVFramework.Shared
         public string GetLiteralName(string name)
         {
 
-            TextInfo info = CultureInfo.CurrentCulture.TextInfo;
+            TextInfo info = CultureInfo.InvariantCulture.TextInfo;
             return info.ToTitleCase(name.Replace("/", " Or ")).Replace(" ", string.Empty);
 
 
@@ -2812,29 +2812,29 @@ namespace EAVFramework.Shared
             return $"\"{value}\"";
         }
 
-        private bool ParameterMatches(ParameterInfo[] parameterInfos, Type[] types)
-        {
-            if (parameterInfos.Length != types.Length)
-                return false;
+        //private bool ParameterMatches(ParameterInfo[] parameterInfos, Type[] types)
+        //{
+        //    if (parameterInfos.Length != types.Length)
+        //        return false;
 
-            for (var j = 0; j < types.Length; j++)
-                if (parameterInfos[j].ParameterType != types[j])
-                    return false;
+        //    for (var j = 0; j < types.Length; j++)
+        //        if (parameterInfos[j].ParameterType != types[j])
+        //            return false;
 
-            return true;
-        }
+        //    return true;
+        //}
 
-        private string GenerateProperty(JToken json, JProperty p)
-        {
-            try
-            {
-                return $"public {GetType(json, p.Value, p.Value.SelectToken("$.type"))} {p.Value.SelectToken("$.schemaName")} {{get;set;}}";
-            }
-            catch (Exception ex)
-            {
-                return $"/// {p.Value.SelectToken("$.schemaName")} {{get;set;}}";
-            }
-        }
+        //private string GenerateProperty(JToken json, JProperty p)
+        //{
+        //    try
+        //    {
+        //        return $"public {GetType(json, p.Value, p.Value.SelectToken("$.type"))} {p.Value.SelectToken("$.schemaName")} {{get;set;}}";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return $"/// {p.Value.SelectToken("$.schemaName")} {{get;set;}}";
+        //    }
+        //}
         private object GetType(JToken document, JToken attribute, JToken type)
         {
 
