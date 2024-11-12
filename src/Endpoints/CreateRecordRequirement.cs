@@ -1,4 +1,4 @@
-﻿using EAVFramework.Validation;
+using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EAVFramework.Endpoints
@@ -12,9 +12,9 @@ namespace EAVFramework.Endpoints
 
         public string EntityCollectionSchemaName { get; }
 
-        public ValidationError ToError()
+        public AuthorizationError ToError()
         {
-            return new ValidationError
+            return new AuthorizationError
             {
                 Error = "No permission to create record",
                 Code = "NO_CREATE_PERMISSION",

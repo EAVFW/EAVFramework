@@ -62,5 +62,11 @@ namespace EAVFramework.Plugins
 
             return this;
         }
+        public PluginContext<TContext, T> AddError(CoreError error)
+        {
+            Errors.Add(error);
+
+            return this;
+        }
     }
 }

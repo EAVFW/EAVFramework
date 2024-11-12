@@ -165,6 +165,11 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var targetServiceType = constraints.First();
 
+            /**
+             * Plugins that are registered against DynamicEntity with no constraints and a result is given
+             */
+            if (targetServiceType == typeof(DynamicEntity) && contraintResults.Length == 1)
+                return contraintResults[0].Item2;
 
 
             return ResoveType(ctx,targetServiceType.IsGenericType ? targetServiceType.GetGenericTypeDefinition() : targetServiceType);

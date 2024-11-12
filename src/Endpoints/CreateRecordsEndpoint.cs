@@ -1,5 +1,6 @@
 using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
+using EAVFramework.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -64,7 +65,10 @@ namespace EAVFramework.Endpoints
             var entity = _context.Add(entityName, record); ;
 
             var _operation = await _context.SaveChangesAsync(context.User);
-             
+
+            if (_operation.Errors.OfType<AuthorizationError>().Any())
+                return new AuthorizationEndpointResult(new { errors = _operation.Errors.OfType<AuthorizationError>() });
+
             if (_operation.Errors.Any())
                 return new DataValidationErrorResult(new { errors = _operation.Errors });
              

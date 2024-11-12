@@ -435,18 +435,15 @@ namespace EAVFramework.Endpoints
 
                         if (existingCollection==null)
                         {
-                            existingCollection=Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType)) as IList;
+                            existingCollection=Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(collectionElementType));
                             method.SetValue(entity.Entity, existingCollection);
                         }
-
+                        var addMethod = existingCollection.GetType().GetMethod("Add", BindingFlags.Instance | BindingFlags.Public);
                         foreach (var obj in prop.Value)
                         {
                             if (obj is JObject && obj["id"] != null)
                             {
-                                if (obj["id"]?.ToString()== "f8e993df-18bd-434e-4e88-08dca009904f")
-                                {
-
-                                }
+                               
                                 //Populate (The related records are allready loaded to context in the load related records step)
                                 var reference = await Context.FindAsync(collectionElementType, obj["id"].ToObject<Guid>());
                                 Context.ChangeTracker.DetectChanges(); 
@@ -459,7 +456,8 @@ namespace EAVFramework.Endpoints
                             {
                                 var element = Activator.CreateInstance(collectionElementType);
 
-                                (existingCollection as IList).Add(element);
+                                addMethod.Invoke(existingCollection, new[] { element });
+                                //(existingCollection as IList).Add(element);
                                 EntityEntry entry = Attach(serializer, obj, element);
                                 //Populate
                                 await PopulateAsync(obj, entry, serializer);

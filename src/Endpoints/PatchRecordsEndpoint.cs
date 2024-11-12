@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
 using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +25,7 @@ using System.Reflection;
 using EAVFramework.Shared;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EAVFramework.Endpoints
 {
@@ -35,17 +36,20 @@ namespace EAVFramework.Endpoints
         private readonly EAVDBContext<TContext> _context;
         private readonly ILogger<PatchRecordsEndpoint<TContext>> logger;
         private readonly IConfiguration configuration;
+        private readonly IAuthorizationService _authorizationService;
 
         public PatchRecordsEndpoint(
             EAVDBContext<TContext> context,
             ILogger<PatchRecordsEndpoint<TContext>> logger,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IAuthorizationService authorizationService
 
             )
         {
             _context = context;
             this.logger = logger;
             this.configuration = configuration;
+            _authorizationService = authorizationService;
         }
 
 
@@ -54,13 +58,23 @@ namespace EAVFramework.Endpoints
             var routeValues = context.GetRouteData().Values;
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
-             
+
+            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName, context), new UpdateRecordRequirement(entityName));
+
+            if (!auth.Succeeded)
+            {
+                return new AuthorizationEndpointResult(new { errors = auth.Failure.FailedRequirements.OfType<IAuthorizationRequirementError>().Select(c => c.ToError()) });
+            }
+
             JToken record = await _context.ReadRecordAsync(context,new ReadOptions {RecordId= recordId, LogPayload = configuration.GetValue<bool>($"EAVFramework:PatchRecordsEndpoint:LogPayload", false) });
 
             var entity = await _context.PatchAsync(entityName, Guid.Parse(recordId), record);
              
             var _operation = await _context.SaveChangesAsync(context.User);
 
+
+            if (_operation.Errors.OfType<AuthorizationError>().Any())
+                return new AuthorizationEndpointResult(new { errors = _operation.Errors.OfType<AuthorizationError>() });
 
             if (_operation.Errors.Any())
                 return new DataValidationErrorResult(new { errors = _operation.Errors });
