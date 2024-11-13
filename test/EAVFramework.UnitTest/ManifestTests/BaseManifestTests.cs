@@ -281,7 +281,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
             var migrator = ctx.Database.GetInfrastructure().GetRequiredService<IMigrator>();
-            var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+            var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent| MigrationsSqlGenerationOptions.Script | MigrationsSqlGenerationOptions.NoTransactions);
             //migrator.Migrate("0");
             //migrator.Migrate();
             return (sql,sp );

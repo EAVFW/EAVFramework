@@ -191,7 +191,7 @@ namespace EAVFramework.Endpoints
         public async Task MigrateAsync()
         {
             var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
-            var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+            var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent | MigrationsSqlGenerationOptions.Script | MigrationsSqlGenerationOptions.NoTransactions);
             _logger.LogInformation("Migrating: {SQL}", sqlscript);
            // await migrator.MigrateAsync();
 
@@ -206,8 +206,15 @@ namespace EAVFramework.Endpoints
                 cmd.CommandText = sql;
                 //  await context.Context.Database.ExecuteSqlRawAsync(sql);
 
-
-                var r = await cmd.ExecuteNonQueryAsync();
+                try
+                {
+                    var r = await cmd.ExecuteNonQueryAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to execute sql: {SQL}", sql);
+                    throw;
+                }
             }
 
 

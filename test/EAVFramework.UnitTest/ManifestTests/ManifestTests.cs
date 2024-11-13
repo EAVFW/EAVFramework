@@ -26,9 +26,10 @@ namespace EAVFramework.UnitTest.ManifestTests
             var version = typeof(DbContext).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
             expected = expected.Replace("{{VERSION}}", version);
-            
-            Assert.AreEqual(Regex.Replace(expected.Trim(), @"\s", string.Empty), Regex.Replace(actual.Trim(), @"\s", string.Empty));
+            var a = Regex.Replace(expected.Replace("COMMIT;",string.Empty).Replace("GO", string.Empty).Replace("BEGIN TRANSACTION;", string.Empty).Trim(), @"\s", string.Empty);
+            var b = Regex.Replace(actual.Replace("COMMIT;", string.Empty).Replace("GO", string.Empty).Replace("BEGIN TRANSACTION;", string.Empty).Trim(), @"\s", string.Empty);
 
+            Assert.AreEqual(a, b);
         }
     }
     [TestClass]
