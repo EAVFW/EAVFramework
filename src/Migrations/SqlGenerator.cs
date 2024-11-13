@@ -116,7 +116,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
             
                 var migrator = ctx.Database.GetInfrastructure().GetRequiredService<IMigrator>();
 
-                var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
+                var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent| MigrationsSqlGenerationOptions.NoTransactions | MigrationsSqlGenerationOptions.Default);
 
                 var result = new MigrationResult { Model = definition, SQL = sql }; ;
            
