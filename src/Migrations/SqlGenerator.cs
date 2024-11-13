@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json.Linq;
+using Semver;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -72,7 +73,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
             var model = JToken.Parse(File.ReadAllText(Path.Combine(projectPath, "obj", "manifest.g.json")));
             var models = Directory.Exists(Path.Combine(projectPath, "manifests")) ? Directory.EnumerateFiles(Path.Combine(projectPath, "manifests"))
                 .Select(file => JToken.Parse(File.ReadAllText(file)))
-                .OrderByDescending(k => Semver.SemVersion.Parse(k.SelectToken("$.version").ToString(), Semver.SemVersionStyles.Strict))
+                .OrderByDescending(k => Semver.SemVersion.Parse(k.SelectToken("$.version").ToString(), Semver.SemVersionStyles.Strict), SemVersion.PrecedenceComparer)
                 .ToArray() : Array.Empty<JToken>();
 
             //var inputHash = GetCombinedFileHash((Directory.Exists(Path.Combine(projectPath, "manifests")) ? Directory.EnumerateFiles(Path.Combine(projectPath, "manifests"))
