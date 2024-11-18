@@ -280,7 +280,8 @@ namespace EAVFramework.Extensions
                             });
 
                             request.Ticket = QueryHelpers.ParseNullableQuery
-                                 (Encoding.UTF8.GetString(CryptographyHelpers.Decrypt(request.HandleId.ToString("N").Sha512(), request.HandleId.ToString("N").Sha1(), ticketinfo.Ticket)));
+                                 (Encoding.UTF8.GetString(CryptographyHelpers.Decrypt(request.HandleId.ToString("N").Sha512(), request.HandleId.ToString("N").Sha1(), ticketinfo.Ticket)))
+                                 ?? new Dictionary<string, StringValues> { };
                             request.IdentityId = ticketinfo.IdentityId;
                             request.RedirectUri = ticketinfo.RedirectUrl;
 
