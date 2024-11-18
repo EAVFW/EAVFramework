@@ -638,8 +638,9 @@ namespace EAVFramework
         }
         public Type GetEntityType(string entityName)
         {
-            var type = manager.ModelDefinition.EntityDTOs[entityName];
-            return type;
+            if(manager.ModelDefinition.EntityDTOs.ContainsKey(entityName))
+                return manager.ModelDefinition.EntityDTOs[entityName];
+            return null;
         }
         public EntityEntry Update(string entityName, JToken data)
         {
