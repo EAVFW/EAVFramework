@@ -24,7 +24,7 @@ namespace EAVFramework.Validation
         {
         
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, context.EntityResource, new CreateRecordRequirement(context.EntityResource.EntityCollectionSchemaName));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, context.EntityResource, new CreateRecordRequirement(context.EntityResource.EntityCollectionSchemaName, typeof(TContext)));
 
             if (!auth.Succeeded)
             {
@@ -53,7 +53,7 @@ namespace EAVFramework.Validation
         {
 
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, context.EntityResource, new UpdateRecordRequirement(context.EntityResource.EntityCollectionSchemaName));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, context.EntityResource, new UpdateRecordRequirement(context.EntityResource.EntityCollectionSchemaName,typeof(TContext)));
 
             if (!auth.Succeeded)
             {

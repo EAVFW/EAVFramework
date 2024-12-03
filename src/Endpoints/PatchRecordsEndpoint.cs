@@ -59,7 +59,7 @@ namespace EAVFramework.Endpoints
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName, context), new UpdateRecordRequirement(entityName));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName, context), new UpdateRecordRequirement(entityName,typeof(TContext)));
 
             if (!auth.Succeeded)
             {
