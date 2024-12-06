@@ -12,8 +12,14 @@ using System.Threading.Tasks;
 namespace EAVFramework.Configuration
 {
 
-
-
+    public class PatchOptions
+    {
+        public bool DisableDeepLoading { get; set; } = false;
+    }
+    public class ContextOptions
+    {
+        public PatchOptions PatchOptions { get; set; } = new PatchOptions();
+    }
     public class EAVFrameworkOptions
     {
 
@@ -66,7 +72,7 @@ namespace EAVFramework.Configuration
         /// If the application is running behinad a proxy an dsetting a pathbase.
         /// </summary>
         public string PathBase { get; set; }
-
+        public ContextOptions Context { get;  set; }
     }
 
 }
