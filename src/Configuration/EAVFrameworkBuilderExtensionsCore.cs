@@ -80,13 +80,26 @@ namespace Microsoft.Extensions.DependencyInjection
 
     public static class DynamicFactoryExtensionMethods
     {
-        public static IServiceCollection AddDynamicScoped<TContext,TService>(this IServiceCollection services, Type genericservice)
+        public static IServiceCollection AddDynamicScoped<TContext, TService>(this IServiceCollection services, Type genericservice)
             where TContext : DynamicContext
             where TService : class
         {
-          //  services.AddScoped(sp => new DynamicFactory<TService>(genericservice, sp));
+            //  services.AddScoped(sp => new DynamicFactory<TService>(genericservice, sp));
 
-        return    services.AddScoped<TService>(sp =>(TService) sp.GetDynamicService<TContext>(genericservice));
+            return services.AddScoped<TService>(sp =>
+            {
+                try
+                {
+                    return (TService) sp.GetDynamicService<TContext>(genericservice);
+
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to create dynamic scoped service <{typeof(TService).Name},{genericservice.Name}>", ex);
+                }
+            }
+                );
+        
         }
     }
 

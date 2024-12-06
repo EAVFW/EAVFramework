@@ -43,7 +43,7 @@ namespace EAVFramework.Endpoints
             var routeValues = context.GetRouteData().Values;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName,context), new CreateRecordRequirement(entityName));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName,context), new CreateRecordRequirement(entityName,typeof(TContext)));
 
             if (!auth.Succeeded)
             {
