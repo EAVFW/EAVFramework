@@ -72,7 +72,7 @@ namespace EAVFramework.Configuration
         /// If the application is running behinad a proxy an dsetting a pathbase.
         /// </summary>
         public string PathBase { get; set; }
-        public ContextOptions Context { get;  set; }
+        public ContextOptions Context { get; set; } = new ContextOptions();
     }
 
 }
