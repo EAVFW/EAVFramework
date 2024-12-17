@@ -163,7 +163,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
 
-            var targetServiceType = constraints.First();
+            var targetServiceType = constraints.FirstOrDefault() ?? throw new InvalidOperationException($"No contraints for {genericTypeArgument.Name} on {t.Name}");
 
             /**
              * Plugins that are registered against DynamicEntity with no constraints and a result is given
