@@ -242,19 +242,20 @@ namespace EAVFramework
             Models.Clear();
         }
 
-        public ConcurrentDictionary<string, ModelDefinition> Models { get; } = new ConcurrentDictionary<string, ModelDefinition>();
+        public ConcurrentDictionary<string, Lazy<ModelDefinition>> Models { get; } = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
         public IEdmModel Model => ModelDefinition.Model;
-        public ModelDefinition ModelDefinition => Models.FirstOrDefault(x=>x.Key.Contains("latest",StringComparison.OrdinalIgnoreCase)).Value ?? Models.Values.FirstOrDefault();
-        public ModelDefinition EnusureBuilded(string modelName,string migrationName, JToken manifest, DynamicContextOptions options)
+        public ModelDefinition ModelDefinition => Models.FirstOrDefault(x=>x.Key.Contains("latest",StringComparison.OrdinalIgnoreCase)).Value?.Value ?? Models.Values.FirstOrDefault()?.Value;
+        public ModelDefinition EnusureBuilded(string modelName, string migrationName, JToken manifest, DynamicContextOptions options)
         {
-            var model = Models.GetOrAdd(modelName, _ =>
+            var model = Models.GetOrAdd(modelName, _ => new Lazy<ModelDefinition>(() =>
             {
 
                 if (_cache.ContainsKey(migrationName))
                 {
-                    Reset(options);
+                    dynamicCodeService.RemoveNamespace(this.options.Value.Namespace);
+                    _cache.Clear();
                 }
-                 
+
                 var m = CreateModel(migrationName, manifest, options);
 
                 var builder = new ODataConventionModelBuilder();
@@ -267,14 +268,14 @@ namespace EAVFramework
 
                 foreach (var entity in m.EntityDTOs)
                 {
-                 
+
                     var config = builder.AddEntityType(entity.Value);
                     if (options.WithODATAEntitySet)
                     {
                         builder.AddEntitySet(entity.Key, config);
                     }
 
-                 //   builder.Function(entity.Key + "Set").ReturnsCollectionFromEntitySet(entity.Value, entity.Key);
+                    //   builder.Function(entity.Key + "Set").ReturnsCollectionFromEntitySet(entity.Value, entity.Key);
 
                     //foreach(var nav in entity.Value.dto.GetProperties().Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() != null))
                     //{
@@ -330,15 +331,15 @@ namespace EAVFramework
 
 
                 }
-              
-               // builder.Function("Test").ReturnsCollectionFromEntitySet()
+
+                // builder.Function("Test").ReturnsCollectionFromEntitySet()
                 m.Model = builder.GetEdmModel();
                 return m;
                 //}
-            });
+            }));
 
            
-            return model;
+            return model.Value;
 
         }
         private ConcurrentDictionary<string, Lazy<ModelDefinition>> _cache = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
