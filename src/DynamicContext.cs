@@ -282,15 +282,15 @@ namespace EAVFramework
         public object Create(DbContext context)
             => Create(context, false);
     }
-    public class DynamicContext : DbContext, IDynamicContext, IHasModelCacheKey
+    public class DynamicContext : DbContext, IDynamicContext
     {
-        private readonly IOptions<DynamicContextOptions> modelOptions;
+        protected readonly IOptions<DynamicContextOptions> modelOptions;
         private readonly IMigrationManager manager;
         private readonly ILogger logger;
 
         private const string MigrationDefaultName = "Initial";
 
-        public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
+      //  public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
 
         public IMigrationManager Manager => manager;
 
@@ -328,7 +328,7 @@ namespace EAVFramework
 
             var latestManifest = modelOptions.Value.Manifests.First();
 
-            manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
+            manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value,true);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -404,28 +404,13 @@ namespace EAVFramework
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            return manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", manifest, this.modelOptions.Value);
+            return manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", manifest, this.modelOptions.Value,true);
         }
 
-        public void AddNewManifest(JToken manifest)
-        {
-            this.modelOptions.Value.Manifests = new[] { manifest }.Concat(this.modelOptions.Value.Manifests).ToArray();
-            ResetMigrationsContext();
-        }
 
-        public void ResetMigrationsContext()
-        {
-            ModelCacheKey = Guid.NewGuid().ToString();
-            if (manager is MigrationManager man)
-            {
-                man.Reset(this.modelOptions.Value);
-            }
-            //var miassemb = Database.GetInfrastructure().GetRequiredService<IMigrationsAssembly>();
-            //if (miassemb is DbSchemaAwareMigrationAssembly mya)
-            //{ 
-            //    mya.Reset(); 
-            //}
-        }
+
+        public string LatestModelKey => this is IHasModelCacheKey modelkey ? modelkey.ModelCacheKey : $"{modelOptions.Value.Schema}_latest";
+       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -438,7 +423,7 @@ namespace EAVFramework
                 var latestManifest = modelOptions.Value.Manifests.First();
                 //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-                manager.EnusureBuilded($"{modelOptions.Value.Schema}_latest", modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest",  modelOptions.Value.Manifests.First(), this.modelOptions.Value,true);
             }
 
             foreach (var en in manager.ModelDefinition.EntityDTOs)

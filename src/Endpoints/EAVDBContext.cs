@@ -129,11 +129,7 @@ namespace EAVFramework.Endpoints
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
 
-        public void ResetMigrationsContext()
-        {
-            Context.ResetMigrationsContext();
-        }
-
+         
         public async Task<T> ExecuteTaskAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
         {
 

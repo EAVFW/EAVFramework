@@ -47,7 +47,7 @@ namespace EAVFramework
         //  Dictionary<string, Type> EntityDTOConfigurations { get; }
         //public MigrationsInfo BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
         ModelDefinition ModelDefinition { get; }
-        ModelDefinition EnusureBuilded(string name, JToken manifest, DynamicContextOptions options);
+        ModelDefinition EnusureBuilded(string modelName, string migrationName, JToken manifest, DynamicContextOptions options, bool isLatest);
         ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options);
         ModelDefinition CreateMigration(string migrationName, JToken afterManifest, JToken beforeManifest, DynamicContextOptions options);
         ModelDefinition CreateMigration(string migrationName, MigrationDefinition migration, DynamicContextOptions value);
@@ -244,14 +244,18 @@ namespace EAVFramework
 
         public ConcurrentDictionary<string, ModelDefinition> Models { get; } = new ConcurrentDictionary<string, ModelDefinition>();
         public IEdmModel Model => ModelDefinition.Model;
-        public ModelDefinition ModelDefinition => Models.FirstOrDefault(k => k.Key.Contains("latest")).Value;
-        public ModelDefinition EnusureBuilded(string name, JToken manifest, DynamicContextOptions options)
+        public ModelDefinition ModelDefinition { get; private set; }
+        public ModelDefinition EnusureBuilded(string modelName,string migrationName, JToken manifest, DynamicContextOptions options, bool isLatest)
         {
-            return Models.GetOrAdd(name, _ =>
+            var model = Models.GetOrAdd(modelName, _ =>
             {
 
-
-                var m = CreateModel(name, manifest, options);
+                if (_cache.ContainsKey(migrationName))
+                {
+                    Reset(options);
+                }
+                 
+                var m = CreateModel(migrationName, manifest, options);
 
                 var builder = new ODataConventionModelBuilder();
 
@@ -333,6 +337,12 @@ namespace EAVFramework
                 //}
             });
 
+            if(isLatest)
+            {
+                ModelDefinition = model;
+            }
+
+            return model;
 
         }
         private ConcurrentDictionary<string, Lazy<ModelDefinition>> _cache = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
