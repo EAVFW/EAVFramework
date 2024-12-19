@@ -1,4 +1,4 @@
-﻿using EAVFramework.UnitTest.ManifestTests;
+using EAVFramework.UnitTest.ManifestTests;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -209,7 +209,7 @@ namespace EAVFramework.UnitTest
 
                 }.Concat(o.Value.Manifests).ToArray();
 
-                ctx.ResetMigrationsContext();
+             //   ctx.ResetMigrationsContext();
 
 
                 await ctx.MigrateAsync();
