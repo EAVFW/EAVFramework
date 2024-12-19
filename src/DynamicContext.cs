@@ -282,7 +282,31 @@ namespace EAVFramework
         public object Create(DbContext context)
             => Create(context, false);
     }
-    public class DynamicContext : DbContext, IDynamicContext, IHasModelCacheKey
+    public class DynamicModelContextKey
+    {
+        public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
+    }
+       
+    public class DynamicModelContext : DynamicContext, IHasModelCacheKey
+    {
+        private readonly DynamicModelContextKey _dynamicModelContextKey;
+
+        public DynamicModelContext(DbContextOptions<DynamicModelContext> options, DynamicModelContextKey dynamicModelContextKey, IOptions<DynamicContextOptions> modelOptions, IMigrationManager migrationManager, ILogger<DynamicModelContext> logger)
+        : base(options, modelOptions, migrationManager, logger)
+        {
+            _dynamicModelContextKey = dynamicModelContextKey;
+        }
+
+        public string ModelCacheKey => _dynamicModelContextKey.ModelCacheKey;
+
+        public override void ResetMigrationsContext()
+        {
+            _dynamicModelContextKey.ModelCacheKey = Guid.NewGuid().ToString("N");
+            base.ResetMigrationsContext();
+        }
+    }
+
+    public class DynamicContext : DbContext, IDynamicContext//, IHasModelCacheKey
     {
         protected readonly IOptions<DynamicContextOptions> modelOptions;
         private readonly IMigrationManager manager;
@@ -290,7 +314,7 @@ namespace EAVFramework
 
         private const string MigrationDefaultName = "Initial";
 
-        public virtual string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
+      //  public virtual string ModelCacheKey { get; set; } = Guid.NewGuid().ToString("N");
 
         public IMigrationManager Manager => manager;
 
@@ -328,7 +352,7 @@ namespace EAVFramework
 
             var latestManifest = modelOptions.Value.Manifests.First();
 
-            manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
+            manager.EnusureBuilded(LatestModelKey,  latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -404,7 +428,7 @@ namespace EAVFramework
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            return manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", manifest, this.modelOptions.Value);
+            return manager.EnusureBuilded(LatestModelKey,  manifest, this.modelOptions.Value);
         }
 
 
@@ -413,7 +437,7 @@ namespace EAVFramework
 
         public virtual void ResetMigrationsContext()
         {
-            ModelCacheKey = Guid.NewGuid().ToString();
+            //ModelCacheKey = Guid.NewGuid().ToString("N");
 
             if (Manager is MigrationManager man)
             {
@@ -434,7 +458,7 @@ namespace EAVFramework
                 var latestManifest = modelOptions.Value.Manifests.First();
                 //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-                manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest",  modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                manager.EnusureBuilded(LatestModelKey,modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
             foreach (var en in manager.ModelDefinition.EntityDTOs)

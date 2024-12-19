@@ -47,7 +47,7 @@ namespace EAVFramework
         //  Dictionary<string, Type> EntityDTOConfigurations { get; }
         //public MigrationsInfo BuildMigrations(string migrationName, JToken manifest, DynamicContextOptions options);
         ModelDefinition ModelDefinition { get; }
-        ModelDefinition EnusureBuilded(string modelName, string migrationName, JToken manifest, DynamicContextOptions options);
+        ModelDefinition EnusureBuilded(string modelName, JToken manifest, DynamicContextOptions options);
         ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options);
         ModelDefinition CreateMigration(string migrationName, JToken afterManifest, JToken beforeManifest, DynamicContextOptions options);
         ModelDefinition CreateMigration(string migrationName, MigrationDefinition migration, DynamicContextOptions value);
@@ -245,18 +245,11 @@ namespace EAVFramework
         public ConcurrentDictionary<string, Lazy<ModelDefinition>> Models { get; } = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
         public IEdmModel Model => ModelDefinition.Model;
         public ModelDefinition ModelDefinition => Models.FirstOrDefault(x=>x.Key.Contains("latest",StringComparison.OrdinalIgnoreCase)).Value?.Value ?? Models.Values.FirstOrDefault()?.Value;
-        public ModelDefinition EnusureBuilded(string modelName, string migrationName, JToken manifest, DynamicContextOptions options)
+        public ModelDefinition EnusureBuilded(string modelName, JToken manifest, DynamicContextOptions options)
         {
             var model = Models.GetOrAdd(modelName, _ => new Lazy<ModelDefinition>(() =>
-            {
-
-                if (_cache.ContainsKey(migrationName))
-                {
-                    dynamicCodeService.RemoveNamespace(this.options.Value.Namespace);
-                    _cache.Clear();
-                }
-
-                var m = CreateModel(migrationName, manifest, options);
+            { 
+                var m = CreateModel(modelName, manifest, options);
 
                 var builder = new ODataConventionModelBuilder();
 

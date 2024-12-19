@@ -305,6 +305,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddRequiredPlatformServices(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.AddSingleton<DynamicModelContextKey>();
             builder.Services.AddOptions<EAVFrameworkOptions>().BindConfiguration("EAVFramework");
             builder.Services.TryAddScoped<MultiTenantContext>();
             builder.Services.TryAddScoped<IContextInitializer, DefaultContextInitializer>();

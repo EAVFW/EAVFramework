@@ -33,7 +33,8 @@ namespace EAVFramework.UnitTest
     public class MigrationsTest : BaseManifestTests
     {
 
-        public async Task<(IServiceProvider, Guid, ClaimsPrincipal)> Setup()
+        public async Task<(IServiceProvider, Guid, ClaimsPrincipal)> Setup<TContext>()
+            where TContext: DynamicContext
         {
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -53,7 +54,7 @@ namespace EAVFramework.UnitTest
 
 
             services.AddCodeServices();
-            services.AddEAVFramework<DynamicContext>();
+            services.AddEAVFramework<TContext>();
 
 
 
@@ -81,7 +82,7 @@ namespace EAVFramework.UnitTest
 
             });
 
-            services.AddDbContext<DynamicContext>((sp, optionsBuilder) =>
+            services.AddDbContext<TContext>((sp, optionsBuilder) =>
             {
 
                 optionsBuilder.UseSqlServer("Name=ApplicationDB", x => x.MigrationsHistoryTable("__MigrationsHistory", "dbo"));
@@ -160,14 +161,14 @@ namespace EAVFramework.UnitTest
         [TestMethod]
         public async Task Test()
         {
-            var (rootServiceProvider, principalId, prinpal) = await Setup();
+            var (rootServiceProvider, principalId, prinpal) = await Setup<DynamicModelContext>();
 
 
 
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
-                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
+                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicModelContext>>();
 
                 await ctx.MigrateAsync();
 
@@ -180,7 +181,7 @@ namespace EAVFramework.UnitTest
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
-                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
+                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicModelContext>>();
 
 
 
@@ -192,7 +193,7 @@ namespace EAVFramework.UnitTest
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
-                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
+                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicModelContext>>();
 
                 var o = sp.GetService<IOptions<DynamicContextOptions>>();
                 o.Value.Manifests = new[]
@@ -220,7 +221,7 @@ namespace EAVFramework.UnitTest
             using (var scope = rootServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var sp = scope.ServiceProvider;
-                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicContext>>();
+                var ctx = sp.GetRequiredService<EAVFramework.Endpoints.EAVDBContext<DynamicModelContext>>();
 
                 ctx.Context.GetEntityType("Cars");
 
