@@ -208,8 +208,8 @@ namespace EAVFramework.UnitTest
                    }),
 
                 }.Concat(o.Value.Manifests).ToArray();
-
-             //   ctx.ResetMigrationsContext();
+              
+                ctx.Context.ResetMigrationsContext();
 
 
                 await ctx.MigrateAsync();

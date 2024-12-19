@@ -282,7 +282,7 @@ namespace EAVFramework
         public object Create(DbContext context)
             => Create(context, false);
     }
-    public class DynamicContext : DbContext, IDynamicContext
+    public class DynamicContext : DbContext, IDynamicContext, IHasModelCacheKey
     {
         protected readonly IOptions<DynamicContextOptions> modelOptions;
         private readonly IMigrationManager manager;
@@ -290,7 +290,7 @@ namespace EAVFramework
 
         private const string MigrationDefaultName = "Initial";
 
-      //  public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
+        public virtual string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
 
         public IMigrationManager Manager => manager;
 
@@ -410,7 +410,18 @@ namespace EAVFramework
 
 
         public string LatestModelKey => this is IHasModelCacheKey modelkey ? modelkey.ModelCacheKey : $"{modelOptions.Value.Schema}_latest";
-       
+
+        public virtual void ResetMigrationsContext()
+        {
+            ModelCacheKey = Guid.NewGuid().ToString();
+
+            if (Manager is MigrationManager man)
+            {
+                man.Reset(this.modelOptions.Value);
+            }
+         
+        }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
