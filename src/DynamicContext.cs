@@ -328,7 +328,7 @@ namespace EAVFramework
 
             var latestManifest = modelOptions.Value.Manifests.First();
 
-            manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value,true);
+            manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -404,7 +404,7 @@ namespace EAVFramework
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            return manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", manifest, this.modelOptions.Value,true);
+            return manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest", manifest, this.modelOptions.Value);
         }
 
 
@@ -423,7 +423,7 @@ namespace EAVFramework
                 var latestManifest = modelOptions.Value.Manifests.First();
                 //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-                manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest",  modelOptions.Value.Manifests.First(), this.modelOptions.Value,true);
+                manager.EnusureBuilded(LatestModelKey, $"{modelOptions.Value.Schema}_latest",  modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
             foreach (var en in manager.ModelDefinition.EntityDTOs)
