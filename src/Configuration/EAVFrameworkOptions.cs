@@ -20,10 +20,14 @@ namespace EAVFramework.Configuration
     {
         public PatchOptions PatchOptions { get; set; } = new PatchOptions();
     }
+    public class ODataOptions
+    {
+        public bool UseODataContextCountSerialization { get; set; } = false;
+    }
     public class EAVFrameworkOptions
     {
 
-        
+        public ODataOptions ODataOptions { get; set; } = new ODataOptions();
 
         /// <summary>
         /// Gets or sets the events options.
