@@ -134,11 +134,12 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IEAVFrameworkBuilder AddEAVFrameworkBuilder<TContext>(this IServiceCollection services, string schema, string connectionString)
             where TContext : DynamicContext
         {
-         
+           
             services.Configure<EAVFrameworkOptions>(o=> {
                 o.Schema = schema;
                 o.ConnectionString = connectionString;
             });
+         
             return new EAVFrameworkBuilder<TContext>(services, schema,connectionString)
                   .AddRequiredPlatformServices();
         }
@@ -304,6 +305,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddRequiredPlatformServices(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.AddSingleton<DynamicModelContextKey>();
+            builder.Services.AddOptions<EAVFrameworkOptions>().BindConfiguration("EAVFramework");
             builder.Services.TryAddScoped<MultiTenantContext>();
             builder.Services.TryAddScoped<IContextInitializer, DefaultContextInitializer>();
             builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();

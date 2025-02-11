@@ -191,7 +191,9 @@ namespace EAVFramework.Generators
             //context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.CustomizationPrefix", out var @namespace);
             var @schema = context.GetMSBuildProperty("CustomizationPrefix");
             var @namespace = context.GetMSBuildProperty("RootNamespace") ?? @schema ?? "EAVFramework.Extensions.Model";
-           
+            var @GenerateAbstractClasses = bool.Parse(context.GetMSBuildProperty("GenerateAbstractClasses", "true"));
+
+
             context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.GeneratePoco", out var GeneratePoco);
 
             var compilation = context.Compilation;
@@ -213,8 +215,7 @@ namespace EAVFramework.Generators
                     var options = new CodeGenerationOptions
                     {
                    
-                       
-                       
+                       GenerateAbstractClasses= @GenerateAbstractClasses,
                         Schema = @schema,
 
 
