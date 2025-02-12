@@ -1,5 +1,6 @@
 ﻿using EAVFramework.Extensions;
 using EAVFramework.Hosting;
+using EAVFramework.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Features;
@@ -9,6 +10,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -46,10 +48,12 @@ namespace EAVFramework.Endpoints.Results
     }
     public class ODataEndpointResult : IEndpointResult
     {
+        private readonly Type type;
         private PageResult data;
 
-        public ODataEndpointResult(PageResult data)
+        public ODataEndpointResult(Type type, PageResult data)
         {
+            this.type = type;
             this.data = data;
         }
 
@@ -58,10 +62,11 @@ namespace EAVFramework.Endpoints.Results
               
             await context.Response.WriteJsonAsync(new ODataCollectionResult { 
                 Count= data.Count, 
-                Context = $"{new Uri(context.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}/api/entities/$metadata", //  "https://localhost:7093/api/entities/$metadata#AlgorithmOutputs(result,id)",
+                Context = $"{new Uri(context.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}/api/entities/$metadata#{type.GetCustomAttribute<EntityAttribute>().CollectionSchemaName}", //  "https://localhost:7093/api/entities/$metadata#AlgorithmOutputs(result,id)",
                 Value = (data as IEnumerable).Cast<object>().ToArray()
             }, null,
                 context.Request.Query.ContainsKey("pretty") ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None);
         }
     }
+    
 }

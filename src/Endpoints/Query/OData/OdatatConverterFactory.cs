@@ -1,4 +1,6 @@
-﻿using System;
+﻿using EAVFramework.Configuration;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 
@@ -7,7 +9,12 @@ namespace EAVFramework.Endpoints.Query.OData
     public class OdatatConverterFactory : IODataConverterFactory
     {
         private static ConcurrentDictionary<Type, IODataConverter> _converters = new ConcurrentDictionary<Type, IODataConverter>();
+        private readonly IOptions<EAVFrameworkOptions> options;
 
+        public OdatatConverterFactory(IOptions<EAVFrameworkOptions> options)
+        {
+            this.options = options;
+        }
         public IODataConverter CreateConverter(Type type)
         {
             return _converters.GetOrAdd(type, type =>
@@ -19,7 +26,7 @@ namespace EAVFramework.Endpoints.Query.OData
                  }
                  else if (type.Name == "SelectSome`1" || type.Name == "SelectAll`1" || type.Name == "SelectSomeAndInheritance`1")
                  {
-                     return new SelectCoverter(type, this);
+                     return new SelectCoverter(type, this,options);
 
 
                  }

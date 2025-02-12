@@ -15,6 +15,7 @@ namespace EAVFramework
             public const string CreateRecord = "CreateRecord";
             public const string QueryEntityPermissions = nameof(QueryEntityPermissions);
             public const string RetrieveRecord = "RetrieveRecord";
+            public const string RetrieveODataRecord = "RetrieveODataRecord";
             public const string PatchRecord = "PatchRecord";
             public const string DeleteRecord = "DeleteRecord";
         }
@@ -27,6 +28,7 @@ namespace EAVFramework
             public const string CreateRecord = "/entities/{EntityCollectionSchemaName}/records";
             public const string QueryEntityPermissions = "/entities/{EntityCollectionSchemaName}/permissions";
             public const string RecordPattern = "/entities/{EntityCollectionSchemaName}/records/{RecordId}";
+            public const string ODataRecordPattern = "/entities/{EntityCollectionSchemaName}({RecordId})";
         }
         public static class RouteParams
         {

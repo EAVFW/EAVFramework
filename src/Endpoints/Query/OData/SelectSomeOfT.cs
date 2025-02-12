@@ -27,6 +27,8 @@ namespace EAVFramework.Endpoints.Query.OData
         }
         private ConcurrentDictionary<Type, PropertyInfo> _NamedPropertyBag = new ConcurrentDictionary<Type, PropertyInfo>();
         private ConcurrentDictionary<string, string> LogicalNameMapping = new ConcurrentDictionary<string, string>();
+        private ConcurrentDictionary<string, string> CollectionSchemaNameMapping = new ConcurrentDictionary<string, string>();
+
 
         public static Type GetType(string typeName)
         {
@@ -48,6 +50,31 @@ namespace EAVFramework.Endpoints.Query.OData
             var serializedType = LogicalNameMapping.GetOrAdd(modeltype.Definition.FullTypeName(), (typename) =>
             {
                 return GetType(typename)?.GetCustomAttribute<EntityAttribute>()?.LogicalName ?? typename;
+
+            });
+
+            //var instance = untypedInstance?.GetValue(data);
+            //if (instance== null)
+            //{
+            //    var aa = getElementType.Invoke(data,null);
+
+
+            //    var c = container.GetValue(data);
+            //    var namedProperty = _NamedPropertyBag.GetOrAdd(c.GetType(), (t) => t.GetProperty("Value"));
+            //    var n = namedProperty.GetValue(c);
+            //    instance=untypedInstance.GetValue(n);
+            //}
+            //var serializedType = instance?.GetType().GetCustomAttribute<EntityAttribute>()?.LogicalName;
+            return serializedType;
+        }
+
+        public string GetCollectionSchemaName(object data)
+        {
+            var test = data as IEdmObject;
+            var modeltype = test.GetEdmType();
+            var serializedType = CollectionSchemaNameMapping.GetOrAdd(modeltype.Definition.FullTypeName(), (typename) =>
+            {
+                return GetType(typename)?.GetCustomAttribute<EntityAttribute>()?.CollectionSchemaName ?? typename;
 
             });
 

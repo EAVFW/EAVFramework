@@ -20,7 +20,7 @@ namespace EAVFramework.Endpoints.Query.OData
             this.odatatConverterFactory = odatatConverterFactory;
         }
 
-        public ConvertResult Convert(object data)
+        public ConvertResult Convert(object data , QueryContext context)
         {
             var poco = Method.GetValue(data) as Dictionary<string, object>;
 
@@ -34,7 +34,7 @@ namespace EAVFramework.Endpoints.Query.OData
                 }
 
                 var converter = odatatConverterFactory.CreateConverter(kv.Value.GetType());
-                var result = converter.Convert(kv.Value);
+                var result = converter.Convert(kv.Value, context);
                 if (result?.Value == null)
                 {
                     poco.Remove(kv.Key);

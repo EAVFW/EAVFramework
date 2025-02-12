@@ -41,7 +41,8 @@ namespace EAVFramework.Endpoints
 
             if (this.options.Value.ODataOptions.UseODataContextCountSerialization)
             {
-                return new ODataEndpointResult(result);
+                var type = _context.Manager.ModelDefinition.EntityDTOs[routeValues[RouteParams.EntityCollectionSchemaNameRouteParam].ToString().Replace(" ", "")];
+                return new ODataEndpointResult(type,result);
             }
 
 
