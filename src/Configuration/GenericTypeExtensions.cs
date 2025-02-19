@@ -41,7 +41,11 @@ namespace Microsoft.Extensions.DependencyInjection
             var targetType = t.MakeGenericType(ttt);
             return targetType;
         }
-
+        private static bool IsDirectInterface(Type type, Type interfaceType)
+        {
+            if (type.BaseType == null) return true;
+            return !type.BaseType.GetInterfaces().Contains(interfaceType);
+        }
         private static Type ResolveGenericArgument<TContext>(Type t, TContext ctx, Type genericTypeArgument, params (Type,Type)[] contraintResults ) where TContext : DynamicContext
         {
             /**
@@ -137,11 +141,16 @@ namespace Microsoft.Extensions.DependencyInjection
                         t.GetInterfaces().Any(c => c == @interface)).ToArray();
                 if (result.Length > 1)
                 {
-                    result= result.Where(r => !result.Any(rr => rr == r.BaseType) 
-                        //If constraints are provided, the item2 is the type that is expected.
-                        //This case is for generic wildcard entity types
-                        && (!contraintResults.Any() || contraintResults.Any(c=>c.Item2 == r)))
-                        .ToArray();
+                    result = result.Where(r => !result.Any(rr => rr == r.BaseType)).ToArray();
+
+                    if (result.Length > 1)
+                    {
+                        result = result.Where(r => 
+                            //If constraints are provided, the item2 is the type that is expected.
+                            //This case is for generic wildcard entity types
+                            (!contraintResults.Any() || contraintResults.Any(c => c.Item2 == r)))
+                            .ToArray();
+                    }
                 }
                 return result.SingleOrDefault() ?? throw new InvalidOperationException($"No type that has interface {@interface}"); ;
             }
