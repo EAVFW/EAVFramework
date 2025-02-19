@@ -34,4 +34,34 @@ namespace EAVFramework.Endpoints
 
         }
     }
+
+    public class RetrieveODataRecordEndpoint<TContext> : IEndpointHandler<TContext>
+     where TContext : DynamicContext
+    {
+        private readonly TContext _context;
+
+        public RetrieveODataRecordEndpoint(TContext context)
+        {
+            _context = context;
+        }
+        public async Task<IEndpointResult> ProcessAsync(HttpContext context)
+        {
+            var routeValues = context.GetRouteData().Values;
+            var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
+            var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
+            context.Request.QueryString = context.Request.QueryString.Add("$filter", $"id eq {recordId}");
+
+            var query = await _context.ExecuteHttpRequest(entityName, context.Request);
+
+            if (!query.Items.Any())
+                return new NotFoundResult();
+
+            var type = _context.Manager.ModelDefinition.EntityDTOs[routeValues[RouteParams.EntityCollectionSchemaNameRouteParam].ToString().Replace(" ", "")];
+
+
+            return new DataEndpointResult(query.Items.First());
+
+
+        }
+    }
 }

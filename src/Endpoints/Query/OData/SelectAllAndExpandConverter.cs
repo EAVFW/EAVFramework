@@ -16,13 +16,13 @@ namespace EAVFramework.Endpoints.Query.OData
             entityProperty = type.GetProperty("Instance");
         }
 
-        public ConvertResult Convert(object data)
+        public ConvertResult Convert(object data, QueryContext context)
         {
             var value = entityProperty.GetValue(data);
 
             var converter = odatatConverterFactory.CreateConverter(value.GetType());
 
-            return converter.Convert(value);
+            return converter.Convert(value, context);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace EAVFramework.Endpoints.Query.OData
     }
     public interface IODataConverter
     {
-        ConvertResult Convert(object data);
+        ConvertResult Convert(object data, QueryContext context);
 
     }
 }

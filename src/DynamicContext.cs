@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OData.UriParser;
@@ -65,7 +66,7 @@ namespace EAVFramework
     }
     public static class DynamicContextExtensions
     {
-        private static OdatatConverterFactory _factory = new OdatatConverterFactory();
+        //private static OdatatConverterFactory _factory = new OdatatConverterFactory();
 
 
 
@@ -154,7 +155,7 @@ namespace EAVFramework
             //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
             //annoying that we have to serialize them ourself.
             var resultList = new List<object>();
-
+            var _factory = request.HttpContext.RequestServices.GetRequiredService<IODataConverterFactory>();
             foreach (var item in items)
             {
                 if (item is DynamicEntity)
@@ -164,13 +165,16 @@ namespace EAVFramework
                 else
                 {
                     var converter = _factory.CreateConverter(item.GetType());
-                    var result = converter.Convert(item);
+                    var result = converter.Convert(item, queryContext);
+                    
                     resultList.Add(result.Value);
                 }
 
 
             }
             var odatafeature = request.ODataFeature();
+
+            
 
             return new PageResult<object>(resultList, null, odatafeature.TotalCount);
 
@@ -241,7 +245,7 @@ namespace EAVFramework
             //TODO - dotnet 5 and the use of system.text.json might be able to use internal clases of converts for all those types here.
             //annoying that we have to serialize them ourself.
             var resultList = new List<object>();
-
+            var _factory = request.HttpContext.RequestServices.GetRequiredService<IODataConverterFactory>();
             foreach (var item in items)
             {
                 if (item is DynamicEntity)
@@ -251,7 +255,7 @@ namespace EAVFramework
                 else
                 {
                     var converter = _factory.CreateConverter(item.GetType());
-                    var result = converter.Convert(item);
+                    var result = converter.Convert(item, queryContext);
                     resultList.Add(result.Value);
                 }
 
