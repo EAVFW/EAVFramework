@@ -3,5 +3,6 @@
     public interface IODataRuntimeType
     {
         string GetDataType(object data);
+        string GetCollectionSchemaName(object data);
     }
 }

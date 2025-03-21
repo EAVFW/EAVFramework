@@ -15,7 +15,7 @@ namespace EAVFramework.Endpoints.Query.OData
             this.odatatConverterFactory = odatatConverterFactory;
         }
         
-        public ConvertResult Convert(object data)
+        public ConvertResult Convert(object data, QueryContext context)
         {
             if (data is byte[])
                return new ConvertResult { Value = data };
@@ -24,7 +24,7 @@ namespace EAVFramework.Endpoints.Query.OData
             foreach (var i in data as IEnumerable)
             {
                 var converter = odatatConverterFactory.CreateConverter(i.GetType());
-                var item = converter.Convert(i);
+                var item = converter.Convert(i, context);
                 list.Add(item.Value);
             }
             

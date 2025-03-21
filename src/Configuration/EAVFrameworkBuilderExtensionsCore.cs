@@ -305,6 +305,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddRequiredPlatformServices(this IEAVFrameworkBuilder builder)
         {
+            builder.Services.AddSingleton<DynamicModelContextKey>();
             builder.Services.AddOptions<EAVFrameworkOptions>().BindConfiguration("EAVFramework");
             builder.Services.TryAddScoped<MultiTenantContext>();
             builder.Services.TryAddScoped<IContextInitializer, DefaultContextInitializer>();
@@ -362,6 +363,7 @@ namespace Microsoft.Extensions.DependencyInjection
            
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>, TContext>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<RetrieveRecordEndpoint<TContext>, TContext>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
+            builder.AddEndpoint<RetrieveODataRecordEndpoint<TContext>, TContext>(EndpointNames.RetrieveODataRecord, RoutePatterns.ODataRecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<CreateRecordsEndpoint<TContext>, TContext>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);
             builder.AddEndpoint<QueryEntityPermissionsEndpoint<TContext>, TContext>(EndpointNames.QueryEntityPermissions, RoutePatterns.QueryEntityPermissions.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<PatchRecordsEndpoint<TContext>, TContext>(EndpointNames.PatchRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Patch);

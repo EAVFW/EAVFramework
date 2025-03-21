@@ -224,7 +224,7 @@ namespace EAVFramework.Infrastructure
             return success;
         }
 
-
+    
         public override void PromoteBinaryOperandTypes(BinaryOperatorKind binaryOperatorKind,
             ref SingleValueNode leftNode, ref SingleValueNode rightNode, out IEdmTypeReference typeReference)
         {

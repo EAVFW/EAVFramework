@@ -64,7 +64,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             sb.AppendLine("DECLARE @adminSRId uniqueidentifier");
             sb.AppendLine("DECLARE @permissionId uniqueidentifier");
             sb.AppendLine($"SET @adminSRId = ISNULL((SELECT s.Id FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[SecurityRoles] s WHERE s.Name = 'System Administrator'),'{Guid.NewGuid()}')");
-            sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[Identities] WHERE [Id] = {adminSGId})");
+            sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[SecurityGroups] WHERE [Id] = {adminSGId})");
             sb.AppendLine("BEGIN");
 
             if (model.Entities["Identity"].MappingStrategy == DTO.MappingStrategy.TPT)
