@@ -18,6 +18,7 @@ using EAVFramework.Configuration;
 using Sprache;
 using EAVFramework.Endpoints;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EAVFramework.Authentication.Passwordless
 {
@@ -213,7 +214,10 @@ namespace EAVFramework.Authentication.Passwordless
                     return;
 
                 }
-                catch (Exception ex) when (ex.Message.Contains("Service not available, closing transmission channel"))
+                
+                catch (Exception ex) 
+                    when (ex.Message.Contains("Service not available, closing transmission channel") 
+                          || ex.Message.Contains("Broken pipe"))
                 {
 
                     _logger.LogWarning(ex, "Failed to send email. Attempt {retryCount} of {maxRetries}", retryCount + 1, maxRetries);
@@ -240,7 +244,9 @@ namespace EAVFramework.Authentication.Passwordless
     public class PasswordlessEasyAuthProvider : DefaultAuthProvider
     {
         private readonly ILogger<PasswordlessEasyAuthProvider> _logger;
-        private readonly EAVEMailService _emailService;
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        // private readonly EAVEMailService _emailService;
         private readonly EAVMetrics _metrics;
      //   private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
@@ -249,11 +255,13 @@ namespace EAVFramework.Authentication.Passwordless
 
         public PasswordlessEasyAuthProvider(
             ILogger<PasswordlessEasyAuthProvider> logger,
-            EAVEMailService emailService, // SmtpClient smtpClient,
+            IServiceScopeFactory scopeFactory,
+          //  EAVEMailService emailService, // SmtpClient smtpClient,
             IOptions<PasswordlessEasyAuthOptions> options, EAVMetrics metrics=null) : this()
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _emailService = emailService;
+            _scopeFactory = scopeFactory;
+            // _emailService = emailService;
             _metrics = metrics;
          //   _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -279,14 +287,17 @@ namespace EAVFramework.Authentication.Passwordless
 
                 //  await _options.Value.PersistTicketAsync(httpcontext, user, handleId,ticket, redirectUri);
 
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var emailService = scope.ServiceProvider.GetRequiredService<EAVEMailService>();
+                    await emailService.SendEmailAsync(authenticateRequest.HandleId,
+                        subject: _options.Value.Subject,
+                        sender: _options.Value.Sender,
+                        to_emails: email,
+                        msgHtml: _options.Value.TemplateMailMessageContents(authenticateRequest.CallbackUrl),
+                        msgPlain: authenticateRequest.CallbackUrl);
 
-                await _emailService.SendEmailAsync(authenticateRequest.HandleId,
-                    subject: _options.Value.Subject,
-                    sender: _options.Value.Sender,
-                    to_emails: email,
-                    msgHtml: _options.Value.TemplateMailMessageContents(authenticateRequest.CallbackUrl),
-                    msgPlain: authenticateRequest.CallbackUrl);
-
+                }
               
                 await _options.Value.ResponseSuccessFullAsync(authenticateRequest.HttpContext);
 
