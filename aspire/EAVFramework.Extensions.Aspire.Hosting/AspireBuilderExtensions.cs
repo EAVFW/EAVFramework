@@ -478,6 +478,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                 project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource })
                 .Needs(build);
+
+                build.WithParentRelationship(project);
             }
 
 

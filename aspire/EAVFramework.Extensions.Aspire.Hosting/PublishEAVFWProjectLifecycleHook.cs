@@ -311,7 +311,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         var test = ProcessUtil.Run(new ProcessSpec("cmd")
                         {
                             WorkingDirectory = eavBuildResource.Workingdirectory,
-                            Arguments = $"/c \"{eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments) + "\"",
+                            Arguments = $"/c \"npm install --force && {eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments) + "\"",
                             InheritEnv = true,
                             OnOutputData = (data) => logger.LogInformation(data),
                             OnErrorData = (data) => logger.LogError(data),
