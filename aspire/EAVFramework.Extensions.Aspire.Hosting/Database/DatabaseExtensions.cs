@@ -125,7 +125,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
                 {
                   Success=true,
                 };
-            });
+            },new CommandOptions { ConfirmationMessage ="Backup created", IsHighlighted=true });
 
             return builder;
 
