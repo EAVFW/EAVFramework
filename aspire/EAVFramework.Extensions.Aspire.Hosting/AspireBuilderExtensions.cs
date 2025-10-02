@@ -455,7 +455,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
              where TProject : IProjectMetadata, new()
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
-            var project = builder.AddProject<TProject>(name, launchProfile);
+            var project = builder.AddProject<TProject>(name, launchProfile)
+                  .WithUrlForEndpoint("https", u => u.DisplayText = "EAV Dev Portal"); 
 
             var workingDirectory = PathNormalizer.NormalizePathForCurrentPlatform(Path.Combine(builder.AppHostDirectory, "../.."));
 
