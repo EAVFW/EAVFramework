@@ -91,6 +91,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         public static (Task<ProcessResult>, IAsyncDisposable) Run(ProcessSpec processSpec)
         {
+            if (!OperatingSystem.IsWindows())
+                return (Task.FromResult(new ProcessResult(0)),null);
+
             var process = new System.Diagnostics.Process()
             {
                 StartInfo =
