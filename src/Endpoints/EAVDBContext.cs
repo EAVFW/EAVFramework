@@ -249,9 +249,9 @@ namespace EAVFramework.Endpoints
             };
         }
 
-        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>, Task> onBeforeCommit = null)
+        public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>, Task> onBeforeCommit = null, bool skipExecutionStrategy=false)
         {
-            return this.Context.SaveChangesPipeline(_serviceProvider, user, _plugins, _pluginScheduler, onBeforeCommit);
+            return this.Context.SaveChangesPipeline(_serviceProvider, user, _plugins, _pluginScheduler, onBeforeCommit, skipExecutionStrategy);
         }
         
         public override async Task SaveChangesAsync(ClaimsPrincipal user)
