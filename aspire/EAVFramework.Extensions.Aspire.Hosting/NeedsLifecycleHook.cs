@@ -46,7 +46,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             var waitingResources = ScanForWaitOnAnnotations(resourceNotificationService, appModel);
 
-            _ = Task.Run(()=>LongRunningWaiterImplementationAsync(resourceNotificationService, waitingResources), cancellationToken);
+            _ = Task.Run(() => LongRunningWaiterImplementationAsync(resourceNotificationService, waitingResources), cancellationToken);
 
             return Task.CompletedTask;
         }
@@ -55,57 +55,57 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             ResourceNotificationService resourceNotificationService,
             ConcurrentDictionary<IResource, ConcurrentDictionary<NeedsAnnotation, TaskCompletionSource>> waitingResources)
         {
-           
-                var stoppingToken = _cts.Token;
 
-                // These states are terminal but we need a better way to detect that
-                static bool IsKnownTerminalState(CustomResourceSnapshot snapshot) =>
-                    snapshot.State.Text == KnownResourceStates.FailedToStart ||
-                    snapshot.State.Text == KnownResourceStates.Running ||
-                    snapshot.State.Text == KnownResourceStates.Finished ||
-                    snapshot.ExitCode is not null;
+            var stoppingToken = _cts.Token;
 
-                // Watch for global resource state changes
-                await foreach (var resourceEvent in resourceNotificationService.WatchAsync(stoppingToken))
+            // These states are terminal but we need a better way to detect that
+            static bool IsKnownTerminalState(CustomResourceSnapshot snapshot) =>
+                snapshot.State.Text == KnownResourceStates.FailedToStart ||
+                snapshot.State.Text == KnownResourceStates.Running ||
+                snapshot.State.Text == KnownResourceStates.Finished ||
+                snapshot.ExitCode is not null;
+
+            // Watch for global resource state changes
+            await foreach (var resourceEvent in resourceNotificationService.WatchAsync(stoppingToken))
+            {
+                if (waitingResources.TryGetValue(resourceEvent.Resource, out var pendingAnnotations))
                 {
-                    if (waitingResources.TryGetValue(resourceEvent.Resource, out var pendingAnnotations))
+                    foreach (var (waitOn, tcs) in pendingAnnotations)
                     {
-                        foreach (var (waitOn, tcs) in pendingAnnotations)
+                        if (waitOn.States is string[] states && states.Contains(resourceEvent.Snapshot.State?.Text, StringComparer.Ordinal))
                         {
-                            if (waitOn.States is string[] states && states.Contains(resourceEvent.Snapshot.State?.Text, StringComparer.Ordinal))
+                            pendingAnnotations.TryRemove(waitOn, out _);
+
+                            _ = DoTheHealthCheck(resourceEvent, tcs);
+                        }
+                        else if (waitOn.WaitUntilCompleted)
+                        {
+                            if (IsKnownTerminalState(resourceEvent.Snapshot))
                             {
                                 pendingAnnotations.TryRemove(waitOn, out _);
 
                                 _ = DoTheHealthCheck(resourceEvent, tcs);
                             }
-                            else if (waitOn.WaitUntilCompleted)
+                        }
+                        else if (waitOn.States is null)
+                        {
+                            if (resourceEvent.Snapshot.State?.Text == "Running")
                             {
-                                if (IsKnownTerminalState(resourceEvent.Snapshot))
-                                {
-                                    pendingAnnotations.TryRemove(waitOn, out _);
+                                pendingAnnotations.TryRemove(waitOn, out _);
 
-                                    _ = DoTheHealthCheck(resourceEvent, tcs);
-                                }
+                                _ = DoTheHealthCheck(resourceEvent, tcs);
                             }
-                            else if (waitOn.States is null)
+                            else if (IsKnownTerminalState(resourceEvent.Snapshot))
                             {
-                                if (resourceEvent.Snapshot.State?.Text == "Running")
-                                {
-                                    pendingAnnotations.TryRemove(waitOn, out _);
+                                pendingAnnotations.TryRemove(waitOn, out _);
 
-                                    _ = DoTheHealthCheck(resourceEvent, tcs);
-                                }
-                                else if (IsKnownTerminalState(resourceEvent.Snapshot))
-                                {
-                                    pendingAnnotations.TryRemove(waitOn, out _);
-
-                                    tcs.TrySetException(new Exception($"Dependency {waitOn.Resource.Name} failed to start"));
-                                }
+                                tcs.TrySetException(new Exception($"Dependency {waitOn.Resource.Name} failed to start"));
                             }
                         }
                     }
                 }
-            
+            }
+
         }
 
         private static ConcurrentDictionary<IResource, ConcurrentDictionary<NeedsAnnotation, TaskCompletionSource>> ScanForWaitOnAnnotations(ResourceNotificationService resourceNotificationService, DistributedApplicationModel appModel)
@@ -143,9 +143,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                             foreach (var waitOn in group)
                             {
-                               // await resourceNotificationService.PublishUpdateAsync(waitOn.Resource, s => s with { Properties = [.. s.Properties] });
+                                // await resourceNotificationService.PublishUpdateAsync(waitOn.Resource, s => s with { Properties = [.. s.Properties] });
 
-                                if(waitOn.Resource.TryGetLastAnnotation<NeedsCompletedAnnotation>(out var alreadyCompleed))
+                                if (waitOn.Resource.TryGetLastAnnotation<NeedsCompletedAnnotation>(out var alreadyCompleed))
                                 {
                                     continue;
                                 }
@@ -291,5 +291,5 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         }
     }
 
-   
+
 }

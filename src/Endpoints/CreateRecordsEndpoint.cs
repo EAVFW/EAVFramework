@@ -15,7 +15,7 @@ using static EAVFramework.Constants;
 namespace EAVFramework.Endpoints
 {
 
-    internal class CreateRecordsEndpoint<TContext>: IEndpointHandler<TContext>
+    internal class CreateRecordsEndpoint<TContext> : IEndpointHandler<TContext>
         where TContext : DynamicContext
     {
         private readonly EAVDBContext<TContext> _context;
@@ -24,10 +24,10 @@ namespace EAVFramework.Endpoints
         private readonly IAuthorizationService _authorizationService;
 
         public CreateRecordsEndpoint(
-            EAVDBContext<TContext> context,         
+            EAVDBContext<TContext> context,
             IConfiguration configuration,
             ILogger<CreateRecordsEndpoint<TContext>> logger,
-            IAuthorizationService authorizationService) 
+            IAuthorizationService authorizationService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -37,13 +37,13 @@ namespace EAVFramework.Endpoints
 
         public async Task<IEndpointResult> ProcessAsync(HttpContext context)
         {
-          
+
 
 
             var routeValues = context.GetRouteData().Values;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName,context), new CreateRecordRequirement(entityName,typeof(TContext)));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName, context), new CreateRecordRequirement(entityName, typeof(TContext)));
 
             if (!auth.Succeeded)
             {
@@ -57,8 +57,8 @@ namespace EAVFramework.Endpoints
             if (context.Request.Headers.ContainsKey("x-batch"))
             {
 
-            
-            
+
+
             }
 
 
@@ -71,7 +71,7 @@ namespace EAVFramework.Endpoints
 
             if (_operation.Errors.Any())
                 return new DataValidationErrorResult(new { errors = _operation.Errors });
-             
+
 
             return new DataEndpointResult(new { id = entity.CurrentValues.GetValue<Guid>("Id") });
 

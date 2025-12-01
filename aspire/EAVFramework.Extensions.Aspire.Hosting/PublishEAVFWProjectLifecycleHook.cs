@@ -48,7 +48,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public string Command { get; }
         public string Workingdirectory { get; }
         public string[] Arguments { get; }
-        public ProjectResource Project { get;  set; }
+        public ProjectResource Project { get; set; }
     }
     internal sealed class ProcessResult
     {
@@ -92,7 +92,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public static (Task<ProcessResult>, IAsyncDisposable) Run(ProcessSpec processSpec)
         {
             if (!OperatingSystem.IsWindows())
-                return (Task.FromResult(new ProcessResult(0)),null);
+                return (Task.FromResult(new ProcessResult(0)), null);
 
             var process = new System.Diagnostics.Process()
             {
@@ -297,17 +297,17 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                     }
                 }
 
-                
+
                 if (resource is EavBuildResource eavBuildResource)
                 {
                     var metadata = eavBuildResource.Project.GetProjectMetadata();
                     var hash = CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
 
                     var logger = _resourceLoggerService.GetLogger(eavBuildResource);
-                     
+
                     var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
                         File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
-                    
+
                     if (hash != oldhash)
                     {
 
@@ -328,9 +328,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             {
                                 logger.LogInformation($"Process exited with code {exitcode}");
                                 _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
-                                   state => state with { ExitCode = exitcode, State = state.State with { Text = exitcode == 0 ? KnownResourceStates.Finished: KnownResourceStates.Exited, Style = exitcode == 0? KnownResourceStateStyles.Success:KnownResourceStateStyles.Error } });
+                                   state => state with { ExitCode = exitcode, State = state.State with { Text = exitcode == 0 ? KnownResourceStates.Finished : KnownResourceStates.Exited, Style = exitcode == 0 ? KnownResourceStateStyles.Success : KnownResourceStateStyles.Error } });
 
-                              
+
 
                                 File.WriteAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt"), hash);
                             }
@@ -347,7 +347,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                 }
             }
 
-           
+
         }
     }
 
@@ -357,7 +357,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
     public class PublishEAVFWProjectLifecycleHook : IDistributedApplicationLifecycleHook
-        
+
     {
         private readonly ResourceLoggerService _resourceLoggerService;
         private readonly ILogger<PublishEAVFWProjectLifecycleHook> _aspirelogger;
@@ -371,7 +371,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             _resourceNotificationService = resourceNotificationService ?? throw new ArgumentNullException(nameof(resourceNotificationService));
         }
 
-        public async Task BeforeStartAsync(DistributedApplicationModel application, CancellationToken cancellationToken = default)
+        public Task BeforeStartAsync(DistributedApplicationModel application, CancellationToken cancellationToken = default)
         {
             var _ = Task.Run(async () =>
             {
@@ -391,7 +391,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                             var modelProjectPath = modelResource.GetModelPath();
 
-                            if (!modelResource.TryGetLastAnnotation<TargetDatabaseResourceAnnotation>(out var targetDatabaseResourceAnnotation)){
+                            if (!modelResource.TryGetLastAnnotation<TargetDatabaseResourceAnnotation>(out var targetDatabaseResourceAnnotation))
+                            {
                                 return;
                             }
 
@@ -481,10 +482,10 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     var migrationCount = await GetMigrationsCountAsync(targetDatabaseResource, connectionString);
                                     if (migrationCount == 0)
                                     {
-                                        await DoMigrationAsync(modelProjectPath , targetDatabaseResourceAnnotation, targetDatabaseResource, connectionString);
+                                        await DoMigrationAsync(modelProjectPath, targetDatabaseResourceAnnotation, targetDatabaseResource, connectionString);
                                     }
 
-                                   migrationannotation.Success = true;
+                                    migrationannotation.Success = true;
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                       state => state with { State = new ResourceStateSnapshot($"migrations was created", KnownResourceStateStyles.Info) });
 
@@ -506,29 +507,30 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                 }
                             }
 
-                            if (modelResource.TryGetLastAnnotation<CreateSigninTokenAnnotation>(out var tokenannotation)){
+                            if (modelResource.TryGetLastAnnotation<CreateSigninTokenAnnotation>(out var tokenannotation))
+                            {
                                 try
                                 {
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                               state => state with { State = new ResourceStateSnapshot("Creating signin link", KnownResourceStateStyles.Info) });
 
-                                    foreach(var target in modelResource.Annotations.OfType<CreateSigninUrlAnnotation>())
+                                    foreach (var target in modelResource.Annotations.OfType<CreateSigninUrlAnnotation>())
                                     {
-                                        var link = await tokenannotation.GenerateLink(target,cancellationToken);
+                                        var link = await tokenannotation.GenerateLink(target, cancellationToken);
 
                                         await _resourceNotificationService.PublishUpdateAsync(target.Target,
                                             state => state with
-                                            {   
-                                                Properties = [.. state.Properties, new ResourcePropertySnapshot("signinlink", link.Link)  ],
-                                                 Urls = [.. state.Urls, new UrlSnapshot("signinlink", link.Link,true), new UrlSnapshot("signinlink", link.Link, false)],
-                                                
+                                            {
+                                                Properties = [.. state.Properties, new ResourcePropertySnapshot("signinlink", link.Link)],
+                                                Urls = [.. state.Urls, new UrlSnapshot("signinlink", link.Link, true), new UrlSnapshot("signinlink", link.Link, false)],
+
                                             });
 
                                         if (target.Project.TryGetEndpoints(out var endpoints))
                                         {
                                             var targetlogger = _resourceLoggerService.GetLogger(target.Target);
 
-                                            targetlogger.LogInformation("Sign in with: {singinlink}", endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString+ link.Link);
+                                            targetlogger.LogInformation("Sign in with: {singinlink}", endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString + link.Link);
                                             _aspirelogger.LogInformation("Sign in to {project}: {singinlink}", target.Target.Name, endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString + link.Link);
 
                                         }
@@ -536,7 +538,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
-                                        state => state with { State = new ResourceStateSnapshot("signin link crated", KnownResourceStateStyles.Info) });  
+                                        state => state with { State = new ResourceStateSnapshot("signin link crated", KnownResourceStateStyles.Info) });
 
 
 
@@ -572,9 +574,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                 }
 
             }, cancellationToken);
-
+            return Task.CompletedTask;
         }
-        
+
         private static async Task DoMigrationAsync(string modelProjectPath, TargetDatabaseResourceAnnotation targetDatabaseResourceAnnotation, SqlServerDatabaseResource targetDatabaseResource, string connectionString)
         {
             var variablegenerator = new SQLClientParameterGenerator();

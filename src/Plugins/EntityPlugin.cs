@@ -16,20 +16,20 @@ namespace EAVFramework.Plugins
     {
 
     }
-       
+
     public abstract class EntityPlugin
-         
+
     {
         public EntityPluginMode Mode { get; set; } = EntityPluginMode.Sync;
 
         public EntityPluginExecution Execution { get; set; }
-        public EntityPluginOperation Operation { get;  set; }
+        public EntityPluginOperation Operation { get; set; }
         public int Order { get; set; }
 
         public Type Type { get; set; }
         public Type Handler { get; set; }
 
-        public virtual ValueTask<bool> ShouldPluginBeExecued<T>(T context, Endpoints.TrackedPipelineItem entity)  where T:DynamicContext
+        public virtual ValueTask<bool> ShouldPluginBeExecued<T>(T context, Endpoints.TrackedPipelineItem entity) where T : DynamicContext
         {
             return ValueTask.FromResult(Type.IsAssignableFrom(entity.Entity.Entity.GetType()));
         }
@@ -37,6 +37,6 @@ namespace EAVFramework.Plugins
         public abstract Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity);
         public abstract Task Execute(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry entity);
 
-      
+
     }
 }

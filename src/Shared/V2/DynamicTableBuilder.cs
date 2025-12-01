@@ -73,7 +73,7 @@ namespace EAVFramework.Shared.V2
             return required;
         }
 
-        
+
 
         public void EmitAlterColumn(string table, string schema, DynamicPropertyBuilder attributeDefinition)
         {
@@ -90,12 +90,12 @@ namespace EAVFramework.Shared.V2
         }
 
 
-       
 
-        public (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(string schemaName,string logicalName, 
-             string migrationName, bool partOfMigration, IReadOnlyCollection< DynamicPropertyBuilder> props)
+
+        public (Type, ConstructorBuilder, Dictionary<string, PropertyBuilder>) CreateColumnsType(string schemaName, string logicalName,
+             string migrationName, bool partOfMigration, IReadOnlyCollection<DynamicPropertyBuilder> props)
         {
-            
+
             var options = dynamicCodeService.Options;
 
             var members = new Dictionary<string, PropertyBuilder>();
@@ -124,7 +124,7 @@ namespace EAVFramework.Shared.V2
             entityCtorBuilderIL.Emit(OpCodes.Call, dfc);
 
 
-           
+
             foreach (var propertyInfo in props)
             {
                 var attributeLogicalName = propertyInfo.LogicalName;
@@ -459,7 +459,7 @@ namespace EAVFramework.Shared.V2
             }
         }
 
-     
+
 
         public void CreateIndex(string table, string schema, string name, bool unique = true, params string[] columns)
         {
@@ -680,9 +680,9 @@ namespace EAVFramework.Shared.V2
             var test = this;
             while (test != null)
             {
-              
 
-                if(test.Parent == null && test.ClrParentType != null)
+
+                if (test.Parent == null && test.ClrParentType != null)
                 {
                     var type = test.ClrParentType;
                     while (type != null)
@@ -691,9 +691,9 @@ namespace EAVFramework.Shared.V2
                         {
                             if (type.IsGenericTypeDefinition)
                             {
-                                
+
                                 return type.MakeGenericType(
-                                    typeArguments: type.GetGenericArguments().Select(a=>
+                                    typeArguments: type.GetGenericArguments().Select(a =>
                                     {
                                         if (a.IsGenericParameter)
                                             return a.GetGenericParameterConstraints().First();
@@ -712,7 +712,7 @@ namespace EAVFramework.Shared.V2
                 }
 
                 test = test.Parent;
-                
+
             }
             return null;
         }
@@ -732,8 +732,8 @@ namespace EAVFramework.Shared.V2
             }
             return isTypeBuilderInstantiation;
         }
-        
-        public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType, bool build=false)
+
+        public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType, bool build = false)
         {
             Type[] GetInterfaceChain()
             {
@@ -743,7 +743,7 @@ namespace EAVFramework.Shared.V2
                 {
                     var current = queue.Dequeue();
                     result.Add(current);
-                    foreach (var i in IsTypeBuilderInstantiation(current) ? current.GetGenericTypeDefinition().GetInterfaces()   : current.GetInterfaces())
+                    foreach (var i in IsTypeBuilderInstantiation(current) ? current.GetGenericTypeDefinition().GetInterfaces() : current.GetInterfaces())
                     {
                         queue.Enqueue(i);
                     }
@@ -751,10 +751,10 @@ namespace EAVFramework.Shared.V2
                 return result.Distinct().ToArray();
             }
 
-            interfaceType = GetInterfaceChain().Where(i => 
-                (!IsTypeBuilderInstantiation (i) && i.GetProperties().Any(p => p.Name == propertyName)) 
-                ||i.IsGenericType && i.GetGenericTypeDefinition().GetProperties().Any(p => p.Name == propertyName))
-                .Select( t=> build && t.IsGenericType ?
+            interfaceType = GetInterfaceChain().Where(i =>
+                (!IsTypeBuilderInstantiation(i) && i.GetProperties().Any(p => p.Name == propertyName))
+                || i.IsGenericType && i.GetGenericTypeDefinition().GetProperties().Any(p => p.Name == propertyName))
+                .Select(t => build && t.IsGenericType ?
                     t.GetGenericTypeDefinition().MakeGenericType(t.GenericTypeArguments.Select(tt =>
                     {
                         return tt switch
@@ -763,10 +763,10 @@ namespace EAVFramework.Shared.V2
                             EnumBuilder foo => foo.CreateTypeInfo(),
                             _ => tt
                         };
-                    }).ToArray()) : t )
-                .ToArray()  ?? Array.Empty<Type>();
+                    }).ToArray()) : t)
+                .ToArray() ?? Array.Empty<Type>();
             return interfaceType.Any();
-          
+
         }
         //public bool ContainsPropertyFromInterfaceInBaseClass(string propertyName, out Type[] interfaceType)
         //{
@@ -969,7 +969,7 @@ namespace EAVFramework.Shared.V2
             {
 
                 var UpMethod = entityTypeBuilder.DefineMethod("Up", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, null, new[] { options.MigrationBuilderCreateTable.DeclaringType });
-                var migrationBuilder = new MigrationBuilderBuilder(DynamicAssemblyBuilder,UpMethod, dynamicCodeService, options);
+                var migrationBuilder = new MigrationBuilderBuilder(DynamicAssemblyBuilder, UpMethod, dynamicCodeService, options);
 
 
 
@@ -990,8 +990,8 @@ namespace EAVFramework.Shared.V2
                 }
                 // var name = schemaName;
                 var istpc = IsParentTPCStrategry();
-               
-                var (columnsCLRType, columnsctor, members) = migrationBuilder.CreateColumnsType(this.SchemaName,this.LogicalName,
+
+                var (columnsCLRType, columnsctor, members) = migrationBuilder.CreateColumnsType(this.SchemaName, this.LogicalName,
                     migrationName, partOfMigration, istpc ? this.AllProperties : this.Properties);
 
                 var columsMethod = entityTypeBuilder.DefineMethod("Columns", MethodAttributes.Public, columnsCLRType, new[] { options.ColumnsBuilderType });
@@ -1588,11 +1588,11 @@ namespace EAVFramework.Shared.V2
                     dp.CreateTypeInfo();
                 }
 
-                if(!IsCreated)
+                if (!IsCreated)
                     FinalizeType();
-               
 
-                var result= Builder.CreateTypeInfo();
+
+                var result = Builder.CreateTypeInfo();
                 IsCreated = true;
                 return result;
             }
@@ -1739,7 +1739,7 @@ namespace EAVFramework.Shared.V2
 
         internal void DeppendsOn(Type dependency)
         {
-             if(this.DynamicAssemblyBuilder.Tables.Any(other => other.Value.Builder == dependency))
+            if (this.DynamicAssemblyBuilder.Tables.Any(other => other.Value.Builder == dependency))
             {
                 this.AddAsDependency(this.DynamicAssemblyBuilder.Tables.Values.First(other => other.Builder == dependency));
             }

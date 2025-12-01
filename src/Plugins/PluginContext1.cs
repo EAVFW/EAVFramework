@@ -12,13 +12,13 @@ namespace EAVFramework.Plugins
 {
     public static class PluginContextFactory
     {
-        public static PluginContext<TContext,T> CreateContext<TContext,T>(IServiceProvider services,EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user, EntityPluginOperation operation)
+        public static PluginContext<TContext, T> CreateContext<TContext, T>(IServiceProvider services, EAVDBContext<TContext> context, EntityEntry entry, ClaimsPrincipal user, EntityPluginOperation operation)
             where TContext : DynamicContext
         {
             var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
             var plugincontext = new PluginContext<TContext, T>
             {
-                Input = (T)entry.Entity,
+                Input = (T) entry.Entity,
                 DB = context,
                 User = user,
                 Operation = operation,
@@ -33,18 +33,18 @@ namespace EAVFramework.Plugins
         }
         public static PluginContext CreateContext<TContext>(TContext context, EntityEntry entry, ClaimsPrincipal user, Type recordtype)
         {
-           var method= typeof(PluginContextFactory).GetMethod(nameof(CreateContext), 2, new Type[] { typeof(TContext), typeof(EntityEntry), typeof(ClaimsPrincipal) });
-            return (PluginContext)method.MakeGenericMethod(typeof(TContext), recordtype).Invoke(null,new object[] { context,entry,user });
+            var method = typeof(PluginContextFactory).GetMethod(nameof(CreateContext), 2, new Type[] { typeof(TContext), typeof(EntityEntry), typeof(ClaimsPrincipal) });
+            return (PluginContext) method.MakeGenericMethod(typeof(TContext), recordtype).Invoke(null, new object[] { context, entry, user });
         }
     }
-    public class PluginContext<TContext,T> : PluginContext
+    public class PluginContext<TContext, T> : PluginContext
         where TContext : DynamicContext
     {
-      
+
         public T Input { get; set; }
         public EAVDBContext<TContext> DB { get; set; }
         public ClaimsPrincipal User { get; set; }
-      
+
         public EAVResource EntityResource { get; set; }
         public EntityPluginOperation Operation { get; set; }
 

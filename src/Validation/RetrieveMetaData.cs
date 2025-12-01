@@ -21,7 +21,7 @@ namespace EAVFramework.Validation
             return _metaData.SelectToken("$.entities").OfType<JProperty>().FirstOrDefault(a => a.Value.SelectToken("$.logicalName")?.ToString() == entityLogicalName)?.Value.SelectToken("$.attributes").OfType<JProperty>();
         }
     }
-    
+
     public interface IRetrieveMetaData<TDynamicContext> where TDynamicContext : DynamicContext
     {
         public ValueTask<IEnumerable<JProperty>> GetAttributeMetaData(string entityLogicalName);

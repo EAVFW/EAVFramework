@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Net.Http;
 
@@ -17,7 +17,7 @@ namespace EAVFramework.Hosting
         }
 
     }
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true,Inherited =true)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
     public class EndpointRouteMethodAttribute : Attribute
     {
         public string Method { get; }
@@ -30,7 +30,7 @@ namespace EAVFramework.Hosting
     {
         public HttpGetAttribute() : base(HttpMethods.Get) { }
     }
- 
+
     public class HttpPostAttribute : EndpointRouteMethodAttribute
     {
         public HttpPostAttribute() : base(HttpMethods.Post) { }

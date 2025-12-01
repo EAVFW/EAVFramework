@@ -24,24 +24,24 @@ namespace EAVFramework.Extensions.Aspire.Hosting
     public record TargetDatabaseResourceAnnotation(string TargetDatabaseResourceName, SqlServerDatabaseResource TargetDatabaseResource) : IResourceAnnotation
     {
         public string Schema { get; set; } = "dbo";
-        public Guid InitialIdentity { get;  set; }
-        public string InitialEmail { get;  set; }
-        public string UserPrincipalName { get;  set; }
-        public string InitialUsername { get;  set; }
-        public string SystemUsersTableName{get;set;} = "SystemUsers";
-        public string InitialSystemSecurityGroupId { get;  set; } = "1b714972-8d0a-4feb-b166-08d93c6ae328";
+        public Guid InitialIdentity { get; set; }
+        public string InitialEmail { get; set; }
+        public string UserPrincipalName { get; set; }
+        public string InitialUsername { get; set; }
+        public string SystemUsersTableName { get; set; } = "SystemUsers";
+        public string InitialSystemSecurityGroupId { get; set; } = "1b714972-8d0a-4feb-b166-08d93c6ae328";
     }
     public record CreateSigninUrlAnnotation(IResource Target, IResource Project) : IResourceAnnotation
     {
-     
+
     }
     public abstract class CreateSigninTokenAnnotation() : IResourceAnnotation
     {
         public Action<IServiceCollection> ServiceCollectionExtender { get; set; }
         public Action<SqlServerDbContextOptionsBuilder> SqlExtender { get; set; }
-        public abstract Task<LinkResult> GenerateLink(CreateSigninUrlAnnotation createSigninUrl,CancellationToken cancellationToken);
+        public abstract Task<LinkResult> GenerateLink(CreateSigninUrlAnnotation createSigninUrl, CancellationToken cancellationToken);
     }
-    public class CreateSigninTokenAnnotation<TContext,TIdentity,TSignin> : CreateSigninTokenAnnotation
+    public class CreateSigninTokenAnnotation<TContext, TIdentity, TSignin> : CreateSigninTokenAnnotation
         where TContext : DynamicContext
         where TIdentity : DynamicEntity, IIdentity
         where TSignin : DynamicEntity, ISigninRecord, new()
@@ -51,7 +51,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         {
             _eAVFWModelProjectResource = eAVFWModelProjectResource;
         }
-       
+
         private readonly EAVFWModelProjectResource _eAVFWModelProjectResource;
 
         public override async Task<LinkResult> GenerateLink(CreateSigninUrlAnnotation createSigninUrl, CancellationToken cancellationToken)
@@ -63,14 +63,14 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             if (_linkGenerator == null)
             {
-                _linkGenerator= await CreateGenerator(targetdatabaes, cancellationToken);
+                _linkGenerator = await CreateGenerator(targetdatabaes, cancellationToken);
 
             }
-            
+
             createSigninUrl.Target.TryGetEndpoints(out var endpoints);
             var url = endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString ?? "https://localhost:3000/";
             var link = await _linkGenerator.GenerateLink(targetdatabaes.InitialIdentity,
-                new Dictionary<string, StringValues> { { "email", targetdatabaes.InitialEmail } }, url, CreateGuidFromString(url+targetdatabaes.InitialEmail));
+                new Dictionary<string, StringValues> { { "email", targetdatabaes.InitialEmail } }, url, CreateGuidFromString(url + targetdatabaes.InitialEmail));
             return link;
         }
 

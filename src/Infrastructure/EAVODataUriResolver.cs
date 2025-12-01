@@ -50,9 +50,9 @@ namespace EAVFramework.Infrastructure
 
         internal Expression MakeFunctionCall(MemberInfo member, params Expression[] arguments)
         {
-            
+
             IEnumerable<Expression> functionCallArguments = arguments;
-            
+
 
             // if the argument is of type Nullable<T>, then translate the argument to Nullable<T>.Value as none
             // of the canonical functions have overloads for Nullable<> arguments.
@@ -111,7 +111,7 @@ namespace EAVFramework.Infrastructure
         //https://github.com/dotnet/efcore/blob/main/src/EFCore.SqlServer/Query/Internal/SqlServerMemberTranslatorProvider.cs
         protected override Expression? BindCustomMethodExpressionOrNull(SingleValueFunctionCallNode node, QueryBinderContext context)
         {
-           
+
             if (node.Name.Equals("DateDiffSecond", StringComparison.OrdinalIgnoreCase))
             {
                 if (node.Parameters.Count() != 2)
@@ -123,14 +123,14 @@ namespace EAVFramework.Infrastructure
                 var endDate = args[1];
 
                 var method = typeof(SqlServerDbFunctionsExtensions).GetMethod("DateDiffSecond", new Type[] { typeof(DbFunctions), typeof(DateTimeOffset), typeof(DateTimeOffset) });
-               
-                    
+
+
                 //    var efType = typeof(EF).GetProperty("Functions")!.PropertyType;
-              //  var efFunctions = Expression.Property(null, typeof(EF), "Functions");
+                //  var efFunctions = Expression.Property(null, typeof(EF), "Functions");
 
                 return MakeFunctionCall(method, [Expression.Constant(EF.Functions), .. args]);
 
-               
+
             }
 
             return base.BindCustomMethodExpressionOrNull(node, context);
@@ -168,13 +168,13 @@ namespace EAVFramework.Infrastructure
         public static IServiceCollection AddEAVOdata<TContext>(this IServiceCollection services)
             where TContext : DynamicContext
         {
-           
+
 
             CustomUriFunctions.AddCustomUriFunction("DateDiffSecond", new FunctionSignatureWithReturnType(
                 EdmCoreModel.Instance.GetDecimal(false), EdmCoreModel.Instance.GetDate(true), EdmCoreModel.Instance.GetDateTimeOffset(true)
                 ));
 
-           
+
             CustomUriFunctions.AddCustomUriFunction("DateDiffSecond", new FunctionSignatureWithReturnType(
                 EdmCoreModel.Instance.GetDecimal(false), EdmCoreModel.Instance.GetDateTimeOffset(true), EdmCoreModel.Instance.GetDate(true)
                 ));
@@ -190,8 +190,9 @@ namespace EAVFramework.Infrastructure
             {
                 var o = new ODataOptions();
                 o.AddRouteComponents("/api/", sp.GetRequiredService<TContext>().EnsureModelCreated().Model,
-                    services => {
-                        services.AddSingleton<ODataUriResolver>(sp => new EAVODataUriResolver { EnableCaseInsensitive = true }); 
+                    services =>
+                    {
+                        services.AddSingleton<ODataUriResolver>(sp => new EAVODataUriResolver { EnableCaseInsensitive = true });
                         services.AddSingleton<IFilterBinder, CustomFilterBinder>();
 
                     }
@@ -224,7 +225,7 @@ namespace EAVFramework.Infrastructure
             return success;
         }
 
-    
+
         public override void PromoteBinaryOperandTypes(BinaryOperatorKind binaryOperatorKind,
             ref SingleValueNode leftNode, ref SingleValueNode rightNode, out IEdmTypeReference typeReference)
         {
@@ -235,7 +236,7 @@ namespace EAVFramework.Infrastructure
                 if ((leftNode.TypeReference.IsEnum()) && (rightNode.TypeReference.IsString()) &&
                     rightNode is ConstantNode)
                 {
-                    string text = ((ConstantNode)rightNode).Value as string;
+                    string text = ((ConstantNode) rightNode).Value as string;
                     ODataEnumValue val;
                     IEdmTypeReference typeRef = leftNode.TypeReference;
 
@@ -248,7 +249,7 @@ namespace EAVFramework.Infrastructure
                 else if ((rightNode.TypeReference.IsEnum()) && (leftNode.TypeReference.IsString()) &&
                          leftNode is ConstantNode)
                 {
-                    string text = ((ConstantNode)leftNode).Value as string;
+                    string text = ((ConstantNode) leftNode).Value as string;
                     ODataEnumValue val;
                     IEdmTypeReference typeRef = rightNode.TypeReference;
                     if (TryParseEnum(typeRef.Definition as IEdmEnumType, text, out val))
@@ -261,8 +262,8 @@ namespace EAVFramework.Infrastructure
                          (rightNode.TypeReference.Definition is IEdmPrimitiveType typeType &&
                           typeType.PrimitiveKind == EdmPrimitiveTypeKind.Int32) && rightNode is ConstantNode)
                 {
-                    int value = (int)((ConstantNode)rightNode).Value;
-                     
+                    int value = (int) ((ConstantNode) rightNode).Value;
+
                     IEdmTypeReference typeRef = leftNode.TypeReference;
                     var enumType = typeRef.Definition as IEdmEnumType;
 
@@ -277,7 +278,7 @@ namespace EAVFramework.Infrastructure
                           lefttype.PrimitiveKind == EdmPrimitiveTypeKind.Int32) && leftNode is ConstantNode)
                 {
                     int value = (int) ((ConstantNode) leftNode).Value;
-                   
+
                     IEdmTypeReference typeRef = rightNode.TypeReference;
                     var enumType = typeRef.Definition as IEdmEnumType;
 

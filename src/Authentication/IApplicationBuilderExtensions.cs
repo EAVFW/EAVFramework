@@ -9,7 +9,7 @@ namespace EAVFramework.Authentication
 {
     public static class IApplicationBuilderExtensions
     {
-        public static AuthenticationBuilder AddForwardedEasyAuth(this AuthenticationBuilder authBuilder, string schemaName = "EasyAuth", Action<EasyAuthForwardedAuthOptions> options=null)
+        public static AuthenticationBuilder AddForwardedEasyAuth(this AuthenticationBuilder authBuilder, string schemaName = "EasyAuth", Action<EasyAuthForwardedAuthOptions> options = null)
         {
             authBuilder.AddScheme<EasyAuthForwardedAuthOptions, EasyAuthForwardedAuth>(schemaName, options ?? EmptyOptions);
             return authBuilder;
@@ -17,15 +17,15 @@ namespace EAVFramework.Authentication
 
         private static void EmptyOptions(EasyAuthForwardedAuthOptions options)
         {
-            
+
         }
 
-        public static T SetForwardedSubjectId<T>(this T builder,   params string[] authSchemas) where T : IApplicationBuilder
+        public static T SetForwardedSubjectId<T>(this T builder, params string[] authSchemas) where T : IApplicationBuilder
         {
             return builder.SetForwardedSubjectId("X-EasyAuth-UserID", authSchemas);
         }
-        
-        public static T SetForwardedSubjectId<T>(this T builder, string headerName= "X-EasyAuth-UserID", string[] authSchemas=null) where T: IApplicationBuilder
+
+        public static T SetForwardedSubjectId<T>(this T builder, string headerName = "X-EasyAuth-UserID", string[] authSchemas = null) where T : IApplicationBuilder
         {
 
             builder.Use(async (context, next) =>
@@ -46,7 +46,7 @@ namespace EAVFramework.Authentication
 
                     }
                 }
-                 
+
 
                 await next().ConfigureAwait(false);
             });
@@ -82,5 +82,5 @@ namespace EAVFramework.Authentication
             return builder;
         }
     }
- 
+
 }

@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -22,7 +22,7 @@ namespace EAVFramework.Endpoints
             var routeValues = context.GetRouteData().Values;
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
-            context.Request.QueryString= context.Request.QueryString.Add("$filter", $"id eq {recordId}");
+            context.Request.QueryString = context.Request.QueryString.Add("$filter", $"id eq {recordId}");
 
             var query = await _context.ExecuteHttpRequest(entityName, context.Request);
 

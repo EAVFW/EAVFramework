@@ -126,7 +126,7 @@ namespace EAVFramework.Shared.V2
             if (PropertyType == null)
                 return;
 
-            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes,true)
+            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes, true)
                 && this.dynamicTableBuilder.GetParentPropertyGetMethod(SchemaName) is PropertyInfo property)
             {
                 foreach (var interfaceType in interfaceTypes)
@@ -160,7 +160,7 @@ namespace EAVFramework.Shared.V2
                     }
                     catch (Exception ex)
                     {
-                       throw new Exception($"Error adding interface overrides for {SchemaName} in {TypeBuilder.Name}", ex);
+                        throw new Exception($"Error adding interface overrides for {SchemaName} in {TypeBuilder.Name}", ex);
                     }
                 }
             }
@@ -180,7 +180,7 @@ namespace EAVFramework.Shared.V2
                 {
                     if (interfaceType.IsGenericType)
                     {
-                        foreach(var dependency in interfaceType.GenericTypeArguments)
+                        foreach (var dependency in interfaceType.GenericTypeArguments)
                         {
                             dynamicTableBuilder.DeppendsOn(dependency);
                         }
@@ -188,7 +188,7 @@ namespace EAVFramework.Shared.V2
                 }
 
             }
-                    if (dynamicTableBuilder.ContainsParentProperty(SchemaName))
+            if (dynamicTableBuilder.ContainsParentProperty(SchemaName))
                 return;
 
 

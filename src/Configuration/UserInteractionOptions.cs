@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 
 namespace EAVFramework.Configuration
 {

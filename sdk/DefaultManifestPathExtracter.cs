@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System.Linq;
 
 namespace EAVFW.Extensions.Manifest.SDK

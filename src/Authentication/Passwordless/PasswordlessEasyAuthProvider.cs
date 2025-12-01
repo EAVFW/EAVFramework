@@ -63,9 +63,9 @@ namespace EAVFramework.Authentication.Passwordless
     }
     public class EmailFilterOptions
     {
-        public bool OpenTrack { get;  set; }
-        public bool ClickTrack { get;  set; }
-        public string EmailId { get;  set; }
+        public bool OpenTrack { get; set; }
+        public bool ClickTrack { get; set; }
+        public string EmailId { get; set; }
     }
     public interface IEAVEmailServiceFilter
     {
@@ -132,9 +132,9 @@ namespace EAVFramework.Authentication.Passwordless
         }
 
         public async Task SendEmailAsync(Guid emailId, string subject, string sender, string to_emails, string msgHtml, string msgPlain,
-            string sender_displayname=null, string to_cc_emails=null, Action<MailMessage> configure=null, bool opentrack=false, bool clicktrack=false)
+            string sender_displayname = null, string to_cc_emails = null, Action<MailMessage> configure = null, bool opentrack = false, bool clicktrack = false)
         {
-           
+
 
             MailMessage mailMessage = new MailMessage()
             {
@@ -147,15 +147,15 @@ namespace EAVFramework.Authentication.Passwordless
                     mailMessage.To.Add(new MailAddress(email));
                 }
             }
-            if(!string.IsNullOrEmpty(to_cc_emails))
+            if (!string.IsNullOrEmpty(to_cc_emails))
             {
                 foreach (var email in to_cc_emails.Split(',', ';'))
                 {
                     mailMessage.CC.Add(new MailAddress(email));
                 }
-            }   
-            mailMessage.From = new MailAddress(sender,sender_displayname,Encoding.UTF8);
-         
+            }
+            mailMessage.From = new MailAddress(sender, sender_displayname, Encoding.UTF8);
+
             var view = AlternateView.CreateAlternateViewFromString(msgHtml, null, MediaTypeNames.Text.Html);
             var plainView = AlternateView.CreateAlternateViewFromString(msgPlain, null, MediaTypeNames.Text.Plain);
             mailMessage.AlternateViews.Add(plainView);
@@ -163,15 +163,16 @@ namespace EAVFramework.Authentication.Passwordless
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = msgHtml;
 
-           
+
 
             foreach (var filter in _emailServiceFilters)
-            {             
+            {
                 await filter.ApplyAsync(mailMessage,
-                    new EmailFilterOptions { 
-                        ClickTrack=clicktrack, 
-                        EmailId= emailId.ToString(),
-                        OpenTrack=opentrack,
+                    new EmailFilterOptions
+                    {
+                        ClickTrack = clicktrack,
+                        EmailId = emailId.ToString(),
+                        OpenTrack = opentrack,
                     });
             }
 
@@ -185,8 +186,8 @@ namespace EAVFramework.Authentication.Passwordless
                 CC:{cc}
                 From: {sender}
                 """,
-                mailMessage.Subject,emailId,
-               string.Join(",", mailMessage.To.Select(email=>  MaskEmail(email.Address))),
+                mailMessage.Subject, emailId,
+               string.Join(",", mailMessage.To.Select(email => MaskEmail(email.Address))),
                string.Join(",", mailMessage.CC.Select(email => MaskEmail(email.Address))),
                sender);
 
@@ -204,7 +205,7 @@ namespace EAVFramework.Authentication.Passwordless
 
             while (retryCount < maxRetries)
             {
-               
+
                 try
                 {
                     await _gate.WaitAsync();
@@ -214,9 +215,9 @@ namespace EAVFramework.Authentication.Passwordless
                     return;
 
                 }
-                
-                catch (Exception ex) 
-                    when (ex.Message.Contains("Service not available, closing transmission channel") 
+
+                catch (Exception ex)
+                    when (ex.Message.Contains("Service not available, closing transmission channel")
                           || ex.Message.Contains("Broken pipe"))
                 {
 
@@ -248,27 +249,27 @@ namespace EAVFramework.Authentication.Passwordless
 
         // private readonly EAVEMailService _emailService;
         private readonly EAVMetrics _metrics;
-     //   private readonly SmtpClient _smtp;
+        //   private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
 
-        public PasswordlessEasyAuthProvider() :base("passwordless") { }
+        public PasswordlessEasyAuthProvider() : base("passwordless") { }
 
         public PasswordlessEasyAuthProvider(
             ILogger<PasswordlessEasyAuthProvider> logger,
             IServiceScopeFactory scopeFactory,
-          //  EAVEMailService emailService, // SmtpClient smtpClient,
-            IOptions<PasswordlessEasyAuthOptions> options, EAVMetrics metrics=null) : this()
+            //  EAVEMailService emailService, // SmtpClient smtpClient,
+            IOptions<PasswordlessEasyAuthOptions> options, EAVMetrics metrics = null) : this()
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _scopeFactory = scopeFactory;
             // _emailService = emailService;
             _metrics = metrics;
-         //   _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
+            //   _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
-     
-       
+
+
 
         public override async Task<OnAuthenticateResult> OnAuthenticate(OnAuthenticateRequest authenticateRequest)
         {
@@ -277,9 +278,12 @@ namespace EAVFramework.Authentication.Passwordless
                 var email = authenticateRequest.Email;
 
                 if (!authenticateRequest.IdentityId.HasValue || authenticateRequest.IdentityId.Value == default)
-                {    
-                      return new OnAuthenticateResult { ErrorMessage = $"User not found",
-                          ErrorCode= "access_denied", ErrorSubCode = "user_not_found", Success=false };
+                {
+                    return new OnAuthenticateResult
+                    {
+                        ErrorMessage = $"User not found",
+                        ErrorCode = "access_denied", ErrorSubCode = "user_not_found", Success = false
+                    };
                 }
 
                 //  var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
@@ -298,34 +302,36 @@ namespace EAVFramework.Authentication.Passwordless
                         msgPlain: authenticateRequest.CallbackUrl);
 
                 }
-              
+
                 await _options.Value.ResponseSuccessFullAsync(authenticateRequest.HttpContext);
 
                 return new OnAuthenticateResult { Success = true };
 
                 //TODO make this option provided
 
-            };
+            }
+            ;
         }
 
-       
 
-       
+
+
         public override async Task<OnCallBackResult> OnCallback(OnCallbackRequest request)
         {
 
 
             var ticket = request.Ticket;
 
-            if(!request.IdentityId.HasValue || request.IdentityId.Value == default)
+            if (!request.IdentityId.HasValue || request.IdentityId.Value == default)
             {
-                 request.IdentityId = await request.Options?.FindIdentity(
-                          new UserDiscoveryRequest { 
-                                        
-                            Email = ticket["email"].ToString(),
-                            HttpContext = request.HttpContext,
-                            ServiceProvider = request.HttpContext.RequestServices
-                    });
+                request.IdentityId = await request.Options?.FindIdentity(
+                         new UserDiscoveryRequest
+                         {
+
+                             Email = ticket["email"].ToString(),
+                             HttpContext = request.HttpContext,
+                             ServiceProvider = request.HttpContext.RequestServices
+                         });
             }
 
             var identity = new ClaimsIdentity(
@@ -344,6 +350,6 @@ namespace EAVFramework.Authentication.Passwordless
 
         }
 
-       
+
     }
 }

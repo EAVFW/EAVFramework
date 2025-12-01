@@ -16,7 +16,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         private readonly ISchemaNameManager schemaNameManager;
         private readonly IManifestPathExtracter manifestPathExtracter;
 
-        public DefaultManifestReplacementRunner(IOptions<ManifestEnricherOptions> options,ISchemaNameManager schemaNameManager, IManifestPathExtracter manifestPathExtracter)
+        public DefaultManifestReplacementRunner(IOptions<ManifestEnricherOptions> options, ISchemaNameManager schemaNameManager, IManifestPathExtracter manifestPathExtracter)
         {
             this.options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             this.schemaNameManager = schemaNameManager ?? throw new ArgumentNullException(nameof(schemaNameManager));
@@ -102,7 +102,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             }
         }
 
-         
+
 
         public async Task RunReplacements(JToken jsonraw, string customizationprefix, ILogger logger, JToken elementToRunReplacementFor = null)
         {
@@ -200,7 +200,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                                 {
 
                                     childProp.Remove();
-                                  
+
                                     if (parentObj.ContainsKey(childProp.Name) && childProp.Value is JObject source && parentObj[childProp.Name] is JObject target)
                                     {
                                         target.Merge(source);
@@ -214,16 +214,16 @@ namespace EAVFW.Extensions.Manifest.SDK
                                     else
                                     {
 
-                                        if (!parentObj.ContainsKey(childProp.Name) || Array.IndexOf(parentObjKeys,childProp.Name) < mergeIndex)
+                                        if (!parentObj.ContainsKey(childProp.Name) || Array.IndexOf(parentObjKeys, childProp.Name) < mergeIndex)
                                         {
                                             parentObj[childProp.Name] = childProp.Value;
                                             q.Enqueue(childProp);
                                         }
-                                        
+
                                     }
 
                                     // parentObj.Add(childProp.Name, childProp.Value);
-                                    
+
                                 }
 
                                 prop.Remove();

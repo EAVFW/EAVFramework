@@ -18,7 +18,7 @@ namespace EAVFramework.Plugins
 
     }
 
-   
+
     public class DefaultPluginScheduler<TContext> : IPluginScheduler<TContext>
         where TContext : DynamicContext
     {
@@ -34,13 +34,13 @@ namespace EAVFramework.Plugins
         }
         public async Task ScheduleAsync(EntityPlugin plugin, string identityid, object entity)
         {
-            var ctx = await plugin.Execute(serviceProvider, new System.Security.Claims.ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("sub", identityid) },"eavfw")), context.Entry( entity));
+            var ctx = await plugin.Execute(serviceProvider, new System.Security.Claims.ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("sub", identityid) }, "eavfw")), context.Entry(entity));
 
             if (ctx.Errors.Any())
             {
-                logger.LogWarning("Plugin ran with errors: {errors}",string.Join(",",ctx.Errors.Select(err=>err.Code)));
+                logger.LogWarning("Plugin ran with errors: {errors}", string.Join(",", ctx.Errors.Select(err => err.Code)));
             }
-                
+
         }
     }
 
@@ -79,7 +79,7 @@ namespace EAVFramework.Plugins
     //        foreach (var entity  in eventData.Context.ChangeTracker.Entries().Where(o=>o.State != Microsoft.EntityFrameworkCore.EntityState.Unchanged))
     //        {
     //            var operation = GetOperation(entity.State);
-               
+
     //            foreach (var plugin in plugins.Where(plugin => plugin.Operation == operation && plugin.Execution == EntityPluginExecution.PreValidate && plugin.Type.IsAssignableFrom(entity.Entity.GetType())))
     //            {
     //                var ctx = await plugin.Execute(eventData.Context.GetService<IServiceProvider>(), context.User, entity);

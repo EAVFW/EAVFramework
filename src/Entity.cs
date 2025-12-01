@@ -1,4 +1,4 @@
-﻿namespace EAVFramework
+namespace EAVFramework
 {
     //public abstract class Entity/*<T>*/ : BaseEntity, IEntity//<T>
     //{

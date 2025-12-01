@@ -1,4 +1,4 @@
-﻿using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.ApplicationModel;
 
 namespace EAVFramework.Extensions.Aspire.Hosting
 {

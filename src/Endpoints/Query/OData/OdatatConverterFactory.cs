@@ -1,4 +1,4 @@
-﻿using EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections;
@@ -26,7 +26,7 @@ namespace EAVFramework.Endpoints.Query.OData
                  }
                  else if (type.Name == "SelectSome`1" || type.Name == "SelectAll`1" || type.Name == "SelectSomeAndInheritance`1")
                  {
-                     return new SelectCoverter(type, this,options);
+                     return new SelectCoverter(type, this, options);
 
 
                  }

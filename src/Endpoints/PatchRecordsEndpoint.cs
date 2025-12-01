@@ -59,17 +59,17 @@ namespace EAVFramework.Endpoints
             var recordId = routeValues[RouteParams.RecordIdRouteParam] as string;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
 
-            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName, context), new UpdateRecordRequirement(entityName,typeof(TContext)));
+            var auth = await _authorizationService.AuthorizeAsync(context.User, _context.CreateEAVResource(entityName, context), new UpdateRecordRequirement(entityName, typeof(TContext)));
 
             if (!auth.Succeeded)
             {
                 return new AuthorizationEndpointResult(new { errors = auth.Failure.FailedRequirements.OfType<IAuthorizationRequirementError>().Select(c => c.ToError()) });
             }
 
-            JToken record = await _context.ReadRecordAsync(context,new ReadOptions {RecordId= recordId, LogPayload = configuration.GetValue<bool>($"EAVFramework:PatchRecordsEndpoint:LogPayload", false) });
+            JToken record = await _context.ReadRecordAsync(context, new ReadOptions { RecordId = recordId, LogPayload = configuration.GetValue<bool>($"EAVFramework:PatchRecordsEndpoint:LogPayload", false) });
 
             var entity = await _context.PatchAsync(entityName, Guid.Parse(recordId), record);
-             
+
             var _operation = await _context.SaveChangesAsync(context.User);
 
 
@@ -85,6 +85,6 @@ namespace EAVFramework.Endpoints
 
         }
 
-      
+
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using EAVFramework.Endpoints;
@@ -40,7 +40,7 @@ namespace EAVFramework.Validation
 
             foreach (var nullField in nullAndRequiredFields)
             {
-                context.AddValidationError( new ValidationError
+                context.AddValidationError(new ValidationError
                 {
                     Error = "Is a required field",
                     Code = "err-required",
@@ -49,7 +49,7 @@ namespace EAVFramework.Validation
                 });
             }
 
-           
+
         }
     }
 }

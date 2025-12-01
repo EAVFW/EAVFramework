@@ -1,4 +1,4 @@
-﻿using EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using EAVFramework.Events;
 using EAVFramework.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -187,7 +187,7 @@ namespace EAVFramework.Hosting
     {
         IEndpointBuilder WithMetadata(params object[] metadata);
 
-        IEndpointBuilder IgnoreRoutePrefix(bool ignoreRoutePrefix =true);
+        IEndpointBuilder IgnoreRoutePrefix(bool ignoreRoutePrefix = true);
     }
     public class Endpoint<TContext> : IEndpointBuilder
         where TContext : DynamicContext

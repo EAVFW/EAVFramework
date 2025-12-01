@@ -1,4 +1,4 @@
-﻿using EAVFramework.Shared;
+using EAVFramework.Shared;
 using Microsoft.AspNetCore.OData.Formatter.Value;
 using Microsoft.OData.Edm;
 using System;

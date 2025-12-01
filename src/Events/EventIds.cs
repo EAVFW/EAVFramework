@@ -1,4 +1,4 @@
-﻿namespace EAVFramework.Events
+namespace EAVFramework.Events
 {
     public static class EventIds
     {

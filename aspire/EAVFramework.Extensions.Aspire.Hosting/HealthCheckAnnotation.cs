@@ -1,4 +1,4 @@
-﻿using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Threading;
@@ -16,14 +16,14 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         public static HealthCheckAnnotation Create(Func<EAVFWModelProjectResource, IHealthCheck> connectionStringFactory)
         {
-            return new(async (resource, token) =>
+            return new((resource, token) =>
             {
                 if (resource is EAVFWModelProjectResource eavmodel)
                 {
-                    return connectionStringFactory(eavmodel);
+                    return Task.FromResult(connectionStringFactory(eavmodel));
                 }
 
-                return null;
+                return Task.FromResult<IHealthCheck>(null);
 
             });
         }

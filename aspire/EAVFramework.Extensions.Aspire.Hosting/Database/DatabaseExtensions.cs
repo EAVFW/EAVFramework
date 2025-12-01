@@ -23,9 +23,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
 {
     public static class DatabaseExtensions
     {
-        async static Task<string> CreateStoredAccessPolicyAsync(string containerName,string policyName, string connectionString)
+        async static Task<string> CreateStoredAccessPolicyAsync(string containerName, string policyName, string connectionString)
         {
-           
+
             // Use the connection string to authorize the operation to create the access policy.
             // Azure AD does not support the Set Container ACL operation that creates the policy.
             BlobContainerClient containerClient = new BlobContainerClient(connectionString, containerName);
@@ -58,13 +58,13 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
                     Identifier = policyName
                 };
 
-                  
+
 
                 Uri sasURI = containerClient.GenerateSasUri(sasBuilder);
                 return sasURI.Query.ToString().Substring(1);
             }
 
-       
+
             catch (RequestFailedException e)
             {
                 Console.WriteLine(e.ErrorCode);
@@ -73,21 +73,21 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
             }
             finally
             {
-              //  await containerClient.DeleteAsync();
+                //  await containerClient.DeleteAsync();
             }
         }
         public static IResourceBuilder<SqlServerDatabaseResource> BackupTo(this IResourceBuilder<SqlServerDatabaseResource> builder, IResourceBuilder<AzureBlobStorageResource> target)
         {
-           
 
-            builder.ApplicationBuilder.Services.TryAddLifecycleHook((sp)=> new test(target.Resource.Parent));
 
-            builder.WithCommand("BACKUP","Backup Database", async (context) =>
+            builder.ApplicationBuilder.Services.TryAddLifecycleHook((sp) => new test(target.Resource.Parent));
+
+            builder.WithCommand("BACKUP", "Backup Database", async (context) =>
             {
 
                 var connectionString = target.Resource.Parent.Outputs["blobStorageAccountKey"]?.ToString();
 
-                var policy = await CreateStoredAccessPolicyAsync("backups","eav-backup", connectionString);
+                var policy = await CreateStoredAccessPolicyAsync("backups", "eav-backup", connectionString);
 
                 var sqlConn = await builder.Resource.Parent.GetConnectionStringAsync();
 
@@ -97,14 +97,14 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
 
                 SqlCommand cmd = conn.CreateCommand();
 
-               
-              // var sql1 = builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
+
+                // var sql1 = builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
                 var a = await target.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
 
                 a = a.TrimEnd('/');
 
 
-                cmd.CommandText= $"""
+                cmd.CommandText = $"""
                   if exists (select * from sys.credentials where name = '{a}/backups')
                     drop credential [{a}/backups]
                   
@@ -123,15 +123,15 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
 
                 return new ExecuteCommandResult
                 {
-                  Success=true,
+                    Success = true,
                 };
-            },new CommandOptions { ConfirmationMessage ="Backup created", IsHighlighted=true });
+            }, new CommandOptions { ConfirmationMessage = "Backup created", IsHighlighted = true });
 
             return builder;
 
         }
 
-        
+
     }
 
     public class test : IDistributedApplicationLifecycleHook
@@ -143,36 +143,36 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
             _parent = parent;
         }
 
-        public async Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
+        public Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
         {
-             _parent.ProvisioningBuildOptions.InfrastructureResolvers.Insert(0, new AzureStorageConnectionStringResolver());
-
+            _parent.ProvisioningBuildOptions.InfrastructureResolvers.Insert(0, new AzureStorageConnectionStringResolver());
+            return Task.CompletedTask;
         }
 
-        
+
     }
     internal class AzureStorageConnectionStringResolver : InfrastructureResolver
     {
 
         public static BicepValue<string> Value(BicepValue<object> value)
         {
-           return new MemberExpression(value.Compile(), "value");
+            return new MemberExpression(value.Compile(), "value");
 
-          
+
         }
 
         public override void ResolveInfrastructure(Azure.Provisioning.Infrastructure infrastructure, ProvisioningBuildOptions options)
         {
-            if(infrastructure is AzureResourceInfrastructure azure && azure.AspireResource is AzureStorageResource storage)
+            if (infrastructure is AzureResourceInfrastructure azure && azure.AspireResource is AzureStorageResource storage)
             {
                 var storageResource = infrastructure.GetProvisionableResources().OfType<Azure.Provisioning.Storage.StorageAccount>().FirstOrDefault();
                 storageResource.AllowSharedKeyAccess = true;
-               
-                    infrastructure.Add(new ProvisioningOutput("blobStorageAccountKey",
-                        typeof(string))
-                    { Value = BicepFunction.Interpolate($"DefaultEndpointsProtocol=https;AccountName={storageResource.Name};AccountKey={Value(storageResource.GetKeys()[0])};EndpointSuffix=core.windows.net"  ) });
+
+                infrastructure.Add(new ProvisioningOutput("blobStorageAccountKey",
+                    typeof(string))
+                { Value = BicepFunction.Interpolate($"DefaultEndpointsProtocol=https;AccountName={storageResource.Name};AccountKey={Value(storageResource.GetKeys()[0])};EndpointSuffix=core.windows.net") });
             }
-           
+
 
             base.ResolveInfrastructure(infrastructure, options);
         }

@@ -34,25 +34,25 @@ namespace EAVFramework
     [Serializable]
     public class DynamicEntity
     {
-       
+
     }
 
 
 
     public class DynamicMigration : Migration
     {
-       
-      //  private readonly JToken model;
+
+        //  private readonly JToken model;
         private readonly IDynamicTable[] tables;
 
         public DynamicMigration(JToken model, IDynamicTable[] tables)
         {
-        //    this.model = model;
+            //    this.model = model;
             this.tables = tables;
         }
         public DynamicMigration(MigrationDefinition migration, IDynamicTable[] tables)
         {
-           
+
             this.tables = tables;
         }
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -60,11 +60,11 @@ namespace EAVFramework
             foreach (var dynamicEntity in tables)
             {
 
-               dynamicEntity.Up(migrationBuilder);
-                 
+                dynamicEntity.Up(migrationBuilder);
+
 
             }
-             
+
         }
 
 

@@ -1,4 +1,4 @@
-﻿namespace EAVFramework.Configuration
+namespace EAVFramework.Configuration
 {
     /// <summary>
     /// Configures events

@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints.Query.OData;
+using EAVFramework.Endpoints.Query.OData;
 
 namespace EAVFramework
 {
@@ -9,7 +9,7 @@ namespace EAVFramework
 
         public ConstantRuntimeType(string logicalName, string collectionSchemaName)
         {
-            this.logicalName=logicalName;
+            this.logicalName = logicalName;
             this.collectionSchemaName = collectionSchemaName;
         }
 

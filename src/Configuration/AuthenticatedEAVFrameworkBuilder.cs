@@ -22,16 +22,16 @@ namespace EAVFramework.Configuration
     {
 
     }
-    public interface IEAVFrameworkTicketStore<TContext,TSignin> : IEAVFrameworkTicketStore<TContext>
+    public interface IEAVFrameworkTicketStore<TContext, TSignin> : IEAVFrameworkTicketStore<TContext>
     {
 
     }
-    public class EAVFrameworkTicketStore<TContext, TSignin> : IEAVFrameworkTicketStore, IEAVFrameworkTicketStore<TContext>, IEAVFrameworkTicketStore<TContext,TSignin>
+    public class EAVFrameworkTicketStore<TContext, TSignin> : IEAVFrameworkTicketStore, IEAVFrameworkTicketStore<TContext>, IEAVFrameworkTicketStore<TContext, TSignin>
         where TContext : DynamicContext
         where TSignin : DynamicEntity, ISigninRecord, new()
     {
         public async Task PersistTicketAsync(PersistTicketRequest request)
-         
+
         {
 
 
@@ -50,8 +50,8 @@ namespace EAVFramework.Configuration
                 });
 
                 var result = await ctx.SaveChangesAsync(request.OwnerIdentity);
-                
-                if(result.Errors.Any())
+
+                if (result.Errors.Any())
                 {
                     throw new InvalidOperationException("Error saving signin" + result.Errors.First().Error);
                 }
@@ -60,7 +60,7 @@ namespace EAVFramework.Configuration
         }
 
         public async Task<TicketInformation> GetTicketInfoAsync(UnPersistTicketReuqest request)
-             
+
         {
 
 
@@ -96,18 +96,18 @@ namespace EAVFramework.Configuration
 
         public IServiceCollection Services => _eavFrameworkBuilder.Services;
 
- 
+
 
         public AuthenticatedEAVFrameworkBuilder WithEAVSigninTicketStore<TContext, TSignin>()
              where TContext : DynamicContext
              where TSignin : DynamicEntity, ISigninRecord, new()
         {
 
-          
-            Services.AddScoped<IPasswordLessLinkGenerator>(sp => sp.GetService<PasswordLessLinkGenerator<TContext,TSignin>>());
+
+            Services.AddScoped<IPasswordLessLinkGenerator>(sp => sp.GetService<PasswordLessLinkGenerator<TContext, TSignin>>());
             Services.AddScoped<IEAVFrameworkTicketStore>(sp => sp.GetRequiredService<IEAVFrameworkTicketStore<TContext, TSignin>>());
             Services.AddScoped<IEAVFrameworkTicketStore<TContext>>(sp => sp.GetService<IEAVFrameworkTicketStore<TContext, TSignin>>());
-          //  Services.AddScoped<IEAVFrameworkTicketStore<TContext,TSignin>>(sp => sp.GetService<EAVFrameworkTicketStore<TContext, TSignin>>());
+            //  Services.AddScoped<IEAVFrameworkTicketStore<TContext,TSignin>>(sp => sp.GetService<EAVFrameworkTicketStore<TContext, TSignin>>());
 
 
 
@@ -115,7 +115,7 @@ namespace EAVFramework.Configuration
             return this;
         }
 
-       
+
 
 
 
@@ -133,5 +133,5 @@ namespace EAVFramework.Configuration
         String Provider { get; set; }
     }
 
-   
+
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -11,16 +11,16 @@ using System.Reflection;
 
 namespace EAVFramework
 {
-   
-  
+
+
     public class DbSchemaAwareMigrationAssembly : MigrationsAssembly
     {
         private readonly DbContext _context;
-        
+
 
         // private readonly IReadOnlyDictionary<TypeInfo, Func<Migration>> _migrations = new Dictionary<TypeInfo, Func<Migration>>();
         // private readonly IReadOnlyDictionary<string, TypeInfo> _migrationsTypes = new Dictionary<string, TypeInfo>();
-        protected  MigrationsInfo migrations;
+        protected MigrationsInfo migrations;
         public DbSchemaAwareMigrationAssembly(
             ICurrentDbContext currentContext,
               IDbContextOptions options, IMigrationsIdGenerator idGenerator,
@@ -39,12 +39,12 @@ namespace EAVFramework
 
             //_migrations["Initial_Migration"] = typeof(DynamicMigration).GetTypeInfo();
             migrations = dynamicContext.GetMigrations();
-            
+
         }
 
         public void Reset()
         {
-          
+
             var dynamicContext = _context as IDynamicContext ?? throw new ArgumentNullException(nameof(_context), "Current Context is not IDynamicContext");
 
             migrations = dynamicContext.GetMigrations();

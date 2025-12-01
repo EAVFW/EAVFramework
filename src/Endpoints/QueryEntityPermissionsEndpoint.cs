@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -26,7 +26,7 @@ namespace EAVFramework.Endpoints
         {
             var routeValues = context.GetRouteData().Values;
             var entityName = routeValues[RouteParams.EntityCollectionSchemaNameRouteParam] as string;
-            var resource = _context.CreateEAVResource(entityName,context);
+            var resource = _context.CreateEAVResource(entityName, context);
 
             var permissions = await permissionStore.GetPermissions(context.User, resource).ToListAsync();
 

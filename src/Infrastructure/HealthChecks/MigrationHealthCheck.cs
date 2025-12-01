@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace EAVFramework.Infrastructure.HealthChecks
 {
-   
+
 
     public class MigrationHealthCheck<T> : IHealthCheck
        where T : DbContext

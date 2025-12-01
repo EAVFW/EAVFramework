@@ -1,4 +1,4 @@
-﻿using EAVFW.Extensions.Manifest.SDK;
+using EAVFW.Extensions.Manifest.SDK;
 using System;
 using System.Reflection;
 
@@ -6,7 +6,7 @@ namespace EAVFramework.Shared.V2
 {
     public class GeoSpatialOptions
     {
-        public Type PointGeomeryType {get;set;}
+        public Type PointGeomeryType { get; set; }
     }
     public class CodeGenerationOptions
     {
@@ -35,22 +35,22 @@ namespace EAVFramework.Shared.V2
         public Type[] DTOBaseInterfaces { get; set; } = Array.Empty<Type>();
 
         public Type[] DTOBaseClasses { get; set; } = Array.Empty<Type>();
-        public ConstructorInfo ForeignKeyAttributeCtor { get;  set; }
+        public ConstructorInfo ForeignKeyAttributeCtor { get; set; }
 
         /// <summary>
         /// The interface added to configuration class for the entity dto
         /// </summary>
-        public Type EntityConfigurationInterface { get;  set; }
+        public Type EntityConfigurationInterface { get; set; }
         public string EntityConfigurationConfigureName { get; set; }
         public Type EntityTypeBuilderType { get; set; }
         public MethodInfo EntityTypeBuilderToTable { get; set; }
         public MethodInfo UseTpcMappingStrategy { get; set; }
-        
+
 
         /// <summary>
         /// Global schema to use when not specified per entity
         /// </summary>
-        public string Schema { get;  set; }
+        public string Schema { get; set; }
         public MethodInfo EntityTypeBuilderHasKey { get; set; }
         public MethodInfo EntityTypeBuilderPropertyMethod { get; set; }
 
@@ -59,10 +59,10 @@ namespace EAVFramework.Shared.V2
         public MethodInfo IsRowVersionMethod { get; set; }
         public MethodInfo HasConversionMethod { get; set; }
         public MethodInfo HasPrecisionMethod { get; set; }
-       // public string MigrationName { get; set; }
+        // public string MigrationName { get; set; }
 
-         
-        public Type DynamicTableType { get;  set; }
+
+        public Type DynamicTableType { get; set; }
         public Type DynamicTableArrayType { get; set; }
         public Type ColumnsBuilderType { get; set; }
         public Type CreateTableBuilderType { get; set; }

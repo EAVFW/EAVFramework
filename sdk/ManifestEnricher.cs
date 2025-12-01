@@ -20,7 +20,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     }
     public interface IParameterGenerator
     {
-        string GetParameter(string name, bool escape=true);
+        string GetParameter(string name, bool escape = true);
     }
     public class SQLClientParameterGenerator : IParameterGenerator
     {
@@ -35,7 +35,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
         public string GetParameter(string name, bool escape)
         {
-            if(escape)
+            if (escape)
                 return $"'$({name})'";
             return $"$({name})";
         }
@@ -63,8 +63,8 @@ namespace EAVFW.Extensions.Manifest.SDK
 
             sb.AppendLine("DECLARE @adminSRId uniqueidentifier");
             sb.AppendLine("DECLARE @permissionId uniqueidentifier");
-            sb.AppendLine($"SET @adminSRId = ISNULL((SELECT s.Id FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[SecurityRoles] s WHERE s.Name = 'System Administrator'),'{Guid.NewGuid()}')");
-            sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[SecurityGroups] WHERE [Id] = {adminSGId})");
+            sb.AppendLine($"SET @adminSRId = ISNULL((SELECT s.Id FROM [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRoles] s WHERE s.Name = 'System Administrator'),'{Guid.NewGuid()}')");
+            sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityGroups] WHERE [Id] = {adminSGId})");
             sb.AppendLine("BEGIN");
 
             if (model.Entities["Identity"].MappingStrategy == DTO.MappingStrategy.TPT)
@@ -81,18 +81,18 @@ namespace EAVFW.Extensions.Manifest.SDK
                 sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[{systemUserEntity}] (Id,Email,Name, ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES ({parameterGenerator.GetParameter("UserGuid")}, {parameterGenerator.GetParameter("UserEmail")},{parameterGenerator.GetParameter("UserName")}, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId});");
             }
 
-              
-                sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRoles] (Name, Description, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES('System Administrator', 'Access to all permissions', @adminSRId, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
-                sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRoleAssignments] (IdentityId, SecurityRoleId, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES({adminSGId}, @adminSRId, '{Guid.NewGuid()}',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
-                sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityGroupMembers] (IdentityId, SecurityGroupId, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES({parameterGenerator.GetParameter("UserGuid")}, {adminSGId}, '{Guid.NewGuid()}',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
 
-            
+            sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRoles] (Name, Description, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES('System Administrator', 'Access to all permissions', @adminSRId, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
+            sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRoleAssignments] (IdentityId, SecurityRoleId, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES({adminSGId}, @adminSRId, '{Guid.NewGuid()}',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
+            sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityGroupMembers] (IdentityId, SecurityGroupId, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES({parameterGenerator.GetParameter("UserGuid")}, {adminSGId}, '{Guid.NewGuid()}',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
+
+
             sb.AppendLine("END;");
-            
-            
+
+
             foreach (var entitiy in model.Entities.Values)
             {
-                WritePermissionStatement(sb, entitiy, "ReadGlobal", "Global Read", adminSGId,true);
+                WritePermissionStatement(sb, entitiy, "ReadGlobal", "Global Read", adminSGId, true);
                 WritePermissionStatement(sb, entitiy, "Read", "Read", adminSGId);
                 WritePermissionStatement(sb, entitiy, "UpdateGlobal", "Global Update", adminSGId, true);
                 WritePermissionStatement(sb, entitiy, "Update", "Update", adminSGId);
@@ -110,16 +110,16 @@ namespace EAVFW.Extensions.Manifest.SDK
         }
         private void WritePermissionStatement(StringBuilder sb, EntityDefinition entity, string permission, string permissionName, string adminSGId, bool adminSRId1 = false)
         {
-            sb.AppendLine($"SET @permissionId = ISNULL((SELECT s.Id FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[Permissions] s WHERE s.Name = '{entity.CollectionSchemaName}{permission}'),'{Guid.NewGuid()}')");
-            sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[Permissions] WHERE [Name] = '{entity.CollectionSchemaName}{permission}')");
+            sb.AppendLine($"SET @permissionId = ISNULL((SELECT s.Id FROM [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[Permissions] s WHERE s.Name = '{entity.CollectionSchemaName}{permission}'),'{Guid.NewGuid()}')");
+            sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[Permissions] WHERE [Name] = '{entity.CollectionSchemaName}{permission}')");
             sb.AppendLine("BEGIN");
-            sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[Permissions] (Name, Description, Id, ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES('{entity.CollectionSchemaName}{permission}', '{permissionName} access to {entity.PluralName}', @permissionId, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
+            sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[Permissions] (Name, Description, Id, ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES('{entity.CollectionSchemaName}{permission}', '{permissionName} access to {entity.PluralName}', @permissionId, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
             sb.AppendLine("END");
             if (adminSRId1)
             {
-                sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[SecurityRolePermissions] WHERE [Name] = 'System Administrator - {entity.CollectionSchemaName} - {permission}')");
+                sb.AppendLine($"IF NOT EXISTS(SELECT * FROM [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRolePermissions] WHERE [Name] = 'System Administrator - {entity.CollectionSchemaName} - {permission}')");
                 sb.AppendLine("BEGIN");
-                sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName",false)}].[{parameterGenerator.GetParameter("DBSchema",false)}].[SecurityRolePermissions] (Name, PermissionId, SecurityRoleId, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES('System Administrator - {entity.CollectionSchemaName} - {permission}', @permissionId, @adminSRId, '{Guid.NewGuid()}', CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
+                sb.AppendLine($"INSERT INTO [{parameterGenerator.GetParameter("DBName", false)}].[{parameterGenerator.GetParameter("DBSchema", false)}].[SecurityRolePermissions] (Name, PermissionId, SecurityRoleId, Id,ModifiedOn,CreatedOn,CreatedById,ModifiedById,OwnerId) VALUES('System Administrator - {entity.CollectionSchemaName} - {permission}', @permissionId, @adminSRId, '{Guid.NewGuid()}', CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,{adminSGId},{adminSGId},{adminSGId})");
                 sb.AppendLine("END");
             }
         }
@@ -138,7 +138,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         protected virtual JObject Merge(JObject jToken, object obj)
         {
 
-            jToken = (JObject)jToken.DeepClone();
+            jToken = (JObject) jToken.DeepClone();
 
 
             var jobj = JToken.FromObject(obj) as JObject;
@@ -183,14 +183,14 @@ namespace EAVFW.Extensions.Manifest.SDK
             var entities = jsonraw.SelectToken("$.entities") as JObject;
             var insertMerges = jsonraw.SelectToken("$.variables.options.insertMergeLayoutVariable")?.ToObject<string>();
 
-            
+
             foreach (var entitieP in (entities)?.Properties() ?? Enumerable.Empty<JProperty>())
             {
-                var entity = (JObject)entitieP.Value;
+                var entity = (JObject) entitieP.Value;
 
                 SetRequiredProps(entity, entitieP.Name);
 
-                await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges,  entity);
+                await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entity);
 
             }
 
@@ -205,8 +205,8 @@ namespace EAVFW.Extensions.Manifest.SDK
                     var reverse = polyLookup.Value.SelectToken("$.type.reverse")?.ToObject<bool>() ?? false;
                     var inline = polyLookup.Value.SelectToken("$.type.inline")?.ToObject<bool>() ?? false;
                     var split = polyLookup.Value.SelectToken("$.type.split")?.ToObject<bool>() ?? false;
-                       
-                    
+
+
 
                     if (split)
                     {
@@ -238,16 +238,16 @@ namespace EAVFW.Extensions.Manifest.SDK
                                         {
                                             type = "lookup",
                                             referenceType = entitieP.Name,
-                                            index = new { unique=true},
+                                            index = new { unique = true },
                                             cascade = new
                                             {
-                                                delete= "cascade"
+                                                delete = "cascade"
                                             }
                                         }
                                     }
                                 }
                             });
-                            
+
                             SetRequiredProps(entities[key] as JObject, key);
 
                             await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entities[key] as JObject);
@@ -272,7 +272,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                                 }
                                 polyLookup.Value["type"]["type"] = "polylookup";
-                               
+
                                 //   polyLookup.Remove();
                             }
                             else
@@ -330,7 +330,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                         }
                         else
                         {
-                            
+
 
                             await EnrichEntity(jsonraw, customizationprefix, logger, insertMerges, entitieP.Value as JObject);
                         }
@@ -356,33 +356,33 @@ namespace EAVFW.Extensions.Manifest.SDK
                             throw new KeyNotFoundException($"The lookup entity does not exists: '{attr["type"]["referenceType"]}'");
                         case "lookup":
 
-                            
-                                var columns = jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].attributes").OfType<JProperty>()
-                                        .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT")}'].attributes").OfType<JProperty>())
-                                        .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC")}'].attributes").OfType<JProperty>())
-                                        .GroupBy(k => k.Name).Select(g => g.First())
-                                        .ToArray();
 
-                                var principalTable = jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].logicalName").ToString();
-                                var principalColumn = columns
-                                        .FirstOrDefault(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
-                                        ?.Value.SelectToken("$.logicalName").ToString()
-                                        ?? throw new InvalidOperationException($"Cant find principalColumn for lookup {entitieP.Name}.{attributeDefinition.Name}"); ;
-                            
-                                var principalNameColumn = columns
-                                        .FirstOrDefault(a => a.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false)
-                                        ?.Value.SelectToken("$.logicalName").ToString()
-                                        ?? throw new InvalidOperationException($"Cant find principalNameColumn for lookup {entitieP.Name}.{attributeDefinition.Name}");
-                                
-                                attr["type"]["foreignKey"] = JToken.FromObject(new
-                                {
-                                    principalTable = principalTable,
-                                    principalColumn = principalColumn,
-                                    principalNameColumn = principalNameColumn,
-                                    name = TrimId(attr.SelectToken("$.logicalName")?.ToString()) // jsonraw.SelectToken($"$.entities['{ attr["type"]["referenceType"] }'].logicalName").ToString().Replace(" ", ""),
-                                });
+                            var columns = jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].attributes").OfType<JProperty>()
+                                    .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPT")}'].attributes").OfType<JProperty>())
+                                    .Concat(jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC") == null ? Enumerable.Empty<JProperty>() : jsonraw.SelectToken($"$.entities['{jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].TPC")}'].attributes").OfType<JProperty>())
+                                    .GroupBy(k => k.Name).Select(g => g.First())
+                                    .ToArray();
 
-                            
+                            var principalTable = jsonraw.SelectToken($"$.entities['{attr["type"]["referenceType"]}'].logicalName").ToString();
+                            var principalColumn = columns
+                                    .FirstOrDefault(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false)
+                                    ?.Value.SelectToken("$.logicalName").ToString()
+                                    ?? throw new InvalidOperationException($"Cant find principalColumn for lookup {entitieP.Name}.{attributeDefinition.Name}"); ;
+
+                            var principalNameColumn = columns
+                                    .FirstOrDefault(a => a.Value.SelectToken("$.isPrimaryField")?.ToObject<bool>() ?? false)
+                                    ?.Value.SelectToken("$.logicalName").ToString()
+                                    ?? throw new InvalidOperationException($"Cant find principalNameColumn for lookup {entitieP.Name}.{attributeDefinition.Name}");
+
+                            attr["type"]["foreignKey"] = JToken.FromObject(new
+                            {
+                                principalTable = principalTable,
+                                principalColumn = principalColumn,
+                                principalNameColumn = principalNameColumn,
+                                name = TrimId(attr.SelectToken("$.logicalName")?.ToString()) // jsonraw.SelectToken($"$.entities['{ attr["type"]["referenceType"] }'].logicalName").ToString().Replace(" ", ""),
+                            });
+
+
                             break;
                         case "float":
                         case "decimal":
@@ -572,7 +572,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             {
                 var entity = qque.Dequeue();
 
-                var tpt = entity.Value.SelectToken("$.TPT")?.ToString() ?? entity.Value.SelectToken("$.TPC")?.ToString(); 
+                var tpt = entity.Value.SelectToken("$.TPT")?.ToString() ?? entity.Value.SelectToken("$.TPC")?.ToString();
                 if (!string.IsNullOrEmpty(tpt))
                 {
                     var baseentity = jsonraw.SelectToken($"$.entities['{tpt}']").Parent as JProperty;
@@ -615,10 +615,10 @@ namespace EAVFW.Extensions.Manifest.SDK
                         type = JToken.FromObject(new
                         {
                             type = "object",
-                           properties=new
-                           {
+                            properties = new
+                            {
 
-                           }
+                            }
                         });
                         return true;
                     case "binary":
@@ -653,7 +653,7 @@ namespace EAVFW.Extensions.Manifest.SDK
                         type = "boolean";
                         return true;
                     case "lookup":
-                   
+
 
                         var foreignTable = jsonraw.SelectToken($"$.entities['{attrType.SelectToken("$.referenceType")}']");
                         var fatAttributes = foreignTable.SelectToken("$.attributes");
@@ -732,10 +732,10 @@ namespace EAVFW.Extensions.Manifest.SDK
 
                     foreach (var attr in (entityValue.SelectToken("$.attributes") as JObject)?.Properties() ?? Enumerable.Empty<JProperty>())
                     {
-                        if(!(attr.Value is JObject attrValue)) continue;
-                        
+                        if (!(attr.Value is JObject attrValue)) continue;
+
                         var attrType = attrValue.SelectToken("$.type");
-                       
+
                         if (!ConvertToSchemaType(attrType, out var type)) continue;
 
                         var propValues = new JObject();

@@ -1,4 +1,4 @@
-﻿namespace EAVFramework.Shared.V2
+namespace EAVFramework.Shared.V2
 {
     public interface IDynamicModelBuilder
     {

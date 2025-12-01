@@ -15,13 +15,13 @@ namespace EAVFW.Extensions.Manifest.SDK
         public string TPC { get; set; }
 
         [JsonProperty("pluralName")]
-        [JsonPropertyName("pluralName")] 
+        [JsonPropertyName("pluralName")]
         public string PluralName { get; set; }
 
         [JsonProperty("collectionSchemaName")]
         [JsonPropertyName("collectionSchemaName")]
         public string CollectionSchemaName { get; set; }
-       
+
         [JsonProperty("logicalName")]
         [JsonPropertyName("logicalName")]
         public string LogicalName { get; set; }
@@ -30,11 +30,11 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("description")]
         [JsonProperty("description")]
         public string Description { get; set; }
-        
+
         [JsonPropertyName("attributes")]
         [JsonProperty("attributes")]
         public Dictionary<string, AttributeDefinitionBase> Attributes { get; set; }
-        
+
         [JsonPropertyName("wizards")]
         [JsonProperty("wizards")]
         public Dictionary<string, WizardDefinition> Wizards { get; set; }
@@ -72,7 +72,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
 
         [JsonPropertyName("abstract")]
-        [JsonProperty("abstract")]  
+        [JsonProperty("abstract")]
         public bool? Abstract { get; set; }
 
         [JsonPropertyName("mappingStrategy")]

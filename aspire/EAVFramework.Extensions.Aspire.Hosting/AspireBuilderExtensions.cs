@@ -284,7 +284,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
            ProjectResource project, string host) : IDistributedApplicationLifecycleHook
         {
 
-            public async Task AfterResourcesCreatedAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
+            public Task AfterResourcesCreatedAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
             {
                 var _ = Task.Run(async () =>
                 {
@@ -296,7 +296,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             if (update.Resource == project && update.Snapshot.Urls.Any(x => new Uri(x.Url).Host == "localhost"))
                             {
                                 var endpoints = project.Annotations.OfType<EndpointAnnotation>().ToImmutableArray();
-                                
+
                                 await resourceNotificationService.PublishUpdateAsync(project,
                                         state => state = state with
                                         {
@@ -314,8 +314,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         }
                     }
                 });
-
-
+                return Task.CompletedTask;
             }
         }
 
@@ -456,12 +455,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
             var project = builder.AddProject<TProject>(name, launchProfile)
-                  .WithUrlForEndpoint("https", u => u.DisplayText = "EAV Dev Portal"); 
+                  .WithUrlForEndpoint("https", u => u.DisplayText = "EAV Dev Portal");
 
             var workingDirectory = PathNormalizer.NormalizePathForCurrentPlatform(Path.Combine(builder.AppHostDirectory, "../.."));
 
             var metadata = project.Resource.GetProjectMetadata();
-           
+
             if (!string.IsNullOrEmpty(npmBuildCommand))
             {
                 var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
@@ -470,9 +469,12 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
                 var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
-                    .WithInitialState(new CustomResourceSnapshot { ResourceType = "EAV Build",
+                    .WithInitialState(new CustomResourceSnapshot
+                    {
+                        ResourceType = "EAV Build",
                         State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
-                        Properties = [] });
+                        Properties = []
+                    });
 
                 if (hash == oldhash)
                     build.WithAnnotation(new NeedsCompletedAnnotation());
@@ -546,25 +548,25 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
             builder.WithAnnotation(new TargetDatabaseResourceAnnotation(target.Resource.Name, target.Resource)
             {
-                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, SystemUsersTableName = systemUsersTableName, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ","")
+                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, SystemUsersTableName = systemUsersTableName, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ", "")
             }, ResourceAnnotationMutationBehavior.Replace);
             return builder;
         }
-        public static IResourceBuilder<T> WithSigninUrl<T>(this IResourceBuilder<T> builder, IResourceBuilder<EAVFWModelProjectResource> model, IResourceBuilder<ProjectResource> project=null)
-            where T:Resource
+        public static IResourceBuilder<T> WithSigninUrl<T>(this IResourceBuilder<T> builder, IResourceBuilder<EAVFWModelProjectResource> model, IResourceBuilder<ProjectResource> project = null)
+            where T : Resource
         {
-            model.WithAnnotation(new CreateSigninUrlAnnotation(builder.Resource,project?.Resource??builder.Resource as IResource));
+            model.WithAnnotation(new CreateSigninUrlAnnotation(builder.Resource, project?.Resource ?? builder.Resource as IResource));
             return builder;
         }
         public static IResourceBuilder<EAVFWModelProjectResource> WithSinginToken<TContext, TIdentity, TSignin>(
-          
-            this IResourceBuilder<EAVFWModelProjectResource> builder, Action<IServiceCollection> services = null, Action<SqlServerDbContextOptionsBuilder> sql=null)
+
+            this IResourceBuilder<EAVFWModelProjectResource> builder, Action<IServiceCollection> services = null, Action<SqlServerDbContextOptionsBuilder> sql = null)
             where TContext : DynamicContext
             where TIdentity : DynamicEntity, IIdentity
             where TSignin : DynamicEntity, ISigninRecord, new()
         {
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
-            builder.WithAnnotation< CreateSigninTokenAnnotation>(new CreateSigninTokenAnnotation<TContext, TIdentity, TSignin>(builder.Resource)
+            builder.WithAnnotation<CreateSigninTokenAnnotation>(new CreateSigninTokenAnnotation<TContext, TIdentity, TSignin>(builder.Resource)
             {
                 ServiceCollectionExtender = services,
                 SqlExtender = sql,

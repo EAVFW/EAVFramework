@@ -31,29 +31,29 @@ using System.IO;
 
 namespace EAVFramework.Extensions
 {
-    
-   
+
+
     public class OnAuthenticateRequest
     {
-        public string CallbackUrl { get; set; } 
+        public string CallbackUrl { get; set; }
         public HttpContext HttpContext { get; set; }
         public IServiceProvider ServiceProvider { get; set; }
         public Guid HandleId { get; set; }
-        public Guid? IdentityId { get;  set; }
-        
+        public Guid? IdentityId { get; set; }
+
         public Configuration.AuthenticationOptions Options { get; set; }
-        public string Email { get;  set; }
+        public string Email { get; set; }
     }
     public class OnCallbackRequest
     {
         public HttpContext HttpContext { get; set; }
         public Configuration.AuthenticationOptions Options { get; set; }
-        public Guid HandleId { get;  set; }
-       
-        public string RedirectUri { get;  set; }
-        public Dictionary<string, StringValues> Ticket { get;  set; }
-        public Guid? IdentityId { get;  set; }
-        public Dictionary<string, StringValues> Props { get;  set; }
+        public Guid HandleId { get; set; }
+
+        public string RedirectUri { get; set; }
+        public Dictionary<string, StringValues> Ticket { get; set; }
+        public Guid? IdentityId { get; set; }
+        public Dictionary<string, StringValues> Props { get; set; }
     }
 
 
@@ -61,14 +61,14 @@ namespace EAVFramework.Extensions
     {
         public Guid HandleId { get; set; }
         public string Link { get; set; }
-        public bool IsNew { get;  set; }
+        public bool IsNew { get; set; }
     }
 
     public interface IPasswordLessLinkGenerator
     {
         Task<LinkResult> GenerateLink(Guid identityId, IDictionary<string, StringValues> state, string targetUrlOrPath, Guid handleId = default);
     }
-    public class PasswordLessLinkGenerator<TContext,TSignin> : IPasswordLessLinkGenerator
+    public class PasswordLessLinkGenerator<TContext, TSignin> : IPasswordLessLinkGenerator
           where TContext : DynamicContext
          where TSignin : DynamicEntity, ISigninRecord, new()
 
@@ -85,7 +85,7 @@ namespace EAVFramework.Extensions
             _ticketStore = ticketStore;
             _serviceProvider = serviceProvider;
         }
-        public async Task<LinkResult> GenerateLink(Guid identityId, IDictionary<string,StringValues> state, string targetUrlOrPath, Guid handleId=default)
+        public async Task<LinkResult> GenerateLink(Guid identityId, IDictionary<string, StringValues> state, string targetUrlOrPath, Guid handleId = default)
         {
             if (handleId != default)
             {
@@ -108,7 +108,7 @@ namespace EAVFramework.Extensions
             }
 
             var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
-                           Encoding.UTF8.GetBytes(string.Join("&", state.SelectMany(k=> k.Value.Select(v=> $"{k.Key}={v}")))));
+                           Encoding.UTF8.GetBytes(string.Join("&", state.SelectMany(k => k.Value.Select(v => $"{k.Key}={v}")))));
 
 
             await _ticketStore.PersistTicketAsync(new PersistTicketRequest
@@ -123,7 +123,7 @@ namespace EAVFramework.Extensions
                 OwnerIdentity = _option.Value.SystemAdministratorIdentity
             });
 
-          
+
 
             return new LinkResult { Link = CreateCallabckUrl(handleId), HandleId = handleId, IsNew = true };
         }
@@ -146,7 +146,7 @@ namespace EAVFramework.Extensions
         public static IEndpointRouteBuilder AddEasyAuth(
             this IEndpointRouteBuilder endpoints,
             AuthenticationProperties authenticationProperties = null)
-         
+
         {
             var authProps = authenticationProperties ?? new AuthenticationProperties();
             return MapAuthEndpoints(endpoints, authProps);
@@ -155,7 +155,7 @@ namespace EAVFramework.Extensions
         private static IEndpointRouteBuilder MapAuthEndpoints(
             IEndpointRouteBuilder endpoints,
             AuthenticationProperties authProps)
-             
+
         {
             var sp = endpoints.ServiceProvider;
             var metrics = sp.GetService<EAVMetrics>();
@@ -169,21 +169,21 @@ namespace EAVFramework.Extensions
                 //https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
                 var authUrl = $"/.auth/login/{auth.AuthenticationName}";
 
-                endpoints.MapGet(authUrl, async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore,[FromQuery] string redirectUri, [FromQuery] string email) =>
+                endpoints.MapGet(authUrl, async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore, [FromQuery] string redirectUri, [FromQuery] string email) =>
                 {
                     var logger = loggerFactory.CreateLogger($"EAVFW.Auth.{auth.AuthenticationName}");
-                    
+
                     metrics?.StartSignup(auth.AuthenticationName);
 
                     var handleId = await options.Authentication.GenerateHandleId(httpcontext.RequestServices);
                     var identityId = await options.Authentication.FindIdentity(new UserDiscoveryRequest { Email = email, HttpContext = httpcontext, ServiceProvider = httpcontext.RequestServices });
 
                     if (auth.UseTicketStore)
-                    {    
+                    {
                         var ticket = CryptographyHelpers.Encrypt(handleId.ToString("N").Sha512(), handleId.ToString("N").Sha1(),
-                            Encoding.UTF8.GetBytes( httpcontext.Request.QueryString.Value?.TrimStart('?')));
+                            Encoding.UTF8.GetBytes(httpcontext.Request.QueryString.Value?.TrimStart('?')));
 
-                   
+
                         await ticketStore.PersistTicketAsync(new PersistTicketRequest
                         {
                             HandleId = handleId,
@@ -205,7 +205,7 @@ namespace EAVFramework.Extensions
                     {
                         Options = options.Authentication,
                         ServiceProvider = httpcontext.RequestServices,
-                        HttpContext = httpcontext, 
+                        HttpContext = httpcontext,
                         CallbackUrl = callbackUrl,
                         HandleId = handleId,
                         IdentityId = identityId,
@@ -215,7 +215,7 @@ namespace EAVFramework.Extensions
 
                     if (!result.Success)
                     {
-                       
+
 
                         var redirectUrl = callbackUrl + $"{(callbackUrl.Contains('?') ? "&" : "?")}error={result.ErrorCode}&error_message={result.ErrorMessage}&error_subcode={result.ErrorSubCode}";
 
@@ -224,13 +224,13 @@ namespace EAVFramework.Extensions
                         httpcontext.Response.Redirect(redirectUrl);
                     }
 
-                  //  await requestDelegate(httpcontext);
+                    //  await requestDelegate(httpcontext);
                 }).WithMetadata(new AllowAnonymousAttribute());
 
                 endpoints.MapMethods(
                     $"{authUrl}/callback",
                     new[] { auth.CallbackHttpMethod.ToString().ToUpperInvariant() },
-                    async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore, [FromQuery] string error, [FromQuery] string error_message, [FromQuery]string error_subcode) =>
+                    async (HttpContext httpcontext, [FromServices] IEAVFrameworkTicketStore ticketStore, [FromQuery] string error, [FromQuery] string error_message, [FromQuery] string error_subcode) =>
                     {
 
                         /**
@@ -251,10 +251,11 @@ namespace EAVFramework.Extensions
                          * Create a callback request object to pass to the auth provider
                          * 
                          */
-                        var request = new OnCallbackRequest{
+                        var request = new OnCallbackRequest
+                        {
                             HttpContext = httpcontext,
                             Options = options.Authentication,
-                            Props = new Dictionary<string, StringValues>( httpcontext.Request.Query, StringComparer.OrdinalIgnoreCase)
+                            Props = new Dictionary<string, StringValues>(httpcontext.Request.Query, StringComparer.OrdinalIgnoreCase)
                         };
                         /**
                          * The authprovider will by default populate the handleid from the
@@ -263,14 +264,14 @@ namespace EAVFramework.Extensions
                          * Providers can override this method to populate the handleid from alternative places.
                          */
                         await auth.PopulateCallbackRequest(request);
-                        
+
 
                         /**
                          * If the handleid is not set, we will not populate redirect, 
                          * identity from ticket store and go directly to the oncallback
                          * on the provider.
                          */
-                        if(request.HandleId != default)
+                        if (request.HandleId != default)
                         {
                             var ticketinfo = await ticketStore.GetTicketInfoAsync(new UnPersistTicketReuqest
                             {
@@ -287,7 +288,7 @@ namespace EAVFramework.Extensions
 
 
                         }
-                         
+
                         var result = await auth.OnCallback(request);
 
                         /**
@@ -300,7 +301,7 @@ namespace EAVFramework.Extensions
                             httpcontext.Response.Redirect(
                                 $"{httpcontext.Request.PathBase}/account/login/callback?provider={auth.AuthenticationName}&error={result.ErrorCode}&error_message={result.ErrorMessage}&error_subcode={result.ErrorSubCode}");
 
-                           
+
                             return;
                         }
 
@@ -310,23 +311,23 @@ namespace EAVFramework.Extensions
                          * this is the the state stored for the account callback endpoint to retrieve and finally 
                          * sign in the user properly.
                          */
-                      
+
                         await httpcontext.SignInAsync(Constants.ExternalCookieAuthenticationScheme,
                             result.Principal, new AuthenticationProperties(
-                                
+
                                 new Dictionary<string, string>
                                 {
                                     ["handleId"] = request.HandleId.ToString(),
                                     ["callbackUrl"] = request.RedirectUri,
                                     ["schema"] = auth.AuthenticationName
                                 })
-                            { 
-                                 RedirectUri = request.RedirectUri
+                            {
+                                RedirectUri = request.RedirectUri
                             });
 
                         httpcontext.Response.Redirect($"{httpcontext.Request.PathBase}/account/login/callback?provider{auth.AuthenticationName}");
 
-                     
+
 
 
                     }).WithMetadata(new AllowAnonymousAttribute());
@@ -386,17 +387,17 @@ namespace EAVFramework.Extensions
                 var handleId = string.Empty;
                 if (result.Properties.Items.ContainsKey("handleId"))
                 {
-                    handleId=result.Properties.Items["handleId"];
+                    handleId = result.Properties.Items["handleId"];
                 }
 
-                
+
 
                 if (result.Properties.Items.ContainsKey("schema"))
                 {
-                    provider=result.Properties.Items["schema"];
+                    provider = result.Properties.Items["schema"];
                 }
-                
-                
+
+
 
                 // retrieve claims of the external user
                 var claims = externalUser.Claims.ToList();
@@ -414,8 +415,8 @@ namespace EAVFramework.Extensions
 
                 var externalUserId = userIdClaim.Value;
                 var externalProvider = userIdClaim.Issuer;
-                 
-                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser, claims, provider,  handleId);
+
+                await options.Authentication.PopulateAuthenticationClaimsAsync(httpcontext, externalUser, claims, provider, handleId);
 
                 var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, Constants.DefaultCookieAuthenticationScheme));
                 await httpcontext.SignInAsync(Constants.DefaultCookieAuthenticationScheme, principal,
@@ -429,10 +430,10 @@ namespace EAVFramework.Extensions
 
                 if (!string.IsNullOrWhiteSpace(result.Properties.RedirectUri))
                 {
-                 
+
                     httpcontext.Response.Redirect(result.Properties.RedirectUri);
                 }
-                else 
+                else
                 //TODO make better way to get that return url
                 if (httpcontext.Request.Cookies.TryGetValue(Constants.DefaultLoginRedirectCookie,
                     out string redirectUri))
@@ -454,7 +455,7 @@ namespace EAVFramework.Extensions
             {
                 // for now just take first authenticator
                 var auth = await context.AuthenticateAsync(Constants.DefaultCookieAuthenticationScheme);
-                
+
                 if (auth.Succeeded)
                 {
 
@@ -463,8 +464,8 @@ namespace EAVFramework.Extensions
                 }
                 else
                 {
-                        context.Response.StatusCode = 401;
-                        await context.Response.WriteJsonAsync(new { error = "Not Authenticated"});
+                    context.Response.StatusCode = 401;
+                    await context.Response.WriteJsonAsync(new { error = "Not Authenticated" });
 
                 }
             }).WithMetadata(new AllowAnonymousAttribute());
@@ -472,7 +473,7 @@ namespace EAVFramework.Extensions
             endpoints.MapGet("/.auth/logout", async httpcontext =>
             {
                 await httpcontext.SignOutAsync(Constants.DefaultCookieAuthenticationScheme);
-                
+
                 var impersonator = await httpcontext.AuthenticateAsync(Constants.ImpersonatorCookieAuthenticationSchema);
                 if (impersonator.Succeeded)
                 {
@@ -512,9 +513,9 @@ namespace EAVFramework.Extensions
 
 
             }).RequireAuthorization("ImpersonatedSigninPolicy");
-       
 
-                return endpoints;
+
+            return endpoints;
         }
     }
 }

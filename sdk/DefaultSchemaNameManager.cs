@@ -8,11 +8,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                 ?.Replace(" ", "")
                 .Replace(":", "_")
                 .Replace("/", "Or")
-                .Replace("&","And")
+                .Replace("&", "And")
                 .Replace("-", "")
                 .Replace("(", "")
                 .Replace(")", "")
-                .Replace(".","")
+                .Replace(".", "")
                 .Trim();
         }
     }

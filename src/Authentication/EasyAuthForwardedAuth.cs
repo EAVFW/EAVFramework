@@ -22,19 +22,19 @@ namespace EAVFramework.Authentication
             {
                 this.Logger.LogWarning("No EasyAuth UserID provided");
             }
-            
+
             var claims = (hasHeader
                             ? new[]
                             {
                                 new Claim("sub", Context.Request.Headers[Options.HeaderName])
                             }
-                            : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix, System.StringComparison.OrdinalIgnoreCase ))
+                            : new Claim[0]).Concat(Context.Request.Headers.Where(h => h.Key.StartsWith(Options.HeaderPrefix, System.StringComparison.OrdinalIgnoreCase))
                             .Select(k => new Claim(k.Key.Substring(Options.HeaderPrefix.Length), k.Value)));
 
             this.Logger.LogInformation("Handle EasyAuthForwardedAuth: {Prefix}" +
-                " {Headers} {Claims}", 
+                " {Headers} {Claims}",
                 Options.HeaderPrefix,
-                string.Join("|", Context.Request.Headers.Select(x=>$"{x.Key}: {x.Value}")),
+                string.Join("|", Context.Request.Headers.Select(x => $"{x.Key}: {x.Value}")),
                 string.Join("|", claims.Select(x => $"{x.Type}: {x.Value}")));
 
             return Task.FromResult(AuthenticateResult.Success(
@@ -44,5 +44,5 @@ namespace EAVFramework.Authentication
                        , Scheme.Name)));
         }
     }
- 
+
 }

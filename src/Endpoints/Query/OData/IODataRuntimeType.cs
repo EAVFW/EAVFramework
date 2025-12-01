@@ -1,4 +1,4 @@
-﻿namespace EAVFramework.Endpoints.Query.OData
+namespace EAVFramework.Endpoints.Query.OData
 {
     public interface IODataRuntimeType
     {

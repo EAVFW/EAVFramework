@@ -1,4 +1,4 @@
-﻿using EAVFramework.Events;
+using EAVFramework.Events;
 using EAVFramework.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -19,7 +19,7 @@ namespace EAVFramework.Hosting
     //    {
     //        _next = next;
     //    }
-       
+
     //    public async Task InvokeAsync(HttpContext context, IEndpointRouter<TContext> endpointRouter)
     //    {
     //        var endpointFeature = context.Features[typeof(Microsoft.AspNetCore.Http.Features.IEndpointFeature)]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -16,6 +16,6 @@ namespace EAVFramework.Shared.V2
         void WriteLambdaExpression(ModuleBuilder builder, ILGenerator il, Type clrType, params MethodInfo[] getters);
         void CreateTableImpl(string entityCollectionName, string schema, Type columnsCLRType, MethodBuilder columsMethod, MethodBuilder ConstraintsMethod, ILGenerator UpMethodIL);
         void AddForeignKey(string EntityCollectionSchemaName, string schema, ILGenerator UpMethodIL, DynamicPropertyBuilder dynamicPropertyBuilder);
-           
+
     }
 }

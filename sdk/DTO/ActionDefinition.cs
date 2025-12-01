@@ -7,7 +7,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         [JsonPropertyName("text")] public string Text { get; set; }
         [JsonPropertyName("workflow")] public string Workflow { get; set; }
-        
+
         /// <summary>
         /// Exclusively used to capture non-spec items
         /// </summary>

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace EAVFramework.Validation
 {
@@ -14,9 +14,9 @@ namespace EAVFramework.Validation
                 {
                     Error = $"Minimum length is {minLength}",
                     Code = "err-minLength",
-                    ErrorArgs = new object[] {minLength}
+                    ErrorArgs = new object[] { minLength }
                 };
-                
+
                 return false;
             }
 
@@ -27,9 +27,9 @@ namespace EAVFramework.Validation
                 {
                     Error = $"Maximum length is {maxLength}",
                     Code = "err-maxLength",
-                    ErrorArgs = new object[] {maxLength}
+                    ErrorArgs = new object[] { maxLength }
                 };
-                
+
                 return false;
             }
 

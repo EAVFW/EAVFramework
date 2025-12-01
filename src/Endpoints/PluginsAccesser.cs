@@ -1,4 +1,4 @@
-﻿using EAVFramework.Plugins;
+using EAVFramework.Plugins;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace EAVFramework.Endpoints
 {
     public class PluginsAccesser<TContext> : IEnumerable<EntityPlugin>
-        where TContext: DynamicContext
+        where TContext : DynamicContext
     {
         private readonly IOptions<DynamicContextOptions> modelOptions;
 
@@ -18,9 +18,9 @@ namespace EAVFramework.Endpoints
             this.modelOptions = modelOptions;
 
             _plugins = plugins.OrderBy(x => x.Order)
-                .Where(x=>x is EntityPlugin<TContext> &&  IsPluginEnabled( x.Handler))               
+                .Where(x => x is EntityPlugin<TContext> && IsPluginEnabled(x.Handler))
                 .ToArray();
-           
+
         }
         internal bool IsPluginEnabled(Type handler)
         {

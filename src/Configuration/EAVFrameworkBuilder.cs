@@ -50,7 +50,7 @@ namespace EAVFramework.Configuration
 
         public IEAVFrameworkBuilder WithMetrics()
         {
- 
+
             Services.AddSingleton<EAVMetrics>();
 
 

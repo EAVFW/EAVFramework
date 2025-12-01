@@ -37,8 +37,8 @@ namespace EAVFramework.Configuration
         /// The redirect url to use when the signin session is completed
         /// </summary>
         public string RedirectUrl { get; set; }
-        public string AuthProvider { get;  set; }
-        public ClaimsPrincipal OwnerIdentity { get;  set; }
+        public string AuthProvider { get; set; }
+        public ClaimsPrincipal OwnerIdentity { get; set; }
     }
     public class TicketInformation
     {
@@ -51,7 +51,7 @@ namespace EAVFramework.Configuration
         /// The redirect url to use when the signin session is completed
         /// </summary>
         public string RedirectUrl { get; set; }
-        public Guid IdentityId { get;  set; }
+        public Guid IdentityId { get; set; }
     }
 
     public class UserDiscoveryRequest
@@ -61,7 +61,7 @@ namespace EAVFramework.Configuration
         /// </summary>
         public HttpContext HttpContext { get; set; }
 
-        public IServiceProvider ServiceProvider { get; set; }   
+        public IServiceProvider ServiceProvider { get; set; }
 
         public string Email { get; set; }
 
@@ -108,7 +108,7 @@ namespace EAVFramework.Configuration
         /// </summary>
         public Func<UserDiscoveryRequest, Task<Guid?>> FindIdentity { get; set; }
 
-   
+
         public Func<EmailDiscoveryRequest, Task<string>> FindEmailFromIdentity { get; set; }
 
 
@@ -141,17 +141,17 @@ namespace EAVFramework.Configuration
         /// </value>
         public bool RequireAuthenticatedUserForSignOutMessage { get; set; } = false;
 
-        public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
+        public Func<HttpContext, ClaimsPrincipal, List<Claim>, string, string, ValueTask> PopulateAuthenticationClaimsAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
 
         public Func<IServiceProvider, ValueTask<Guid>> GenerateHandleId { get; set; } = DefaultHandleIdGenerator;
 
-        private static ValueTask<Guid> DefaultHandleIdGenerator(IServiceProvider serviceProvider) => new ValueTask<Guid>( CryptographyHelpers.CreateCryptographicallySecureGuid());
-     
-
-        public Func<HttpContext, ClaimsPrincipal, List<Claim>,string, string,ValueTask> OnAuthenticatedAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
+        private static ValueTask<Guid> DefaultHandleIdGenerator(IServiceProvider serviceProvider) => new ValueTask<Guid>(CryptographyHelpers.CreateCryptographicallySecureGuid());
 
 
-        static internal ValueTask DefaultPopulateAuthenticationClaimsAsync(HttpContext http, ClaimsPrincipal principal, List<Claim> claims,string provider, string handleid) => default;
+        public Func<HttpContext, ClaimsPrincipal, List<Claim>, string, string, ValueTask> OnAuthenticatedAsync { get; set; } = DefaultPopulateAuthenticationClaimsAsync;
+
+
+        static internal ValueTask DefaultPopulateAuthenticationClaimsAsync(HttpContext http, ClaimsPrincipal principal, List<Claim> claims, string provider, string handleid) => default;
 
         /// <summary>
         /// Gets or sets the name of the cookie used for the check session endpoint.

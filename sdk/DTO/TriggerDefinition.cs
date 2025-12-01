@@ -7,7 +7,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         [JsonPropertyName("form")] public string Form { get; set; }
 
-     //   [JsonPropertyName("ribbon")] public string Ribbon { get; set; }
+        //   [JsonPropertyName("ribbon")] public string Ribbon { get; set; }
 
         /// <summary>
         /// Exclusively used to capture non-spec items

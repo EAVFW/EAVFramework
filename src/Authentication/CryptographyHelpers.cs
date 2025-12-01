@@ -74,7 +74,7 @@ namespace EAVFramework.Authentication
             var key = new byte[16];
             var iv = new byte[16];
 
-            var derive_bytes = new Rfc2898DeriveBytes(password, ToByteArray(salt),1000, HashAlgorithmName.SHA1);
+            var derive_bytes = new Rfc2898DeriveBytes(password, ToByteArray(salt), 1000, HashAlgorithmName.SHA1);
             key = derive_bytes.GetBytes(symmetricAlgorithm.KeySize / bits);
             iv = derive_bytes.GetBytes(symmetricAlgorithm.BlockSize / bits);
 

@@ -130,10 +130,10 @@ namespace EAVFramework.Shared.V2
             var principalSchema = dynamicPropertyBuilder.ReferenceType.Schema; // manifest.SelectToken($"$.entities['{entityName}'].schema")?.ToString() ?? options.Schema ?? "dbo";
             var principalTable = dynamicPropertyBuilder.ReferenceType.CollectionSchemaName;// manifest.SelectToken($"$.entities['{entityName}'].pluralName").ToString().Replace(" ", "");
             var principalColumn = dynamicPropertyBuilder.ReferenceType.Properties.Single(p => p.IsPrimaryKey).SchemaName; //  manifest.SelectToken($"$.entities['{entityName}'].attributes").OfType<JProperty>()
-               // .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false).Name.Replace(" ", "");
+                                                                                                                          // .Single(a => a.Value.SelectToken("$.isPrimaryKey")?.ToObject<bool>() ?? false).Name.Replace(" ", "");
 
-            var onDeleteCascade = dynamicPropertyBuilder.OnDeleteCascade  ?? options.ReferentialActionNoAction;
-            var onUpdateCascade = dynamicPropertyBuilder .OnUpdateCascade ?? options.ReferentialActionNoAction;
+            var onDeleteCascade = dynamicPropertyBuilder.OnDeleteCascade ?? options.ReferentialActionNoAction;
+            var onUpdateCascade = dynamicPropertyBuilder.OnUpdateCascade ?? options.ReferentialActionNoAction;
 
             foreach (var arg1 in options.MigrationsBuilderAddForeignKey.GetParameters())
             {
@@ -148,8 +148,8 @@ namespace EAVFramework.Shared.V2
                     case "principalschema": UpMethodIL.Emit(OpCodes.Ldstr, principalSchema); break;
                     case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable); break;
                     case "principalcolumn": UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
-                    case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onUpdateCascade); break;
-                    case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onDeleteCascade); break;
+                    case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, (int) onUpdateCascade); break;
+                    case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, (int) onDeleteCascade); break;
 
                     default:
 
@@ -163,7 +163,7 @@ namespace EAVFramework.Shared.V2
             UpMethodIL.Emit(OpCodes.Pop);
         }
 
-      
+
 
         public void WriteLambdaExpression(ModuleBuilder builder, ILGenerator il, Type clrType, params MethodInfo[] getters)
         {
@@ -325,10 +325,10 @@ namespace EAVFramework.Shared.V2
 
                     if (properties.All(c => dynamicTableBuilder.AllPropsWithLookups.Contains(c)))
                     {
-                        
-                        var genericArgs = @interface.GetGenericArguments().Select((c, i) => GetTypeBuilderFromConstraint(c,dynamicTableBuilder)).ToArray();
 
-                     //   File.AppendAllLines("test1.txt", new[] { $"Generating Generic Interface: {@interface.Name}<{string.Join(",", genericArgs.Select(c=>c?.Name))}>", });
+                        var genericArgs = @interface.GetGenericArguments().Select((c, i) => GetTypeBuilderFromConstraint(c, dynamicTableBuilder)).ToArray();
+
+                        //   File.AppendAllLines("test1.txt", new[] { $"Generating Generic Interface: {@interface.Name}<{string.Join(",", genericArgs.Select(c=>c?.Name))}>", });
                         var a = @interface.MakeGenericType(genericArgs);
 
                         dynamicTableBuilder.AddInterface(a);
@@ -373,7 +373,7 @@ namespace EAVFramework.Shared.V2
             }
         }
 
-        private Type GetTypeBuilderFromConstraint( Type constraint, DynamicTableBuilder dynamicTableBuilder)
+        private Type GetTypeBuilderFromConstraint(Type constraint, DynamicTableBuilder dynamicTableBuilder)
         {
             try
             {
@@ -392,7 +392,7 @@ namespace EAVFramework.Shared.V2
                     var entitykey = found.EntityKey ?? constraint.DeclaringType.GetCustomAttribute<EntityInterfaceAttribute>().EntityKey;
                     if (string.IsNullOrEmpty(found.AttributeKey))
                     {
-                        return dynamicTableBuilder.AddAsDependency( dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == entitykey)).Builder;
+                        return dynamicTableBuilder.AddAsDependency(dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == entitykey)).Builder;
                     }
 
                     var prop = dynamicTableBuilder.DynamicAssemblyBuilder.Tables.Values.FirstOrDefault(c => c.EntityKey == entitykey).Properties
@@ -408,18 +408,19 @@ namespace EAVFramework.Shared.V2
                 }
 
 
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
-                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name}",ex);
-               //throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
-               //     $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
+                throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name}", ex);
+                //throw new InvalidOperationException($"Failed to get builder from constraint: {constraint.Name} -" +
+                //     $" {string.Join(",", constraint.GetGenericParameterConstraints().Select(c=>$"{c.Name}<{string.Join(",", c.GetCustomAttributes<EntityInterfaceAttribute>().Select(cc=>cc.EntityKey))}>" ))}", ex);
             }
 
-          //  if (constraint.GetGenericParameterConstraints() is Type[] array && array.Length == 2 &&  array.Any(a=>a==))
-                
+            //  if (constraint.GetGenericParameterConstraints() is Type[] array && array.Length == 2 &&  array.Any(a=>a==))
+
             //if (!constraint.GetGenericParameterConstraints().Any())
             //{
-               
+
             //    if (found != null)
             //    {
             //        var entitykey = found.EntityKey ?? constraint.DeclaringType.GetCustomAttribute<EntityInterfaceAttribute>().EntityKey;
@@ -470,7 +471,7 @@ namespace EAVFramework.Shared.V2
             //}
             //  File.AppendAllLines("test1.txt", new[] { $"Inteface type: {constraint.DeclaringType.FullName} is Generic<{string.Join(",", constraint.GetGenericParameterConstraints().Select(p => p.Name))}>" });
             var constraints = constraint.GetGenericParameterConstraints().ToArray();
-            if (constraints.Length>1)
+            if (constraints.Length > 1)
             {
                 throw new Exception($"Multiple contraints found for {constraint?.ReflectedType?.Name}");
             }
@@ -480,7 +481,7 @@ namespace EAVFramework.Shared.V2
             if (@interface == typeof(DynamicEntity))
                 return typeof(DynamicEntity);
 
-            return GetTypeFromManifest(dynamicTableBuilder.DynamicAssemblyBuilder,@interface)?.Builder;
+            return GetTypeFromManifest(dynamicTableBuilder.DynamicAssemblyBuilder, @interface)?.Builder;
 
         }
         private DynamicTableBuilder GetTypeFromManifest(DynamicAssemblyBuilder assembly, Type @interface)
@@ -497,7 +498,7 @@ namespace EAVFramework.Shared.V2
                 throw new KeyNotFoundException($"Could not find schemaname on {entityKey}, {@interface.Name}");
             }
 
-            return schemaName; 
+            return schemaName;
         }
 
         public virtual void CreateJsonSerializationAttribute(PropertyBuilder attProp, string logicalName)

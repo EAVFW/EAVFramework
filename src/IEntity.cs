@@ -1,7 +1,7 @@
-﻿namespace EAVFramework
+namespace EAVFramework
 {
     public interface IEntity//<T>
     {
-      //  T Id { get; set; }
+        //  T Id { get; set; }
     }
 }

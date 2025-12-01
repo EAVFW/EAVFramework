@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace EAVFramework.Shared.V2
 
         public IEnumerable<Type> GetTypes() => Assemblies.Values.SelectMany(v => v.GetTypes());
 
-        public DynamicCodeService(CodeGenerationOptions options, 
+        public DynamicCodeService(CodeGenerationOptions options,
             IEmitPropertyService emitPropertyService = null,
              ILookupBuilder lookupPropertyBuilder = null,
              IChoiceEnumBuilder choiceEnumBuilder = null,
@@ -56,20 +56,20 @@ namespace EAVFramework.Shared.V2
                 ModuleBuilder myModule =
                   builder.DefineDynamicModule(moduleName + ".dll");
 
-                return new DynamicAssemblyBuilder(this, myModule, @namespace,moduleName);
+                return new DynamicAssemblyBuilder(this, myModule, @namespace, moduleName);
             });
         }
 
         internal Type FindParentClasses(string entityKey, string[] allProps)
         {
-           return
-                Options.DTOBaseClasses.FirstOrDefault(dto => dto.GetCustomAttributes<BaseEntityAttribute>().Any(att => att?.EntityKey == entityKey)) ??
-                Options.DTOBaseClasses
-                    .Where(dto => dto.GetCustomAttributes<BaseEntityAttribute>(false).Any(attr => string.IsNullOrEmpty(attr.EntityKey)))
-                    .Concat(new[] { typeof(DynamicEntity) })
-                    .Where(c => CompairProps(c, allProps))
-              .OrderByDescending(c => c.GetProperties().Length)
-              .First();
+            return
+                 Options.DTOBaseClasses.FirstOrDefault(dto => dto.GetCustomAttributes<BaseEntityAttribute>().Any(att => att?.EntityKey == entityKey)) ??
+                 Options.DTOBaseClasses
+                     .Where(dto => dto.GetCustomAttributes<BaseEntityAttribute>(false).Any(attr => string.IsNullOrEmpty(attr.EntityKey)))
+                     .Concat(new[] { typeof(DynamicEntity) })
+                     .Where(c => CompairProps(c, allProps))
+               .OrderByDescending(c => c.GetProperties().Length)
+               .First();
         }
 
         private bool CompairProps(Type c, string[] allProps)
@@ -85,7 +85,7 @@ namespace EAVFramework.Shared.V2
                 .Select(p => p.Name)
                 .ToList();
             return fk;
-           
+
         }
 
         internal void RemoveNamespace(string @namespace)
@@ -96,6 +96,6 @@ namespace EAVFramework.Shared.V2
             }
         }
 
-       
+
     }
 }

@@ -12,7 +12,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("entities")]
         [JsonProperty("entities")]
         public Dictionary<string, EntityDefinition> Entities { get; set; }
-       
+
         [JsonProperty("version")]
         [JsonPropertyName("version")]
         public string Version { get; set; }
@@ -51,7 +51,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         public AttributeObjectDefinition Target { get; set; }
         public string Key { get; set; }
         public MigrationEntityDefinition Entity { get; set; }
-        
+
         public bool HasCascadeChanges()
         {
 
@@ -66,9 +66,9 @@ namespace EAVFW.Extensions.Manifest.SDK
         }
         public bool HasChanged()
         {
-            if ((Source.IsRequired??false) != (Target.IsRequired??false))
+            if ((Source.IsRequired ?? false) != (Target.IsRequired ?? false))
                 return true;
-            if(Source.AttributeType.Type != Target.AttributeType.Type)
+            if (Source.AttributeType.Type != Target.AttributeType.Type)
                 return true;
             if (Source.AttributeType.MaxLength != Target.AttributeType.MaxLength)
                 return true;
@@ -98,11 +98,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                 if (Target.AttributeType.SqlOptions.Any(kv => Source.AttributeType.SqlOptions[kv.Key].Equals(kv.Value)))
                     return true;
             }
-          
 
 
-            
-             
+
+
+
             return false;
         }
     }
@@ -119,7 +119,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         public EntityDefinition Source { get; set; }
         public EntityDefinition Target { get; set; }
-        public MigrationDefinition MigrationDefinition { get;  set; }
+        public MigrationDefinition MigrationDefinition { get; set; }
 
 
 
@@ -180,8 +180,8 @@ namespace EAVFW.Extensions.Manifest.SDK
             return new MigrationEntityDefinition
             {
                 MigrationDefinition = this,
-                Source = (Source?.Entities.ContainsKey(entityKey) ??false) ? Source.Entities[entityKey] : null,
-                
+                Source = (Source?.Entities.ContainsKey(entityKey) ?? false) ? Source.Entities[entityKey] : null,
+
                 Target = Target.Entities[entityKey]
             };
         }
