@@ -313,7 +313,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                      
                     var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
                         File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
-                    
+
                     if (hash != oldhash)
                     {
 
@@ -334,14 +334,22 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             {
                                 logger.LogInformation($"Process exited with code {exitcode}");
                                 _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
-                                   state => state with { ExitCode = exitcode, State = state.State with { Text = exitcode == 0 ? KnownResourceStates.Finished: KnownResourceStates.Exited, Style = exitcode == 0? KnownResourceStateStyles.Success:KnownResourceStateStyles.Error } });
+                                   state => state with { ExitCode = exitcode, State = state.State with { Text = exitcode == 0 ? KnownResourceStates.Finished : KnownResourceStates.Exited, Style = exitcode == 0 ? KnownResourceStateStyles.Success : KnownResourceStateStyles.Error } });
 
-                              
 
-                                File.WriteAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt"), hash);
+                                try
+                                {
+                                    File.WriteAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt"), hash);
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogError(ex, "Failed to write build hash file");
+                                }
+
                             }
-
                         });
+                    
+
                     }
                     else
                     {
