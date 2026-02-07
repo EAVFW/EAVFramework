@@ -476,13 +476,10 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         Properties = []
                     });
 
-                if (hash == oldhash)
-                    build.WithAnnotation(new NeedsCompletedAnnotation());
-
-                project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource })
-                .Needs(build);
+                project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource });
 
                 build.WithParentRelationship(project);
+                project.WaitForCompletion(build);
             }
 
 
@@ -587,6 +584,135 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             builder.WithAnnotation(new NetTopologySuiteAnnotation(), ResourceAnnotationMutationBehavior.Replace);
             return builder;
+        }
+
+        /// <summary>
+        /// Configures the project resource to wait for the EAV model to complete and establishes a parent-child relationship.
+        /// </summary>
+        /// <typeparam name="T">The project resource type.</typeparam>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="modelBuilder">The EAV model resource builder to wait for.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithEAVModel(
+            this IResourceBuilder<ProjectResource> builder,
+            IResourceBuilder<EAVFWModelProjectResource> modelBuilder,
+            IResourceBuilder<SqlServerDatabaseResource> database)
+        {
+            // Add database reference
+            builder.WithReference(database, "ApplicationDB");
+
+            // Wait for the model to complete before starting the project
+            builder.WaitForCompletion(modelBuilder);
+
+            // Establish parent-child relationship (project is parent of model)
+            modelBuilder.WithParentRelationship(builder);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Creates and configures an EAV model for the project resource with full setup including database publishing and signin tokens.
+        /// </summary>
+        /// <typeparam name="TModel">The model project that contains the manifest.g.json file.</typeparam>
+        /// <typeparam name="TContext">The database context type.</typeparam>
+        /// <typeparam name="TIdentity">The identity type for signin tokens.</typeparam>
+        /// <typeparam name="TSignin">The signin type for signin tokens.</typeparam>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="modelName">The name for the model resource.</param>
+        /// <param name="database">The database resource to publish to.</param>
+        /// <param name="initialEmail">The initial user email address.</param>
+        /// <param name="initialIdentity">The initial user identity GUID.</param>
+        /// <param name="initialUsername">The initial username.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithEAVModel<TModel, TContext, TIdentity, TSignin>(
+            this IResourceBuilder<ProjectResource> builder,
+            string modelName,
+            IResourceBuilder<SqlServerDatabaseResource> database,
+            string initialEmail,
+            Guid initialIdentity,
+            string initialUsername)
+            where TModel : IProjectMetadata, new()
+            where TContext : DynamicContext
+            where TIdentity : DynamicEntity, IIdentity
+            where TSignin : DynamicEntity, ISigninRecord, new()
+        {
+            // Create the EAV model with full configuration
+            var modelBuilder = builder.ApplicationBuilder
+                .AddEAVFWModel<TModel>(modelName)
+                .PublishTo(database, initialEmail, initialIdentity, initialUsername)
+                .WithSinginToken<TContext, TIdentity, TSignin>();
+
+            // Use the simple overload to set up relationships
+            return builder.WithEAVModel(modelBuilder, database);
+        }
+
+        /// <summary>
+        /// Configures SMTP settings for the project using a mail server container resource.
+        /// Automatically extracts host and port from the mail server's SMTP endpoint.
+        /// </summary>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="mailServer">The mail server container resource (e.g., Mailpit, MailHog).</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithMailServer(
+            this IResourceBuilder<ProjectResource> builder,
+            IResourceBuilder<ContainerResource> mailServer)
+        {
+            // Configure SMTP using endpoint references
+            // GetEndpoint returns a ReferenceExpression that resolves at runtime
+            builder
+                .WithEnvironment("Smtp__Host", mailServer.GetEndpoint("smtp").Property(EndpointProperty.Host))
+                .WithEnvironment("Smtp__Port", mailServer.GetEndpoint("smtp").Property(EndpointProperty.Port))
+                .WithEnvironment("Smtp__Password", "")
+                .WithEnvironment("Smtp__Username", "")
+                .WithEnvironment("Smtp__EnableSsl", "false");
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a Mailpit container for local SMTP testing with web UI.
+        /// Mailpit provides a local SMTP server with a web interface for viewing sent emails during development.
+        /// </summary>
+        /// <param name="builder">The distributed application builder.</param>
+        /// <param name="name">The name of the mail server resource. Defaults to "mail-server".</param>
+        /// <param name="httpPort">The host port for the web UI. Defaults to null (random port) to avoid conflicts when running multiple projects.</param>
+        /// <param name="smtpPort">The host port for SMTP. Defaults to null (random port) to avoid conflicts when running multiple projects.</param>
+        /// <returns>The container resource builder for further configuration.</returns>
+        public static IResourceBuilder<ContainerResource> AddMailpit(
+            this IDistributedApplicationBuilder builder,
+            string name = "mail-server",
+            int? httpPort = null,
+            int? smtpPort = null)
+        {
+            return builder
+                .AddContainer(name, "axllent/mailpit")
+                .WithHttpEndpoint(httpPort, 8025, name: "http")
+                .WithEndpoint(smtpPort, 1025, name: "smtp")
+                .WithLifetime(ContainerLifetime.Persistent)
+                .WithUrlForEndpoint("http", u => u.DisplayText = "Read mail here");
+        }
+
+        /// <summary>
+        /// Adds a Mailpit container and configures the project to use it for SMTP.
+        /// This is a convenience method that combines AddMailpit() and WithMailServer() into one call.
+        /// Uses random ports by default to avoid conflicts when running multiple projects in parallel.
+        /// </summary>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="name">The name of the mail server resource. Defaults to "mail-server".</param>
+        /// <param name="httpPort">The host port for the web UI. Defaults to null (random port).</param>
+        /// <param name="smtpPort">The host port for SMTP. Defaults to null (random port).</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithMailPit(
+            this IResourceBuilder<ProjectResource> builder,
+            string name = "mail-server",
+            int? httpPort = null,
+            int? smtpPort = null)
+        {
+            // Add the Mailpit container to the application
+            var mailServer = builder.ApplicationBuilder.AddMailpit(name, httpPort, smtpPort);
+
+            // Configure this project to use the mail server
+            return builder.WithMailServer(mailServer);
         }
 
 

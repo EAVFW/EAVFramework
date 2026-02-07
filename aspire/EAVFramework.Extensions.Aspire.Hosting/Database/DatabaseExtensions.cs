@@ -11,6 +11,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.Identity.Client.Extensions.Msal;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -18,6 +19,10 @@ using System.Threading.Tasks;
 using Azure.Provisioning.Expressions;
 using Azure.Storage.Sas;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
+using static Aspire.Hosting.ApplicationModel.CommandResults;
+
+#pragma warning disable ASPIREINTERACTION001 // Interaction service is in preview
 
 namespace EAVFramework.Extensions.Aspire.Hosting.Database
 {
@@ -129,6 +134,165 @@ namespace EAVFramework.Extensions.Aspire.Hosting.Database
 
             return builder;
 
+        }
+
+        /// <summary>
+        /// Adds an interactive command to restore a BACPAC file to a SQL Server instance.
+        /// The command will prompt for BACPAC file path, database name, and overwrite option.
+        /// </summary>
+        /// <param name="builder">The SQL Server resource builder</param>
+        /// <param name="defaultDataDirectory">Optional default directory to search for BACPAC files. If null, uses "../data" relative to AppHost directory.</param>
+        /// <param name="defaultDatabaseName">Default database name for restore. Defaults to "sql-db".</param>
+        /// <param name="commandName">Custom command name. Defaults to "restore-bacpac".</param>
+        /// <param name="displayName">Custom display name. Defaults to "Restore BACPAC File".</param>
+        /// <param name="iconName">Custom icon name. Defaults to "DatabaseArrowDown".</param>
+        /// <returns>The SQL Server resource builder for chaining</returns>
+        public static IResourceBuilder<SqlServerServerResource> WithRestoreBacpacCommand(
+            this IResourceBuilder<SqlServerServerResource> builder,
+            string? defaultDataDirectory = null,
+            string defaultDatabaseName = "sql-db",
+            string commandName = "restore-bacpac",
+            string displayName = "Restore BACPAC File",
+            string iconName = "DatabaseArrowDown")
+        {
+            builder.WithCommand(
+                name: commandName,
+                displayName: displayName,
+                executeCommand: async context =>
+                {
+                    var interactionService = context.ServiceProvider
+                        .GetRequiredService<IInteractionService>();
+
+                    // Auto-detect BACPAC files in data directory
+                    var appHostDir = builder.ApplicationBuilder.AppHostDirectory;
+                    var dataDir = string.IsNullOrEmpty(defaultDataDirectory)
+                        ? Path.GetFullPath(Path.Combine(appHostDir, "..", "..", "data"))
+                        : Path.GetFullPath(defaultDataDirectory);
+
+                    string? defaultBacpacPath = null;
+
+                    if (Directory.Exists(dataDir))
+                    {
+                        var bacpacFiles = Directory.GetFiles(dataDir, "*.bacpac");
+                        if (bacpacFiles.Length > 0)
+                        {
+                            defaultBacpacPath = Path.GetFullPath(bacpacFiles[0]);
+                        }
+                    }
+
+                    // Prompt for inputs
+                    var inputs = new List<InteractionInput>
+                    {
+                        new()
+                        {
+                            Name = "FilePath",
+                            Label = "BACPAC File Path",
+                            InputType = InputType.Text,
+                            Required = true,
+                            Value = defaultBacpacPath,
+                            Placeholder = "/path/to/backup.bacpac"
+                        },
+                        new()
+                        {
+                            Name = "DatabaseName",
+                            Label = "Target Database Name",
+                            InputType = InputType.Text,
+                            Required = true,
+                            Value = defaultDatabaseName,
+                            Placeholder = defaultDatabaseName
+                        },
+                        new()
+                        {
+                            Name = "OverwriteExisting",
+                            Label = "Overwrite if database exists?",
+                            InputType = InputType.Boolean,
+                            Required = false,
+                            Value = "true"
+                        }
+                    };
+
+                    var result = await interactionService.PromptInputsAsync(
+                        title: "Restore BACPAC Database",
+                        message: "Specify the BACPAC file location and target database:",
+                        inputs: inputs);
+
+                    if (result.Canceled)
+                        return Canceled();
+
+                    var filePath = result.Data[0].Value;
+                    var databaseName = result.Data[1].Value;
+                    var overwrite = bool.Parse(result.Data[2].Value ?? "false");
+
+                    try
+                    {
+                        // Validate file exists
+                        if (!File.Exists(filePath))
+                        {
+                            return Failure($"File not found: {filePath}");
+                        }
+
+                        // Get the SQL Server connection string with the actual allocated endpoint
+                        var baseConnectionString = await builder.Resource.GetConnectionStringAsync(context.CancellationToken);
+
+                        if (string.IsNullOrEmpty(baseConnectionString))
+                        {
+                            return Failure("Could not get SQL Server connection string. Ensure SQL Server is running.");
+                        }
+
+                        // Modify connection string to connect to 'master' database for management operations
+                        var sqlBuilder = new SqlConnectionStringBuilder(baseConnectionString)
+                        {
+                            InitialCatalog = "master"
+                        };
+                        var connectionString = sqlBuilder.ConnectionString;
+
+                        // Check if database exists and handle overwrite
+                        if (overwrite)
+                        {
+                            using var checkConn = new SqlConnection(connectionString);
+                            await checkConn.OpenAsync(context.CancellationToken);
+                            using var cmd = checkConn.CreateCommand();
+                            cmd.CommandText = $@"
+                                IF EXISTS (SELECT name FROM sys.databases WHERE name = N'{databaseName}')
+                                BEGIN
+                                    ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                                    DROP DATABASE [{databaseName}];
+                                END";
+                            await cmd.ExecuteNonQueryAsync(context.CancellationToken);
+                        }
+
+                        // Use DacFx library to import the BACPAC
+                        using var bacPackage = Microsoft.SqlServer.Dac.BacPackage.Load(filePath);
+                        var dacServices = new Microsoft.SqlServer.Dac.DacServices(connectionString);
+
+                        // Optional: Subscribe to progress events for better UX
+                        dacServices.Message += (sender, e) =>
+                            Console.WriteLine($"[BACPAC Import] {e.Message.MessageType}: {e.Message.Message}");
+
+                        // Import with options
+                        var importOptions = new Microsoft.SqlServer.Dac.DacImportOptions
+                        {
+                            CommandTimeout = 0 // Unlimited timeout for large databases
+                        };
+
+                        dacServices.ImportBacpac(bacPackage, databaseName, importOptions, context.CancellationToken);
+
+                        return Success();
+                    }
+                    catch (Exception ex)
+                    {
+                        return Failure($"Error: {ex.Message}");
+                    }
+                },
+                updateState: context =>
+                    context.ResourceSnapshot.State?.Text == "Running"
+                        ? ResourceCommandState.Enabled
+                        : ResourceCommandState.Disabled,
+                iconName: iconName,
+                isHighlighted: true
+            );
+
+            return builder;
         }
 
 

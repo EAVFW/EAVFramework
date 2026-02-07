@@ -91,9 +91,6 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         public static (Task<ProcessResult>, IAsyncDisposable) Run(ProcessSpec processSpec)
         {
-            if (!OperatingSystem.IsWindows())
-                return (Task.FromResult(new ProcessResult(0)), null);
-
             var process = new System.Diagnostics.Process()
             {
                 StartInfo =
@@ -243,11 +240,13 @@ namespace EAVFramework.Extensions.Aspire.Hosting
     {
         private readonly ResourceLoggerService _resourceLoggerService;
         private readonly ResourceNotificationService _resourceNotificationService;
+        private readonly ILogger<BuildEAVFWAppsLifecycleHook> _logger;
 
-        public BuildEAVFWAppsLifecycleHook(ResourceLoggerService resourceLoggerService, ResourceNotificationService resourceNotificationService)
+        public BuildEAVFWAppsLifecycleHook(ResourceLoggerService resourceLoggerService, ResourceNotificationService resourceNotificationService, ILogger<BuildEAVFWAppsLifecycleHook> logger)
         {
             _resourceLoggerService = resourceLoggerService;
             _resourceNotificationService = resourceNotificationService;
+            _logger = logger;
         }
         public static string CreateMd5ForFolder(string path)
         {
@@ -280,6 +279,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
         public async Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("BuildEAVFWAppsLifecycleHook: Starting BeforeStartAsync. OS: {OS}, IsWindows: {IsWindows}",
+                Environment.OSVersion, OperatingSystem.IsWindows());
+
             foreach (var resource in appModel.Resources)
             {
 
@@ -287,66 +289,161 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                 if (resource.TryGetLastAnnotation(out EAVFWBuildAnnotation buildAnnotation))
                 {
+                    _logger.LogInformation("Found EAVFWBuildAnnotation for resource {ResourceName}", resource.Name);
                     var metadata = buildAnnotation.ProjectResource.GetProjectMetadata();
-                    var hash = CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
-                    var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
-                        File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
+                    var srcPath = Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src");
+                    _logger.LogInformation("Calculating hash for {SrcPath}", srcPath);
+
+                    var hash = CreateMd5ForFolder(srcPath);
+                    var hashFilePath = Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt");
+                    var oldhash = File.Exists(hashFilePath) ?
+                        File.ReadAllText(hashFilePath) : null;
+
+                    _logger.LogInformation("Hash comparison - Current: {CurrentHash}, Previous: {PreviousHash}, Changed: {Changed}",
+                        hash, oldhash ?? "none", hash != oldhash);
+
                     if (hash != oldhash)
                     {
-
+                        _logger.LogInformation("Hash mismatch detected, build will be required for {ResourceName}", resource.Name);
                     }
                 }
 
 
                 if (resource is EavBuildResource eavBuildResource)
                 {
-                    var metadata = eavBuildResource.Project.GetProjectMetadata();
-                    var hash = CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
-
+                    _logger.LogInformation("Processing EavBuildResource: {ResourceName}", eavBuildResource.Name);
                     var logger = _resourceLoggerService.GetLogger(eavBuildResource);
 
-                    var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
-                        File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
-
-                    if (hash != oldhash)
+                    try
                     {
+                        var metadata = eavBuildResource.Project.GetProjectMetadata();
+                        logger.LogInformation("Project metadata - Path: {ProjectPath}", metadata.ProjectPath);
 
-                        var test = ProcessUtil.Run(new ProcessSpec("cmd")
+                        var srcPath = Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src");
+                        logger.LogInformation("Checking source directory: {SrcPath}, Exists: {Exists}",
+                            srcPath, Directory.Exists(srcPath));
+
+                        if (!Directory.Exists(srcPath))
                         {
-                            WorkingDirectory = eavBuildResource.Workingdirectory,
-                            Arguments = $"/c \"npm install --force && {eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments) + "\"",
-                            InheritEnv = true,
-                            OnOutputData = (data) => logger.LogInformation(data),
-                            OnErrorData = (data) => logger.LogError(data),
-                            OnStart = (pid) =>
+                            logger.LogError("Source directory does not exist: {SrcPath}. Cannot proceed with build.", srcPath);
+                            await _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                state => state with { State = state.State with { Text = "Source directory missing", Style = KnownResourceStateStyles.Error } });
+                            continue;
+                        }
+
+                        logger.LogInformation("Calculating MD5 hash for source directory...");
+                        var hash = CreateMd5ForFolder(srcPath);
+                        logger.LogInformation("MD5 hash calculated: {Hash}", hash);
+
+                        var hashFilePath = Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt");
+                        var oldhash = File.Exists(hashFilePath) ?
+                            File.ReadAllText(hashFilePath) : null;
+
+                        logger.LogInformation("Previous build hash: {OldHash}", oldhash ?? "none (first build)");
+                        logger.LogInformation("Build required: {BuildRequired}", hash != oldhash);
+
+                        if (hash != oldhash)
+                        {
+                            logger.LogInformation("Starting build process...");
+                            logger.LogInformation("Working directory: {WorkingDir}", eavBuildResource.Workingdirectory);
+                            logger.LogInformation("Command: {Command}", eavBuildResource.Command);
+                            logger.LogInformation("Arguments: {Arguments}", string.Join(" ", eavBuildResource.Arguments));
+
+                            // Platform-specific shell configuration
+                            string shellExecutable;
+                            string shellArgument;
+                            string buildCommand = $"npm install --force && {eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments);
+
+                            if (OperatingSystem.IsWindows())
                             {
-                                logger.LogInformation($"Started process with pid {pid}");
-                                _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
-                                    state => state with { State = state.State with { Text = "Building", Style = KnownResourceStateStyles.Info } });
-                            },
-                            OnStop = (exitcode) =>
+                                shellExecutable = "cmd";
+                                shellArgument = $"/c \"{buildCommand}\"";
+                                logger.LogInformation("Platform: Windows, Shell: cmd.exe");
+                            }
+                            else
                             {
-                                logger.LogInformation($"Process exited with code {exitcode}");
-                                _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
-                                   state => state with { ExitCode = exitcode, State = state.State with { Text = exitcode == 0 ? KnownResourceStates.Finished : KnownResourceStates.Exited, Style = exitcode == 0 ? KnownResourceStateStyles.Success : KnownResourceStateStyles.Error } });
-
-
-
-                                File.WriteAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt"), hash);
+                                shellExecutable = "/bin/bash";
+                                shellArgument = $"-c \"{buildCommand}\"";
+                                logger.LogInformation("Platform: Unix/Linux, Shell: /bin/bash");
                             }
 
-                        });
-                    }
-                    else
-                    {
-                        await _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
-                                state => state with { State = state.State with { Text = KnownResourceStates.Finished, Style = KnownResourceStateStyles.Success } });
+                            logger.LogInformation("Full command: {Shell} {Arguments}", shellExecutable, shellArgument);
 
+                            logger.LogInformation("Launching build process with {Shell}...", shellExecutable);
+                            var test = ProcessUtil.Run(new ProcessSpec(shellExecutable)
+                            {
+                                WorkingDirectory = eavBuildResource.Workingdirectory,
+                                Arguments = shellArgument,
+                                InheritEnv = true,
+                                OnOutputData = (data) => logger.LogInformation("[BUILD OUTPUT] {Data}", data),
+                                OnErrorData = (data) => logger.LogError("[BUILD ERROR] {Data}", data),
+                                OnStart = (pid) =>
+                                {
+                                    logger.LogInformation("Build process started with PID {Pid}", pid);
+                                    _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                        state => state with { State = state.State with { Text = "Building", Style = KnownResourceStateStyles.Info } });
+                                },
+                                OnStop = (exitcode) =>
+                                {
+                                    logger.LogInformation("Build process exited with code {ExitCode}", exitcode);
+
+                                    if (exitcode == 0)
+                                    {
+                                        logger.LogInformation("Build completed successfully. Saving hash to {HashFile}", hashFilePath);
+                                        try
+                                        {
+                                            var hashDir = Path.GetDirectoryName(hashFilePath);
+                                            if (!Directory.Exists(hashDir))
+                                            {
+                                                Directory.CreateDirectory(hashDir);
+                                                logger.LogInformation("Created directory for hash file: {HashDir}", hashDir);
+                                            }
+                                            File.WriteAllText(hashFilePath, hash);
+                                            logger.LogInformation("Build hash saved successfully");
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            logger.LogError(ex, "Failed to save build hash to {HashFile}", hashFilePath);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        logger.LogError("Build failed with exit code {ExitCode}", exitcode);
+                                    }
+
+                                    _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                       state => state with {
+                                           ExitCode = exitcode,
+                                           State = state.State with {
+                                               Text = exitcode == 0 ? KnownResourceStates.Finished : KnownResourceStates.Exited,
+                                               Style = exitcode == 0 ? KnownResourceStateStyles.Success : KnownResourceStateStyles.Error
+                                           }
+                                       });
+                                }
+
+                            });
+
+                            logger.LogInformation("Build process launched. Waiting for completion...");
+                        }
+                        else
+                        {
+                            logger.LogInformation("Source code unchanged (hash match). Skipping build.");
+                            await _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                                    state => state with { State = state.State with { Text = KnownResourceStates.Finished, Style = KnownResourceStateStyles.Success } });
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error processing build for {ResourceName}: {Message}", eavBuildResource.Name, ex.Message);
+                        await _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
+                            state => state with { State = state.State with { Text = "Build error", Style = KnownResourceStateStyles.Error } });
                     }
 
                 }
             }
 
+            _logger.LogInformation("BuildEAVFWAppsLifecycleHook: Completed BeforeStartAsync");
 
         }
     }
@@ -375,7 +472,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         {
             var _ = Task.Run(async () =>
             {
-
+                _aspirelogger.LogInformation("PublishEAVFWProjectLifecycleHook: Starting BeforeStartAsync");
 
                 foreach (var modelResource in application.Resources.OfType<EAVFWModelProjectResource>())
                 {
@@ -388,17 +485,25 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         {
 
                             var logger = _resourceLoggerService.GetLogger(modelResource);
+                            logger.LogInformation("Processing model resource: {ResourceName} (Attempt {Attempt}/{MaxAttempts})", modelResource.Name, i + 1, retryCount);
 
                             var modelProjectPath = modelResource.GetModelPath();
+                            logger.LogInformation("Model project path: {ModelPath}", modelProjectPath);
 
                             if (!modelResource.TryGetLastAnnotation<TargetDatabaseResourceAnnotation>(out var targetDatabaseResourceAnnotation))
                             {
+                                logger.LogWarning("No TargetDatabaseResourceAnnotation found for resource {ResourceName}. Skipping.", modelResource.Name);
                                 return;
                             }
 
                             var targetDatabaseResourceName = targetDatabaseResourceAnnotation.TargetDatabaseResourceName;
+                            logger.LogInformation("Target database resource name: {DatabaseResourceName}", targetDatabaseResourceName);
+
                             var targetDatabaseResource = application.Resources.OfType<SqlServerDatabaseResource>().Single(r => r.Name == targetDatabaseResourceName);
+                            logger.LogInformation("Target database: {DatabaseName}", targetDatabaseResource.DatabaseName);
+
                             var targetSQLServerResource = targetDatabaseResource.Parent;
+                            logger.LogInformation("Target SQL Server resource: {ServerResourceName}", targetSQLServerResource.Name);
 
 
                             if (!modelResource.TryGetLastAnnotation(out DatabaseCreatedAnnotation createdatabaseannovation))
@@ -409,18 +514,23 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             if (!createdatabaseannovation.Success)
                             {
 
-
+                                logger.LogInformation("Starting database creation for {DatabaseName} (Attempt {Attempt})", targetDatabaseResource.DatabaseName, createdatabaseannovation.Attempt);
                                 await _resourceNotificationService.PublishUpdateAsync(modelResource,
-                                    state => state with { State = new ResourceStateSnapshot($"Creating DB ${targetDatabaseResource.DatabaseName} - Attempt ${createdatabaseannovation.Attempt}", KnownResourceStateStyles.Info) });
+                                    state => state with { State = new ResourceStateSnapshot($"Creating DB {targetDatabaseResource.DatabaseName} - Attempt {createdatabaseannovation.Attempt}", KnownResourceStateStyles.Info) });
 
                                 try
                                 {
+                                    logger.LogInformation("Retrieving SQL Server connection string for {ServerName}", targetSQLServerResource.Name);
                                     var serverConnectionString = await targetSQLServerResource.ConnectionStringExpression.GetValueAsync(CancellationToken.None);
 
+                                    // Log connection string (mask password for security)
+                                    var sanitizedConnectionString = new SqlConnectionStringBuilder(serverConnectionString) { Password = "***" }.ConnectionString;
+                                    logger.LogInformation("Connection string (sanitized): {ConnectionString}", sanitizedConnectionString);
 
+                                    logger.LogInformation("Opening connection to SQL Server...");
                                     using var conn = new SqlConnection(serverConnectionString);
-
                                     await conn.OpenAsync();
+                                    logger.LogInformation("Connection opened successfully");
 
                                     SqlCommand cmd = conn.CreateCommand();
                                     cmd.CommandText = $"""
@@ -430,8 +540,10 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                          ALTER DATABASE [{targetDatabaseResource.DatabaseName}] SET RECOVERY SIMPLE;
                                        END
                                        """;
-                                    await cmd.ExecuteNonQueryAsync();
 
+                                    logger.LogInformation("Executing database creation command for {DatabaseName}", targetDatabaseResource.DatabaseName);
+                                    await cmd.ExecuteNonQueryAsync();
+                                    logger.LogInformation("Database {DatabaseName} created successfully", targetDatabaseResource.DatabaseName);
 
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
@@ -442,18 +554,21 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                 catch (InvalidOperationException invalid)
                                 {
                                     createdatabaseannovation.Attempt++;
-                                    logger.LogWarning(invalid, "Transient error, properly due to endpoints not up yet. We are backing off and trying again.");
+                                    logger.LogWarning(invalid, "Database creation failed with InvalidOperationException (Attempt {Attempt}). Endpoints may not be ready yet. Database: {DatabaseName}, Server: {ServerName}",
+                                        createdatabaseannovation.Attempt, targetDatabaseResource.DatabaseName, targetSQLServerResource.Name);
                                     throw;
                                 }
                                 catch (SqlException sqlexception)
                                 {
                                     createdatabaseannovation.Attempt++;
-                                    logger.LogWarning(sqlexception, "Transient error, properly due to sql server not ready yet. We are backing off and trying again");
+                                    logger.LogWarning(sqlexception, "Database creation failed with SqlException (Attempt {Attempt}). SQL Server may not be ready. Error Number: {ErrorNumber}, State: {State}, Database: {DatabaseName}",
+                                        createdatabaseannovation.Attempt, sqlexception.Number, sqlexception.State, targetDatabaseResource.DatabaseName);
                                     throw;
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, "Failed to create db");
+                                    logger.LogError(ex, "Failed to create database {DatabaseName}. Exception type: {ExceptionType}, Message: {Message}",
+                                        targetDatabaseResource.DatabaseName, ex.GetType().Name, ex.Message);
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.FailedToStart, KnownResourceStateStyles.Error) });
@@ -470,19 +585,29 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                             if (!migrationannotation.Success)
                             {
-
+                                logger.LogInformation("Starting migration process for {DatabaseName} (Attempt {Attempt})", targetDatabaseResource.DatabaseName, migrationannotation.Attempt);
                                 await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                   state => state with { State = new ResourceStateSnapshot("Creating Migrations", KnownResourceStateStyles.Info) });
 
 
                                 try
                                 {
-
+                                    logger.LogInformation("Retrieving connection string for database {DatabaseName}", targetDatabaseResource.DatabaseName);
                                     var connectionString = await targetDatabaseResource.ConnectionStringExpression.GetValueAsync(cancellationToken);
-                                    var migrationCount = await GetMigrationsCountAsync(targetDatabaseResource, connectionString);
+
+                                    logger.LogInformation("Checking existing migrations count for {DatabaseName}", targetDatabaseResource.DatabaseName);
+                                    var migrationCount = await GetMigrationsCountAsync(targetDatabaseResource, connectionString, logger);
+                                    logger.LogInformation("Found {MigrationCount} existing migrations in {DatabaseName}", migrationCount, targetDatabaseResource.DatabaseName);
+
                                     if (migrationCount == 0)
                                     {
-                                        await DoMigrationAsync(modelProjectPath, targetDatabaseResourceAnnotation, targetDatabaseResource, connectionString);
+                                        logger.LogInformation("No existing migrations found. Starting migration generation for {DatabaseName}", targetDatabaseResource.DatabaseName);
+                                        await DoMigrationAsync(modelProjectPath, targetDatabaseResourceAnnotation, targetDatabaseResource, connectionString, logger);
+                                        logger.LogInformation("Migration completed successfully for {DatabaseName}", targetDatabaseResource.DatabaseName);
+                                    }
+                                    else
+                                    {
+                                        logger.LogInformation("Skipping migration - {MigrationCount} migrations already exist in {DatabaseName}", migrationCount, targetDatabaseResource.DatabaseName);
                                     }
 
                                     migrationannotation.Success = true;
@@ -493,12 +618,14 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                 catch (SqlException sqlexception)
                                 {
                                     migrationannotation.Attempt++;
-                                    logger.LogWarning(sqlexception, "Transient error, properly due to sql server not ready yet. We are backing off and trying again");
+                                    logger.LogWarning(sqlexception, "Migration failed with SqlException (Attempt {Attempt}). Error Number: {ErrorNumber}, State: {State}, Database: {DatabaseName}",
+                                        migrationannotation.Attempt, sqlexception.Number, sqlexception.State, targetDatabaseResource.DatabaseName);
                                     throw;
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, "Failed to create migrations");
+                                    logger.LogError(ex, "Failed to create migrations for {DatabaseName}. Exception type: {ExceptionType}, Message: {Message}",
+                                        targetDatabaseResource.DatabaseName, ex.GetType().Name, ex.Message);
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                         state => state with { State = new ResourceStateSnapshot(KnownResourceStates.FailedToStart, KnownResourceStateStyles.Error) });
@@ -511,12 +638,18 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             {
                                 try
                                 {
+                                    logger.LogInformation("Starting signin link creation for {ResourceName}", modelResource.Name);
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                               state => state with { State = new ResourceStateSnapshot("Creating signin link", KnownResourceStateStyles.Info) });
 
-                                    foreach (var target in modelResource.Annotations.OfType<CreateSigninUrlAnnotation>())
+                                    var signinUrlAnnotations = modelResource.Annotations.OfType<CreateSigninUrlAnnotation>().ToList();
+                                    logger.LogInformation("Found {Count} signin URL annotations to process", signinUrlAnnotations.Count);
+
+                                    foreach (var target in signinUrlAnnotations)
                                     {
+                                        logger.LogInformation("Generating signin link for target {TargetName}", target.Target.Name);
                                         var link = await tokenannotation.GenerateLink(target, cancellationToken);
+                                        logger.LogInformation("Generated signin link: {Link}", link.Link);
 
                                         await _resourceNotificationService.PublishUpdateAsync(target.Target,
                                             state => state with
@@ -529,41 +662,65 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                         if (target.Project.TryGetEndpoints(out var endpoints))
                                         {
                                             var targetlogger = _resourceLoggerService.GetLogger(target.Target);
+                                            var fullSigninUrl = endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString + link.Link;
 
-                                            targetlogger.LogInformation("Sign in with: {singinlink}", endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString + link.Link);
-                                            _aspirelogger.LogInformation("Sign in to {project}: {singinlink}", target.Target.Name, endpoints?.FirstOrDefault()?.AllocatedEndpoint.UriString + link.Link);
+                                            targetlogger.LogInformation("Sign in with: {singinlink}", fullSigninUrl);
+                                            _aspirelogger.LogInformation("Sign in to {project}: {singinlink}", target.Target.Name, fullSigninUrl);
+                                            logger.LogInformation("Published signin link for {TargetName}: {Url}", target.Target.Name, fullSigninUrl);
 
+                                        }
+                                        else
+                                        {
+                                            logger.LogWarning("No endpoints found for target {TargetName}", target.Target.Name);
                                         }
                                     }
 
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
-                                        state => state with { State = new ResourceStateSnapshot("signin link crated", KnownResourceStateStyles.Info) });
+                                        state => state with { State = new ResourceStateSnapshot("signin link created", KnownResourceStateStyles.Info) });
 
-
+                                    logger.LogInformation("Signin link creation completed for {ResourceName}", modelResource.Name);
 
                                 }
                                 catch (Exception ex)
                                 {
-
+                                    logger.LogError(ex, "Failed to create signin link for {ResourceName}. Exception type: {ExceptionType}, Message: {Message}",
+                                        modelResource.Name, ex.GetType().Name, ex.Message);
                                 }
                             }
+                            else
+                            {
+                                logger.LogInformation("No CreateSigninTokenAnnotation found for {ResourceName}, skipping signin link creation", modelResource.Name);
+                            }
 
+                            logger.LogInformation("Successfully completed all operations for {ResourceName}", modelResource.Name);
                             await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                       state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success) });
                             return;
                         }
                         catch (Exception ex)
                         {
+                            var logger = _resourceLoggerService.GetLogger(modelResource);
+
                             if (i == retryCount - 1)
                             {
+                                logger.LogError(ex, "Failed to process {ResourceName} after {RetryCount} attempts. Exception type: {ExceptionType}, Message: {Message}",
+                                    modelResource.Name, retryCount, ex.GetType().Name, ex.Message);
+                                _aspirelogger.LogError(ex, "FINAL FAILURE: Resource {ResourceName} failed after {RetryCount} attempts", modelResource.Name, retryCount);
+
                                 await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                    state => state with { State = new ResourceStateSnapshot(KnownResourceStates.FailedToStart, KnownResourceStateStyles.Error) });
                             }
                             else
                             {
+                                logger.LogWarning(ex, "Attempt {Attempt}/{MaxAttempts} failed for {ResourceName}. Retrying in {Delay}ms. Exception type: {ExceptionType}, Message: {Message}",
+                                    i + 1, retryCount, modelResource.Name, delay, ex.GetType().Name, ex.Message);
+
                                 await Task.Delay(delay);
                                 delay *= 2; // Exponential backoff
+
+                                logger.LogInformation("Retrying {ResourceName} (Attempt {NextAttempt}/{MaxAttempts}) with {NewDelay}ms delay",
+                                    modelResource.Name, i + 2, retryCount, delay);
                             }
                         }
 
@@ -573,20 +730,26 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                 }
 
+                _aspirelogger.LogInformation("PublishEAVFWProjectLifecycleHook: Completed processing all EAVFWModelProjectResource resources");
+
             }, cancellationToken);
             return Task.CompletedTask;
         }
 
-        private static async Task DoMigrationAsync(string modelProjectPath, TargetDatabaseResourceAnnotation targetDatabaseResourceAnnotation, SqlServerDatabaseResource targetDatabaseResource, string connectionString)
+        private static async Task DoMigrationAsync(string modelProjectPath, TargetDatabaseResourceAnnotation targetDatabaseResourceAnnotation, SqlServerDatabaseResource targetDatabaseResource, string connectionString, ILogger logger)
         {
+            logger.LogInformation("Starting DoMigrationAsync for database {DatabaseName}, Model path: {ModelPath}", targetDatabaseResource.DatabaseName, modelProjectPath);
+
             var variablegenerator = new SQLClientParameterGenerator();
             var migrator = new SQLMigrationGenerator(variablegenerator, new ManifestPermissionGenerator(variablegenerator));
 
+            logger.LogInformation("Generating SQL migrations from manifest at {ManifestPath}", Path.GetDirectoryName(modelProjectPath));
             var sqls = await migrator.GenerateSQL(Path.GetDirectoryName(modelProjectPath), true, targetDatabaseResourceAnnotation.SystemUsersTableName ?? "SystemUsers",
                 o =>
                 {
                     o.UseNetTopologySuite();
                 });
+            logger.LogInformation("SQL migration generation completed");
 
             var replacements = new Dictionary<string, string>
             {
@@ -599,27 +762,47 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                 ["UserPrincipalName"] = targetDatabaseResourceAnnotation.UserPrincipalName ?? "PoulKjeldagerSorensen"
 
             };
+            logger.LogInformation("Replacements configured: DBName={DBName}, DBSchema={DBSchema}, UserEmail={UserEmail}",
+                replacements["DBName"], replacements["DBSchema"], replacements["UserEmail"]);
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 var files = new[] { sqls.SQL, sqls.Permissions };
+                logger.LogInformation("Opening connection to database {DatabaseName}", targetDatabaseResource.DatabaseName);
                 await conn.OpenAsync();
+                logger.LogInformation("Connection opened. Processing {FileCount} SQL files", files.Length);
+
+                int fileIndex = 0;
                 foreach (var file in files)
                 {
-                    var cmdText = variablegenerator.DoReplacements(file, replacements);
+                    fileIndex++;
+                    var fileType = fileIndex == 1 ? "Schema" : "Permissions";
+                    logger.LogInformation("Processing {FileType} SQL file ({FileIndex}/{FileCount})", fileType, fileIndex, files.Length);
 
-                    foreach (var sql in cmdText.Split("GO"))
+                    var cmdText = variablegenerator.DoReplacements(file, replacements);
+                    var sqlBatches = cmdText.Split("GO");
+                    logger.LogInformation("Found {BatchCount} SQL batches in {FileType} file", sqlBatches.Length, fileType);
+
+                    int batchIndex = 0;
+                    foreach (var sql in sqlBatches)
                     {
+                        batchIndex++;
                         using var cmd = conn.CreateCommand();
 
                         cmd.CommandText = sql.Trim();
-                        //  await context.Context.Database.ExecuteSqlRawAsync(sql);
 
                         if (!string.IsNullOrEmpty(cmd.CommandText))
                         {
-                            // logger.LogInformation("Executing Migration SQL:\n{mig}", cmd.CommandText);
+                            logger.LogInformation("Executing {FileType} SQL batch {BatchIndex}/{BatchCount} ({Length} chars)",
+                                fileType, batchIndex, sqlBatches.Length, cmd.CommandText.Length);
+                            logger.LogDebug("SQL Command:\n{SQL}", cmd.CommandText);
+
                             var r = await cmd.ExecuteNonQueryAsync();
-                            // Console.WriteLine("Rows changed: " + r);
+                            logger.LogInformation("Batch {BatchIndex} completed. Rows affected: {RowsAffected}", batchIndex, r);
+                        }
+                        else
+                        {
+                            logger.LogDebug("Skipping empty SQL batch {BatchIndex}", batchIndex);
                         }
                     }
 
@@ -633,12 +816,16 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             }
         }
 
-        private static async Task<int> GetMigrationsCountAsync(SqlServerDatabaseResource targetDatabaseResource, string connectionString)
+        private static async Task<int> GetMigrationsCountAsync(SqlServerDatabaseResource targetDatabaseResource, string connectionString, ILogger logger)
         {
+            logger.LogInformation("Checking migrations count in database {DatabaseName}", targetDatabaseResource.DatabaseName);
+
             var migrationCount = 0;
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
+                logger.LogInformation("Opening connection to check migrations in {DatabaseName}", targetDatabaseResource.DatabaseName);
                 await conn.OpenAsync();
+                logger.LogInformation("Connection opened for migrations check");
 
                 SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"""
@@ -651,7 +838,9 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                           select 0
                                        END
                                    """;
+                logger.LogDebug("Executing migration count query");
                 migrationCount = (int) await cmd.ExecuteScalarAsync();
+                logger.LogInformation("Migration count query completed. Found {MigrationCount} migrations", migrationCount);
 
             }
 
