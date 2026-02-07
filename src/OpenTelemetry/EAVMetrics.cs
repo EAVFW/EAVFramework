@@ -20,7 +20,7 @@ namespace EAVFramework.OpenTelemetry
         public EAVMetrics(IMeterFactory meterFactory, IConfiguration configuration)
         {
 
-            var meter = meterFactory.Create(configuration.GetValue<string>("EAVFW:Metrics:MeterName", "EAVFW.Auth.Signin"));
+            var meter = meterFactory.Create(configuration.GetValue<string>("EAVFW:Metrics:MeterName","EAVFW.Auth.Signin"));
 
             SigninStartedCounter = meter.CreateCounter<int>("signin-started", "Signin");
             SigninSuccessCounter = meter.CreateCounter<int>("signin-success", "Signin");
@@ -28,7 +28,7 @@ namespace EAVFramework.OpenTelemetry
 
         }
 #endif
-        public void StartSignup(string authschema) => SigninStartedCounter?.Add(1, new TagList { { "schema", authschema } });
+        public void StartSignup(string authschema) => SigninStartedCounter?.Add(1,new TagList { { "schema", authschema } });
         public void SigninSuccess(string authschema) => SigninSuccessCounter?.Add(1, new TagList { { "schema", authschema } });
         public void SigninFailed(string authschema) => SigninFailedCounter?.Add(1, new TagList { { "schema", authschema } });
 

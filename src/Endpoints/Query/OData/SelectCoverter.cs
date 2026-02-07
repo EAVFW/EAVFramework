@@ -27,7 +27,7 @@ namespace EAVFramework.Endpoints.Query.OData
             this.options = options;
             //this.entityProperty = type.GetMethod("ToDictionary", new[] { typeof(Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) });
             var SelectExpandWrapperConverter = type.Assembly.GetType("Microsoft.AspNetCore.OData.Query.Wrapper.SelectExpandWrapperConverter");
-            MapperProvider = (Func<IEdmModel, IEdmStructuredType, IPropertyMapper>) SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+            MapperProvider = (Func<IEdmModel, IEdmStructuredType, IPropertyMapper>)SelectExpandWrapperConverter.GetField("MapperProvider", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
 
 
 
@@ -41,20 +41,20 @@ namespace EAVFramework.Endpoints.Query.OData
 
         public ConvertResult Convert(object data, QueryContext context)
         {
-
+            
             //https://github.com/OData/AspNetCoreOData/blob/main/src/Microsoft.AspNetCore.OData/Query/Wrapper/SelectAllOfT.cs
             //Microsoft.AspNetCore.OData.Query.Wrapper.SelectAll<KFST.Vanddata.Model.Identity>
-
+            
             var poco = (data as Microsoft.AspNetCore.OData.Query.Wrapper.ISelectExpandWrapper).ToDictionary(MapperProvider);
 
             var typeParser = SelectCoverter.typeParser.CreateTypeParser(data.GetType(), data);
             // var poco = (IDictionary<string, object>)entityProperty.Invoke(data, new object[] { MapperProvider });
+           
 
-
-            if (options.Value.ODataOptions.UseODataContextCountSerialization)
+            if(options.Value.ODataOptions.UseODataContextCountSerialization)
             {
-
-                poco["@odata.context"] = $"{new Uri(context.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}/api/entities/$metadata#{typeParser.GetCollectionSchemaName(data)}/$entity";
+                
+                poco["@odata.context"] =  $"{new Uri(context.Request.GetDisplayUrl()).GetLeftPart(UriPartial.Authority)}/api/entities/$metadata#{typeParser.GetCollectionSchemaName(data)}/$entity";
             }
             else
             {
@@ -67,7 +67,7 @@ namespace EAVFramework.Endpoints.Query.OData
             {
                 if (kv.Value == null)
                 {
-                    if (options.Value.ODataOptions.RemoveNullsWhenSerialize)
+                    if(options.Value.ODataOptions.RemoveNullsWhenSerialize)
                         poco.Remove(kv.Key);
 
                     continue;
@@ -84,7 +84,7 @@ namespace EAVFramework.Endpoints.Query.OData
                     poco[kv.Key] = result.Value;
                     if (result.TotalCount.HasValue)
                     {
-                        poco[kv.Key + "@odata.count"] = result.TotalCount;
+                        poco[kv.Key+"@odata.count"] = result.TotalCount;
 
                     }
 

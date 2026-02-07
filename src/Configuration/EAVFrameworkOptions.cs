@@ -23,7 +23,7 @@ namespace EAVFramework.Configuration
             DateFormatHandling = DateFormatHandling.IsoDateFormat,
             DateTimeZoneHandling = DateTimeZoneHandling.Utc,
             NullValueHandling = NullValueHandling.Ignore,
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,           
 
         };
     }
@@ -66,9 +66,9 @@ namespace EAVFramework.Configuration
         /// The user interaction options.
         /// </value>
         public UserInteractionOptions UserInteraction { get; set; } = new UserInteractionOptions();
-        public string Schema { get; set; }
-        public string ConnectionString { get; set; }
-        public ClaimsPrincipal SystemAdministratorIdentity { get; set; }
+        public string Schema { get;  set; }
+        public string ConnectionString { get;  set; }
+        public ClaimsPrincipal SystemAdministratorIdentity { get;  set; }
 
         /// <summary>
         /// The Host (BaseURL) that the application is running on

@@ -29,7 +29,7 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
         private readonly IParameterGenerator _parameterGenerator;
         private readonly IManifestPermissionGenerator manifestPermissionGenerator;
 
-        public SQLMigrationGenerator(IParameterGenerator parameterGenerator, IManifestPermissionGenerator manifestPermissionGenerator)
+        public SQLMigrationGenerator(IParameterGenerator parameterGenerator,IManifestPermissionGenerator manifestPermissionGenerator)
         {
             _parameterGenerator = parameterGenerator;
             this.manifestPermissionGenerator = manifestPermissionGenerator;
@@ -66,9 +66,9 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
         }
 
         public async Task<MigrationResult> GenerateSQL(string projectPath, bool shouldGeneratePermissions, string systemEntity,
-            Action<SqlServerDbContextOptionsBuilder> extend = null)
+            Action<SqlServerDbContextOptionsBuilder> extend=null)
         {
-            var schema = _parameterGenerator.GetParameter("DBSchema", false);// "$(DBSchema)";
+            var schema = _parameterGenerator.GetParameter("DBSchema",false);// "$(DBSchema)";
             var definition = JsonSerializer.Deserialize<ManifestDefinition>(File.ReadAllText(Path.Combine(projectPath, "obj", "manifest.g.json")));
             var model = JToken.Parse(File.ReadAllText(Path.Combine(projectPath, "obj", "manifest.g.json")));
             var models = Directory.Exists(Path.Combine(projectPath, "manifests")) ? Directory.EnumerateFiles(Path.Combine(projectPath, "manifests"))
@@ -83,13 +83,13 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
 
             var optionsBuilder = new DbContextOptionsBuilder<DynamicContext>();
             //  optionsBuilder.UseInMemoryDatabase("test");
-            optionsBuilder.UseSqlServer("dummy", x =>
-            {
-                x.MigrationsHistoryTable("__MigrationsHistory", schema);
-                extend?.Invoke(x);
-            }
-            );
-
+           optionsBuilder.UseSqlServer("dummy",   x =>
+           {
+               x.MigrationsHistoryTable("__MigrationsHistory", schema);
+               extend?.Invoke(x);
+           }
+           );
+         
             optionsBuilder.EnableSensitiveDataLogging();
 
             optionsBuilder.EnableDetailedErrors();
@@ -114,19 +114,19 @@ namespace EAVFW.Extensions.Manifest.SDK.Migrations
                  , NullLogger<DynamicContext>.Instance);
 
 
+            
+                var migrator = ctx.Database.GetInfrastructure().GetRequiredService<IMigrator>();
 
-            var migrator = ctx.Database.GetInfrastructure().GetRequiredService<IMigrator>();
+                var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent| MigrationsSqlGenerationOptions.NoTransactions | MigrationsSqlGenerationOptions.Default);
 
-            var sql = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent | MigrationsSqlGenerationOptions.NoTransactions | MigrationsSqlGenerationOptions.Default);
-
-            var result = new MigrationResult { Model = definition, SQL = sql }; ;
-
+                var result = new MigrationResult { Model = definition, SQL = sql }; ;
+           
 
             if (shouldGeneratePermissions)
                 result.Permissions = await InitializeSystemAdministrator(result.Model, systemEntity);
 
             return result;
-
+            
         }
         public async Task<string> InitializeSystemAdministrator(ManifestDefinition model, string systemUserEntity)
         {

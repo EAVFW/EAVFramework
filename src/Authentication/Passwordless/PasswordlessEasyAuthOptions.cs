@@ -20,7 +20,7 @@ namespace EAVFramework.Authentication.Passwordless
         /// </summary>
         public string Sender { get; set; }
 
-
+       
 
         /// <summary>
         /// Function for taking the generated magic link and interpolating it into the desired sign-in email response
@@ -34,7 +34,7 @@ namespace EAVFramework.Authentication.Passwordless
         /// </summary>
         public Action<HttpContext> OnNotFound { get; set; } = context => { context.Response.StatusCode = 404; };
 
-
+     
         public Func<HttpContext, Task> ResponseSuccessFullAsync { get; set; } = DefaultResponse;
 
         private static async Task DefaultResponse(HttpContext httpcontext)

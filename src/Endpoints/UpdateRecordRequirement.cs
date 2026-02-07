@@ -12,7 +12,7 @@ namespace EAVFramework.Endpoints
             Context = context;
         }
 
-
+         
         public string EntityName { get; }
         public Type Context { get; }
         public Type Type { get; }
@@ -27,7 +27,7 @@ namespace EAVFramework.Endpoints
                 {
                     EntityName
                 },
-                EntityCollectionSchemaName = EntityName
+                EntityCollectionSchemaName=EntityName
 
             };
         }

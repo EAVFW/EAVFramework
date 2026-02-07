@@ -22,8 +22,8 @@ namespace EAVFramework
 
         public static class RoutePatterns
         {
-
-
+         
+          
             public const string QueryRecords = "/entities/{EntityCollectionSchemaName}";
             public const string CreateRecord = "/entities/{EntityCollectionSchemaName}/records";
             public const string QueryEntityPermissions = "/entities/{EntityCollectionSchemaName}/permissions";
@@ -36,7 +36,7 @@ namespace EAVFramework
             public const string RecordIdRouteParam = "RecordId";
         }
 
-
+       
         public const string DefaultCookieAuthenticationScheme = "eavfw";
         public const string ExternalCookieAuthenticationScheme = "eavfw.external";
         public const string ImpersonatorCookieAuthenticationSchema = "eavfw.impersonator";

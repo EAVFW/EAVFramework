@@ -19,11 +19,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                     return new AttributeStringDefinition { Value = reader.GetString() ?? "" };
                 case JsonTokenType.StartObject:
                     var node = JsonNode.Parse(ref reader);
-
-                    var t = node.Deserialize<AttributeObjectDefinition>(new JsonSerializerOptions { Converters = { new TypeDefinitionConverter() } });
-                    return t;
-
-
+                    
+                        var t = node.Deserialize<AttributeObjectDefinition>(new JsonSerializerOptions { Converters={ new TypeDefinitionConverter()} });
+                        return t;
+                    
+                    
                 default:
                     throw new Exception($"{reader.TokenType} is not supported as AttributeDefinition");
             }
@@ -48,18 +48,18 @@ namespace EAVFW.Extensions.Manifest.SDK
     [JsonConverter(typeof(AttributeConverter))]
     public abstract class AttributeDefinitionBase
     {
-
+         
     }
 
     public class AttributeStringDefinition : AttributeDefinitionBase
     {
         public string Value { get; set; }
     }
-
+    
 
     public class AttributeObjectDefinition : AttributeDefinitionBase
     {
-
+        
 
         [JsonPropertyName("isPrimaryField")] public bool IsPrimaryField { get; set; }
         [JsonPropertyName("logicalName")] public string LogicalName { get; set; }
@@ -78,16 +78,16 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonExtensionData]
         public Dictionary<string, JsonElement> AdditionalFields { get; set; }
 
-
-
+        
+        
         [JsonPropertyName("isPrimaryKey")]
         public bool? IsPrimaryKey { get; set; }
 
         [JsonPropertyName("isRequired")]
-
+        
         public bool? IsRequired { get; set; }
-
-
+       
+    
 
         [JsonPropertyName("isRowVersion")]
         public bool IsRowVersion { get; set; }
@@ -107,11 +107,11 @@ namespace EAVFW.Extensions.Manifest.SDK
                     return new TypeDefinition { Type = reader.GetString() ?? "" };
                 case JsonTokenType.StartObject:
                     var node = JsonNode.Parse(ref reader);
-
-                    var t = node.Deserialize<TypeDefinition>();
-                    return t;
-
-
+                      
+                        var t = node.Deserialize<TypeDefinition>();
+                        return t;
+                    
+                   
                 default:
                     throw new Exception($"{reader.TokenType} is not supported as AttributeDefinition");
             }
@@ -123,7 +123,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             {
                 TypeDefinition attributeObjectDefinition =>
                     JsonSerializer.Serialize(attributeObjectDefinition),
-
+                
                 _ => throw new ArgumentException($"{value.GetType()} is not supported")
             };
 
@@ -133,7 +133,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     }
 
     // [JsonConverter(typeof(TypeDefinitionConverter))]
-
+     
     public class CascadeOptions
     {
         [JsonPropertyName("delete")]
@@ -150,7 +150,7 @@ namespace EAVFW.Extensions.Manifest.SDK
             {
                 return OnDelete == cascadeOptions.OnDelete && OnUpdate == cascadeOptions.OnUpdate;
             }
-
+            
             return base.Equals(obj);
         }
         public override int GetHashCode()
@@ -196,7 +196,7 @@ namespace EAVFW.Extensions.Manifest.SDK
     {
         [JsonPropertyName("unique")]
         public bool Unique { get; set; } = true;
-
+      
         [JsonPropertyName("name")]
         public string Name { get; set; }
     }
@@ -213,7 +213,7 @@ namespace EAVFW.Extensions.Manifest.SDK
         [JsonPropertyName("sql")] public Dictionary<string, JsonElement> SqlOptions { get; set; }
 
         [JsonPropertyName("cascade")]
-        public CascadeOptions Cascades { get; set; }
+        public CascadeOptions Cascades {get;set;}
 
         [JsonPropertyName("index")]
         public IndexInfo IndexInfo { get; set; }
