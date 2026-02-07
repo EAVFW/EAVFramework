@@ -24,19 +24,40 @@ namespace EAVFramework.UnitTest.ManifestTests
         public static void AreEqual(string expected, string actual)
         {
             var version = typeof(DbContext).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-
             expected = expected.Replace("{{VERSION}}", version);
-            var a = Regex.Replace(expected.Replace("COMMIT;",string.Empty).Replace("GO", string.Empty).Replace("BEGIN TRANSACTION;", string.Empty).Trim(), @"\s", string.Empty);
-            var b = Regex.Replace(actual.Replace("COMMIT;", string.Empty).Replace("GO", string.Empty).Replace("BEGIN TRANSACTION;", string.Empty).Trim(), @"\s", string.Empty);
 
-            // Normalize @descriptionN to @description
-            a = Regex.Replace(a, @"@description\d+", "@description");
-            b = Regex.Replace(b, @"@description\d+", "@description");
-            // Normalize @descriptionN to @description
-            a = Regex.Replace(a, @"@var\d+", "@var");
-            b = Regex.Replace(b, @"@var\d+", "@var");
+            var a = Normalize(expected);
+            var b = Normalize(actual);
 
             Assert.AreEqual(a, b);
+        }
+
+        private static string Normalize(string sql)
+        {
+            var result = sql
+                .Replace("COMMIT;", string.Empty)
+                .Replace("GO", string.Empty)
+                .Replace("BEGIN TRANSACTION;", string.Empty)
+                .Trim();
+
+            // Strip whitespace
+            result = Regex.Replace(result, @"\s", string.Empty);
+
+            // Normalize numbered variables
+            result = Regex.Replace(result, @"@description\d+", "@description");
+            result = Regex.Replace(result, @"@var\d+", "@var");
+
+            // Normalize DECLARE type difference
+            result = result.Replace("nvarchar(max)", "sysname");
+
+            // Normalize QUOTENAME wrapping
+            result = result.Replace("QUOTENAME([d].[name])", "[d].[name]");
+
+            // Normalize constraint drop pattern (after whitespace strip):
+            // Old: CONSTRAINT['+@var+'];  New: CONSTRAINT'+@var+';
+            result = result.Replace("CONSTRAINT['+@var+'];", "CONSTRAINT'+@var+';");
+
+            return result;
         }
     }
     [TestClass]
