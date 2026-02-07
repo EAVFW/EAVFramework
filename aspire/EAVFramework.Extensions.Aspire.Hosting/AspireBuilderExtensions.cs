@@ -718,6 +718,79 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
 
+        /// <summary>
+        /// Forwards configuration values prefixed with the project name as environment variables.
+        /// <para>
+        /// Supports both hierarchical and flat configuration formats (case-insensitive):
+        /// </para>
+        /// <para>
+        /// Hierarchical: "SCL_Portal:CrmFeatureFlags:EnableCrmPolling" = "true"
+        /// </para>
+        /// <para>
+        /// Flat: "SCL_PORTAL__CRM_FEATURE_FLAGS__ENABLE_CRM_POLLING" = "true"
+        /// </para>
+        /// <para>
+        /// Both will be forwarded to the service as environment variable "CRM_FEATURE_FLAGS__ENABLE_CRM_POLLING" = "true".
+        /// </para>
+        /// </summary>
+        /// <typeparam name="TProject">The project type (e.g., Projects.SCL_Portal).</typeparam>
+        /// <param name="builder">The resource builder.</param>
+        /// <returns>The resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> ForwardEnvironmentVariables<TProject>(
+            this IResourceBuilder<ProjectResource> builder)
+        {
+            // Extract project name from type (e.g., Projects.SCL_Portal -> "SCL_Portal")
+            var projectTypeName = typeof(TProject).Name;
+
+            // Get the configuration section for this project
+            var configuration = builder.ApplicationBuilder.Configuration;
+
+            // First try hierarchical format (SCL_Portal:Key:SubKey) - case-insensitive
+            var projectSection = configuration.GetSection(projectTypeName);
+
+            if (projectSection.Exists())
+            {
+                // Forward each configuration value as an environment variable
+                foreach (var kvp in projectSection.AsEnumerable(makePathsRelative: true))
+                {
+                    // Skip the root key (empty key)
+                    if (string.IsNullOrEmpty(kvp.Key) || string.IsNullOrEmpty(kvp.Value))
+                    {
+                        continue;
+                    }
+
+                    // Convert configuration key to environment variable format
+                    // e.g., "CrmFeatureFlags:EnableCrmPolling" -> "CrmFeatureFlags__EnableCrmPolling"
+                    var envVarName = kvp.Key.Replace(":", "__", StringComparison.Ordinal);
+
+                    builder = builder.WithEnvironment(envVarName, kvp.Value);
+                }
+            }
+
+            // Check for flat format with both original case and uppercase
+            // (SCL_Portal__Key__SubKey or SCL_PORTAL__KEY__SUBKEY)
+            var flatPrefixes = new[]
+            {
+                $"{projectTypeName}__",
+                $"{projectTypeName.ToUpperInvariant()}__"
+            };
+
+            foreach (var flatPrefix in flatPrefixes)
+            {
+                foreach (var kvp in configuration.AsEnumerable())
+                {
+                    if (kvp.Key != null && kvp.Key.StartsWith(flatPrefix, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kvp.Value))
+                    {
+                        // Strip the prefix and forward
+                        var envVarName = kvp.Key.Substring(flatPrefix.Length);
+                        builder = builder.WithEnvironment(envVarName, kvp.Value);
+                    }
+                }
+            }
+
+            return builder;
+        }
+
     }
 
 }
