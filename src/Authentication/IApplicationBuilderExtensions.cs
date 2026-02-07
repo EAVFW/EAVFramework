@@ -1,8 +1,9 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authentication;
 using EAVFramework.Extensions;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace EAVFramework.Authentication
 {
@@ -38,7 +39,7 @@ namespace EAVFramework.Authentication
 
                         if (auth.Succeeded && auth.Principal.FindFirstValue("sub") is string subject && subject.IsPresent())
                         {
-                            context.Request.Headers.Add(headerName, subject);
+                            context.Request.Headers[headerName] = subject;
 
                             break;
                         }
@@ -66,7 +67,7 @@ namespace EAVFramework.Authentication
 
                         if (auth.Succeeded && auth.Principal.FindFirstValue(claim) is string value && value.IsPresent())
                         {
-                            context.Request.Headers.Add(headerName, value);
+                            context.Request.Headers[headerName] = value;
 
                             break;
                         }

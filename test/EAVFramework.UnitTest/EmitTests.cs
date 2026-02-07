@@ -3,6 +3,7 @@ using EAVFramework.Shared.V2;
 using EAVFramework.UnitTest.ManifestTests;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -20,6 +21,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.PortableExecutable;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -28,7 +30,59 @@ using static EAVFramework.Shared.TypeHelper;
 
 namespace EAVFramework.UnitTest
 {
-  
+    public class SuperSuper<T> : DynamicEntity
+    {
+        public Guid Id { get; set; }
+        public Guid Test { get; set; }
+    }
+
+    public class Super : SuperSuper<TestIdentity>
+    {
+        
+    }
+
+    
+    public class TestIdentity : DynamicEntity, IIdentity
+    {
+        public Guid Id { get; set; }
+    }
+
+    public interface ITest
+    {
+        Guid Id { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "SecurityGroup")]
+    public interface MyIdentity
+    {
+        Guid Id { get; set; }
+
+    }
+
+    [Serializable()]
+    [EntityDTO(LogicalName = "identity", Schema = "dbo")]
+    [Entity(LogicalName = "identity", SchemaName = "Identity", CollectionSchemaName = "Identities", IsBaseClass = true, EntityKey = "Identity")]
+    public partial class Identity : BaseIdEntity<Identity>, IHaveName, IIdentity
+    {
+        public Identity()
+        {
+        }
+
+        [DataMember(Name = "name")]
+        [EntityField(AttributeKey = "Name")]
+        [JsonProperty("name")]
+        [JsonPropertyName("name")]
+        [PrimaryField()]
+        public String Name { get; set; }
+
+        [DataMember(Name = "identities")]
+        [JsonProperty("identities")]
+        [JsonPropertyName("identities")]
+        [InverseProperty("AwesomeUser")]
+        public ICollection<Identity> Identities { get; set; }
+
+    }
+
     [TestClass]
     public class EmitTests : BaseManifestTests
     {
@@ -113,7 +167,14 @@ namespace EAVFramework.UnitTest
         {
             foreach (var file in code)
             {
-                Assert.AreEqual(RemoveWhitespace(File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt")), RemoveWhitespace(file.Value), file.Key);
+                var a = File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt");
+                var b = file.Value;
+                if (RemoveWhitespace(a) != RemoveWhitespace(file.Value))
+                {
+
+                }
+                Assert.AreEqual(
+                    RemoveWhitespace(File.ReadAllText("Specs/" + folder + "/" + file.Key + ".txt")), RemoveWhitespace(file.Value), file.Key);
             }
         }
 
@@ -163,14 +224,14 @@ namespace EAVFramework.UnitTest
                 o.DTOBaseClasses = new[] { typeof(FullBaseOwnerEntity<>), typeof(FullBaseIdEntity<>) };
                 o.DTOBaseInterfaces = new[] {  typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
-                    typeof(IOpenIdConnectResource<>),
+                    typeof(IOpenIdConnectResource),
                     typeof(IOpenIdConnectClient<,>),
                     typeof(IAllowedGrantType<>),
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
             });
 
-            var manifest = new ManifestService(new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
+            var manifest = new ManifestService(codeMigratorV2,new ManifestServiceOptions { MigrationName = "Latest", Namespace = "MC.Models", });
 
             var tables = manifest.BuildDynamicModel(codeMigratorV2, JToken.Parse(File.ReadAllText("Specs/oidcclient.json")));
             var code = codeMigratorV2.GenerateCodeFiles();
@@ -211,7 +272,7 @@ namespace EAVFramework.UnitTest
                 o.DTOBaseInterfaces = new[] {  
                     typeof(IOpenIdConnectIdentityResource),
                     typeof(IOpenIdConnectScope<>),
-                    typeof(IOpenIdConnectResource<>),
+                    typeof(IOpenIdConnectResource),
                     
                     typeof(IOpenIdConnectScopeResource<,>)
                 };
@@ -284,14 +345,240 @@ namespace EAVFramework.UnitTest
                 var classBType = classB.CreateType();
         }
 
+        public static void TestType<T>() where T : DynamicEntity, IIdentity, new()
+        {
+            var test = new T {  };
+            var t = test.Id;
+            test.Id = Guid.NewGuid();
+        }
+
+        public (System.Reflection.Emit.PropertyBuilder, FieldBuilder) CreateProperty(TypeBuilder builder, string name, Type type, PropertyAttributes props = PropertyAttributes.None,
+           MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Virtual)
+        {
+            try
+            {
+                // options.EntityDTOsBuilders
+                var proertyBuilder = builder.DefineProperty(name, props, type, Type.EmptyTypes);
+
+                FieldBuilder customerNameBldr = builder.DefineField($"_{name}",
+                                                           type,
+                                                           FieldAttributes.Private);
+
+                // The property set and property get methods require a special
+                // set of attributes.
+
+
+
+
+                // Define the "get" accessor method for CustomerName.
+                MethodBuilder custNameGetPropMthdBldr =
+                    builder.DefineMethod($"get_{name}",
+                                               methodAttributes,
+                                               type,
+                                               Type.EmptyTypes);
+
+                ILGenerator custNameGetIL = custNameGetPropMthdBldr.GetILGenerator();
+
+                custNameGetIL.Emit(OpCodes.Ldarg_0);
+                custNameGetIL.Emit(OpCodes.Ldfld, customerNameBldr);
+                custNameGetIL.Emit(OpCodes.Ret);
+
+                // Define the "set" accessor method for CustomerName.
+                MethodBuilder custNameSetPropMthdBldr =
+                    builder.DefineMethod($"set_{name}",
+                                               methodAttributes,
+                                               null,
+                                               new Type[] { type });
+
+                ILGenerator custNameSetIL = custNameSetPropMthdBldr.GetILGenerator();
+
+                custNameSetIL.Emit(OpCodes.Ldarg_0);
+                custNameSetIL.Emit(OpCodes.Ldarg_1);
+                custNameSetIL.Emit(OpCodes.Stfld, customerNameBldr);
+                custNameSetIL.Emit(OpCodes.Ret);
+
+                // Last, we must map the two methods created above to our PropertyBuilder to
+                // their corresponding behaviors, "get" and "set" respectively.
+                proertyBuilder.SetGetMethod(custNameGetPropMthdBldr);
+                proertyBuilder.SetSetMethod(custNameSetPropMthdBldr);
+
+                //foreach (var a in dynamicPropertyBuilder.TypeBuilder.GetInterfaces().Where(n => n.Name.Contains("IAuditOwnerFields")))
+                //{
+
+                //    try
+                //    {
+                //        var p = a.GetGenericTypeDefinition().GetProperties().FirstOrDefault(k => k.Name == name);
+                //        if (p != null)
+                //        {
+                //            dynamicPropertyBuilder.TypeBuilder.DefineMethodOverride(custNameGetPropMthdBldr, p.GetMethod);
+                //        }
+                //    }
+                //    catch (NotSupportedException)
+                //    {
+
+                //    }
+
+                //}
+
+                return (proertyBuilder, customerNameBldr);
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception($"Failed to create Property: {builder.Name}.{name}", ex);
+            }
+        }
+        
+        public class EmitBaseTestClass<T> : DynamicEntity where T:DynamicEntity
+        {
+
+            [DataMember(Name = "id")]
+            [JsonProperty("id")]
+            [JsonPropertyName("id")]
+            public Guid Id { get; set; }
+
+
+        }
+
+        [TestMethod]
+        public void TestSomething()
+        {
+
+
+            /*
+             * 
+             * We will generate 
+             * 
+             * class Identity : FullBaseIdEntity<Identity>, IHaveName, IIdentity
+             * { 
+             *     public string Name {get;set;}
+             *     
+             *     //System.TypeLoadException: Method 'get_Id' in type 'Identity' from assembly 'test, 
+             *     //However this is a property on FullBaseIdEntity<>
+             *     
+             * }
+             * 
+             * and 
+             * 
+             * class Contact : Identity
+             * {
+             * 
+             * }
+             * 
+             * 
+             */
+                       
+            
+
+            AssemblyName myAsmName = new AssemblyName("test");
+
+            
+            var builder = AssemblyBuilder.DefineDynamicAssembly(myAsmName,
+              AssemblyBuilderAccess.RunAndCollect);
+            
+
+                        ModuleBuilder myModule =
+              builder.DefineDynamicModule("test.dll");
+            
+            var identityBuilder = myModule.DefineType($"Identity", TypeAttributes.Public
+                                                                        | TypeAttributes.Class
+                                                                        | TypeAttributes.AutoClass
+                                                                        | TypeAttributes.AnsiClass
+                                                                        | TypeAttributes.Serializable
+                                                                        | TypeAttributes.BeforeFieldInit);
+
+            identityBuilder.SetParent(typeof(EmitBaseTestClass<>).MakeGenericType(identityBuilder));
+
+            identityBuilder.AddInterfaceImplementation(typeof(IHaveName));
+            identityBuilder.AddInterfaceImplementation(typeof(IIdentity));
+            CreateProperty(identityBuilder, "Name", typeof(string));
+
+
+            var propName = "Id";
+
+            //var idInterfaceOverrider = identityBuilder.DefineProperty($"IIdentity.get_Id",
+            //          PropertyAttributes.None,
+            //          typeof(Guid),
+            //          null);
+
+            // var instane = typeof(FullBaseIdEntity<>).GetProperty(propName);
+
+            var propert = identityBuilder.BaseType;
+            var property = typeof(EmitBaseTestClass<DynamicEntity>).GetProperty(propName);
+            {
+                var base_get = identityBuilder.DefineMethod($"get_{propName}",
+                    MethodAttributes.Virtual| MethodAttributes.Private | MethodAttributes.Final| MethodAttributes.SpecialName | MethodAttributes.NewSlot| MethodAttributes.HideBySig,
+                    property.PropertyType, System.Type.EmptyTypes);
+                var il = base_get.GetILGenerator();
+
+               // il.DeclareLocal(typeof(Guid));
+
+              //  il.Emit(OpCodes.Ldloca_S, 0);
+              //  il.Emit(OpCodes.Initobj, typeof(Guid));
+                il.Emit(OpCodes.Ldarg_0);
+             //   il.EmitWriteLine("The value of 'x' is:");
+              //  il.EmitWriteLine(xField);
+                il.EmitCall(OpCodes.Call, property.GetGetMethod(), null);
+                il.Emit(OpCodes.Ret);
+                identityBuilder.DefineMethodOverride(base_get, typeof(IIdentity).GetProperty(propName).GetGetMethod());
+             //   idInterfaceOverrider.SetGetMethod(base_get);
+                //  
+
+            }
+            {
+                var base_set = identityBuilder.DefineMethod($"set_{propName}", 
+                    MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
+
+                   null, new[] { property.PropertyType });
+                var il = base_set.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Call, property.GetSetMethod());
+
+                il.Emit(OpCodes.Ret);
+                identityBuilder.DefineMethodOverride(base_set, typeof(IIdentity).GetProperty(propName).GetSetMethod());
+             //   idInterfaceOverrider.SetSetMethod(base_set);
+
+            }
+
+
+            var contactBuilder = myModule.DefineType($"Contact", TypeAttributes.Public
+                                                                        | TypeAttributes.Class
+                                                                        | TypeAttributes.AutoClass
+                                                                        | TypeAttributes.AnsiClass
+                                                                        | TypeAttributes.Serializable
+                                                                        | TypeAttributes.BeforeFieldInit);
+
+            contactBuilder.SetParent(identityBuilder);
+          
+
+
+
+            var identityType = identityBuilder.CreateType();
+            var contactType = contactBuilder.CreateType();
+          
+
+            this.GetType().GetMethod("TestType").MakeGenericMethod(contactType).Invoke(this, null);
+
+             
+
+
+        }
+
         [TestMethod]
         [DeploymentItem(@"Specs/TestExternalBaseClass", "Specs/TestExternalBaseClass")]
         public void TestExternalBaseClass()
         {
             DynamicCodeService codeMigratorV2 = CreateOptions(o =>
             {
-                o.DTOBaseInterfaces = new[] { typeof(IHaveName), typeof(IIdentity) };
-                o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) }; 
+                o.DTOBaseInterfaces = new Type[] { 
+                    typeof(IHaveName), 
+                    typeof(IIdentity) 
+                };
+                o.DTOBaseClasses = new[] { typeof(BaseIdEntity<>), typeof(BaseOwnerEntity<>) };
+               
+                o.GenerateAbstractClasses = false;
+              
                 
             });
 
@@ -299,27 +586,65 @@ namespace EAVFramework.UnitTest
 
             var identity = assembly.WithTable("Identity", "Identity", "identity", "Identities", "dbo", true);
             var securityGroup = assembly.WithTable("SecurityGroup", "SecurityGroup", "securitygroup", "SecurityGroups", "dbo");
-             
+            var contact = assembly.WithTable("Contact", "Contact", "contact", "Contracts", "dbo");
+
             securityGroup.WithBaseEntity(identity);
+            contact.WithBaseEntity(identity);
 
             identity.AddProperty("Id", "Id", "id", "guid").PrimaryKey();
             identity.AddProperty("Name", "Name", "name", "text").PrimaryField();
 
-            identity.AddProperty("Awesome User", "AwesomeUserId", "awesomeuserid", "guid").LookupTo(identity);
-             
+           var a = identity.AddProperty("Awesome User", "AwesomeUserId", "awesomeuserid", "guid").LookupTo(identity);
+
             securityGroup.AddProperty("Id", "Id", "id", "guid");
+            contact.AddProperty("Id", "Id", "id", "guid");
 
 
+            //var typeBuilder = identity.Builder;
 
+            //var superType = typeof(BaseIdEntity<>).MakeGenericType(identity.Builder);
+
+            //MethodBuilder getterMethodBuilder = typeBuilder.DefineMethod("get_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeof(Guid), Type.EmptyTypes);
+            //MethodBuilder setterMethodBuilder = typeBuilder.DefineMethod("set_Id", MethodAttributes.Private | MethodAttributes.Virtual | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new[] { typeof(Guid) });
+
+            //// ILGenerator for getter
+            //ILGenerator getterIL = getterMethodBuilder.GetILGenerator();
+            //getterIL.Emit(OpCodes.Ldarg_0);
+            //getterIL.Emit(OpCodes.Call, typeof(BaseIdEntity<>).GetProperty("Id").GetGetMethod());
+            //getterIL.Emit(OpCodes.Ret);
+
+            //// ILGenerator for setter
+            //ILGenerator setterIL = setterMethodBuilder.GetILGenerator();
+            //setterIL.Emit(OpCodes.Ldarg_0);
+            //setterIL.Emit(OpCodes.Ldarg_1);
+            //setterIL.Emit(OpCodes.Call, typeof(BaseIdEntity<>).GetProperty("Id").GetSetMethod());
+            //setterIL.Emit(OpCodes.Ret);
+
+            //typeBuilder.DefineMethodOverride(getterMethodBuilder, typeof(IIdentity).GetProperty("Id").GetGetMethod());
+            //typeBuilder.DefineMethodOverride(setterMethodBuilder, typeof(IIdentity).GetProperty("Id").GetSetMethod());
+            contact.BuildType();
             securityGroup.BuildType();
             identity.BuildType();
 
+
+            // Map the methods to the property
+            //   idPropertyBuilder.SetGetMethod(getterMethodBuilder);
+            //   idPropertyBuilder.SetSetMethod(setterMethodBuilder);
+
+            // Implement ITest.Id explicitly
+
+           
+
+
+
             var securityGroupType = securityGroup.CreateTypeInfo();
             var identitType = identity.CreateTypeInfo();
-
+            var contactType = contact.CreateTypeInfo();
 
             Assert.AreEqual("Identity", identitType.Name);
             Assert.AreEqual("SecurityGroup", securityGroupType.Name);
+
+            this.GetType().GetMethod("TestType").MakeGenericMethod(identitType).Invoke(this, null);
 
             var code = codeMigratorV2.GenerateCodeFiles();
             AssertFiles(code, nameof(TestExternalBaseClass));
@@ -337,7 +662,7 @@ namespace EAVFramework.UnitTest
     [EntityInterface(EntityKey = "Identity")]
     public interface IIdentity
     {
-
+        public Guid Id { get; set; }
     }
 
 
@@ -355,39 +680,39 @@ namespace EAVFramework.UnitTest
         [DataMember(Name = "modifiedbyid")]
         [JsonProperty("modifiedbyid")]
         [JsonPropertyName("modifiedbyid")]
-        public Guid? ModifiedById { get; set; }
+        public virtual Guid? ModifiedById { get; set; }
 
         [ForeignKey("ModifiedById")]
         [JsonProperty("modifiedby")]
         [JsonPropertyName("modifiedby")]
         [DataMember(Name = "modifiedby")]
-        public TIdentity ModifiedBy { get; set; }
+        public virtual TIdentity ModifiedBy { get; set; }
 
         [DataMember(Name = "createdbyid")]
         [JsonProperty("createdbyid")]
         [JsonPropertyName("createdbyid")]
-        public Guid? CreatedById { get; set; }
+        public virtual Guid? CreatedById { get; set; }
 
         [ForeignKey("CreatedById")]
         [JsonProperty("createdby")]
         [JsonPropertyName("createdby")]
         [DataMember(Name = "createdby")]
-        public TIdentity CreatedBy { get; set; }
+        public virtual TIdentity CreatedBy { get; set; }
 
         [DataMember(Name = "modifiedon")]
         [JsonProperty("modifiedon")]
         [JsonPropertyName("modifiedon")]
-        public DateTime? ModifiedOn { get; set; }
+        public virtual DateTime? ModifiedOn { get; set; }
 
         [DataMember(Name = "createdon")]
         [JsonProperty("createdon")]
         [JsonPropertyName("createdon")]
-        public DateTime? CreatedOn { get; set; }
+        public virtual DateTime? CreatedOn { get; set; }
 
         [DataMember(Name = "rowversion")]
         [JsonProperty("rowversion")]
         [JsonPropertyName("rowversion")]
-        public byte[] RowVersion { get; set; }
+        public virtual byte[] RowVersion { get; set; }
 
     }
     [BaseEntity]
@@ -471,7 +796,133 @@ namespace EAVFramework.UnitTest
 
       //  public ICollection<TAllowedGrantType> AllowedGrantTypes { get; set; }
     }
-       
+
+    [EntityInterface(EntityKey = "OpenId Connect Authorization")]
+    // [ConstraintMapping(EntityKey = "Allowed Grant Type", AttributeKey = "Allowed Grant Type Value", ConstraintName = nameof(TAllowedGrantTypeValue))]
+    [ConstraintMapping(AttributeKey = "Type", ConstraintName = nameof(TOpenIdConnectAuthorizationType))]
+    [ConstraintMapping(AttributeKey = "Status", ConstraintName = nameof(TOpenIdConnectAuthorizationStatus))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Client", ConstraintName = nameof(TOpenIdConnectClient))]
+    // [ConstraintMapping(EntityKey = "OpenId Connect Token", ConstraintName = nameof(TOpenIdConnectToken))]
+    //   [ConstraintMapping(EntityKey = "OpenId Connect Authorization Scope", ConstraintName = nameof(TOpenIdConnectAuthorizationScope))]
+    public interface IOpenIdConnectAuthorization<TOpenIdConnectClient, TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType>
+      where TOpenIdConnectClient : DynamicEntity
+      // where TOpenIdConnectToken : DynamicEntity
+      // where TOpenIdConnectAuthorizationScope : DynamicEntity
+      where TOpenIdConnectAuthorizationStatus : struct, IConvertible
+      where TOpenIdConnectAuthorizationType : struct, IConvertible
+
+        //<TOpenIdConnectClient, TAllowedGrantType,TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TOpenIdConnectAuthorizationScope, TOpenIdConnectAuthorization, 
+        //TOpenIdConnectToken, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectAuthorization : DynamicEntity, IOpenIdConnectAuthorization<TOpenIdConnectClient, TAllowedGrantType, TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TOpenIdConnectAuthorizationScope, 
+        //    TOpenIdConnectAuthorization, TOpenIdConnectToken,TOpenIdConnectTokenStatus, TOpenIdConnectTokenType,TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectClient : DynamicEntity, IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue>
+        //
+        //where TAllowedGrantType : DynamicEntity, IAllowedGrantType<TAllowedGrantTypeValue>
+        //where TOpenIdConnectAuthorizationScope : DynamicEntity, IOpenIdConnectAuthorizationScope<TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectToken : DynamicEntity, IOpenIdConnectToken<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType,
+        //    TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType,TAllowedGrantType, TOpenIdConnectAuthorizationScope, TOpenIdConnectToken, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectTokenStatus : struct, IConvertible
+        //where TOpenIdConnectTokenType : struct, IConvertible
+        //where TOpenIdConnectClientTypes : struct, IConvertible
+        //where TOpenIdConnectClientConsentTypes : struct, IConvertible
+        //where TAllowedGrantTypeValue : struct, IConvertible
+        //where TOpenIdConnectIdentityResource : DynamicEntity, IOpenIdConnectIdentityResource
+        //where TOpenIdConnectAuthorizationType : struct, IConvertible
+    {
+        public TOpenIdConnectAuthorizationStatus? Status { get; set; }
+        public TOpenIdConnectAuthorizationType? Type { get; set; }
+
+        public Guid Id { get; set; }
+        public Guid? ClientId { get; set; }
+        public Guid? SubjectId { get; set; }
+        public TOpenIdConnectClient Client { get; set; }
+        public DateTime? CreatedOn { get; set; }
+        //public ICollection<TOpenIdConnectToken> OpenIdConnectTokens { get; set; }
+        //public ICollection<TOpenIdConnectAuthorizationScope> OpenIdConnectAuthorizationScopes { get; set; }
+
+        public string Properties { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "OpenId Connect Token")]
+    [ConstraintMapping(AttributeKey = "Status", ConstraintName = nameof(TOpenIdConnectTokenStatus))]
+    [ConstraintMapping(AttributeKey = "Type", ConstraintName = nameof(TOpenIdConnectTokenType))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Client", ConstraintName = nameof(TOpenIdConnectClient))]
+    [ConstraintMapping(EntityKey = "OpenId Connect Authorization", ConstraintName = nameof(TOpenIdConnectAuthorization))]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Authorization", AttributeKey = "Status", ConstraintName = "TOpenIdConnectAuthorizationStatus")]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Client", AttributeKey = "Type", ConstraintName = "TOpenIdConnectClientTypes")]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Client", AttributeKey = "Consent Type", ConstraintName = "TOpenIdConnectClientConsentTypes")]
+    //[ConstraintMapping(EntityKey = "Allowed Grant Type", AttributeKey = "Allowed Grant Type Value", ConstraintName = nameof(TAllowedGrantTypeValue))]
+    //[ConstraintMapping(EntityKey = "OpenId Connect Authorization", AttributeKey = "Type", ConstraintName = "TOpenIdConnectAuthorizationType")]
+    ////[EntityChoice(AttributeKey= "Status")]
+    //[GenericTypeArgument(ArgumentName = "TOpenIdConnectClient", ManifestKey = "OpenId Connect Client")]
+    public interface IOpenIdConnectToken<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType>
+       where TOpenIdConnectClient : DynamicEntity
+       where TOpenIdConnectAuthorization : DynamicEntity
+       where TOpenIdConnectTokenStatus : struct, IConvertible
+       where TOpenIdConnectTokenType : struct, IConvertible
+        //<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType, [EntityChoice(AttributeKey = "Status")] TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType,
+        //TAllowedGrantType, TOpenIdConnectAuthorizationScope, TOpenIdConnectToken, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectToken : DynamicEntity, IOpenIdConnectToken<TOpenIdConnectClient, TOpenIdConnectAuthorization, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType,
+        //    TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TAllowedGrantType, TOpenIdConnectAuthorizationScope, TOpenIdConnectToken, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectClient : DynamicEntity, IOpenIdConnectClient<TAllowedGrantType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue>
+        //where TOpenIdConnectAuthorization: DynamicEntity, IOpenIdConnectAuthorization<TOpenIdConnectClient, TAllowedGrantType,TOpenIdConnectAuthorizationStatus, TOpenIdConnectAuthorizationType, TOpenIdConnectAuthorizationScope,
+        //    TOpenIdConnectAuthorization, TOpenIdConnectToken, TOpenIdConnectTokenStatus, TOpenIdConnectTokenType, TOpenIdConnectClientTypes, TOpenIdConnectClientConsentTypes, TAllowedGrantTypeValue, TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectTokenStatus : struct,IConvertible
+        //where TOpenIdConnectTokenType : struct, IConvertible
+        //where  TOpenIdConnectAuthorizationStatus : struct, IConvertible
+        //where TAllowedGrantType : DynamicEntity, IAllowedGrantType<TAllowedGrantTypeValue>
+        //where TOpenIdConnectAuthorizationScope : DynamicEntity, IOpenIdConnectAuthorizationScope<TOpenIdConnectIdentityResource>
+        //where TOpenIdConnectClientTypes : struct, IConvertible
+        //where TOpenIdConnectClientConsentTypes : struct, IConvertible
+        //  where TAllowedGrantTypeValue : struct, IConvertible
+        //  where TOpenIdConnectIdentityResource : DynamicEntity, IOpenIdConnectIdentityResource
+        // where TOpenIdConnectAuthorizationType : struct, IConvertible
+    {
+        public Guid Id { get; set; }
+        public Guid? ClientId { get; set; }
+        public String Payload { get; set; }
+        public DateTime? CreatedOn { get; set; }
+        public DateTime? ExpirationDate { get; set; }
+        public String Properties { get; set; }
+        public TOpenIdConnectClient Client { get; set; }
+        public DateTime? RedemptionDate { get; set; }
+        public Guid? ReferenceId { get; set; }
+
+        public Guid? AuthorizationId { get; set; }
+
+
+        public TOpenIdConnectAuthorization Authorization { get; set; }
+
+        public Guid? SubjectId { get; set; }
+        public TOpenIdConnectTokenStatus? Status { get; set; }
+        public TOpenIdConnectTokenType? Type { get; set; }
+
+        //[ForeignKey("SubjectId")]
+        //[JsonProperty("subject")]
+        //[JsonPropertyName("subject")]
+        //[DataMember(Name = "subject")]
+        //public Identity Subject { get; set; }
+    }
+    [EntityInterface(EntityKey = "OpenId Connect Secret")]
+    public interface IOpenIdConnectSecret
+    {
+        public string Value { get; set; }
+        public DateTime? Expiration { get; set; }
+
+        public Guid? ClientId { get; set; }
+    }
+
+    [EntityInterface(EntityKey = "OpenId Connect Authorization Scope")]
+    [ConstraintMapping(EntityKey = "OpenId Connect Identity Resource", ConstraintName = nameof(TOpenIdConnectIdentityResource))]
+
+    public interface IOpenIdConnectAuthorizationScope<TOpenIdConnectIdentityResource>
+       where TOpenIdConnectIdentityResource : DynamicEntity
+    {
+        public TOpenIdConnectIdentityResource Scope { get; set; }
+        public Guid? AuthorizationId { get; set; }
+        public Guid? ScopeId { get; set; }
+    }
+
     [EntityInterface(EntityKey = "OpenId Connect Identity Resource")]
     public interface IOpenIdConnectIdentityResource
 
@@ -495,10 +946,21 @@ namespace EAVFramework.UnitTest
 
 
     [EntityInterface(EntityKey = "OpenId Connect Resource")]
-    public interface IOpenIdConnectResource<TOpenIdConnectScopeResource> where TOpenIdConnectScopeResource : DynamicEntity
+    // [ConstraintMapping(EntityKey = "OpenId Connect Scope Resource", ConstraintName = nameof(TOpenIdConnectScopeResource))]
+    public interface IOpenIdConnectResource
     {
 
-        //  public ICollection<TOpenIdConnectScopeResource> OpenIdConnectScopeResources { get; set; }
+        // public Guid Id { get; set; }
+        public string Name { get; set; }
+        //  public string DisplayName { get; set; }
+        //  public string Description { get; set; }
+
+        //  public Boolean? ShowInDiscoveryDocument { get; set; }
+
+        //  public string Properties { get; set; }
+
+
+        //  public ICollection<TOpenIdConnectScopeResource> Resources { get; set; }
     }
 
 
@@ -536,9 +998,9 @@ namespace EAVFramework.UnitTest
     {
 
     }
-    public class OIDCResource : DynamicEntity ,
-        IOpenIdConnectResource<OIDCScopeResource>
+    public class OIDCResource : DynamicEntity ,     IOpenIdConnectResource
     {
+        public string Name { get; set; }
         public ICollection<OIDCScopeResource> OpenIdConnectScopeResources { get; set; }
     }
 

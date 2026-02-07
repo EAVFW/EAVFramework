@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 
 namespace EAVFramework.Endpoints.Query.OData
@@ -16,13 +16,13 @@ namespace EAVFramework.Endpoints.Query.OData
             entityProperty = type.GetProperty("Instance");
         }
 
-        public object Convert(object data)
+        public ConvertResult Convert(object data, QueryContext context)
         {
             var value = entityProperty.GetValue(data);
 
             var converter = odatatConverterFactory.CreateConverter(value.GetType());
 
-            return converter.Convert(value);
+            return converter.Convert(value, context);
         }
     }
 }

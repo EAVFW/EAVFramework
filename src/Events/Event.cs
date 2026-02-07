@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using EAVFramework.Logging;
 using System;
 using System.Threading.Tasks;
@@ -15,14 +15,14 @@ namespace EAVFramework.Events
         /// Authentication related events
         /// </summary>
         public const string Query = "Query";
- 
+
 
         /// <summary>
         /// Error related events
         /// </summary>
         public const string Error = "Error";
 
-       
+
     }
 
     /// <summary>

@@ -1,23 +1,36 @@
-﻿using EAVFramework.Extensions;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
+using Newtonsoft.Json;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace EAVFramework.Configuration
 {
 
+    public class PatchOptions
+    {
+        public bool DisableDeepLoading { get; set; } = false;
+    }
+    public class ContextOptions
+    {
+        public PatchOptions PatchOptions { get; set; } = new PatchOptions();
+    }
+    public class ODataOptions
+    {
+        public bool UseODataContextCountSerialization { get; set; } = false;
+        public bool RemoveNullsWhenSerialize { get; set; } = true;
 
+        public JsonSerializerSettings JsonSerializerSettings { get; set; } = new JsonSerializerSettings
+        {
+            Formatting = Formatting.None,
+            DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+            NullValueHandling = NullValueHandling.Ignore,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,           
 
+        };
+    }
     public class EAVFrameworkOptions
     {
 
-        
+        public ODataOptions ODataOptions { get; set; } = new ODataOptions();
 
         /// <summary>
         /// Gets or sets the events options.
@@ -53,8 +66,20 @@ namespace EAVFramework.Configuration
         /// The user interaction options.
         /// </value>
         public UserInteractionOptions UserInteraction { get; set; } = new UserInteractionOptions();
-        public string Schema { get; internal set; }
-        public string ConnectionString { get; internal set; }
+        public string Schema { get;  set; }
+        public string ConnectionString { get;  set; }
+        public ClaimsPrincipal SystemAdministratorIdentity { get;  set; }
+
+        /// <summary>
+        /// The Host (BaseURL) that the application is running on
+        /// </summary>
+        public string Host { get; set; }
+
+        /// <summary>
+        /// If the application is running behinad a proxy an dsetting a pathbase.
+        /// </summary>
+        public string PathBase { get; set; }
+        public ContextOptions Context { get; set; } = new ContextOptions();
     }
 
 }

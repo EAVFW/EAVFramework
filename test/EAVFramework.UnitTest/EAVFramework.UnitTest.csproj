@@ -1,17 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+      <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
     <UserSecretsId>5530110b-f598-40fb-a452-3a16fa69df9e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="5.0.17" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.4.1" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.4.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -93,6 +92,30 @@
     </None>
     <None Update="Specs\manifest.payments.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-crm.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-crm.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-oauth.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-oidc.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-oidc.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-padel.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\mc-padel.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Specs\TestExternalBaseClass\Contact.cs.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace EAVFramework.Authentication
 {
@@ -11,5 +11,5 @@ namespace EAVFramework.Authentication
             return (string) prop.GetValue(null);
         }
     }
- 
+
 }

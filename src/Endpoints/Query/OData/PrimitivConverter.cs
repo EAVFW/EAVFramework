@@ -1,11 +1,11 @@
-﻿namespace EAVFramework.Endpoints.Query.OData
+namespace EAVFramework.Endpoints.Query.OData
 {
     internal class PrimitivConverter : IODataConverter
     {
-        public object Convert(object data)
+        public ConvertResult Convert(object data, QueryContext context)
         {
 
-            return data;
+            return new ConvertResult { Value = data };
         }
     }
 }

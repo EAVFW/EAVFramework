@@ -1,0 +1,6028 @@
+{
+	"variables": {
+		"sitemaps": {
+			"CRM": {
+				"order": 0,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "CRM"
+			},
+			"CRMAdmin": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"Administration": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			}
+		},
+		"layouts": {
+			"OneColumnTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			},
+			"TwoColumnsTemplate": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				},
+				"COLUMN_Second": {
+					"sections": {
+						"SECTION_Additional": {}
+					}
+				}
+			}
+		},
+		"PrimaryInformation": {
+			"tab": "TAB_General",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"TAB_General": {
+			"title": "General Information",
+			"locale": {
+				"1030": {
+					"title": "General Information"
+				}
+			},
+			"columns": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				},
+				"COLUMN_Second": {
+					"sections": {
+						"SECTION_Additional": {}
+					}
+				}
+			}
+		},
+		"TAB_Administrative": {
+			"title": "Administrative",
+			"locale": {
+				"1030": {
+					"title": "Administrative"
+				}
+			},
+			"columns": {
+				"COLUMN_First": {
+					"sections": {
+						"SECTION_General": {}
+					}
+				}
+			}
+		},
+		"TAB_Administrative_Columns": {
+			"Created On": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Created By": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Modified On": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Modified By": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			},
+			"Owner": {
+				"readonly": true,
+				"tab": "TAB_Administrative",
+				"column": "COLUMN_First",
+				"section": "SECTION_General"
+			}
+		},
+		"Administrative": {
+			"tab": "TAB_Administrative",
+			"column": "COLUMN_First",
+			"section": "SECTION_General"
+		},
+		"audit": {
+			"Modified On": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Created On": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet"
+					}
+				},
+				"type": {
+					"type": "DateTime",
+					"required": true
+				}
+			},
+			"Owner": {
+				"locale": {
+					"1030": {
+						"displayName": "Ejer"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Modified By": {
+				"locale": {
+					"1030": {
+						"displayName": "Ændret af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Created By": {
+				"locale": {
+					"1030": {
+						"displayName": "Oprettet af"
+					}
+				},
+				"type": {
+					"type": "lookup",
+					"referenceType": "Identity",
+					"required": true
+				}
+			},
+			"Row Version": {
+				"type": {
+					"type": "binary"
+				},
+				"isRowVersion": true
+			}
+		},
+		"translations": {
+			"Name": {
+				"1030": {
+					"displayName": "Navn"
+				}
+			},
+			"Description": {
+				"1030": {
+					"displayName": "Beskrivelse"
+				}
+			}
+		}
+	},
+	"entities": {
+		"Country": {
+			"pluralName": "Countries",
+			"description": "List of countries",
+			"sitemap": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"locale": {
+				"1030": {
+					"displayName": "Land",
+					"pluralName": "Lande"
+				},
+				"1033": {
+					"displayName": "Country",
+					"pluralName": "Countries"
+				}
+			},
+			"views": {
+				"All Countries": {
+					"columns": {
+						"Name": {},
+						"Name (ISO3166)": {},
+						"Alpha2 Code": {},
+						"Alpha3 Code": {},
+						"Numeric Code": {}
+					}
+				}
+			},
+			"attributes": {
+				"Name": {
+					"description": "Display Name",
+					"isPrimaryField": true,
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name"
+				},
+				"Name (ISO3166)": {
+					"description": "The ISO 3166 name",
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"locale": {
+						"1030": {
+							"displayName": "ISO3166 Navn"
+						},
+						"1033": {
+							"displayName": "Name (ISO3166)"
+						}
+					},
+					"displayName": "Name (ISO3166)",
+					"schemaName": "NameISO3166",
+					"logicalName": "nameiso3166"
+				},
+				"Alpha2 Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 2
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Alpha2 kode"
+						},
+						"1033": {
+							"displayName": "Alpha2 Code"
+						}
+					},
+					"displayName": "Alpha2 Code",
+					"schemaName": "Alpha2Code",
+					"logicalName": "alpha2code"
+				},
+				"Alpha3 Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 3
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Alpha3 kode"
+						},
+						"1033": {
+							"displayName": "Alpha3 Code"
+						}
+					},
+					"displayName": "Alpha3 Code",
+					"schemaName": "Alpha3Code",
+					"logicalName": "alpha3code"
+				},
+				"Numeric Code": {
+					"type": {
+						"type": "integer"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Lande kode"
+						},
+						"1033": {
+							"displayName": "Numeric Code"
+						}
+					},
+					"displayName": "Numeric Code",
+					"schemaName": "NumericCode",
+					"logicalName": "numericcode"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Addresses": {
+								"title": "Addresses",
+								"locale": {
+									"1030": {
+										"title": "Adresser"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": {
+								"title": "Administrative",
+								"locale": {
+									"1030": {
+										"title": "Administrative"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Name (ISO3166)": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Alpha2 Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Alpha3 Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Numeric Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Owner": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Country",
+			"schemaName": "Country",
+			"logicalName": "country",
+			"collectionSchemaName": "Countries"
+		},
+		"Address": {
+			"pluralName": "Addresses",
+			"locale": {
+				"1030": {
+					"displayName": "Adresse",
+					"pluralName": "Adresser"
+				},
+				"1033": {
+					"displayName": "Address",
+					"pluralName": "Addresses"
+				}
+			},
+			"sitemap": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"views": {
+				"All Countries": {
+					"columns": {
+						"Address Line": {},
+						"City": {},
+						"ZipCode": {},
+						"Country": {}
+					}
+				}
+			},
+			"attributes": {
+				"Address Line": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Adresse"
+						},
+						"1033": {
+							"displayName": "Address Line"
+						}
+					},
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"x-public": true,
+					"displayName": "Address Line",
+					"schemaName": "AddressLine",
+					"logicalName": "addressline"
+				},
+				"Address Line 2": {
+					"locale": {
+						"1030": {
+							"displayName": "Adresselinje 2"
+						},
+						"1033": {
+							"displayName": "Address Line 2"
+						}
+					},
+					"type": {
+						"type": "Text",
+						"maxLength": 255
+					},
+					"x-public": true,
+					"displayName": "Address Line 2",
+					"schemaName": "AddressLine2",
+					"logicalName": "addressline2"
+				},
+				"City": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					},
+					"locale": {
+						"1030": {
+							"displayName": "By"
+						},
+						"1033": {
+							"displayName": "City"
+						}
+					},
+					"x-public": true,
+					"displayName": "City",
+					"schemaName": "City",
+					"logicalName": "city"
+				},
+				"ZipCode": {
+					"type": {
+						"type": "integer"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Postnummer"
+						},
+						"1033": {
+							"displayName": "ZipCode"
+						}
+					},
+					"x-public": true,
+					"displayName": "ZipCode",
+					"schemaName": "ZipCode",
+					"logicalName": "zipcode"
+				},
+				"Country": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Country",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Addresses",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "All Addresses"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "country",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "country"
+						}
+					},
+					"displayName": "Country",
+					"schemaName": "CountryId",
+					"logicalName": "countryid",
+					"locale": {
+						"1033": {
+							"displayName": "Country"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"name": "Main Information",
+					"type": "Main",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Accounts": {
+								"title": "Accounts",
+								"locale": {
+									"1030": {
+										"title": "Selskaber"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": {
+								"title": "Administrative",
+								"locale": {
+									"1030": {
+										"title": "Administrative"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Address Line": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Address Line 2": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"City": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Zip Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Country": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Owner": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Address",
+			"schemaName": "Address",
+			"logicalName": "address",
+			"collectionSchemaName": "Addresses"
+		},
+		"Account Type": {
+			"description": "Munipacility and Water Company",
+			"pluralName": "Account Types",
+			"sitemap": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabstyper",
+					"displayName": "Selskabstype"
+				},
+				"1033": {
+					"displayName": "Account Type",
+					"pluralName": "Account Types"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"x-public": true,
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Account Type",
+			"schemaName": "AccountType",
+			"logicalName": "accounttype",
+			"collectionSchemaName": "AccountTypes"
+		},
+		"Account": {
+			"pluralName": "Accounts",
+			"sitemap": {
+				"Accounts": {
+					"locale": {
+						"1030": {
+							"displayName": "Selskab",
+							"pluralName": "Selskaber"
+						}
+					},
+					"viewName": "All Accounts",
+					"order": 0,
+					"app": "DefaultApp",
+					"area": "CRM",
+					"group": "CRM"
+				}
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Firmaer",
+					"displayName": "Firma"
+				},
+				"1033": {
+					"displayName": "Account",
+					"pluralName": "Accounts"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"x-public": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Phone": {
+					"type": {
+						"type": "Text",
+						"format": "Phone"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Telefonnummer"
+						},
+						"1033": {
+							"displayName": "Phone"
+						}
+					},
+					"x-public": true,
+					"displayName": "Phone",
+					"schemaName": "Phone",
+					"logicalName": "phone"
+				},
+				"Email": {
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Email"
+						},
+						"1033": {
+							"displayName": "Email"
+						}
+					},
+					"x-public": true,
+					"displayName": "Email",
+					"schemaName": "Email",
+					"logicalName": "email"
+				},
+				"Account Type": {
+					"x-public": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account Type",
+						"foreignKey": {
+							"principalTable": "accounttype",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "accounttype"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Type"
+						},
+						"1033": {
+							"displayName": "Account Type"
+						}
+					},
+					"displayName": "Account Type",
+					"schemaName": "AccountTypeId",
+					"logicalName": "accounttypeid"
+				},
+				"Address": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Address",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_WaterCompanies",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "All Accounts"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "address",
+							"principalColumn": "id",
+							"principalNameColumn": "addressline",
+							"name": "address"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Adresse"
+						},
+						"1033": {
+							"displayName": "Address"
+						}
+					},
+					"x-public": true,
+					"displayName": "Address",
+					"schemaName": "AddressId",
+					"logicalName": "addressid"
+				},
+				"Billing Address": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Address",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_WaterCompanies",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "All Accounts"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "address",
+							"principalColumn": "id",
+							"principalNameColumn": "addressline",
+							"name": "billingaddress"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Faktureringsadresse"
+						},
+						"1033": {
+							"displayName": "Billing Address"
+						}
+					},
+					"x-public": true,
+					"displayName": "Billing Address",
+					"schemaName": "BillingAddressId",
+					"logicalName": "billingaddressid"
+				},
+				"EAN Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 15
+					},
+					"locale": {
+						"1030": {
+							"displayName": "EAN Nummer"
+						},
+						"1033": {
+							"displayName": "EAN Code"
+						}
+					},
+					"x-public": true,
+					"displayName": "EAN Code",
+					"schemaName": "EANCode",
+					"logicalName": "eancode"
+				},
+				"Primary Company Code": {
+					"type": {
+						"type": "Text",
+						"maxLength": 8
+					},
+					"locale": {
+						"1030": {
+							"displayName": "CVR nr."
+						},
+						"1033": {
+							"displayName": "Primary Company Code"
+						}
+					},
+					"x-public": true,
+					"displayName": "Primary Company Code",
+					"schemaName": "PrimaryCompanyCode",
+					"logicalName": "primarycompanycode"
+				},
+				"Homepage": {
+					"type": {
+						"type": "Text",
+						"maxLength": 255,
+						"format": "Url"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Hjemmeside"
+						},
+						"1033": {
+							"displayName": "Homepage"
+						}
+					},
+					"x-public": true,
+					"displayName": "Homepage",
+					"schemaName": "Homepage",
+					"logicalName": "homepage"
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Account Statuses",
+						"options": {
+							"Active": 1,
+							"CVR Validation Missing": 2,
+							"Validation data on next login": 3,
+							"Inactive": 0
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Status"
+						},
+						"1033": {
+							"displayName": "Status"
+						}
+					},
+					"displayName": "Status",
+					"schemaName": "Status",
+					"logicalName": "status"
+				},
+				"Allow External Signin": {
+					"type": {
+						"type": "boolean"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Tillad adgang"
+						},
+						"1033": {
+							"displayName": "Allow External Signin"
+						}
+					},
+					"displayName": "Allow External Signin",
+					"schemaName": "AllowExternalSignin",
+					"logicalName": "allowexternalsignin"
+				},
+				"Field Metadata": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Metadata field for the info about which fields are locked",
+					"displayName": "Field Metadata",
+					"schemaName": "FieldMetadata",
+					"logicalName": "fieldmetadata",
+					"locale": {
+						"1033": {
+							"displayName": "Field Metadata"
+						}
+					}
+				},
+				"Company form": {
+					"locale": {
+						"1033": {
+							"displayName": "Virksomhedsform"
+						}
+					},
+					"type": {
+						"type": "string"
+					},
+					"displayName": "Company form",
+					"schemaName": "Companyform",
+					"logicalName": "companyform"
+				},
+				"Ownership Type": {
+					"x-public": true,
+					"type": {
+						"type": "Choice",
+						"name": "Ownership Type",
+						"options": {
+							"Municipally Owned": {
+								"value": 1,
+								"locale": {
+									"1030": {
+										"displayName": "Selskabet er kommunalt ejet"
+									}
+								}
+							},
+							"Consumer Owned": {
+								"value": 2,
+								"locale": {
+									"1030": {
+										"displayName": "Selskabet er forbrugerejet"
+									}
+								}
+							},
+							"Privately owned": {
+								"value": 3,
+								"locale": {
+									"1030": {
+										"displayName": "Selskabet er privatejet"
+									}
+								}
+							}
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Ejerstruktur"
+						},
+						"1033": {
+							"displayName": "Ownership Type"
+						}
+					},
+					"displayName": "Ownership Type",
+					"schemaName": "OwnershipType",
+					"logicalName": "ownershiptype"
+				},
+				"Main industry": {
+					"locale": {
+						"1033": {
+							"displayName": "Hovedbranche"
+						}
+					},
+					"type": {
+						"type": "string"
+					},
+					"displayName": "Main industry",
+					"schemaName": "Mainindustry",
+					"logicalName": "mainindustry"
+				},
+				"External Id": {
+					"type": {
+						"type": "string"
+					},
+					"displayName": "External Id",
+					"schemaName": "ExternalId",
+					"logicalName": "externalid",
+					"locale": {
+						"1033": {
+							"displayName": "External Id"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Persons": {
+								"title": "Persons",
+								"locale": {
+									"1030": {
+										"title": "Personer"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_AccountCodes": {
+								"title": "Valid Account Codes",
+								"locale": {
+									"1030": {
+										"title": "Tilladte CVR Numre"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": {
+								"title": "Administrative",
+								"locale": {
+									"1030": {
+										"title": "Administrative"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Primary Company Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Allow External Signin": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Account Type": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Phone": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Email": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Address": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"BillingAddress": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"EAN Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Homepage": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Status": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Ownership Type": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Owner": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"views": {
+				"All Accounts": {
+					"ribbon": {
+						"CUSTOM_IMPORT": {},
+						"CUSTOM_EXPORT": {}
+					},
+					"columns": {
+						"Name": {},
+						"Internal Account Code": {},
+						"Primary Company Code": {},
+						"Allow External Signin": {},
+						"Account Type": {},
+						"Phone": {},
+						"Email": {},
+						"Status": {}
+					}
+				}
+			},
+			"displayName": "Account",
+			"schemaName": "Account",
+			"logicalName": "account",
+			"collectionSchemaName": "Accounts"
+		},
+		"Account Code": {
+			"pluralName": "Account Codes",
+			"description": "A CVR number which can be associated with an Account",
+			"sitemap": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "CVR Nummre",
+					"displayName": "CVR Nummer"
+				},
+				"1033": {
+					"displayName": "Account Code",
+					"pluralName": "Account Codes"
+				}
+			},
+			"attributes": {
+				"Code": {
+					"isPrimaryField": true,
+					"type": {
+						"type": "Text",
+						"maxLength": 8
+					},
+					"locale": {
+						"1030": {
+							"displayName": "CVR Nummer"
+						},
+						"1033": {
+							"displayName": "Code"
+						}
+					},
+					"displayName": "Code",
+					"schemaName": "Code",
+					"logicalName": "code"
+				},
+				"Account": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_AccountCodes",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "account",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "account"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Selskab"
+						},
+						"1033": {
+							"displayName": "Account"
+						}
+					},
+					"displayName": "Account",
+					"schemaName": "AccountId",
+					"logicalName": "accountid"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": {
+								"title": "Administrative",
+								"locale": {
+									"1030": {
+										"title": "Administrative"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Code": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Account": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Owner": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Account Code",
+			"schemaName": "AccountCode",
+			"logicalName": "accountcode",
+			"collectionSchemaName": "AccountCodes"
+		},
+		"Account Role": {
+			"pluralName": "Account Roles",
+			"description": "The roles a person can have with the account. (Billing, Primary, Aministrator) ",
+			"sitemap": {
+				"order": 50,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "Configuration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabsroller",
+					"displayName": "Selskabsrolle"
+				},
+				"1033": {
+					"displayName": "Account Role",
+					"pluralName": "Account Roles"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Localized Name (1030)": {
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Dansk Navn"
+						},
+						"1033": {
+							"displayName": "Localized Name (1030)"
+						}
+					},
+					"displayName": "Localized Name (1030)",
+					"schemaName": "LocalizedName1030",
+					"logicalName": "localizedname1030"
+				},
+				"Is Public": {
+					"locale": {
+						"1030": {
+							"displayName": "Offentlig"
+						},
+						"1033": {
+							"displayName": "Is Public"
+						}
+					},
+					"type": {
+						"type": "boolean"
+					},
+					"description": "Controls if external users may use / assign this role",
+					"displayName": "Is Public",
+					"schemaName": "IsPublic",
+					"logicalName": "ispublic"
+				},
+				"External Role": {
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Ekstern Rolle"
+						},
+						"1033": {
+							"displayName": "External Role"
+						}
+					},
+					"displayName": "External Role",
+					"schemaName": "ExternalRole",
+					"logicalName": "externalrole"
+				},
+				"Auto Provision Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"foreignKey": {
+							"principalTable": "securityrole",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "autoprovisionsecurityrole"
+						}
+					},
+					"displayName": "Auto Provision Security Role",
+					"schemaName": "AutoProvisionSecurityRoleId",
+					"logicalName": "autoprovisionsecurityroleid",
+					"locale": {
+						"1033": {
+							"displayName": "Auto Provision Security Role"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Account Role",
+			"schemaName": "AccountRole",
+			"logicalName": "accountrole",
+			"collectionSchemaName": "AccountRoles"
+		},
+		"Account Role Assignment": {
+			"pluralName": "Account Role Assignments",
+			"locale": {
+				"1030": {
+					"pluralName": "Selskabsrolle Tildelinger",
+					"displayName": "Selskabrolle Tildeling"
+				},
+				"1033": {
+					"displayName": "Account Role Assignment",
+					"pluralName": "Account Role Assignments"
+				}
+			},
+			"views": {
+				"Associated Contacts": {
+					"columns": {
+						"Role": {},
+						"Contact": {}
+					}
+				},
+				"Associated Accounts": {
+					"columns": {
+						"Role": {},
+						"Account": {}
+					}
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account Role",
+						"foreignKey": {
+							"principalTable": "accountrole",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "role"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Rolle"
+						},
+						"1033": {
+							"displayName": "Role"
+						}
+					},
+					"displayName": "Role",
+					"schemaName": "RoleId",
+					"logicalName": "roleid"
+				},
+				"Contact": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Contact",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Accounts",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "Associated Accounts"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "contact",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "contact"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Bruger"
+						},
+						"1033": {
+							"displayName": "Contact"
+						}
+					},
+					"displayName": "Contact",
+					"schemaName": "ContactId",
+					"logicalName": "contactid"
+				},
+				"Account": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Account",
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Persons",
+								"column": "COLUMN_First",
+								"section": "SECTION_General",
+								"view": "Associated Contacts"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "account",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "account"
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Selskab"
+						},
+						"1033": {
+							"displayName": "Account"
+						}
+					},
+					"displayName": "Account",
+					"schemaName": "AccountId",
+					"logicalName": "accountid"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Account Role Assignment",
+			"schemaName": "AccountRoleAssignment",
+			"logicalName": "accountroleassignment",
+			"collectionSchemaName": "AccountRoleAssignments"
+		},
+		"Server": {
+			"pluralName": "Servers",
+			"locale": {
+				"1030": {
+					"pluralName": "Servers",
+					"displayName": "Server"
+				},
+				"1033": {
+					"displayName": "Server",
+					"pluralName": "Servers"
+				}
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Heartbeat": {
+					"type": {
+						"type": "DateTime"
+					},
+					"displayName": "Heartbeat",
+					"schemaName": "Heartbeat",
+					"logicalName": "heartbeat",
+					"locale": {
+						"1033": {
+							"displayName": "Heartbeat"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Server",
+			"schemaName": "Server",
+			"logicalName": "server",
+			"collectionSchemaName": "Servers"
+		},
+		"Environment Variable": {
+			"pluralName": "Environment Variables",
+			"locale": {
+				"1030": {
+					"pluralName": "Miljø Variabler",
+					"displayName": "Miljø Variable"
+				},
+				"1033": {
+					"displayName": "Environment Variable",
+					"pluralName": "Environment Variables"
+				}
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Server": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Server",
+						"foreignKey": {
+							"principalTable": "server",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "server"
+						}
+					},
+					"displayName": "Server",
+					"schemaName": "ServerId",
+					"logicalName": "serverid",
+					"locale": {
+						"1033": {
+							"displayName": "Server"
+						}
+					}
+				},
+				"Application Name": {
+					"type": {
+						"type": "string"
+					},
+					"displayName": "Application Name",
+					"schemaName": "ApplicationName",
+					"logicalName": "applicationname",
+					"locale": {
+						"1033": {
+							"displayName": "Application Name"
+						}
+					}
+				},
+				"Value": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"displayName": "Value",
+					"schemaName": "Value",
+					"logicalName": "value",
+					"locale": {
+						"1033": {
+							"displayName": "Value"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Environment Variable",
+			"schemaName": "EnvironmentVariable",
+			"logicalName": "environmentvariable",
+			"collectionSchemaName": "EnvironmentVariables"
+		},
+		"Document": {
+			"pluralName": "Documents",
+			"locale": {
+				"1030": {
+					"pluralName": "Dokumenter",
+					"displayName": "Dokument"
+				},
+				"1033": {
+					"displayName": "Document",
+					"pluralName": "Documents"
+				}
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Size": {
+					"type": {
+						"type": "integer"
+					},
+					"displayName": "Size",
+					"schemaName": "Size",
+					"logicalName": "size",
+					"locale": {
+						"1033": {
+							"displayName": "Size"
+						}
+					}
+				},
+				"Container": {
+					"type": {
+						"type": "Text",
+						"maxLength": 100
+					},
+					"displayName": "Container",
+					"schemaName": "Container",
+					"logicalName": "container",
+					"locale": {
+						"1033": {
+							"displayName": "Container"
+						}
+					}
+				},
+				"Path": {
+					"type": {
+						"type": "Text",
+						"maxLength": 512
+					},
+					"displayName": "Path",
+					"schemaName": "Path",
+					"logicalName": "path",
+					"locale": {
+						"1033": {
+							"displayName": "Path"
+						}
+					}
+				},
+				"ContentType": {
+					"type": {
+						"type": "Text"
+					},
+					"displayName": "ContentType",
+					"schemaName": "ContentType",
+					"logicalName": "contenttype",
+					"locale": {
+						"1033": {
+							"displayName": "ContentType"
+						}
+					}
+				},
+				"Compressed": {
+					"type": {
+						"type": "boolean"
+					},
+					"displayName": "Compressed",
+					"schemaName": "Compressed",
+					"logicalName": "compressed",
+					"locale": {
+						"1033": {
+							"displayName": "Compressed"
+						}
+					}
+				},
+				"Data": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					},
+					"displayName": "Data",
+					"schemaName": "Data",
+					"logicalName": "data",
+					"locale": {
+						"1033": {
+							"displayName": "Data"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Document",
+			"schemaName": "Document",
+			"logicalName": "document",
+			"collectionSchemaName": "Documents"
+		},
+		"Identity": {
+			"pluralName": "Identities",
+			"abstract": true,
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Awesome User": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "awesomeuser"
+						}
+					},
+					"displayName": "Awesome User",
+					"schemaName": "AwesomeUserId",
+					"logicalName": "awesomeuserid"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Identity",
+			"schemaName": "Identity",
+			"logicalName": "identity",
+			"collectionSchemaName": "Identities",
+			"locale": {
+				"1033": {
+					"displayName": "Identity",
+					"pluralName": "Identities"
+				}
+			}
+		},
+		"System User": {
+			"TPT": "Identity",
+			"pluralName": "System Users",
+			"attributes": {
+				"Email": {
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					},
+					"displayName": "Email",
+					"schemaName": "Email",
+					"logicalName": "email",
+					"locale": {
+						"1033": {
+							"displayName": "Email"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				}
+			},
+			"displayName": "System User",
+			"schemaName": "SystemUser",
+			"logicalName": "systemuser",
+			"collectionSchemaName": "SystemUsers",
+			"locale": {
+				"1033": {
+					"displayName": "System User",
+					"pluralName": "System Users"
+				}
+			}
+		},
+		"Security Group": {
+			"TPT": "Identity",
+			"pluralName": "Security Groups",
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppe",
+					"displayName": "Sikkerhedsgrupper"
+				},
+				"1033": {
+					"displayName": "Security Group",
+					"pluralName": "Security Groups"
+				}
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"keys": {
+				"ExternalId": [
+					"External Id"
+				]
+			},
+			"attributes": {
+				"External Id": {
+					"type": {
+						"type": "string"
+					},
+					"displayName": "External Id",
+					"schemaName": "ExternalId",
+					"logicalName": "externalid",
+					"locale": {
+						"1033": {
+							"displayName": "External Id"
+						}
+					}
+				},
+				"Is Business Unit": {
+					"type": {
+						"type": "boolean"
+					},
+					"displayName": "Is Business Unit",
+					"schemaName": "IsBusinessUnit",
+					"logicalName": "isbusinessunit",
+					"locale": {
+						"1033": {
+							"displayName": "Is Business Unit"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				}
+			},
+			"displayName": "Security Group",
+			"schemaName": "SecurityGroup",
+			"logicalName": "securitygroup",
+			"collectionSchemaName": "SecurityGroups"
+		},
+		"Contact": {
+			"TPT": "Identity",
+			"pluralName": "Contacts",
+			"sitemap": {
+				"order": 0,
+				"app": "DefaultApp",
+				"area": "CRM",
+				"group": "CRM"
+			},
+			"forms": {
+				"Main Information": {
+					"type": "Main",
+					"name": "Main Information",
+					"ribbon": {
+						"EAVFW_IMPERSONATE": {
+							"roles": {
+								"allowed": [
+									"System Administrator"
+								]
+							}
+						}
+					},
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Accounts": {
+								"title": "Accounts",
+								"locale": {
+									"1030": {
+										"title": "Selskaber"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_SecurityGroups": {
+								"title": "Security Groups",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsgrupper"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							},
+							"TAB_Administrative": {
+								"title": "Administrative",
+								"locale": {
+									"1030": {
+										"title": "Administrative"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Status": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Email": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Phone": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Allow Notifications": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"NemLogin RID": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Created By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified On": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Modified By": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Owner": {
+							"readonly": true,
+							"tab": "TAB_Administrative",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Kontaktpersoner",
+					"displayName": "Kontaktperson"
+				},
+				"1033": {
+					"displayName": "Contact",
+					"pluralName": "Contacts"
+				}
+			},
+			"attributes": {
+				"Phone": {
+					"x-public": true,
+					"type": {
+						"type": "Text",
+						"format": "Phone"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Telefonnummer"
+						},
+						"1033": {
+							"displayName": "Phone"
+						}
+					},
+					"displayName": "Phone",
+					"schemaName": "Phone",
+					"logicalName": "phone"
+				},
+				"Email": {
+					"x-public": true,
+					"type": {
+						"type": "Text",
+						"format": "Email"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Email"
+						},
+						"1033": {
+							"displayName": "Email"
+						}
+					},
+					"displayName": "Email",
+					"schemaName": "Email",
+					"logicalName": "email"
+				},
+				"Allow Notifications": {
+					"x-public": true,
+					"type": {
+						"type": "boolean"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Tillad Notification"
+						},
+						"1033": {
+							"displayName": "Allow Notifications"
+						}
+					},
+					"displayName": "Allow Notifications",
+					"schemaName": "AllowNotifications",
+					"logicalName": "allownotifications"
+				},
+				"NemLogin RID": {
+					"type": {
+						"type": "Text"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Nemlog-in RID"
+						},
+						"1033": {
+							"displayName": "NemLogin RID"
+						}
+					},
+					"displayName": "NemLogin RID",
+					"schemaName": "NemLoginRID",
+					"logicalName": "nemloginrid"
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Contact Status",
+						"options": {
+							"Active": 1,
+							"Validation data on next login": 2,
+							"Inactive": 0,
+							"New": 3
+						}
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Status"
+						},
+						"1033": {
+							"displayName": "Status"
+						}
+					},
+					"displayName": "Status",
+					"schemaName": "Status",
+					"logicalName": "status"
+				},
+				"Field Metadata": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"description": "Metadata field for the info about which fields are locked",
+					"displayName": "Field Metadata",
+					"schemaName": "FieldMetadata",
+					"logicalName": "fieldmetadata",
+					"locale": {
+						"1033": {
+							"displayName": "Field Metadata"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				}
+			},
+			"views": {
+				"All Contacts": {
+					"ribbon": {
+						"EAVFW_IMPERSONATE": {
+							"roles": {
+								"allowed": [
+									"System Administrator"
+								]
+							}
+						}
+					},
+					"columns": {
+						"Name": {},
+						"Status": {},
+						"Email": {},
+						"Phone": {},
+						"Allow Notifications": {},
+						"NemLogin RID": {}
+					}
+				}
+			},
+			"displayName": "Contact",
+			"schemaName": "Contact",
+			"logicalName": "contact",
+			"collectionSchemaName": "Contacts"
+		},
+		"Permission": {
+			"pluralName": "Permissions",
+			"keys": {
+				"IX_Name": [
+					"Name"
+				]
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Tilladelse",
+					"displayName": "Tilladelser"
+				},
+				"1033": {
+					"displayName": "Permission",
+					"pluralName": "Permissions"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Description": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Beskrivelse"
+						},
+						"1033": {
+							"displayName": "Description"
+						}
+					},
+					"displayName": "Description",
+					"schemaName": "Description",
+					"logicalName": "description"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_SecurityRoles": {
+								"title": "Security Roles",
+								"locale": {
+									"1030": {
+										"title": "Sikkerhedsroller"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Description": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Permission",
+			"schemaName": "Permission",
+			"logicalName": "permission",
+			"collectionSchemaName": "Permissions"
+		},
+		"Security Role": {
+			"pluralName": "Security Roles",
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle",
+					"displayName": "Sikkerhedsroller"
+				},
+				"1033": {
+					"displayName": "Security Role",
+					"pluralName": "Security Roles"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Description": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"locale": {
+						"1030": {
+							"displayName": "Beskrivelse"
+						},
+						"1033": {
+							"displayName": "Description"
+						}
+					},
+					"displayName": "Description",
+					"schemaName": "Description",
+					"logicalName": "description"
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"forms": {
+				"Main": {
+					"type": "Main",
+					"name": "Main Information",
+					"layout": {
+						"tabs": {
+							"TAB_General": {
+								"title": "General Information",
+								"locale": {
+									"1030": {
+										"title": "General Information"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									},
+									"COLUMN_Second": {
+										"sections": {
+											"SECTION_Additional": {}
+										}
+									}
+								}
+							},
+							"TAB_Permissions": {
+								"title": "Permissions",
+								"locale": {
+									"1030": {
+										"title": "Permissions"
+									}
+								},
+								"columns": {
+									"COLUMN_First": {
+										"sections": {
+											"SECTION_General": {}
+										}
+									}
+								}
+							}
+						}
+					},
+					"columns": {
+						"Name": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						},
+						"Description": {
+							"tab": "TAB_General",
+							"column": "COLUMN_First",
+							"section": "SECTION_General"
+						}
+					}
+				}
+			},
+			"displayName": "Security Role",
+			"schemaName": "SecurityRole",
+			"logicalName": "securityrole",
+			"collectionSchemaName": "SecurityRoles"
+		},
+		"Security Role Permission": {
+			"pluralName": "Security Role Permissions",
+			"description": "The Many to Many relationship between security roles and permissions",
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"keys": {
+				"IX_RolePermission": [
+					"Security Role",
+					"Permission"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tilladelse",
+					"displayName": "Sikkerhedsrolle tilladelser"
+				},
+				"1033": {
+					"displayName": "Security Role Permission",
+					"pluralName": "Security Role Permissions"
+				}
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"locale": {
+						"1030": {
+							"displayName": "Navn"
+						},
+						"1033": {
+							"displayName": "Name"
+						}
+					},
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					}
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Permission",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "permission",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "permission"
+						}
+					},
+					"displayName": "Permission",
+					"schemaName": "PermissionId",
+					"logicalName": "permissionid",
+					"locale": {
+						"1033": {
+							"displayName": "Permission"
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true,
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Permissions",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "securityrole",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "securityrole"
+						}
+					},
+					"displayName": "Security Role",
+					"schemaName": "SecurityRoleId",
+					"logicalName": "securityroleid",
+					"locale": {
+						"1033": {
+							"displayName": "Security Role"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Security Role Permission",
+			"schemaName": "SecurityRolePermission",
+			"logicalName": "securityrolepermission",
+			"collectionSchemaName": "SecurityRolePermissions"
+		},
+		"Security Role Assignment": {
+			"pluralName": "Security Role Assignments",
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"keys": {
+				"IX_IdentityRole": [
+					"Security Role",
+					"Identity"
+				]
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsrolle tildeling",
+					"displayName": "Sikkerhedsrolle tildelinger"
+				},
+				"1033": {
+					"displayName": "Security Role Assignment",
+					"pluralName": "Security Role Assignments"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityRoles",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "identity"
+						}
+					},
+					"displayName": "Identity",
+					"schemaName": "IdentityId",
+					"logicalName": "identityid",
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"Security Role": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Role",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "securityrole",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "securityrole"
+						}
+					},
+					"displayName": "Security Role",
+					"schemaName": "SecurityRoleId",
+					"logicalName": "securityroleid",
+					"locale": {
+						"1033": {
+							"displayName": "Security Role"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Security Role Assignment",
+			"schemaName": "SecurityRoleAssignment",
+			"logicalName": "securityroleassignment",
+			"collectionSchemaName": "SecurityRoleAssignments"
+		},
+		"Security Group Member": {
+			"pluralName": "Security Group Members",
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"locale": {
+				"1030": {
+					"pluralName": "Sikkerhedsgruppemedlem",
+					"displayName": "Sikkerhedsgruppemedlemmer"
+				},
+				"1033": {
+					"displayName": "Security Group Member",
+					"pluralName": "Security Group Members"
+				}
+			},
+			"keys": {
+				"IX_SecurityGroupIdentity": [
+					"Security Group",
+					"Identity"
+				]
+			},
+			"attributes": {
+				"Identity": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_SecurityGroups",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "identity"
+						}
+					},
+					"displayName": "Identity",
+					"schemaName": "IdentityId",
+					"logicalName": "identityid",
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"Security Group": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Security Group",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "securitygroup",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "securitygroup"
+						}
+					},
+					"displayName": "Security Group",
+					"schemaName": "SecurityGroupId",
+					"logicalName": "securitygroupid",
+					"locale": {
+						"1033": {
+							"displayName": "Security Group"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Security Group Member",
+			"schemaName": "SecurityGroupMember",
+			"logicalName": "securitygroupmember",
+			"collectionSchemaName": "SecurityGroupMembers"
+		},
+		"Record Share": {
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"pluralName": "Record Shares",
+			"locale": {
+				"1030": {
+					"pluralName": "Række Deling",
+					"displayName": "Række Delinger"
+				},
+				"1033": {
+					"displayName": "Record Share",
+					"pluralName": "Record Shares"
+				}
+			},
+			"attributes": {
+				"Identity": {
+					"isPrimaryField": true,
+					"displayName": "Identity",
+					"schemaName": "Identity",
+					"logicalName": "identity",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"EntityName": {
+					"type": {
+						"type": "Text",
+						"required": true
+					},
+					"displayName": "EntityName",
+					"schemaName": "EntityName",
+					"logicalName": "entityname",
+					"locale": {
+						"1033": {
+							"displayName": "EntityName"
+						}
+					}
+				},
+				"RecordId": {
+					"type": {
+						"type": "guid",
+						"required": true
+					},
+					"displayName": "RecordId",
+					"schemaName": "RecordId",
+					"logicalName": "recordid",
+					"locale": {
+						"1033": {
+							"displayName": "RecordId"
+						}
+					}
+				},
+				"Permission": {
+					"type": {
+						"type": "lookup",
+						"index": {
+							"unique": false
+						},
+						"referenceType": "Permission",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "permission",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "permission"
+						}
+					},
+					"displayName": "Permission",
+					"schemaName": "PermissionId",
+					"logicalName": "permissionid",
+					"locale": {
+						"1033": {
+							"displayName": "Permission"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Record Share",
+			"schemaName": "RecordShare",
+			"logicalName": "recordshare",
+			"collectionSchemaName": "RecordShares"
+		},
+		"Signin": {
+			"pluralName": "Signins",
+			"attributes": {
+				"Identity": {
+					"readonly": true,
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"index": {
+							"unique": false
+						},
+						"forms": {
+							"Main": {
+								"type": "Main",
+								"name": "Main Information",
+								"tab": "TAB_Signins",
+								"column": "COLUMN_First",
+								"section": "SECTION_General"
+							}
+						},
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "identity"
+						}
+					},
+					"displayName": "Identity",
+					"schemaName": "IdentityId",
+					"logicalName": "identityid",
+					"locale": {
+						"1033": {
+							"displayName": "Identity"
+						}
+					}
+				},
+				"Status": {
+					"type": {
+						"type": "Choice",
+						"name": "Signin Status",
+						"options": {
+							"Approved": {
+								"value": 0,
+								"locale": {
+									"1030": {
+										"displayName": "Godkendt"
+									}
+								}
+							},
+							"Rejected": {
+								"value": 1,
+								"locale": {
+									"1030": {
+										"displayName": "Afvist"
+									}
+								}
+							},
+							"Used": {
+								"value": 2,
+								"locale": {
+									"1030": {
+										"displayName": "Brugt"
+									}
+								}
+							}
+						}
+					},
+					"displayName": "Status",
+					"schemaName": "Status",
+					"logicalName": "status",
+					"locale": {
+						"1033": {
+							"displayName": "Status"
+						}
+					}
+				},
+				"Properties": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"readonly": true,
+					"displayName": "Properties",
+					"schemaName": "Properties",
+					"logicalName": "properties",
+					"locale": {
+						"1033": {
+							"displayName": "Properties"
+						}
+					}
+				},
+				"Claims": {
+					"type": {
+						"type": "MultilineText"
+					},
+					"readonly": true,
+					"displayName": "Claims",
+					"schemaName": "Claims",
+					"logicalName": "claims",
+					"locale": {
+						"1033": {
+							"displayName": "Claims"
+						}
+					}
+				},
+				"SessionId": {
+					"type": {
+						"type": "Text",
+						"maxLength": 64
+					},
+					"displayName": "SessionId",
+					"schemaName": "SessionId",
+					"logicalName": "sessionid",
+					"locale": {
+						"1033": {
+							"displayName": "SessionId"
+						}
+					}
+				},
+				"Provider": {
+					"type": {
+						"type": "Text"
+					},
+					"displayName": "Provider",
+					"schemaName": "Provider",
+					"logicalName": "provider",
+					"locale": {
+						"1033": {
+							"displayName": "Provider"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Signin",
+			"schemaName": "Signin",
+			"logicalName": "signin",
+			"collectionSchemaName": "Signins",
+			"locale": {
+				"1033": {
+					"displayName": "Signin",
+					"pluralName": "Signins"
+				}
+			}
+		},
+		"Workflow": {
+			"pluralName": "Workflows",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces",
+					"displayName": "Arbejdsproces"
+				},
+				"1033": {
+					"displayName": "Workflow",
+					"pluralName": "Workflows"
+				}
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"Manifest": {
+					"type": {
+						"type": "lookup",
+						"referenceType": "Document",
+						"foreignKey": {
+							"principalTable": "document",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "manifest"
+						}
+					},
+					"displayName": "Manifest",
+					"schemaName": "ManifestId",
+					"logicalName": "manifestid",
+					"locale": {
+						"1033": {
+							"displayName": "Manifest"
+						}
+					}
+				},
+				"Version": {
+					"type": {
+						"type": "Text"
+					},
+					"displayName": "Version",
+					"schemaName": "Version",
+					"logicalName": "version",
+					"locale": {
+						"1033": {
+							"displayName": "Version"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Workflow",
+			"schemaName": "Workflow",
+			"logicalName": "workflow",
+			"collectionSchemaName": "Workflows"
+		},
+		"Workflow Run": {
+			"pluralName": "Workflow Runs",
+			"locale": {
+				"1030": {
+					"pluralName": "Arbejdsproces k�rsler",
+					"displayName": "Arbejdsproces k�rsel"
+				},
+				"1033": {
+					"displayName": "Workflow Run",
+					"pluralName": "Workflow Runs"
+				}
+			},
+			"sitemap": {
+				"order": 100,
+				"app": "DefaultApp",
+				"area": "Administration",
+				"group": "Administration"
+			},
+			"attributes": {
+				"Name": {
+					"isPrimaryField": true,
+					"displayName": "Name",
+					"schemaName": "Name",
+					"logicalName": "name",
+					"type": {
+						"type": "string"
+					},
+					"locale": {
+						"1033": {
+							"displayName": "Name"
+						}
+					}
+				},
+				"State": {
+					"type": {
+						"type": "binary",
+						"format": "File"
+					},
+					"displayName": "State",
+					"schemaName": "State",
+					"logicalName": "state",
+					"locale": {
+						"1033": {
+							"displayName": "State"
+						}
+					}
+				},
+				"Id": {
+					"isPrimaryKey": true,
+					"type": {
+						"type": "guid"
+					},
+					"displayName": "Id",
+					"schemaName": "Id",
+					"logicalName": "id",
+					"locale": {
+						"1033": {
+							"displayName": "Id"
+						}
+					}
+				},
+				"Modified On": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret"
+						},
+						"1033": {
+							"displayName": "Modified On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Modified On",
+					"schemaName": "ModifiedOn",
+					"logicalName": "modifiedon"
+				},
+				"Created On": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet"
+						},
+						"1033": {
+							"displayName": "Created On"
+						}
+					},
+					"type": {
+						"type": "DateTime",
+						"required": true
+					},
+					"displayName": "Created On",
+					"schemaName": "CreatedOn",
+					"logicalName": "createdon"
+				},
+				"Owner": {
+					"locale": {
+						"1030": {
+							"displayName": "Ejer"
+						},
+						"1033": {
+							"displayName": "Owner"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "owner"
+						}
+					},
+					"displayName": "Owner",
+					"schemaName": "OwnerId",
+					"logicalName": "ownerid"
+				},
+				"Modified By": {
+					"locale": {
+						"1030": {
+							"displayName": "Ændret af"
+						},
+						"1033": {
+							"displayName": "Modified By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "modifiedby"
+						}
+					},
+					"displayName": "Modified By",
+					"schemaName": "ModifiedById",
+					"logicalName": "modifiedbyid"
+				},
+				"Created By": {
+					"locale": {
+						"1030": {
+							"displayName": "Oprettet af"
+						},
+						"1033": {
+							"displayName": "Created By"
+						}
+					},
+					"type": {
+						"type": "lookup",
+						"referenceType": "Identity",
+						"required": true,
+						"foreignKey": {
+							"principalTable": "identity",
+							"principalColumn": "id",
+							"principalNameColumn": "name",
+							"name": "createdby"
+						}
+					},
+					"displayName": "Created By",
+					"schemaName": "CreatedById",
+					"logicalName": "createdbyid"
+				},
+				"Row Version": {
+					"type": {
+						"type": "binary"
+					},
+					"isRowVersion": true,
+					"displayName": "Row Version",
+					"schemaName": "RowVersion",
+					"logicalName": "rowversion",
+					"locale": {
+						"1033": {
+							"displayName": "Row Version"
+						}
+					}
+				}
+			},
+			"displayName": "Workflow Run",
+			"schemaName": "WorkflowRun",
+			"logicalName": "workflowrun",
+			"collectionSchemaName": "WorkflowRuns"
+		}
+	},
+	"config": {
+		"SVG_LOGO_PATH": "/logo.svg"
+	},
+	"apps": {
+		"DefaultApp": {
+			"title": "MC"
+		}
+	},
+	"errorMessages": {},
+	"version": "1.0.1"
+}

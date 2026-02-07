@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>disable</Nullable>
 
@@ -11,6 +11,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <LangVersion>12.0</LangVersion>
 
 	</PropertyGroup>
 
@@ -20,20 +21,12 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="System.Text.Json" Version="8.0.0"/>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="3.0.26" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
+		<PackageReference Include="System.Text.Json" Version="10.0.2" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="DotNETDevOps.JsonFunctions" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.31" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)'=='net6.0'">
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)'=='net8.0'">
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-	</ItemGroup>
+ 
 
 </Project>

@@ -12,116 +12,344 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using EAVFramework.Extensions;
+using Microsoft.Extensions.Logging;
+using EAVFramework.OpenTelemetry;
+using EAVFramework.Configuration;
+using Sprache;
+using EAVFramework.Endpoints;
+using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EAVFramework.Authentication.Passwordless
 {
-    public class PasswordlessEasyAuthProvider : IEasyAuthProvider
+
+    public abstract class DefaultAuthProvider : IEasyAuthProvider
     {
-      
+        private readonly string _authSchema;
+        private readonly HttpMethod _httpMethod;
+
+        public DefaultAuthProvider(string authSchema, HttpMethod httpMethod = null)
+        {
+            _authSchema = authSchema;
+            _httpMethod = httpMethod ?? HttpMethod.Get;
+        }
+        public string AuthenticationName => _authSchema;
+        public virtual HttpMethod CallbackHttpMethod => _httpMethod;
+        public virtual bool AutoGenerateRoutes { get; } = true;
+        public bool UseTicketStore { get; protected set; } = true;
+
+        public abstract Task<OnAuthenticateResult> OnAuthenticate(OnAuthenticateRequest authenticateRequest);
+        public abstract Task<OnCallBackResult> OnCallback(OnCallbackRequest request);
+        public virtual RequestDelegate OnSignout(string callbackUrl)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual RequestDelegate OnSignedOut()
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual RequestDelegate OnSingleSignOut(string callbackUrl)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual Task PopulateCallbackRequest(OnCallbackRequest request)
+        {
+            request.HandleId = request.HttpContext.Request.Query.TryGetValue("token", out var token) ? Guid.Parse(token) : default;
+            return Task.CompletedTask;
+        }
+    }
+    public class EmailFilterOptions
+    {
+        public bool OpenTrack { get; set; }
+        public bool ClickTrack { get; set; }
+        public string EmailId { get; set; }
+    }
+    public interface IEAVEmailServiceFilter
+    {
+        Task ApplyAsync(MailMessage mailMessage, EmailFilterOptions emailFilterOptions);
+    }
+    public class SendGridEmailFilter : IEAVEmailServiceFilter
+    {
+        public Task ApplyAsync(MailMessage mailMessage, EmailFilterOptions emailFilterOptions)
+        {
+            var options = JToken.FromObject(new
+            {
+                unique_args = new Dictionary<string, string>
+                {
+                    ["email_id"] = emailFilterOptions.EmailId?.URLSafeHash()// emailId.ToString().URLSafeHash(),
+                },
+                filters = new
+                {
+                    opentrack = new { settings = new { enable = emailFilterOptions.OpenTrack ? 1 : 0 } },
+                    clicktrack = new { settings = new { enable = emailFilterOptions.ClickTrack ? 1 : 0 } }
+                }
+            });
+
+            mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
+            // mailMessage.Headers.Add("From", sender);
+            return Task.CompletedTask;
+        }
+    }
+    public class EAVEMailService
+    {
         private readonly SmtpClient _smtp;
+        private readonly ILogger<EAVEMailService> _logger;
+        private readonly IEnumerable<IEAVEmailServiceFilter> _emailServiceFilters;
+
+        public EAVEMailService(SmtpClient smtpClient, ILogger<EAVEMailService> logger, IEnumerable<IEAVEmailServiceFilter> emailServiceFilters)
+        {
+            _smtp = smtpClient;
+            _logger = logger;
+            _emailServiceFilters = emailServiceFilters;
+        }
+
+        private string MaskEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return email;
+            }
+
+            var atIndex = email.IndexOf('@');
+            if (atIndex < 0)
+            {
+                return email;
+            }
+
+            var localPart = email.Substring(0, atIndex);
+            var domain = email.Substring(atIndex);
+
+            if (localPart.Length <= 3)
+            {
+                return $"{localPart}***{domain}";
+            }
+
+            var maskedLocalPart = localPart.Substring(0, 3) + new string('*', localPart.Length - 3);
+            return $"{maskedLocalPart}{domain}";
+        }
+
+        public async Task SendEmailAsync(Guid emailId, string subject, string sender, string to_emails, string msgHtml, string msgPlain,
+            string sender_displayname = null, string to_cc_emails = null, Action<MailMessage> configure = null, bool opentrack = false, bool clicktrack = false)
+        {
+
+
+            MailMessage mailMessage = new MailMessage()
+            {
+                Subject = subject
+            };
+            if (!string.IsNullOrEmpty(to_emails))
+            {
+                foreach (var email in to_emails.Split(',', ';'))
+                {
+                    mailMessage.To.Add(new MailAddress(email));
+                }
+            }
+            if (!string.IsNullOrEmpty(to_cc_emails))
+            {
+                foreach (var email in to_cc_emails.Split(',', ';'))
+                {
+                    mailMessage.CC.Add(new MailAddress(email));
+                }
+            }
+            mailMessage.From = new MailAddress(sender, sender_displayname, Encoding.UTF8);
+
+            var view = AlternateView.CreateAlternateViewFromString(msgHtml, null, MediaTypeNames.Text.Html);
+            var plainView = AlternateView.CreateAlternateViewFromString(msgPlain, null, MediaTypeNames.Text.Plain);
+            mailMessage.AlternateViews.Add(plainView);
+            mailMessage.AlternateViews.Add(view);
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = msgHtml;
+
+
+
+            foreach (var filter in _emailServiceFilters)
+            {
+                await filter.ApplyAsync(mailMessage,
+                    new EmailFilterOptions
+                    {
+                        ClickTrack = clicktrack,
+                        EmailId = emailId.ToString(),
+                        OpenTrack = opentrack,
+                    });
+            }
+
+            configure?.Invoke(mailMessage);
+
+            _logger.LogInformation(
+                """
+                Sending email '{subject}'
+                ID: {id}
+                To: {to}
+                CC:{cc}
+                From: {sender}
+                """,
+                mailMessage.Subject, emailId,
+               string.Join(",", mailMessage.To.Select(email => MaskEmail(email.Address))),
+               string.Join(",", mailMessage.CC.Select(email => MaskEmail(email.Address))),
+               sender);
+
+
+
+            await SendEmailWithRetryAsync(mailMessage);
+
+        }
+        private SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
+        private async Task SendEmailWithRetryAsync(MailMessage mailMessage)
+        {
+            const int maxRetries = 5;
+            int retryCount = 0;
+            int delay = 40; // Initial delay in milliseconds 
+
+            while (retryCount < maxRetries)
+            {
+
+                try
+                {
+                    await _gate.WaitAsync();
+
+                    await _smtp.SendMailAsync(mailMessage);
+
+                    return;
+
+                }
+
+                catch (Exception ex)
+                    when (ex.Message.Contains("Service not available, closing transmission channel")
+                          || ex.Message.Contains("Broken pipe"))
+                {
+
+                    _logger.LogWarning(ex, "Failed to send email. Attempt {retryCount} of {maxRetries}", retryCount + 1, maxRetries);
+
+                    if (retryCount == maxRetries - 1)
+                    {
+                        throw;
+                    }
+
+                    await Task.Delay(delay);
+                    delay *= 2; // Exponential backoff
+                    retryCount++;
+                }
+                finally
+                {
+                    _gate.Release();
+                }
+            }
+
+
+        }
+
+    }
+    public class PasswordlessEasyAuthProvider : DefaultAuthProvider
+    {
+        private readonly ILogger<PasswordlessEasyAuthProvider> _logger;
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        // private readonly EAVEMailService _emailService;
+        private readonly EAVMetrics _metrics;
+        //   private readonly SmtpClient _smtp;
         private readonly IOptions<PasswordlessEasyAuthOptions> _options;
 
-        public PasswordlessEasyAuthProvider() { }
+        public PasswordlessEasyAuthProvider() : base("passwordless") { }
 
         public PasswordlessEasyAuthProvider(
-            SmtpClient smtpClient,
-            IOptions<PasswordlessEasyAuthOptions> options)
+            ILogger<PasswordlessEasyAuthProvider> logger,
+            IServiceScopeFactory scopeFactory,
+            //  EAVEMailService emailService, // SmtpClient smtpClient,
+            IOptions<PasswordlessEasyAuthOptions> options, EAVMetrics metrics = null) : this()
         {
-         
-            _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _scopeFactory = scopeFactory;
+            // _emailService = emailService;
+            _metrics = metrics;
+            //   _smtp = smtpClient ?? throw new ArgumentNullException(nameof(smtpClient));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
-        public string AuthenticationName => "passwordless";
-        public HttpMethod CallbackHttpMethod => HttpMethod.Get;
-        public bool AutoGenerateRoutes { get; set; } = true;
 
-        public async Task OnAuthenticate(HttpContext httpcontext, string handleId, string callbackUrl)
+
+
+        public override async Task<OnAuthenticateResult> OnAuthenticate(OnAuthenticateRequest authenticateRequest)
         {
-           // return async (httpcontext) =>
+            // return async (httpcontext) =>
             {
+                var email = authenticateRequest.Email;
 
-                var email = httpcontext.Request.Query["email"].FirstOrDefault();
-                var redirectUri = httpcontext.Request.Query["redirectUri"].FirstOrDefault();
-
-                var user = await _options.Value.FetchUserIdByEmailAsync(httpcontext,httpcontext.RequestServices, email);
-
-                if (user == null)
+                if (!authenticateRequest.IdentityId.HasValue || authenticateRequest.IdentityId.Value == default)
                 {
-                    httpcontext.Response.Redirect(callbackUrl  + $"{(callbackUrl.Contains('?')?"&":"?")}error=access_denied&error_subcode=user_not_found");
-                    return;
+                    return new OnAuthenticateResult
+                    {
+                        ErrorMessage = $"User not found",
+                        ErrorCode = "access_denied", ErrorSubCode = "user_not_found", Success = false
+                    };
                 }
 
-                var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
-                    Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
+                //  var ticket = CryptographyHelpers.Encrypt(handleId.Sha512(), handleId.Sha1(),
+                //      Encoding.UTF8.GetBytes($"sub={user}&email={email}"));
 
-                await _options.Value.PersistTicketAsync(httpcontext, user, handleId,ticket, redirectUri);
+                //  await _options.Value.PersistTicketAsync(httpcontext, user, handleId,ticket, redirectUri);
 
-                var options = JToken.FromObject(new
+                using (var scope = _scopeFactory.CreateScope())
                 {
-                    unique_args = new Dictionary<string, string>
-                    {
-                        ["email_id"] = handleId.URLSafeHash(),
-                    },
-                    filters = new
-                    {
-                        opentrack = new { settings = new { enable = 0 } },
-                        clicktrack = new { settings = new { enable = 0 } }
-                    }
-                });
+                    var emailService = scope.ServiceProvider.GetRequiredService<EAVEMailService>();
+                    await emailService.SendEmailAsync(authenticateRequest.HandleId,
+                        subject: _options.Value.Subject,
+                        sender: _options.Value.Sender,
+                        to_emails: email,
+                        msgHtml: _options.Value.TemplateMailMessageContents(authenticateRequest.CallbackUrl),
+                        msgPlain: authenticateRequest.CallbackUrl);
 
-                MailMessage mailMessage = new MailMessage()
-                    { Subject = _options.Value.Subject };
-                mailMessage.To.Add(new MailAddress(email));
-                mailMessage.From = new MailAddress(_options.Value.Sender);
-                var msgHtml = _options.Value.TemplateMailMessageContents(callbackUrl);
-                var view = AlternateView.CreateAlternateViewFromString(msgHtml, null, MediaTypeNames.Text.Html);
-                var plainView = AlternateView.CreateAlternateViewFromString(callbackUrl, null, MediaTypeNames.Text.Plain);
-                mailMessage.AlternateViews.Add(view);
-                mailMessage.AlternateViews.Add(plainView);
-                mailMessage.IsBodyHtml = true;
-                mailMessage.Body = msgHtml;
-                mailMessage.Headers.Add("X-SMTPAPI", options.ToString());
-                await _smtp.SendMailAsync(mailMessage);
+                }
 
-              
-                await _options.Value.ResponseSuccessFullAsync(httpcontext);
-             
-               
+                await _options.Value.ResponseSuccessFullAsync(authenticateRequest.HttpContext);
+
+                return new OnAuthenticateResult { Success = true };
+
                 //TODO make this option provided
 
-            };
+            }
+            ;
         }
 
-        public async Task<(ClaimsPrincipal, string,string)> OnCallback(HttpContext httpcontext)
-        {
-            var handleId = httpcontext.Request.Query["token"].FirstOrDefault();
-            var (ticketInfo, redirectUri) = await _options.Value.GetTicketInfoAsync(httpcontext,handleId);
 
-            var ticket = QueryHelpers.ParseNullableQuery
-            (Encoding.UTF8.GetString(CryptographyHelpers.Decrypt(handleId.Sha512(), handleId.Sha1(),
-                ticketInfo)));
+
+
+        public override async Task<OnCallBackResult> OnCallback(OnCallbackRequest request)
+        {
+
+
+            var ticket = request.Ticket;
+
+            if (!request.IdentityId.HasValue || request.IdentityId.Value == default)
+            {
+                request.IdentityId = await request.Options?.FindIdentity(
+                         new UserDiscoveryRequest
+                         {
+
+                             Email = ticket["email"].ToString(),
+                             HttpContext = request.HttpContext,
+                             ServiceProvider = request.HttpContext.RequestServices
+                         });
+            }
 
             var identity = new ClaimsIdentity(
-                ticket.Select(kv => new Claim(kv.Key, kv.Value)).ToArray(),
+                [new Claim("sub",request.IdentityId.ToString()), ..
+                ticket.Select(kv => new Claim(kv.Key, kv.Value)).ToArray()],
                 AuthenticationName);
 
-            return await Task.FromResult((new ClaimsPrincipal(identity), redirectUri, handleId));
+
+
+            return new OnCallBackResult
+            {
+                Principal = new ClaimsPrincipal(identity),
+
+                Success = true
+            };
+
         }
 
-        public RequestDelegate OnSignout(string callbackUrl)
-        {
-            throw new NotImplementedException();
-        }
 
-        public RequestDelegate OnSignedOut()
-        {
-            throw new NotImplementedException();
-        }
-
-        public RequestDelegate OnSingleSignOut(string callbackUrl)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

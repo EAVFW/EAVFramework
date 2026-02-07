@@ -1,4 +1,4 @@
-﻿using EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using EAVFramework.Hosting;
 
 namespace EAVFramework.Extensions
@@ -10,7 +10,7 @@ namespace EAVFramework.Extensions
             return endpoint?.Name switch
             {
                 Constants.EndpointNames.QueryRecords => options.EnableQueryRecordsEndpoint,
-              
+
                 _ => true
             };
         }

@@ -1,4 +1,4 @@
-﻿using EAVFramework.Plugins;
+using EAVFramework.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Reflection;
@@ -19,5 +19,6 @@ namespace EAVFramework.Configuration
         IServiceCollection Services { get; }
       
         void WithDBContext();
+        IEAVFrameworkBuilder WithMetrics();
     }
 }

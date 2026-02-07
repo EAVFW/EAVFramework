@@ -1,4 +1,4 @@
-﻿using EAVFramework.Hosting;
+using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
@@ -8,12 +8,12 @@ namespace EAVFramework.Endpoints.Results
 {
     public class Status202AcceptedResult : IEndpointResult
     {
-        
 
-        public async Task ExecuteAsync(HttpContext context)
+
+        public Task ExecuteAsync(HttpContext context)
         {
             context.Response.StatusCode = StatusCodes.Status202Accepted;
-          
+            return Task.CompletedTask;
         }
     }
 
@@ -22,7 +22,7 @@ namespace EAVFramework.Endpoints.Results
         private readonly Stream _stream;
         private readonly string contentType;
 
-        public StreamResult(Stream stream, string contentType=null)
+        public StreamResult(Stream stream, string contentType = null)
         {
             _stream = stream;
             this.contentType = contentType;
@@ -30,10 +30,10 @@ namespace EAVFramework.Endpoints.Results
 
         public async Task ExecuteAsync(HttpContext context)
         {
-          
+
             context.Response.ContentType = contentType ?? "application/json; charset=UTF-8";
-            
-          
+
+
             await _stream.CopyToAsync(context.Response.Body);
             await context.Response.Body.FlushAsync();
 

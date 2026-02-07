@@ -1,9 +1,12 @@
-﻿
+
+using EAVFW.Extensions.Manifest.SDK;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 
 namespace EAVFramework.Shared.V2
@@ -85,8 +88,10 @@ namespace EAVFramework.Shared.V2
 
 
 
-            dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo())
-               .AddForeignKey(SchemaName);
+            var propBuilder = dynamicTableBuilder.AddProperty(null, FKSchemaName, FKLogicalName, related.GetTypeInfo());
+
+
+            propBuilder.AddForeignKey(SchemaName);
 
             //var (attFKProp, attFKField) = CreateProperty(entityType, (FKSchemaName ??
             //    (foreigh.Parent as JProperty).Name).Replace(" ", ""), foreighSchemaName == entitySchameName ?
@@ -111,33 +116,102 @@ namespace EAVFramework.Shared.V2
             ForeignKey = schemaName;
             return this;
         }
+        public PropertyInfo GetMethod => TypeBuilder.GetProperty(SchemaName);
+        public PropertyBuilder PropertyBuilder { get; private set; }
+        public FieldBuilder FieldBuilder { get; private set; }
 
-        public void Build()
+
+        public void AddInterfaceOverrides()
         {
-            if (PropertyType == null || dynamicTableBuilder.ContainsParentProperty(SchemaName))
-            {
+            if (PropertyType == null)
                 return;
+
+            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes,true)
+                && this.dynamicTableBuilder.GetParentPropertyGetMethod(SchemaName) is PropertyInfo property)
+            {
+                foreach (var interfaceType in interfaceTypes)
+                {
+                    try
+                    {
+                        {
+                            var base_get = TypeBuilder.DefineMethod($"get_{interfaceType.Name}_{LogicalName}",
+                                MethodAttributes.Virtual | MethodAttributes.Private | MethodAttributes.Final | MethodAttributes.SpecialName | MethodAttributes.NewSlot | MethodAttributes.HideBySig,
+                                property.PropertyType, System.Type.EmptyTypes);
+                            var il = base_get.GetILGenerator();
+                            il.Emit(OpCodes.Ldarg_0);
+                            il.EmitCall(OpCodes.Call, property.GetGetMethod(), null);
+                            il.Emit(OpCodes.Ret);
+                            TypeBuilder.DefineMethodOverride(base_get, interfaceType.GetProperty(SchemaName).GetGetMethod());
+                        }
+                        {
+                            var base_set = TypeBuilder.DefineMethod($"set_{LogicalName}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
+
+                               null, new[] { property.PropertyType });
+                            var il = base_set.GetILGenerator();
+                            il.Emit(OpCodes.Ldarg_0);
+                            il.Emit(OpCodes.Ldarg_1);
+                            il.Emit(OpCodes.Call, property.GetSetMethod());
+
+                            il.Emit(OpCodes.Ret);
+                            TypeBuilder.DefineMethodOverride(base_set, interfaceType.GetProperty(SchemaName).GetSetMethod());
+
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                       throw new Exception($"Error adding interface overrides for {SchemaName} in {TypeBuilder.Name}", ex);
+                    }
+                }
             }
 
 
-            var (prop, field) = dynamicCodeService.EmitPropertyService.CreateProperty(this.TypeBuilder, SchemaName, DTOPropertyType ?? PropertyType);
+        }
+        public void Build()
+        {
+            if (PropertyType == null)
+                return;
 
-            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(prop, LogicalName,AttributeKey);
 
-            dynamicCodeService.EmitPropertyService.CreateJsonSerializationAttribute(prop, LogicalName);
+            if (dynamicTableBuilder.ContainsPropertyFromInterfaceInBaseClass(SchemaName, out Type[] interfaceTypes)
+              && this.dynamicTableBuilder.GetParentPropertyGetMethod(SchemaName) is PropertyInfo property)
+            {
+                foreach (var interfaceType in interfaceTypes)
+                {
+                    if (interfaceType.IsGenericType)
+                    {
+                        foreach(var dependency in interfaceType.GenericTypeArguments)
+                        {
+                            dynamicTableBuilder.DeppendsOn(dependency);
+                        }
+                    }
+                }
+
+            }
+                    if (dynamicTableBuilder.ContainsParentProperty(SchemaName))
+                return;
+
+
+
+            var (PropertyBuilder, FieldBuilder) = dynamicCodeService.EmitPropertyService
+                    .CreateProperty(this.TypeBuilder, SchemaName, DTOPropertyType ?? PropertyType);
+
+            dynamicCodeService.EmitPropertyService.CreateDataMemberAttribute(PropertyBuilder, LogicalName, AttributeKey);
+
+            dynamicCodeService.EmitPropertyService.CreateJsonSerializationAttribute(PropertyBuilder, LogicalName);
 
             foreach (var inverse in InverseProperties)
             {
                 CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(dynamicCodeService.Options.InverseAttributeCtor, new object[] { inverse });
 
-                prop.SetCustomAttribute(ForeignKeyAttributeBuilder);
+                PropertyBuilder.SetCustomAttribute(ForeignKeyAttributeBuilder);
             }
 
             if (IsPrimaryField)
             {
                 CustomAttributeBuilder PrimaryFieldAttributeBuilder = new CustomAttributeBuilder(typeof(PrimaryFieldAttribute).GetConstructor(new Type[] { }), new object[] { });
 
-                prop.SetCustomAttribute(PrimaryFieldAttributeBuilder);
+                PropertyBuilder.SetCustomAttribute(PrimaryFieldAttributeBuilder);
 
 
             }
@@ -146,7 +220,7 @@ namespace EAVFramework.Shared.V2
             {
                 CustomAttributeBuilder PrimaryKeyAttributeBuilder = new CustomAttributeBuilder(typeof(PrimaryKeyAttribute).GetConstructor(new Type[] { }), new object[] { });
 
-                prop.SetCustomAttribute(PrimaryKeyAttributeBuilder);
+                PropertyBuilder.SetCustomAttribute(PrimaryKeyAttributeBuilder);
 
 
             }
@@ -155,7 +229,7 @@ namespace EAVFramework.Shared.V2
             {
                 CustomAttributeBuilder DescriptionAttributeBuilder = new CustomAttributeBuilder(typeof(DescriptionAttribute).GetConstructor(new Type[] { typeof(string) }), new object[] { Description });
 
-                prop.SetCustomAttribute(DescriptionAttributeBuilder);
+                PropertyBuilder.SetCustomAttribute(DescriptionAttributeBuilder);
 
 
             }
@@ -163,7 +237,7 @@ namespace EAVFramework.Shared.V2
             if (enumbuilder != null)
             {
                 foreach (var values in Choices)
-                    enumbuilder.DefineLiteral(string.IsNullOrWhiteSpace( values.Key) ? "Empty": values.Key, values.Value);
+                    enumbuilder.DefineLiteral(string.IsNullOrWhiteSpace(values.Key) ? "Empty" : values.Key, values.Value);
 
                 DTOPropertyType = typeof(Nullable<>).MakeGenericType(enumbuilder.CreateTypeInfo()); ;
                 //                }
@@ -176,8 +250,9 @@ namespace EAVFramework.Shared.V2
             {
                 CustomAttributeBuilder ForeignKeyAttributeBuilder = new CustomAttributeBuilder(this.dynamicCodeService.Options.ForeignKeyAttributeCtor, new object[] { ForeignKey });
 
-                prop.SetCustomAttribute(ForeignKeyAttributeBuilder);
+                PropertyBuilder.SetCustomAttribute(ForeignKeyAttributeBuilder);
             }
+
         }
         public TypeBuilder TypeBuilder => this.dynamicTableBuilder.Builder;
 

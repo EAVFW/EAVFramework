@@ -1,4 +1,4 @@
-﻿using EAVFramework.Extensions;
+using EAVFramework.Extensions;
 using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
@@ -22,11 +22,11 @@ namespace EAVFramework.Endpoints.Results
     }
     public class Status200CreatedResult : IEndpointResult
     {
-       
+
 
         public Status200CreatedResult()
         {
-             
+
         }
 
         public Task ExecuteAsync(HttpContext context)

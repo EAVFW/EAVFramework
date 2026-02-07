@@ -1,94 +1,42 @@
+using EAVFramework.Configuration;
 using EAVFramework.Plugins;
+using EAVFramework.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Security.Claims;
-using System.Reflection;
-using EAVFramework.Shared;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using System.Linq;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json.Serialization;
-using System.Collections.Concurrent;
-using System.Runtime.Serialization;
-using System.Collections.Generic;
+using System;
 using System.Collections;
-using System.Diagnostics;
-using System.Threading;
-using System.Linq.Expressions;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
+using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EAVFramework.Endpoints
 {
-    public class DataUrlHelper
-    {
-        public string Name { get; set; }
 
-        public string ContentType { get; set; }
-
-        public byte[] Data { get; set; }
-
-        public void Parse(string dataUrl)
-        {
-            if (!dataUrl.StartsWith("data:"))
-            {
-                Data = Convert.FromBase64String(dataUrl);
-                return;
-            }
-
-
-            var matches = Regex.Match(dataUrl, @"data:(?<type>.+?);name=(?<name>.+?);base64,(?<data>.+)");
-
-            if (matches.Groups.Count < 3)
-            {
-                throw new Exception("Invalid DataUrl format");
-            }
-
-            ContentType = matches.Groups["type"].Value;
-            Name= matches.Groups["name"].Value; ;
-            Data =  Convert.FromBase64String(matches.Groups["data"].Value);
-        }
-    }
-
-    public class DataUrlConverter : JsonConverter
-    {
-
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(byte[]);
-        }
-
-
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            var a = new DataUrlHelper();
-            a.Parse(reader.ReadAsString());
-
-            return a.Data;
-        }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public abstract class EAVDBContext 
+    public abstract class EAVDBContext
     {
         public abstract Task SaveChangesAsync(ClaimsPrincipal user);
         public abstract ValueTask<EntityEntry> FindAsync(string entityName, params object[] keys);
         public abstract EntityEntry Add(string entityName, JToken record);
+        public abstract Type GetEntityType(string entityCollectionName);
     }
 
     public record EntityRef([property: JsonProperty("$type")] string Type, [property: JsonProperty("id")] Guid Id);
@@ -98,10 +46,11 @@ namespace EAVFramework.Endpoints
     {
         public TContext Context { get; }
 
-        private readonly PluginsAccesser<TContext> plugins;
-        private readonly ILogger<EAVDBContext<TContext>> logger;
-        private readonly IServiceProvider serviceProvider;
-        private readonly IPluginScheduler<TContext> pluginScheduler;
+        private readonly PluginsAccesser<TContext> _plugins;
+        private readonly ILogger<EAVDBContext<TContext>> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IOptions<EAVFrameworkOptions> _options;
+        private readonly IPluginScheduler<TContext> _pluginScheduler;
 
 
         public T GetContextService<T>() where T : class
@@ -124,12 +73,16 @@ namespace EAVFramework.Endpoints
                 return await Context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
             }
 
-            catch(InvalidOperationException)
+            catch (InvalidOperationException)
             {
                 return null;
             }
         }
 
+        public override Type GetEntityType(string entityCollectionName)
+        {
+            return this.Context.GetEntityType(entityCollectionName);
+        }
         public virtual EntityEntry Remove(object obj)
         {
             return this.Context.Remove(obj);
@@ -138,7 +91,7 @@ namespace EAVFramework.Endpoints
         {
             return this.Context.Add(obj);
         }
-         
+
         public virtual EntityEntry RemoveWithoutCascading(object obj)
         {
             var entry = this.Context.Entry(obj);
@@ -165,7 +118,8 @@ namespace EAVFramework.Endpoints
                 Context.Entry(obj).State = EntityState.Unchanged;
             }
         }
-        public EntityEntry Attach(object obj) {
+        public EntityEntry Attach(object obj)
+        {
             return Context.Attach(obj);
         }
         public EntityEntry Update(object obj)
@@ -176,10 +130,6 @@ namespace EAVFramework.Endpoints
         //   private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings {  Converters = { new DataUrlConverter } });
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
 
-        public void ResetMigrationsContext()
-        {
-            Context.ResetMigrationsContext();
-        }
 
         public async Task<T> ExecuteTaskAsync<T>(Func<Task<T>> query, CancellationToken cancellationToken = default)
         {
@@ -216,32 +166,35 @@ namespace EAVFramework.Endpoints
             return this.Context.FindAsync<T>(keys);
         }
 
-         
+
 
         public EAVDBContext(
-            TContext context, 
-            PluginsAccesser<TContext> plugins, 
-            ILogger<EAVDBContext<TContext>> logger, 
-            IServiceProvider serviceProvider, IPluginScheduler<TContext> pluginScheduler)
+            TContext context,
+            PluginsAccesser<TContext> plugins,
+            ILogger<EAVDBContext<TContext>> logger,
+            IServiceProvider serviceProvider,
+            IOptions<EAVFrameworkOptions> options,
+            IPluginScheduler<TContext> pluginScheduler)
         {
             this.Context = context ?? throw new ArgumentNullException(nameof(context));
-            this.plugins = plugins;
-            this.logger = logger;
-            this.serviceProvider = serviceProvider;
-            this.pluginScheduler = pluginScheduler;
+            this._plugins = plugins;
+            this._logger = logger;
+            this._serviceProvider = serviceProvider;
+            _options = options;
+            this._pluginScheduler = pluginScheduler;
             context.EnsureModelCreated();
         }
-        
+
         public async Task MigrateAsync()
         {
             var migrator = Context.Database.GetInfrastructure().GetRequiredService<IMigrator>();
-            var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
-            logger.LogInformation("Migrating: {SQL}", sqlscript);
-           // await migrator.MigrateAsync();
+            var sqlscript = migrator.GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent | MigrationsSqlGenerationOptions.Script | MigrationsSqlGenerationOptions.NoTransactions);
+            _logger.LogInformation("Migrating: {SQL}", sqlscript);
+            // await migrator.MigrateAsync();
 
             var conn = Context.Database.GetDbConnection();
-          
-            if(conn.State != System.Data.ConnectionState.Open)
+
+            if (conn.State != System.Data.ConnectionState.Open)
                 await conn.OpenAsync();
 
             foreach (var sql in sqlscript.Split("GO"))
@@ -250,8 +203,15 @@ namespace EAVFramework.Endpoints
                 cmd.CommandText = sql;
                 //  await context.Context.Database.ExecuteSqlRawAsync(sql);
 
-
-                var r = await cmd.ExecuteNonQueryAsync();
+                try
+                {
+                    var r = await cmd.ExecuteNonQueryAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to execute sql: {SQL}", sql);
+                    throw;
+                }
             }
 
 
@@ -262,11 +222,11 @@ namespace EAVFramework.Endpoints
             {
                 var reader = new StreamReader(context.Request.BodyReader.AsStream());
                 var text = await reader.ReadToEndAsync();
-                logger.LogInformation("Reading Payload : {Payload}", text);
+                _logger.LogInformation("Reading Payload : {Payload}", text);
 
                 var record = JToken.Parse(text);
                 if (!string.IsNullOrEmpty(options.RecordId))
-                    record["id"] =  options.RecordId;
+                    record["id"] = options.RecordId;
                 return record;
             }
             else
@@ -285,23 +245,23 @@ namespace EAVFramework.Endpoints
             return new EAVResource
             {
                 EntityType = type,
-                EntityCollectionSchemaName =  type.GetCustomAttribute<EntityAttribute>().CollectionSchemaName,
-                Host =context.Request.Host
+                EntityCollectionSchemaName = type.GetCustomAttribute<EntityAttribute>().CollectionSchemaName,
+                Host = context.Request.Host
             };
         }
 
         public ValueTask<OperationContext<TContext>> SaveChangesAsync(ClaimsPrincipal user, Func<OperationContext<TContext>, Task> onBeforeCommit = null)
         {
-            return this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler, onBeforeCommit);
+            return this.Context.SaveChangesPipeline(_serviceProvider, user, _plugins, _pluginScheduler, onBeforeCommit);
         }
-        
+
         public override async Task SaveChangesAsync(ClaimsPrincipal user)
         {
-            var a= await this.Context.SaveChangesPipeline(serviceProvider, user, plugins, pluginScheduler);
+            var a = await this.Context.SaveChangesPipeline(_serviceProvider, user, _plugins, _pluginScheduler);
 
 
-           if(a.Errors.Any())
-            throw new Exception("Failed to save, " + String.Join(",", a.Errors.Select(c => c.Error)));
+            if (a.Errors.Any())
+                throw new Exception("Failed to save, " + String.Join(",", a.Errors.Select(c => c.Error)));
         }
 
         static ConcurrentDictionary<string, PropertyInfo> methods = new ConcurrentDictionary<string, PropertyInfo>();
@@ -311,26 +271,36 @@ namespace EAVFramework.Endpoints
             //   this.Context.ChangeTracker.LazyLoadingEnabled=true;
             var entity = await FindAsync(entityName, recordId);
 
-
-            /**
-             * We load up all properties with an object from database unless no id on object is provided,
-             * then its assumed to be a new object or partial update
-             * Two Cases:
-             * 1: if the object has no id field but the root object do have propertyname + "id", then it should be partial update
-             * 2: if no id and no propertyname + "id" field on root, then its assume that the object should replace the existing as new
-             */
-            var relatedProps = record.OfType<JProperty>()
-                .Where(p => p.Value.Type == JTokenType.Object && p.Value is JObject obj && (obj.ContainsKey("id")|| record[p.Name+"id"] !=null )).ToArray();
-
-            foreach (var related in relatedProps.Select(related =>
-                 entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
+            if (_options.Value.Context.PatchOptions.DisableDeepLoading)
             {
-                if (related!=null)
-                {
-                    await related.LoadAsync();
-                }
-            }
 
+                var relatedProps = record.OfType<JProperty>()
+                    .Where(p => p.Value.Type == JTokenType.Object && p.Value is JObject obj && (obj.ContainsKey("id") || record[p.Name + "id"] != null)).ToArray();
+
+                foreach (var related in relatedProps.Select(related =>
+                     entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, related.Name, StringComparison.OrdinalIgnoreCase))))
+                {
+                    if (related != null)
+                    {
+                        await related.LoadAsync();
+                    }
+                }
+
+            }
+            else
+            {
+
+                /**
+                 * We load up all properties with an object from database unless no id on object is provided,
+                 * then its assumed to be a new object or partial update
+                 * Two Cases:
+                 * 1: if the object has no id field but the root object do have propertyname + "id", then it should be partial update
+                 * 2: if no id and no propertyname + "id" field on root, then its assume that the object should replace the existing as new
+                 */
+
+
+                await LoadRelatedDataAsync(record, entity);
+            }
 
             var serializer = new JsonSerializer();
 
@@ -340,9 +310,65 @@ namespace EAVFramework.Endpoints
 
             // TraverseDeleteCollections(record, new Lazy<Type>(entity.Entity.GetType()));
 
-            logger.LogInformation("Patching {EntityName}<{RecordId}>: {Changes}", entityName, recordId, this.Context.ChangeTracker.DebugView.LongView);
+            _logger.LogInformation("Patching {EntityName}<{RecordId}>: {Changes}", entityName, recordId, this.Context.ChangeTracker.DebugView.LongView);
 
             return entity;
+        }
+
+        private async Task LoadRelatedDataAsync(JToken record, EntityEntry entity)
+        {
+            foreach (var prop in record.OfType<JProperty>().ToArray())
+            {
+                if (prop.Value is JObject relatedRecord)
+                {
+
+                    if (relatedRecord.ContainsKey("id") || record[prop.Name + "id"] != null)
+                    {
+                        var related = entity.References.FirstOrDefault(c => string.Equals(c.Metadata.Name, prop.Name, StringComparison.OrdinalIgnoreCase));
+
+                        if (related == null)
+                        {
+                            if (this._options.Value.Endpoints.PatchEndpointOptions.LogWarningForUnknownData)
+                            {
+                                _logger.LogWarning($"Property {prop.Name} not found on entity {entity.Metadata.GetSchemaQualifiedTableName()}");
+                            }
+
+                            if (this._options.Value.Endpoints.PatchEndpointOptions.AllowUnknownData)
+                            {
+                                prop.Remove();
+                                continue;
+                            }
+
+                            throw new Exception($"Property {prop.Name} not found on entity {entity.Metadata.GetSchemaQualifiedTableName()}");
+                        }
+
+                        await related.LoadAsync(); //TODO, we could cache id+rowrecord to avoid loading from db
+
+                        await LoadRelatedDataAsync(relatedRecord, related.TargetEntry);
+                    }
+
+
+                }
+                else if (prop.Value is JArray relatedArray)
+                {
+                    var relatedcol = entity.Collections.FirstOrDefault(c => string.Equals(c.Metadata.Name, prop.Name, StringComparison.OrdinalIgnoreCase));
+                    //TODO,  relatedcol.Query(). could create where query to load all in one go
+
+                    foreach (var item in relatedArray)
+                    {
+                        if (item is JObject obj && obj.ContainsKey("id"))
+                        {
+                            var relatedEntity = await this.Context.FindAsync(relatedcol.Metadata.TargetEntityType.ClrType, item["id"].ToObject<Guid>());
+                            await LoadRelatedDataAsync(obj, Context.Entry(relatedEntity));
+                        }
+
+                        // var relatedEntity = relatedcol.Query().  (item["id"].ToObject<Guid>());
+
+
+                    }
+
+                }
+            }
         }
 
         private async Task PopulateAsync(JToken record, EntityEntry entity, JsonSerializer serializer)
@@ -351,10 +377,10 @@ namespace EAVFramework.Endpoints
             {
                 var propName = prop.Name.EndsWith("@deleted") ? prop.Name.Substring(0, prop.Name.IndexOf('@')) : prop.Name;
 
-                var method = methods.GetOrAdd(entity.Metadata.GetSchemaQualifiedTableName()+propName, (_) => entity.Entity.GetType().GetProperties().FirstOrDefault(c => c.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == propName));
+                var method = methods.GetOrAdd(entity.Metadata.GetSchemaQualifiedTableName() + propName, (_) => entity.Entity.GetType().GetProperties().FirstOrDefault(c => c.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == propName));
 
-                
-                if (method!=null)
+
+                if (method != null)
                 {
                     if (prop.Name.EndsWith("@deleted"))
                     {
@@ -371,11 +397,11 @@ namespace EAVFramework.Endpoints
                             var entry = Context.Entry(related);
 
                             var p = entry.Metadata.FindPrimaryKey().Properties.SingleOrDefault();
-                           
-                            var deleteItem = id.ToString().Split("@");
-                            p.PropertyInfo.SetValue(related, p.PropertyInfo.PropertyType == typeof(Guid) ? Guid.Parse(deleteItem[0]): throw new Exception("Primary type other than guid is not supported"));
 
-                           
+                            var deleteItem = id.ToString().Split("@");
+                            p.PropertyInfo.SetValue(related, p.PropertyInfo.PropertyType == typeof(Guid) ? Guid.Parse(deleteItem[0]) : throw new Exception("Primary type other than guid is not supported"));
+
+
                             var ct = entry.Metadata.GetProperties().FirstOrDefault(c => c.IsConcurrencyToken);
                             if (ct != null)
                             {
@@ -390,19 +416,20 @@ namespace EAVFramework.Endpoints
                                 }
                             }
 
-                                
-                                Context.Attach(related);
+
+                            Context.Attach(related);
                             Context.Remove(related);
 
                         }
 
-                    }else if (prop.Value.Type == JTokenType.Object)
+                    }
+                    else if (prop.Value.Type == JTokenType.Object)
                     {
 
                         var existing = method.GetValue(entity.Entity);
-                        if (existing==null)
+                        if (existing == null)
                         {
-                            existing=Activator.CreateInstance(method.PropertyType);
+                            existing = Activator.CreateInstance(method.PropertyType);
                             method.SetValue(entity.Entity, existing);
                         }
 
@@ -418,25 +445,42 @@ namespace EAVFramework.Endpoints
                     else if (prop.Value.Type == JTokenType.Array)
                     {
                         var collectionElementType = method.PropertyType.GetGenericArguments().First();
-                        IList existingCollection = method.GetValue(entity.Entity) as IList;
+                        var existingCollection = method.GetValue(entity.Entity);
 
-                        if (existingCollection==null)
+                        if (existingCollection == null)
                         {
-                            existingCollection=Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType)) as IList;
+                            existingCollection = Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(collectionElementType));
                             method.SetValue(entity.Entity, existingCollection);
                         }
-
+                        var addMethod = existingCollection.GetType().GetMethod("Add", BindingFlags.Instance | BindingFlags.Public);
                         foreach (var obj in prop.Value)
                         {
-                            var element = Activator.CreateInstance(collectionElementType);
-                            existingCollection.Add(element);
-                            EntityEntry entry = Attach(serializer, obj, element);
-                            //Populate
-                            await PopulateAsync(obj, entry, serializer);
+                            if (obj is JObject && obj["id"] != null)
+                            {
+
+                                //Populate (The related records are allready loaded to context in the load related records step)
+                                var reference = await Context.FindAsync(collectionElementType, obj["id"].ToObject<Guid>());
+                                Context.ChangeTracker.DetectChanges();
+                                var entityReference = Context.Entry(reference);
+
+
+                                await PopulateAsync(obj, entityReference, serializer);
+                            }
+                            else
+                            {
+                                var element = Activator.CreateInstance(collectionElementType);
+
+                                addMethod.Invoke(existingCollection, new[] { element });
+                                //(existingCollection as IList).Add(element);
+                                EntityEntry entry = Attach(serializer, obj, element);
+                                //Populate
+                                await PopulateAsync(obj, entry, serializer);
+                            }
+
 
                         }
                     }
-                    else if(prop.Value.Type == JTokenType.Null)
+                    else if (prop.Value.Type == JTokenType.Null)
                     {
                         if (method.PropertyType.IsGenericType && method.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
                         {
@@ -476,17 +520,17 @@ namespace EAVFramework.Endpoints
             foreach (var p in entry.Metadata.FindPrimaryKey().Properties)
             {
                 var reader = obj[p.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName]?.CreateReader();
-                if (reader!=null)
+                if (reader != null)
                 {
                     p.PropertyInfo.SetValue(element, serializer.Deserialize(reader, p.PropertyInfo.PropertyType));
-                    hasKey=true;
+                    hasKey = true;
                 }
             }
 
             foreach (var p in entry.Properties.Where(p => p.Metadata.IsConcurrencyToken))
             {
                 var reader = obj[p.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName]?.CreateReader();
-                if (reader!=null)
+                if (reader != null)
                 {
                     p.Metadata.PropertyInfo.SetValue(element, serializer.Deserialize(obj[p.Metadata.PropertyInfo.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName].CreateReader(), p.Metadata.PropertyInfo.PropertyType));
 
@@ -497,11 +541,11 @@ namespace EAVFramework.Endpoints
             {
                 if (hasKey)
                 {
-                    entry=Context.Attach(element);
+                    entry = Context.Attach(element);
                 }
                 else
                 {
-                    entry=Context.Add(element);
+                    entry = Context.Add(element);
 
                 }
             }
@@ -649,7 +693,7 @@ namespace EAVFramework.Endpoints
         {
             var record = await this.Context.FindAsync(entityName, keys);
             if (record == null)
-                return null;          
+                return null;
             var entry = this.Context.Entry(record);
             entry.State = EntityState.Deleted;
             return entry;
@@ -661,20 +705,20 @@ namespace EAVFramework.Endpoints
         }
         public DbSet<TBase> Set<TBase>(Type type) where TBase : DynamicEntity
         {
-           
-            var a=this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]);
-            var b = (DbSet<TBase>)a;
+
+            var a = this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]);
+            var b = (DbSet<TBase>) a;
             return b;
         }
-        public IQueryable<TBase> FromSqlRaw<TBase>(Type type,string sql, params object[] parameters) where TBase : DynamicEntity
+        public IQueryable<TBase> FromSqlRaw<TBase>(Type type, string sql, params object[] parameters) where TBase : DynamicEntity
         {
             var m = typeof(RelationalQueryableExtensions).GetMethod(nameof(RelationalQueryableExtensions.FromSqlRaw), BindingFlags.Public | BindingFlags.Static);
 
-            var set= this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]); ;
+            var set = this.GetType().GetMethod(nameof(Set), 1, new Type[0]).MakeGenericMethod(type).Invoke(this, new object[0]); ;
 
-            var b=m.MakeGenericMethod(type).Invoke(null, new object[] { set,sql, parameters });
+            var b = m.MakeGenericMethod(type).Invoke(null, new object[] { set, sql, parameters });
 
-            var c = (IQueryable<TBase>)b;
+            var c = (IQueryable<TBase>) b;
             return c;
 
 
@@ -686,15 +730,15 @@ namespace EAVFramework.Endpoints
         {
             return this.Context.Set(this.Context.GetEntityType(name));
         }
-        public IQueryable<TInterface> FilteredSet<TEntity,TInterface>( Expression<Func<TInterface,bool>> filter)
-            where TEntity : DynamicEntity 
+        public IQueryable<TInterface> FilteredSet<TEntity, TInterface>(Expression<Func<TInterface, bool>> filter)
+            where TEntity : DynamicEntity
         {
             //this.Context.GetEntityType(name)
             return this.Context.Set<TEntity>().OfType<TInterface>().Where(filter);
-                 
+
         }
         public IQueryable<TInterface> FilteredSet<TInterface>(string name, Expression<Func<TInterface, bool>> filter)
-            
+
         {
             var type = this.Context.GetEntityType(name);
             //            var method = this.GetType().GetMethod(nameof(FilteredSet), 2, new[] { typeof(Expression<Func<TInterface, bool>>) });
@@ -704,6 +748,7 @@ namespace EAVFramework.Endpoints
 
 
         }
+
 
         public IQueryable<T> Set<T>(string name)
         {
@@ -721,7 +766,7 @@ namespace EAVFramework.Endpoints
           this Expression<Func<TSource, bool>> root)
         {
             var visitor = new ParameterTypeVisitor<TSource, TTarget>();
-            return (Expression<Func<TTarget, bool>>)visitor.Visit(root);
+            return (Expression<Func<TTarget, bool>>) visitor.Visit(root);
         }
 
         class ParameterTypeVisitor<TSource, TTarget> : ExpressionVisitor

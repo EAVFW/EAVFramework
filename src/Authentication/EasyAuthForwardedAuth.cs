@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
@@ -10,8 +10,7 @@ namespace EAVFramework.Authentication
 {
     public class EasyAuthForwardedAuth : AuthenticationHandler<EasyAuthForwardedAuthOptions>
     {
-        public EasyAuthForwardedAuth(IOptionsMonitor<EasyAuthForwardedAuthOptions> options, ILoggerFactory logger, UrlEncoder encoder,
-            ISystemClock clock) : base(options, logger, encoder, clock)
+        public EasyAuthForwardedAuth(IOptionsMonitor<EasyAuthForwardedAuthOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
         {
         }
 

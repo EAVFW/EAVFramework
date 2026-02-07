@@ -1,48 +1,49 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-    <PackageId>EAVFramework</PackageId>
-    <Authors>Poul Kjeldager</Authors>
-    <Company>EAVFW</Company>
-    <PackageTags>EAV;EntityFramework</PackageTags>
-    <Description>
-      This library adds support for dynamic data modelling and an EAV framework on top of EF Core
-    </Description>
-    <PackageProjectUrl>https://github.com/EAVFW/EAVFramework</PackageProjectUrl>
-	<RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+        <LangVersion>12</LangVersion>
+        <PackageId>EAVFramework</PackageId>
+        <Authors>Poul Kjeldager</Authors>
+        <Company>EAVFW</Company>
+        <PackageTags>EAV;EntityFramework</PackageTags>
+        <Description>
+            This library adds support for dynamic data modelling and an EAV framework on top of EF Core
+        </Description>
+        <PackageProjectUrl>https://github.com/EAVFW/EAVFramework</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/EAVFW/EAVFramework</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-   
-    
-  </PropertyGroup>
+
+
+    </PropertyGroup>
 
     <ItemGroup>
-
-     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-   
-     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.1.1" />
-     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="Semver" Version="3.0.0" />
       
+    </ItemGroup> 
+
+    <ItemGroup>
+        <ProjectReference Include="..\sdk\EAVFW.Extensions.Manifest.SDK.csproj" />
     </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.17" />
-  </ItemGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.31" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.31" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)'=='net8.0'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.23" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.23" />
+	</ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)'=='net9.0'">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.12" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\sdk\EAVFW.Extensions.Manifest.SDK.csproj" />
-  </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)'=='net10.0'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.2" />
+    </ItemGroup>
+
 
 </Project>

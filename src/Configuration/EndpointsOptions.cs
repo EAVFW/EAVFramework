@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using System;
 
 namespace EAVFramework.Configuration
 {
+    public class PatchEndpointOptions
+    {
+        public bool AllowUnknownData { get; set; } = true;
+        public bool LogWarningForUnknownData { get; set; } = true;
+    }
     /// <summary>
     /// Configures which endpoints are enabled or disabled.
     /// </summary>
@@ -15,6 +20,8 @@ namespace EAVFramework.Configuration
         /// <c>true</c> if the authorize endpoint is enabled; otherwise, <c>false</c>.
         /// </value>
         public bool EnableQueryRecordsEndpoint { get; set; } = true;
+
+        public PatchEndpointOptions PatchEndpointOptions { get; set; } = new PatchEndpointOptions();
 
         public Action<IEndpointConventionBuilder> EndpointConfiguration { get; set; }
 

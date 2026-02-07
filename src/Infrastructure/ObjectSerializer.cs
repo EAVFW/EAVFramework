@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,10 +23,10 @@ namespace EAVFramework.Infrastructure
 
             this.options = options;
         }
-         
+
         public override ICollection<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return (ICollection<T>)JsonSerializer.Deserialize( ref reader, typeToConvert, options);
+            return (ICollection<T>) JsonSerializer.Deserialize(ref reader, typeToConvert, options);
         }
 
         public override void Write(Utf8JsonWriter writer, ICollection<T> value, JsonSerializerOptions options)
@@ -58,9 +58,9 @@ namespace EAVFramework.Infrastructure
             JsonSerializerOptions options)
         {
             Type keyType = type.GetGenericArguments()[0];
-            
 
-            JsonConverter converter = (JsonConverter)Activator.CreateInstance(
+
+            JsonConverter converter = (JsonConverter) Activator.CreateInstance(
                 typeof(NavigationCollectionConverter<>).MakeGenericType(
                     new Type[] { keyType }),
                 BindingFlags.Instance | BindingFlags.Public,
@@ -71,15 +71,14 @@ namespace EAVFramework.Infrastructure
             return converter;
         }
     }
-    
+
     internal static class ObjectSerializer
     {
-     
+
         private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
         {
-            IgnoreNullValues = true,   //ReferenceHandler
-                                       //   ReferenceHandling = ReferenceHandling.Preserve
-             Converters=
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters =
              {
                  new DictionaryTKeyEnumTValueConverter()
              }
@@ -95,5 +94,5 @@ namespace EAVFramework.Infrastructure
             return JsonSerializer.Deserialize<T>(value, Options);
         }
     }
-    
+
 }

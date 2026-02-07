@@ -63,7 +63,7 @@ namespace EAVFramework.UnitTest.ManifestTests
 
 
 
-            var sql = RunDBWithSchema("manifest_rowversion", manifest);
+            var (sql, _) = RunDBWithSchema("manifest_rowversion", manifest);
 
             //Assure
 

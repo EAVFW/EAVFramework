@@ -34,9 +34,75 @@ using System.Linq.Expressions;
 using System.Linq;
 using EAVFramework.Shared;
 using EAVFramework.Endpoints.Query.OData;
+using EAVFramework.Authentication.Passwordless;
+using System.Reflection.Metadata;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+
+
+    //public class DynamicFactory<T>
+    //{
+    //    private readonly Type _implementation;
+    //    private readonly IServiceProvider _serviceProvider;
+
+    //    public DynamicFactory(Type implementation, IServiceProvider serviceProvider)
+    //    {
+    //        _implementation = implementation;
+    //        _serviceProvider = serviceProvider;
+    //    }
+    //    public async Task<T> CreateAsync()
+    //    {
+    //        var (feat, ctx) = await _serviceProvider.GetCustomerContext();
+
+    //        return (T) _serviceProvider.GetDynamicService<DynamicManifestContext<DynamicContext, CustomerApp, Document>>(_implementation);
+
+
+    //    }
+    //}
+    public interface ICustomerAppContextFeatureOptionInterfaceRegistration
+    {
+        Type Interface { get; }
+    }
+    public class CustomerAppContextFeatureOptionInterfaceRegistration<T> : ICustomerAppContextFeatureOptionInterfaceRegistration
+    {
+        public Type Interface { get; } = typeof(T);
+    }
+    public class CustomerAppContextFeatureOptionInterfaceRegistration : ICustomerAppContextFeatureOptionInterfaceRegistration
+    {
+        public CustomerAppContextFeatureOptionInterfaceRegistration(Type @interface)
+        {
+            Interface = @interface;
+        }
+
+        public Type Interface { get; }
+    }
+
+    public static class DynamicFactoryExtensionMethods
+    {
+        public static IServiceCollection AddDynamicScoped<TContext, TService>(this IServiceCollection services, Type genericservice)
+            where TContext : DynamicContext
+            where TService : class
+        {
+            //  services.AddScoped(sp => new DynamicFactory<TService>(genericservice, sp));
+
+            return services.AddScoped<TService>(sp =>
+            {
+                try
+                {
+                    return (TService) sp.GetDynamicService<TContext>(genericservice);
+
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to create dynamic scoped service <{typeof(TService).Name},{genericservice.Name}>", ex);
+                }
+            }
+                );
+
+        }
+    }
+
 
     public static class DynamicCodeServiceExtensions
     {
@@ -52,70 +118,13 @@ namespace Microsoft.Extensions.DependencyInjection
         }
     }
 
-  
-
-
-    public static class GenericTypeExtensions
-    {
-        public static Type ResolveGenericArguments<TContext,TModel>(this Type t) where TContext : DynamicContext
-        {
-            var ttt = t.GetGenericArguments().Select(ta =>
-            {
-                var constraints = ta.GetGenericParameterConstraints();
-                if (constraints.Any(tta => tta == typeof(DynamicContext)))
-                {
-                    return typeof(TContext);
-                }
-
-                if(constraints.Any(tta => tta == typeof(IConvertible)))
-                {
-                    //enums
-                    var constraintMapping = t.GetCustomAttributes<ConstraintMappingAttribute>().SingleOrDefault(c => c.ConstraintName == ta.Name)
-                    ?? throw new InvalidOperationException($"No ConstraintMappingAttribute set for the Contraints {ta.Name} on {t.Name}");
-
-
-
-                    var entirtyType = typeof(TModel).Assembly.GetTypes().SingleOrDefault(t => 
-                    t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute &&
-                    t.GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && attr.EntityKey == constraintMapping.EntityKey);
-
-                    var propertyType = entirtyType.GetProperties().Single(c =>
-                        c.GetCustomAttribute<EntityFieldAttribute>() is EntityFieldAttribute field && field.AttributeKey == constraintMapping.AttributeKey);
-
-                    return Nullable.GetUnderlyingType(propertyType.PropertyType) ?? propertyType.PropertyType;
-
-
-                }
-
-                var @interface = constraints.FirstOrDefault(c => c.IsInterface && !string.IsNullOrEmpty(c.GetCustomAttribute<EntityInterfaceAttribute>()?.EntityKey));
-                if (@interface != null)
-                {
-
-                    if (@interface.IsGenericType)
-                    {
-                        return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
-                       t.GetInterfaces().Any(c => c.IsGenericType && c.GetGenericTypeDefinition() == @interface.GetGenericTypeDefinition())).Single();
-                    }
-
-
-                    return typeof(TModel).Assembly.GetTypes().Where(t => t.GetCustomAttribute<EntityDTOAttribute>() != null &&
-                            t.GetInterfaces().Any(c => c == @interface)).Single();
-                }
-
-                throw new InvalidOperationException($"Cant find constraint for {ta.Name} on {t.Name}" );
-
-            }).ToArray();
-            return t.MakeGenericType(ttt);
-        }
-    }
-
     /// <summary>
     /// Builder extension methods for registering core services
     /// </summary>
     public static class EAVFrameworkBuilderExtensionsCore
     {
 
-       
+
 
         /// <summary>
         /// Creates a builder.
@@ -125,12 +134,14 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IEAVFrameworkBuilder AddEAVFrameworkBuilder<TContext>(this IServiceCollection services, string schema, string connectionString)
             where TContext : DynamicContext
         {
-         
-            services.Configure<EAVFrameworkOptions>(o=> {
+
+            services.Configure<EAVFrameworkOptions>(o =>
+            {
                 o.Schema = schema;
                 o.ConnectionString = connectionString;
             });
-            return new EAVFrameworkBuilder<TContext>(services, schema,connectionString)
+
+            return new EAVFrameworkBuilder<TContext>(services, schema, connectionString)
                   .AddRequiredPlatformServices();
         }
 
@@ -140,19 +151,19 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="services">The services.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddEAVFramework<TContext>(this IServiceCollection services, 
-            string schema="dbo", string connectionString= "Name=ApplicationDB"
+        public static IEAVFrameworkBuilder AddEAVFramework<TContext>(this IServiceCollection services,
+            string schema = "dbo", string connectionString = "Name=ApplicationDB"
             )
             where TContext : DynamicContext
         {
-            var builder = services.AddEAVFrameworkBuilder<TContext>(schema,connectionString);
+            var builder = services.AddEAVFrameworkBuilder<TContext>(schema, connectionString);
 
-            builder              
-                .AddDefaultEndpoints< TContext>()                
+            builder
+                .AddDefaultEndpoints<TContext>()
                   .AddPluggableServices();
 
 
-           
+
 
             return builder;
         }
@@ -170,13 +181,24 @@ namespace Microsoft.Extensions.DependencyInjection
             return services.AddEAVFramework<TContext>();
         }
 
+        public static void AddDynamicInterface<T>(this IServiceCollection services)
+        {
+            services.AddSingleton<ICustomerAppContextFeatureOptionInterfaceRegistration, CustomerAppContextFeatureOptionInterfaceRegistration<T>>();
+
+        }
+        public static void AddDynamicInterface(this IServiceCollection services, Type @interface)
+        {
+            services.AddSingleton<ICustomerAppContextFeatureOptionInterfaceRegistration>(new CustomerAppContextFeatureOptionInterfaceRegistration(@interface));
+
+        }
+
         /// <summary>
         /// Adds the EAVFramework.
         /// </summary>
         /// <param name="services">The services.</param>
         /// <param name="configuration">The configuration.</param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddIdentityServer<TContext>(this IServiceCollection services, IConfiguration configuration)
+        public static IEAVFrameworkBuilder AddEAVFramework<TContext>(this IServiceCollection services, IConfiguration configuration)
              where TContext : DynamicContext
         {
             services.Configure<EAVFrameworkOptions>(configuration);
@@ -190,10 +212,10 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
-        public static IEAVFrameworkBuilder AddValidation<TDynamicContext>(this IEAVFrameworkBuilder builder) where TDynamicContext:DynamicContext
+        public static IEAVFrameworkBuilder AddValidation<TDynamicContext>(this IEAVFrameworkBuilder builder) where TDynamicContext : DynamicContext
         {
-            builder.Services.TryAddScoped(typeof(IRetrieveMetaData<>),typeof(RetrieveMetaData<>));
-            
+            builder.Services.TryAddScoped(typeof(IRetrieveMetaData<>), typeof(RetrieveMetaData<>));
+
             builder.Services.RegisterValidator<StringValidator, string>();
             builder.Services.RegisterValidator<NumberValidator, decimal>();
             builder.Services.RegisterValidator<NumberValidator, int>();
@@ -249,28 +271,30 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddCookie(Constants.DefaultCookieAuthenticationScheme, options =>
                 {
 
-                  
+
                     options.Events.OnRedirectToAccessDenied = ReplaceRedirector(HttpStatusCode.Forbidden, options.Events.OnRedirectToAccessDenied);
                     options.Events.OnRedirectToLogin = ReplaceRedirector(HttpStatusCode.Unauthorized, options.Events.OnRedirectToLogin);
 
 
                 })
+                .AddCookie(Constants.ImpersonatorCookieAuthenticationSchema)
                 .AddCookie(Constants.ExternalCookieAuthenticationScheme)
                 .AddCookie(Constants.DefaultLoginRedirectCookie);
-          
+
             builder.Services.AddSingleton<IConfigureOptions<CookieAuthenticationOptions>, ConfigureInternalCookieOptions>();
             builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, PostConfigureInternalCookieOptions>();
-          //  builder.Services.AddTransientDecorator<IAuthenticationService, IdentityServerAuthenticationService>();
-          //  builder.Services.AddTransientDecorator<IAuthenticationHandlerProvider, FederatedSignoutAuthenticationHandlerProvider>();
+            //  builder.Services.AddTransientDecorator<IAuthenticationService, IdentityServerAuthenticationService>();
+            //  builder.Services.AddTransientDecorator<IAuthenticationHandlerProvider, FederatedSignoutAuthenticationHandlerProvider>();
 
             return builder;
         }
 
         static Func<RedirectContext<CookieAuthenticationOptions>, Task> ReplaceRedirector(HttpStatusCode statusCode, Func<RedirectContext<CookieAuthenticationOptions>, Task> existingRedirector) =>
-    context => {
+    context =>
+    {
         if (context.Request.Path.StartsWithSegments("/api"))
         {
-            context.Response.StatusCode = (int)statusCode;
+            context.Response.StatusCode = (int) statusCode;
             return Task.CompletedTask;
         }
         return existingRedirector(context);
@@ -283,18 +307,27 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IEAVFrameworkBuilder AddRequiredPlatformServices(this IEAVFrameworkBuilder builder)
         {
-           
+            builder.Services.AddSingleton<DynamicModelContextKey>();
+            builder.Services.AddOptions<EAVFrameworkOptions>().BindConfiguration("EAVFramework");
+            builder.Services.TryAddScoped<MultiTenantContext>();
+            builder.Services.TryAddScoped<IContextInitializer, DefaultContextInitializer>();
             builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             builder.Services.AddOptions();
             builder.Services.AddSingleton(
                 resolver => resolver.GetRequiredService<IOptions<EAVFrameworkOptions>>().Value);
 
-            
+
             builder.Services.AddHttpClient();
             builder.Services.AddEntityFrameworkSqlServer();
-            builder.Services.AddScoped(typeof(EAVDBContext<>),typeof(EAVDBContext<>));
+            builder.Services.AddScoped(typeof(EAVDBContext<>), typeof(EAVDBContext<>));
             builder.Services.AddSingleton<IODataConverterFactory, OdatatConverterFactory>();
             builder.Services.AddCodeServices();
+            builder.Services.AddScoped(typeof(PasswordLessLinkGenerator<,>));
+            // builder.Services.AddScoped(typeof(EAVFrameworkTicketStore<,>));
+            builder.Services.AddScoped(typeof(IEAVFrameworkTicketStore<,>), typeof(EAVFrameworkTicketStore<,>));
+
+            builder.Services.AddScoped<EAVEMailService>();
+
             //builder.Services.AddSingleton<SavingIncepter>();
             return builder;
         }
@@ -314,23 +347,25 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddTransient(typeof(IPluginScheduler<>), typeof(DefaultPluginScheduler<>));
             builder.Services.TryAddTransient(typeof(IPermissionStore<>), typeof(DefaultPermissionStore<>));
             builder.Services.TryAddTransient<IFormContextFeature<DynamicContext>, DefaultFormContextFeature<DynamicContext>>();
+            builder.Services.TryAddTransient(typeof(IEndpointRouter<>), typeof(EndpointRouter<>));
             return builder;
         }
 
-            /// <summary>
-            /// Adds the default endpoints.
-            /// </summary>
-            /// <param name="builder">The builder.</param>
-            /// <returns></returns>
-            public static IEAVFrameworkBuilder AddDefaultEndpoints<TContext>(this IEAVFrameworkBuilder builder)
-            where TContext : DynamicContext
+        /// <summary>
+        /// Adds the default endpoints.
+        /// </summary>
+        /// <param name="builder">The builder.</param>
+        /// <returns></returns>
+        public static IEAVFrameworkBuilder AddDefaultEndpoints<TContext>(this IEAVFrameworkBuilder builder)
+        where TContext : DynamicContext
         {
 
-            builder.Services.AddTransient<IEndpointRouter<TContext>, EndpointRouter<TContext>>();
-         
-           
+
+
+
             builder.AddEndpoint<QueryRecordsEndpoint<TContext>, TContext>(EndpointNames.QueryRecords, RoutePatterns.QueryRecords.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<RetrieveRecordEndpoint<TContext>, TContext>(EndpointNames.RetrieveRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
+            builder.AddEndpoint<RetrieveODataRecordEndpoint<TContext>, TContext>(EndpointNames.RetrieveODataRecord, RoutePatterns.ODataRecordPattern.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<CreateRecordsEndpoint<TContext>, TContext>(EndpointNames.CreateRecord, RoutePatterns.CreateRecord.EnsureLeadingSlash(), HttpMethods.Post);
             builder.AddEndpoint<QueryEntityPermissionsEndpoint<TContext>, TContext>(EndpointNames.QueryEntityPermissions, RoutePatterns.QueryEntityPermissions.EnsureLeadingSlash(), HttpMethods.Get);
             builder.AddEndpoint<PatchRecordsEndpoint<TContext>, TContext>(EndpointNames.PatchRecord, RoutePatterns.RecordPattern.EnsureLeadingSlash(), HttpMethods.Patch);
@@ -347,24 +382,24 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="name">The name.</param>
         /// <param name="path">The path.</param>
         /// <returns></returns>
-        public static IEndpointBuilder AddEndpoint<T,TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
+        public static IEndpointBuilder AddEndpoint<T, TContext>(this IEAVFrameworkBuilder builder, string name, string pattern, params string[] methods)
             where T : class, IEndpointHandler<TContext>
             where TContext : DynamicContext
         {
-            return builder.Services.AddEndpoint<T, TContext>(name,pattern,methods);
-             
-         
+            return builder.Services.AddEndpoint<T, TContext>(name, pattern, methods);
+
+
         }
-      
+
 
         public static IEndpointBuilder AddEndpoint<T, TContext>(this IServiceCollection services, string name, string pattern, params string[] methods)
            where T : class, IEndpointHandler<TContext>
            where TContext : DynamicContext
         {
-            return services.AddEndpoint<TContext>(typeof(T),name,pattern,methods);
-            
+            return services.AddEndpoint<TContext>(typeof(T), name, pattern, methods);
 
-          
+
+
         }
 
 
@@ -373,13 +408,13 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var attr = endpoint.GetCustomAttribute<EndpointRouteAttribute>();
 
-            return services.AddEndpoint<TContext>(endpoint,attr.Name, attr.Route,
-                endpoint.GetCustomAttributes<EndpointRouteMethodAttribute>(true).Select(c=>c.Method).ToArray());
+            return services.AddEndpoint<TContext>(endpoint, attr.Name, attr.Route,
+                endpoint.GetCustomAttributes<EndpointRouteMethodAttribute>(true).Select(c => c.Method).ToArray());
 
 
         }
-        public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services,Type endpoint,  string name, string pattern, params string[] methods)
-          
+        public static IEndpointBuilder AddEndpoint<TContext>(this IServiceCollection services, Type endpoint, string name, string pattern, params string[] methods)
+
           where TContext : DynamicContext
         {
             services.AddTransient(endpoint);
@@ -391,21 +426,22 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static AuthenticatedEAVFrameworkBuilder AddAuthentication(
-            this IEAVFrameworkBuilder builder,
+            this IEAVFrameworkBuilder builder, Action<EAVFramework.Configuration.AuthenticationOptions> configure,
             AuthenticationProperties properties = null)
         {
             var props = properties ?? new AuthenticationProperties();
             builder.Services.AddTransient<AuthenticationProperties>(_ => props);
             builder.AddCookieAuthentication();
+            builder.Services.Configure<EAVFrameworkOptions>(options => configure?.Invoke(options.Authentication));
             return new AuthenticatedEAVFrameworkBuilder(builder);
         }
 
-        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T,TOptions>(
+        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T, TOptions>(
             this AuthenticatedEAVFrameworkBuilder builder,
-            Action<TOptions> configureOptions) where T: class, IEasyAuthProvider
-            where TOptions:class
+            Action<TOptions> configureOptions) where T : class, IEasyAuthProvider
+            where TOptions : class
         {
-             
+
             builder.Services.AddOptions<TOptions>().Configure(configureOptions);
 
             return builder.AddAuthenticationProvider<T>();
@@ -426,21 +462,21 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T, TOptions,TDep>(
+        public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T, TOptions, TDep>(
            this AuthenticatedEAVFrameworkBuilder builder,
-           Action<TOptions,TDep> configureOptions) where T : class, IEasyAuthProvider
+           Action<TOptions, TDep> configureOptions) where T : class, IEasyAuthProvider
            where TOptions : class
-           where TDep:class
+           where TDep : class
         {
-            
+
             builder.Services.AddOptions<TOptions>().Configure(configureOptions);
-             
+
             return builder.AddAuthenticationProvider<T>();
         }
 
         public static AuthenticatedEAVFrameworkBuilder AddAuthenticationProvider<T, TOptions, TDep1, TDep2>(
           this AuthenticatedEAVFrameworkBuilder builder,
-          Action<TOptions, TDep1,TDep2> configureOptions) where T : class, IEasyAuthProvider
+          Action<TOptions, TDep1, TDep2> configureOptions) where T : class, IEasyAuthProvider
           where TOptions : class
           where TDep1 : class
           where TDep2 : class
@@ -451,13 +487,13 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder.AddAuthenticationProvider<T>();
         }
 
-        public static IEAVFrameworkBuilder AddPlugin<T,TContext,TEntity>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, EntityPluginOperation operation, int order=0, EntityPluginMode mode = EntityPluginMode.Sync)
-            where T : class, IPlugin<TContext,TEntity>
+        public static IEAVFrameworkBuilder AddPlugin<T, TContext, TEntity>(this IEAVFrameworkBuilder builder, EntityPluginExecution execution, EntityPluginOperation operation, int order = 0, EntityPluginMode mode = EntityPluginMode.Sync)
+            where T : class, IPlugin<TContext, TEntity>
             where TEntity : DynamicEntity
             where TContext : DynamicContext
         {
             builder.Services.AddTransient<T>();
-            builder.Services.AddSingleton<EntityPlugin>(new EntityPlugin<TContext,TEntity> { Execution=execution, Operation = operation, Order=order, Type=typeof(TEntity), Handler=typeof(T), Mode =mode  });
+            builder.Services.AddSingleton<EntityPlugin>(new EntityPlugin<TContext, TEntity> { Execution = execution, Operation = operation, Order = order, Type = typeof(TEntity), Handler = typeof(T), Mode = mode });
 
             return builder;
         }
