@@ -1,4 +1,4 @@
-namespace EAVFramework
+﻿namespace EAVFramework
 {
     //public abstract class AuditableEntity<T> : Entity/*<T>*/, IAuditableEntity<T>
     //{

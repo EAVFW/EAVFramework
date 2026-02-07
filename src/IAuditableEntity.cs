@@ -1,4 +1,4 @@
-namespace EAVFramework
+﻿namespace EAVFramework
 {
     //public interface IAuditableEntity<T>
     //{
