@@ -1,4 +1,4 @@
-using EAVFramework.Configuration;
+﻿using EAVFramework.Configuration;
 using EAVFramework.Extensions;
 using EAVFramework.Logging;
 using EAVFramework.Services;

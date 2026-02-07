@@ -1,4 +1,4 @@
-using EAVFramework.Plugins;
+﻿using EAVFramework.Plugins;
 using Newtonsoft.Json.Linq;
 
 namespace EAVFramework.Validation

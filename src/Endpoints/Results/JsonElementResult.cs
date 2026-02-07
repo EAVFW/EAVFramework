@@ -1,4 +1,4 @@
-using EAVFramework.Extensions;
+﻿using EAVFramework.Extensions;
 using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;

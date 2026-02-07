@@ -1,4 +1,4 @@
-namespace EAVFW.Extensions.Manifest.SDK
+﻿namespace EAVFW.Extensions.Manifest.SDK
 {
     public interface ISchemaNameManager
     {
