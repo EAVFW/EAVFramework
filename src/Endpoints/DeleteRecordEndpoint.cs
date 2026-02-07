@@ -1,4 +1,4 @@
-﻿using EAVFramework.Endpoints.Results;
+using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
 using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
@@ -24,10 +24,10 @@ namespace EAVFramework.Endpoints
 
         public DeleteRecordEndpoint(
            EAVDBContext<TContext> context,
-            
+
             IConfiguration configuration,
-          
-            ILogger<DeleteRecordEndpoint<TContext>> logger)  
+
+            ILogger<DeleteRecordEndpoint<TContext>> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -43,7 +43,7 @@ namespace EAVFramework.Endpoints
             //var record = await _context.ReadRecordAsync(context, new ReadOptions { LogPayload = configuration.GetValue<bool>($"EAVFramework:DeleteRecordEndpoint:LogPayload", false) });
 
             var record = await _context.DeleteAsync(entityName, Guid.Parse(recordId));
-           
+
             var _operation = await _context.SaveChangesAsync(context.User);
 
             if (_operation.Errors.Any())
@@ -54,6 +54,6 @@ namespace EAVFramework.Endpoints
 
         }
 
-      
+
     }
 }

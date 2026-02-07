@@ -1,10 +1,11 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Reflection;
 
 namespace EAVFramework
 {
-    public class DynamicContextOptions : MigrationManagerOptions{
+    public class DynamicContextOptions : MigrationManagerOptions
+    {
         public JToken[] Manifests { get; set; }
 
         public bool EnableDynamicMigrations { get; set; }

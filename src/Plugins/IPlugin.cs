@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,12 +14,12 @@ namespace EAVFramework.Plugins
     {
 
     }
-    public interface IPlugin<TContext> : IPlugin 
+    public interface IPlugin<TContext> : IPlugin
         where TContext : DynamicContext
     {
 
     }
-    public interface IPlugin<TContext,T> : IPlugin<TContext>
+    public interface IPlugin<TContext, T> : IPlugin<TContext>
         where TContext : DynamicContext
         where T : DynamicEntity
     {

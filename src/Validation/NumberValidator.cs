@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Newtonsoft.Json.Linq;
 
 namespace EAVFramework.Validation
@@ -31,8 +31,8 @@ namespace EAVFramework.Validation
                 {
                     Error = $"Much be larger than {minimum}",
                     Code = "err-minimum",
-                    ErrorArgs = new object[] {minimum},
-                   
+                    ErrorArgs = new object[] { minimum },
+
                 };
                 return false;
             }
@@ -44,7 +44,7 @@ namespace EAVFramework.Validation
                 {
                     Error = $"Much be less than {maximum}",
                     Code = "err-maximum",
-                    ErrorArgs = new object[] {maximum}
+                    ErrorArgs = new object[] { maximum }
                 };
                 return false;
             }
@@ -56,7 +56,7 @@ namespace EAVFramework.Validation
                 {
                     Error = $"Much be less than or equal to {exclusiveMinimum}",
                     Code = "err-exclusiveMinimum",
-                    ErrorArgs = new object[] {exclusiveMinimum}
+                    ErrorArgs = new object[] { exclusiveMinimum }
                 };
                 return false;
             }
@@ -68,7 +68,7 @@ namespace EAVFramework.Validation
                 {
                     Error = $"Much be larger than or equal {exclusiveMaximum}",
                     Code = "err-exclusiveMaximum",
-                    ErrorArgs = new object[] {exclusiveMaximum}
+                    ErrorArgs = new object[] { exclusiveMaximum }
                 };
                 return false;
             }

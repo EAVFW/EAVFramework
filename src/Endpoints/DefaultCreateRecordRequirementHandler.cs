@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 
 namespace EAVFramework.Endpoints
@@ -9,7 +9,7 @@ namespace EAVFramework.Endpoints
         protected override Task HandleRequirementAsync(
             AuthorizationHandlerContext context, CreateRecordRequirement requirement)
         {
-           
+
             context.Succeed(requirement);
             return Task.CompletedTask;
         }

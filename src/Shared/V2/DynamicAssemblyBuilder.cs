@@ -1,4 +1,4 @@
-﻿using EAVFW.Extensions.Manifest.SDK.DTO;
+using EAVFW.Extensions.Manifest.SDK.DTO;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ namespace EAVFramework.Shared.V2
 {
     public class DynamicAssemblyBuilder : IDynamicTableBuilder
     {
-        public ConcurrentDictionary<string, DynamicTableBuilder> Tables { get; }= new ConcurrentDictionary<string, DynamicTableBuilder>();
+        public ConcurrentDictionary<string, DynamicTableBuilder> Tables { get; } = new ConcurrentDictionary<string, DynamicTableBuilder>();
 
 
         private DynamicCodeService dynamicCodeService;
@@ -32,9 +32,9 @@ namespace EAVFramework.Shared.V2
 
 
 
-        public DynamicTableBuilder WithTable(string entityKey, string tableSchemaname, string tableLogicalName, string tableCollectionSchemaName, string schema = "dbo", bool isBaseClass = false, MappingStrategy? mappingStrategy=null)
+        public DynamicTableBuilder WithTable(string entityKey, string tableSchemaname, string tableLogicalName, string tableCollectionSchemaName, string schema = "dbo", bool isBaseClass = false, MappingStrategy? mappingStrategy = null)
         {
-            return Tables.GetOrAdd(tableSchemaname, (_) => new DynamicTableBuilder(dynamicCodeService, Module, this, entityKey, tableSchemaname, tableLogicalName, tableCollectionSchemaName, schema,isBaseClass,mappingStrategy));
+            return Tables.GetOrAdd(tableSchemaname, (_) => new DynamicTableBuilder(dynamicCodeService, Module, this, entityKey, tableSchemaname, tableLogicalName, tableCollectionSchemaName, schema, isBaseClass, mappingStrategy));
         }
 
         public IEnumerable<Type> GetTypes() => this.Module.GetTypes();

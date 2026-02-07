@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EAVFramework
 {
-    public class DefaultFormContextFeature<TDynamicContext> :IFormContextFeature<DynamicContext> where TDynamicContext : DynamicContext
+    public class DefaultFormContextFeature<TDynamicContext> : IFormContextFeature<DynamicContext> where TDynamicContext : DynamicContext
     {
         private readonly IOptions<DynamicContextOptions> options;
 

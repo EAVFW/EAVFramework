@@ -1,4 +1,4 @@
-﻿using EAVFramework.Shared;
+using EAVFramework.Shared;
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -26,7 +26,7 @@ namespace EAVFramework.Endpoints.Query.OData
 
                 type.GenericTypeArguments[0].GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && !attr.IsBaseClass)
             {
-                return new ConstantRuntimeType(attr.LogicalName,attr.CollectionSchemaName);
+                return new ConstantRuntimeType(attr.LogicalName, attr.CollectionSchemaName);
             }
 
             return new SelectSomeOfT(this);

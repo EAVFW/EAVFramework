@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 
 namespace EAVFramework.Endpoints
@@ -28,8 +28,8 @@ namespace EAVFramework.Endpoints
             }
 
             ContentType = matches.Groups["type"].Value;
-            Name= matches.Groups["name"].Value; ;
-            Data =  Convert.FromBase64String(matches.Groups["data"].Value);
+            Name = matches.Groups["name"].Value; ;
+            Data = Convert.FromBase64String(matches.Groups["data"].Value);
         }
     }
 }

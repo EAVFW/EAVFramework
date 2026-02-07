@@ -9,6 +9,7 @@ using EAVFramework.Configuration;
 using EAVFW.Extensions.SecurityModel;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -284,7 +285,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
            ProjectResource project, string host) : IDistributedApplicationLifecycleHook
         {
 
-            public async Task AfterResourcesCreatedAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
+            public Task AfterResourcesCreatedAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
             {
                 var _ = Task.Run(async () =>
                 {
@@ -296,7 +297,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             if (update.Resource == project && update.Snapshot.Urls.Any(x => new Uri(x.Url).Host == "localhost"))
                             {
                                 var endpoints = project.Annotations.OfType<EndpointAnnotation>().ToImmutableArray();
-                                
+
                                 await resourceNotificationService.PublishUpdateAsync(project,
                                         state => state = state with
                                         {
@@ -314,8 +315,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         }
                     }
                 });
-
-
+                return Task.CompletedTask;
             }
         }
 
@@ -455,12 +455,13 @@ namespace EAVFramework.Extensions.Aspire.Hosting
              where TProject : IProjectMetadata, new()
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
-            var project = builder.AddProject<TProject>(name, launchProfile);
+            var project = builder.AddProject<TProject>(name, launchProfile)
+                  .WithUrlForEndpoint("https", u => u.DisplayText = "EAV Dev Portal");
 
             var workingDirectory = PathNormalizer.NormalizePathForCurrentPlatform(Path.Combine(builder.AppHostDirectory, "../.."));
 
             var metadata = project.Resource.GetProjectMetadata();
-           
+
             if (!string.IsNullOrEmpty(npmBuildCommand))
             {
                 var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
@@ -469,15 +470,17 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
                 var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
-                    .WithInitialState(new CustomResourceSnapshot { ResourceType = "EAV Build",
+                    .WithInitialState(new CustomResourceSnapshot
+                    {
+                        ResourceType = "EAV Build",
                         State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
-                        Properties = [] });
+                        Properties = []
+                    });
 
-                if (hash == oldhash)
-                    build.WithAnnotation(new NeedsCompletedAnnotation());
+                project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource });
 
-                project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource })
-                .Needs(build);
+                build.WithParentRelationship(project);
+                project.WaitForCompletion(build);
             }
 
 
@@ -543,25 +546,25 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
             builder.WithAnnotation(new TargetDatabaseResourceAnnotation(target.Resource.Name, target.Resource)
             {
-                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, SystemUsersTableName = systemUsersTableName, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ","")
+                InitialEmail = administratorEmail, InitialIdentity = initialAdministratorUserId, SystemUsersTableName = systemUsersTableName, Schema = schema, InitialUsername = Username, UserPrincipalName = Username.Replace(" ", "")
             }, ResourceAnnotationMutationBehavior.Replace);
             return builder;
         }
-        public static IResourceBuilder<T> WithSigninUrl<T>(this IResourceBuilder<T> builder, IResourceBuilder<EAVFWModelProjectResource> model, IResourceBuilder<ProjectResource> project=null)
-            where T:Resource
+        public static IResourceBuilder<T> WithSigninUrl<T>(this IResourceBuilder<T> builder, IResourceBuilder<EAVFWModelProjectResource> model, IResourceBuilder<ProjectResource> project = null)
+            where T : Resource
         {
-            model.WithAnnotation(new CreateSigninUrlAnnotation(builder.Resource,project?.Resource??builder.Resource as IResource));
+            model.WithAnnotation(new CreateSigninUrlAnnotation(builder.Resource, project?.Resource ?? builder.Resource as IResource));
             return builder;
         }
         public static IResourceBuilder<EAVFWModelProjectResource> WithSinginToken<TContext, TIdentity, TSignin>(
-          
-            this IResourceBuilder<EAVFWModelProjectResource> builder, Action<IServiceCollection> services = null, Action<SqlServerDbContextOptionsBuilder> sql=null)
+
+            this IResourceBuilder<EAVFWModelProjectResource> builder, Action<IServiceCollection> services = null, Action<SqlServerDbContextOptionsBuilder> sql = null)
             where TContext : DynamicContext
             where TIdentity : DynamicEntity, IIdentity
             where TSignin : DynamicEntity, ISigninRecord, new()
         {
             builder.ApplicationBuilder.Services.TryAddLifecycleHook<PublishEAVFWProjectLifecycleHook>();
-            builder.WithAnnotation< CreateSigninTokenAnnotation>(new CreateSigninTokenAnnotation<TContext, TIdentity, TSignin>(builder.Resource)
+            builder.WithAnnotation<CreateSigninTokenAnnotation>(new CreateSigninTokenAnnotation<TContext, TIdentity, TSignin>(builder.Resource)
             {
                 ServiceCollectionExtender = services,
                 SqlExtender = sql,
@@ -584,8 +587,216 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             return builder;
         }
 
+        /// <summary>
+        /// Configures the project resource to wait for the EAV model to complete and establishes a parent-child relationship.
+        /// </summary>
+        /// <typeparam name="T">The project resource type.</typeparam>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="modelBuilder">The EAV model resource builder to wait for.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithEAVModel(
+            this IResourceBuilder<ProjectResource> builder,
+            IResourceBuilder<EAVFWModelProjectResource> modelBuilder,
+            IResourceBuilder<SqlServerDatabaseResource> database)
+        {
+            // Add database reference
+            builder.WithReference(database, "ApplicationDB");
+
+            // Wait for the model to complete before starting the project
+            builder.WaitForCompletion(modelBuilder);
+
+            // Establish parent-child relationship (project is parent of model)
+            modelBuilder.WithParentRelationship(builder);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Creates and configures an EAV model for the project resource with full setup including database publishing and signin tokens.
+        /// </summary>
+        /// <typeparam name="TModel">The model project that contains the manifest.g.json file.</typeparam>
+        /// <typeparam name="TContext">The database context type.</typeparam>
+        /// <typeparam name="TIdentity">The identity type for signin tokens.</typeparam>
+        /// <typeparam name="TSignin">The signin type for signin tokens.</typeparam>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="modelName">The name for the model resource.</param>
+        /// <param name="database">The database resource to publish to.</param>
+        /// <param name="initialEmail">The initial user email address.</param>
+        /// <param name="initialIdentity">The initial user identity GUID.</param>
+        /// <param name="initialUsername">The initial username.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithEAVModel<TModel, TContext, TIdentity, TSignin>(
+            this IResourceBuilder<ProjectResource> builder,
+            string modelName,
+            IResourceBuilder<SqlServerDatabaseResource> database,
+            string initialEmail,
+            Guid initialIdentity,
+            string initialUsername)
+            where TModel : IProjectMetadata, new()
+            where TContext : DynamicContext
+            where TIdentity : DynamicEntity, IIdentity
+            where TSignin : DynamicEntity, ISigninRecord, new()
+        {
+            // Create the EAV model with full configuration
+            var modelBuilder = builder.ApplicationBuilder
+                .AddEAVFWModel<TModel>(modelName)
+                .PublishTo(database, initialEmail, initialIdentity, initialUsername)
+                .WithSinginToken<TContext, TIdentity, TSignin>();
+
+            // Use the simple overload to set up relationships
+            return builder.WithEAVModel(modelBuilder, database);
+        }
+
+        /// <summary>
+        /// Configures SMTP settings for the project using a mail server container resource.
+        /// Automatically extracts host and port from the mail server's SMTP endpoint.
+        /// </summary>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="mailServer">The mail server container resource (e.g., Mailpit, MailHog).</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithMailServer(
+            this IResourceBuilder<ProjectResource> builder,
+            IResourceBuilder<ContainerResource> mailServer)
+        {
+            // Configure SMTP using endpoint references
+            // GetEndpoint returns a ReferenceExpression that resolves at runtime
+            builder
+                .WithEnvironment("Smtp__Host", mailServer.GetEndpoint("smtp").Property(EndpointProperty.Host))
+                .WithEnvironment("Smtp__Port", mailServer.GetEndpoint("smtp").Property(EndpointProperty.Port))
+                .WithEnvironment("Smtp__Password", "")
+                .WithEnvironment("Smtp__Username", "")
+                .WithEnvironment("Smtp__EnableSsl", "false");
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a Mailpit container for local SMTP testing with web UI.
+        /// Mailpit provides a local SMTP server with a web interface for viewing sent emails during development.
+        /// </summary>
+        /// <param name="builder">The distributed application builder.</param>
+        /// <param name="name">The name of the mail server resource. Defaults to "mail-server".</param>
+        /// <param name="httpPort">The host port for the web UI. Defaults to null (random port) to avoid conflicts when running multiple projects.</param>
+        /// <param name="smtpPort">The host port for SMTP. Defaults to null (random port) to avoid conflicts when running multiple projects.</param>
+        /// <returns>The container resource builder for further configuration.</returns>
+        public static IResourceBuilder<ContainerResource> AddMailpit(
+            this IDistributedApplicationBuilder builder,
+            string name = "mail-server",
+            int? httpPort = null,
+            int? smtpPort = null)
+        {
+            return builder
+                .AddContainer(name, "axllent/mailpit")
+                .WithHttpEndpoint(httpPort, 8025, name: "http")
+                .WithEndpoint(smtpPort, 1025, name: "smtp")
+                .WithLifetime(ContainerLifetime.Persistent)
+                .WithUrlForEndpoint("http", u => u.DisplayText = "Read mail here");
+        }
+
+        /// <summary>
+        /// Adds a Mailpit container and configures the project to use it for SMTP.
+        /// This is a convenience method that combines AddMailpit() and WithMailServer() into one call.
+        /// Uses random ports by default to avoid conflicts when running multiple projects in parallel.
+        /// </summary>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="name">The name of the mail server resource. Defaults to "mail-server".</param>
+        /// <param name="httpPort">The host port for the web UI. Defaults to null (random port).</param>
+        /// <param name="smtpPort">The host port for SMTP. Defaults to null (random port).</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithMailPit(
+            this IResourceBuilder<ProjectResource> builder,
+            string name = "mail-server",
+            int? httpPort = null,
+            int? smtpPort = null)
+        {
+            // Add the Mailpit container to the application
+            var mailServer = builder.ApplicationBuilder.AddMailpit(name, httpPort, smtpPort);
+
+            // Configure this project to use the mail server
+            return builder.WithMailServer(mailServer);
+        }
 
 
+
+
+        /// <summary>
+        /// Forwards configuration values prefixed with the project name as environment variables.
+        /// <para>
+        /// Uses flat configuration format with double underscores as section delimiters.
+        /// Property names must match C# property names (PascalCase) for ASP.NET Core binding to work.
+        /// </para>
+        /// <para>
+        /// Format: "SCL_PORTAL__SectionName__PropertyName" = "value"
+        /// </para>
+        /// <para>
+        /// Example: "SCL_PORTAL__CrmFeatureFlags__EnableCrmPolling" = "true"
+        /// </para>
+        /// <para>
+        /// This will be forwarded to the service as: "CrmFeatureFlags__EnableCrmPolling" = "true"
+        /// </para>
+        /// <para>
+        /// Note: ASP.NET Core configuration is case-insensitive but does NOT remove underscores,
+        /// so "ENABLE_CRM_POLLING" will NOT match property "EnableCrmPolling".
+        /// </para>
+        /// </summary>
+        /// <typeparam name="TProject">The project type (e.g., Projects.SCL_Portal).</typeparam>
+        /// <param name="builder">The resource builder.</param>
+        /// <returns>The resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> ForwardEnvironmentVariables<TProject>(
+            this IResourceBuilder<ProjectResource> builder)
+        {
+            // Extract project name from type (e.g., Projects.SCL_Portal -> "SCL_Portal")
+            var projectTypeName = typeof(TProject).Name;
+
+            // Get the configuration
+            var configuration = builder.ApplicationBuilder.Configuration;
+
+            // Check for flat format with both original case and uppercase
+            // (SCL_Portal__Key__SubKey or SCL_PORTAL__KEY__SUBKEY)
+            var flatPrefixes = new[]
+            {
+                $"{projectTypeName}__",
+                $"{projectTypeName.ToUpperInvariant()}__"
+            };
+
+            foreach (var flatPrefix in flatPrefixes)
+            {
+                // Iterate through all configuration keys
+                foreach (var section in configuration.GetChildren())
+                {
+                    ProcessConfigurationSection(builder, section, flatPrefix);
+                }
+            }
+
+            return builder;
+        }
+
+        private static void ProcessConfigurationSection(
+            IResourceBuilder<ProjectResource> builder,
+            IConfigurationSection section,
+            string prefix)
+        {
+            var key = section.Path;
+
+            // Check if this key starts with our prefix
+            if (key != null && key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var value = section.Value;
+
+                if (!string.IsNullOrEmpty(value))
+                {
+                    // Strip the prefix and forward
+                    var envVarName = key.Substring(prefix.Length);
+                    builder.WithEnvironment(envVarName, value);
+                }
+            }
+
+            // Recursively process child sections
+            foreach (var child in section.GetChildren())
+            {
+                ProcessConfigurationSection(builder, child, prefix);
+            }
+        }
 
     }
 

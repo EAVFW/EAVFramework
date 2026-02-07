@@ -1,4 +1,4 @@
-﻿using EAVFramework.Plugins;
+using EAVFramework.Plugins;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
@@ -28,9 +28,9 @@ namespace EAVFramework.Endpoints
 
     //    //protected async Task RunAsyncPostOperation(HttpContext context, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry a)
     //    //{
-          
 
-           
+
+
     //    //}
 
     //    //protected async Task RunPipelineAsync<TContext>(IServiceProvider serviceProvider, HttpContext context, OperationContext<TContext> operation) where TContext : DynamicContext
@@ -57,7 +57,7 @@ namespace EAVFramework.Endpoints
 
     //    //    // var opeation = GetOperation(a.State) ;
 
-            
+
     //    //    foreach (var plugin in SelectAndSortPlugins(a, operation, EntityPluginExecution.PostOperation))
     //    //    {
     //    //        await plugin.Execute(serviceProvider, context.User, a);

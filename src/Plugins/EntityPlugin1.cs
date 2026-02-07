@@ -70,7 +70,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
 
 
-                var entry = (EntityPlugin)Activator.CreateInstance(typeof(EntityPlugin<,>).MakeGenericType(contexttype, entitytype));
+                var entry = (EntityPlugin) Activator.CreateInstance(typeof(EntityPlugin<,>).MakeGenericType(contexttype, entitytype));
 
                 entry.Execution = attr.Execution;
                 entry.Mode = attr.Mode;
@@ -89,7 +89,7 @@ namespace Microsoft.Extensions.DependencyInjection
 }
 namespace EAVFramework.Plugins
 {
-   
+
     public interface IPluginRegistration
     {
 
@@ -104,18 +104,18 @@ namespace EAVFramework.Plugins
             return builder.AddPlugin(typeof(T));
         }
 
-     
+
         public static IEAVFrameworkBuilder AddPlugin(this IEAVFrameworkBuilder builder, Type pluginType)
         {
-             builder.Services.AddPlugin(pluginType);
+            builder.Services.AddPlugin(pluginType);
             return builder;
         }
-         
-       
+
+
 
     }
 
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple =true, Inherited =false)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class PluginRegistrationAttribute : Attribute
     {
         public EntityPluginExecution Execution { get; }
@@ -138,13 +138,13 @@ namespace EAVFramework.Plugins
 
     public class DynamicEntityPlugin<TContext> : EntityPlugin<TContext>
         where TContext : DynamicContext
-       // where T : DynamicEntity
+        // where T : DynamicEntity
     {
 
-       
+
 
         public override ValueTask<bool> ShouldPluginBeExecued<T>(T context, TrackedPipelineItem entity)
-         
+
         {
             if (context is null)
             {
@@ -162,8 +162,8 @@ namespace EAVFramework.Plugins
              * A plugin that is registered with a interface against all entities with * matching can be catched here first.
              */
             if (Type.IsGenericTypeParameter)
-            { 
-               
+            {
+
                 var interfaceType = Type.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);
 
                 if (interfaceType == null && Type.GetGenericParameterConstraints().FirstOrDefault() == typeof(DynamicEntity))
@@ -171,19 +171,20 @@ namespace EAVFramework.Plugins
                     return ValueTask.FromResult(true);
                 }
 
-                if (interfaceType.IsAssignableFrom(entity.Entity.Entity.GetType()) || entity.Entity.Entity.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType)){
+                if (interfaceType.IsAssignableFrom(entity.Entity.Entity.GetType()) || entity.Entity.Entity.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType))
+                {
                     return ValueTask.FromResult(true);
                 }
             }
 
-                
+
             var type = GetPluginType(context as TContext);
-        
 
-            return ValueTask.FromResult(type?.IsAssignableFrom(entity.Entity.Entity.GetType())??false);
-          
 
-          
+            return ValueTask.FromResult(type?.IsAssignableFrom(entity.Entity.Entity.GetType()) ?? false);
+
+
+
         }
         public override async Task Execute(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry collectionEntry)
 
@@ -199,28 +200,28 @@ namespace EAVFramework.Plugins
 
         private Type GetPluginType(TContext db)
         {
-             
+
             if (Type.IsGenericTypeParameter)
             {
-              
+
                 var interfaceType = Type.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);
 
-                return db.Manager.ModelDefinition.EntityDTOs.Values.FirstOrDefault(t => t.GetInterfaces().Any(i => i==interfaceType || (i.IsGenericType && interfaceType.IsGenericType && i.GetGenericTypeDefinition() == interfaceType.GetGenericTypeDefinition())));
+                return db.Manager.ModelDefinition.EntityDTOs.Values.FirstOrDefault(t => t.GetInterfaces().Any(i => i == interfaceType || (i.IsGenericType && interfaceType.IsGenericType && i.GetGenericTypeDefinition() == interfaceType.GetGenericTypeDefinition())));
 
 
             }
             return Type;
         }
 
-        public async  Task Execute<T>(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry collectionEntry) where T:DynamicEntity
-           
+        public async Task Execute<T>(IServiceProvider services, ClaimsPrincipal principal, CollectionEntry collectionEntry) where T : DynamicEntity
+
         {
-            
+
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
             var contextWrapper = services.GetRequiredService<PluginContextAccessor>();
             foreach (var entity in collectionEntry.CurrentValue)
             {
-             //   var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal);
+                //   var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal);
                 var plugincontext = new PluginContext<TContext, T>
                 {
                     Input = entity as T,
@@ -257,14 +258,14 @@ namespace EAVFramework.Plugins
               .Invoke(this, new object[] { services, principal, entity }) as Task<PluginContext>;
             return await task;
         }
-        public async Task<PluginContext> Execute<T>(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) where T:DynamicEntity
-            
+        public async Task<PluginContext> Execute<T>(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) where T : DynamicEntity
+
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
 
             var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal, this.Operation);
 
-            var handler = services.GetDynamicService<TContext>(Handler, Type.IsGenericTypeParameter ? new[] { (Type,typeof(T))} : new (Type,Type)[0] ) as IPlugin<TContext, T>;
+            var handler = services.GetDynamicService<TContext>(Handler, Type.IsGenericTypeParameter ? new[] { (Type, typeof(T)) } : new (Type, Type)[0]) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
 
             return plugincontext;
@@ -272,7 +273,7 @@ namespace EAVFramework.Plugins
     }
 
 
-    public class EntityPlugin<TContext,T> : EntityPlugin<TContext>
+    public class EntityPlugin<TContext, T> : EntityPlugin<TContext>
         where TContext : DynamicContext
         where T : DynamicEntity
     {
@@ -293,12 +294,12 @@ namespace EAVFramework.Plugins
                     Input = entity as T,
                     DB = db,
                     User = principal,
-                   
-                      EntityResource = new EAVResource
-                      {
-                          EntityType = entity.GetType(),
-                          EntityCollectionSchemaName = entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
-                      }
+
+                    EntityResource = new EAVResource
+                    {
+                        EntityType = entity.GetType(),
+                        EntityCollectionSchemaName = entity.GetType().GetCustomAttribute<EntityAttribute>().CollectionSchemaName
+                    }
                 };
 
                 contextWrapper.Context = plugincontext;
@@ -311,19 +312,19 @@ namespace EAVFramework.Plugins
                 //var task = invoker.Invoke(handler, new object[] { pluginContext }) as Task;
                 //await task;
 
-               
+
             }
         }
-        
-        public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity) 
+
+        public override async Task<PluginContext> Execute(IServiceProvider services, ClaimsPrincipal principal, EntityEntry entity)
         {
             var db = services.GetRequiredService<EAVDBContext<TContext>>();
-           
-            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services,db, entity, principal,this.Operation);
-           
+
+            var plugincontext = PluginContextFactory.CreateContext<TContext, T>(services, db, entity, principal, this.Operation);
+
             var handler = services.GetService(Handler) as IPlugin<TContext, T>;
             await handler.Execute(plugincontext);
-            
+
             return plugincontext;
         }
     }

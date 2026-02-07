@@ -22,7 +22,7 @@ management
     .WithEnvironment("EAVFW_JOBSERVER_DISABLED","true")
     .WithEnvironment("SubscriberQueue__Disabled","true")
     .WithReference(db, "ApplicationDB")
-    .Needs(eavmodel);
+    .WaitForCompletion(eavmodel);
 
 
 builder.Build().Run();

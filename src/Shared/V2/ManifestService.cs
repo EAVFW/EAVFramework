@@ -502,9 +502,9 @@ namespace EAVFramework.Shared.V2
 
                 foreach (var table in manifest.SelectToken("$.entities").OfType<JProperty>().Select(t => tables[t.Name]).TSort(d => d.Dependencies))
                 {
-                 
-                        var schema = table.Schema ?? options.Schema ?? "dbo";
-                        var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
+
+                    var schema = table.Schema ?? options.Schema ?? "dbo";
+                    var result = this.options.DTOAssembly?.GetTypes().FirstOrDefault(t => t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute attr && attr.LogicalName == table.LogicalName && (this.options.SkipValidateSchemaNameForRemoteTypes || string.Equals(attr.Schema, schema, StringComparison.OrdinalIgnoreCase)))?.GetTypeInfo();
 
                     try
                     {
@@ -514,10 +514,11 @@ namespace EAVFramework.Shared.V2
                             this.options.EntityDTOs[table.CollectionSchemaName] = result;
 
                         }
-                        else {
-                           // table.FinalizeType();
+                        else
+                        {
+                            // table.FinalizeType();
 
-                           
+
                             this.options.EntityDTOs[table.CollectionSchemaName] = table.CreateTypeInfo();
                         }
                         this.options.EntityDTOConfigurations[table.CollectionSchemaName] = table.CreateConfigurationTypeInfo();
@@ -530,7 +531,7 @@ namespace EAVFramework.Shared.V2
                         throw;
                     }
                 }
-                   
+
                 foreach (var entity in manifest.SelectToken("$.entities").OfType<JProperty>())
                 {
 
@@ -540,11 +541,11 @@ namespace EAVFramework.Shared.V2
 
                     }
                     //  var a = table.Builder.CreateTypeInfo();
-                  
 
-                  
 
-                  
+
+
+
                 }
 
             }
@@ -679,8 +680,8 @@ namespace EAVFramework.Shared.V2
                      AttributeSchemaName = attribute.SchemaName,  //attribute.Value.SelectToken("$.schemaName").ToString(),
                      PropertyGetMethod = columnsCLRType.GetProperty(attribute.SchemaName).GetMethod,
                      ReferenceType = entities[attribute.AttributeType.ReferenceType],
-                     OnDeleteCascade = (ReferentialAction)(attribute.AttributeType?.Cascades?.OnDelete ?? referentialActionNoAction),
-                     OnUpdateCascade = (ReferentialAction)(attribute.AttributeType?.Cascades?.OnUpdate ?? referentialActionNoAction),
+                     OnDeleteCascade = (ReferentialAction) (attribute.AttributeType?.Cascades?.OnDelete ?? referentialActionNoAction),
+                     OnUpdateCascade = (ReferentialAction) (attribute.AttributeType?.Cascades?.OnUpdate ?? referentialActionNoAction),
                      // ForeignKey = attribute.ForeignKey
                  }).OrderBy(n => n.Name)
                  .ToArray();
@@ -1069,8 +1070,8 @@ namespace EAVFramework.Shared.V2
                     case "principalschema": UpMethodIL.Emit(OpCodes.Ldstr, principalSchema); break;
                     case "principaltable": UpMethodIL.Emit(OpCodes.Ldstr, principalTable); break;
                     case "principalcolumn": UpMethodIL.Emit(OpCodes.Ldstr, principalColumn); break;
-                    case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onUpdateCascade); break;
-                    case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, (int)onDeleteCascade); break;
+                    case "onupdate": UpMethodIL.Emit(OpCodes.Ldc_I4, (int) onUpdateCascade); break;
+                    case "ondelete": UpMethodIL.Emit(OpCodes.Ldc_I4, (int) onDeleteCascade); break;
 
                     default:
 
@@ -1197,7 +1198,7 @@ namespace EAVFramework.Shared.V2
                     else
                     {
 
-                       
+
                         var migrationStrategy = entityMigration.MappingStrategyChange();
 
 
@@ -1228,19 +1229,19 @@ namespace EAVFramework.Shared.V2
 
                         }
 
-                        if (migrationStrategy == MappingStrategyChangeEnum.TPT2TPC && !(entity.Abstract??false))
+                        if (migrationStrategy == MappingStrategyChangeEnum.TPT2TPC && !(entity.Abstract ?? false))
                         {
                             var columnsToMove = entityMigration.GetAttributesMovingFromBase()
                                 .OfType<AttributeObjectDefinition>()
-                                .Where(c=>!c.IsRowVersion)
+                                .Where(c => !c.IsRowVersion)
                                 .ToArray();
 
-                           
-                                var columnsToMoveSql = string.Join("\n",
-                                    columnsToMove
-                                    .Select(attr => $"\t[{schema}].[{entity.CollectionSchemaName}].[{attr.SchemaName}] = BaseRecords.[{attr.SchemaName}],"));
 
-                                var upSql1 = $"""
+                            var columnsToMoveSql = string.Join("\n",
+                                columnsToMove
+                                .Select(attr => $"\t[{schema}].[{entity.CollectionSchemaName}].[{attr.SchemaName}] = BaseRecords.[{attr.SchemaName}],"));
+
+                            var upSql1 = $"""
                                         UPDATE
                                         [{schema}].[{entity.CollectionSchemaName}]
                                         SET
@@ -1252,7 +1253,7 @@ namespace EAVFramework.Shared.V2
                                         ON 
                                             records.Id = BaseRecords.Id;
                                         """;
-                            
+
 
                             EmitSQLUp(migrationBuilder.UpMethodIL, upSql1);
 
@@ -1271,7 +1272,7 @@ namespace EAVFramework.Shared.V2
                             if (existingField.HasChanged())
                             {
                                 EmitAlterColumn(migrationBuilder.UpMethodIL, entity.CollectionSchemaName, schema, existingField.Target);
-                                
+
                             }
 
                             if (IsFieldLookup(existingField.Target) && existingField.HasCascadeChanges())
@@ -1304,16 +1305,16 @@ namespace EAVFramework.Shared.V2
 
                     }
 
-               
+
                     // var fields = entity.GetAllProperties(migration.Entities).Values.OfType<AttributeObjectDefinition>().ToArray();
                     foreach (var key in entityMigration.GetNewKeys())
-                    { 
+                    {
 
                         var props = key.Value;
                         var name = key.Key;
-                    
-                        var colums = props.Select(p => entity.GetField(p,migration.Entities).SchemaName).ToArray();
-                        migrationBuilder.CreateIndex(entity.CollectionSchemaName,entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo",
+
+                        var colums = props.Select(p => entity.GetField(p, migration.Entities).SchemaName).ToArray();
+                        migrationBuilder.CreateIndex(entity.CollectionSchemaName, entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo",
                             name, true, colums);
 
                     }
@@ -1488,8 +1489,8 @@ namespace EAVFramework.Shared.V2
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalColumn);
                     ConstraintsMethodIL.Emit(OpCodes.Ldstr, principalSchema);
 
-                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int)fk.OnUpdateCascade); //OnUpdate
-                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int)fk.OnDeleteCascade); //OnDelete
+                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int) fk.OnUpdateCascade); //OnUpdate
+                    ConstraintsMethodIL.Emit(OpCodes.Ldc_I4, (int) fk.OnDeleteCascade); //OnDelete
 
 
                     //
@@ -1604,10 +1605,10 @@ namespace EAVFramework.Shared.V2
             return null;
         }
 
-        public static AttributeObjectDefinition GetField(this EntityDefinition entity,string key, Dictionary<string, EntityDefinition> entities)
+        public static AttributeObjectDefinition GetField(this EntityDefinition entity, string key, Dictionary<string, EntityDefinition> entities)
         {
-           
-            
+
+
             while (entity != null)
             {
                 if (entity.Attributes.ContainsKey(key) && entity.Attributes[key] is AttributeObjectDefinition attr)
@@ -1667,20 +1668,20 @@ namespace EAVFramework.Shared.V2
         public static Dictionary<string, AttributeObjectDefinition> GetProperties(this EntityDefinition entity,
             Dictionary<string, EntityDefinition> entities)
         {
-            return  (entity.GetMappingStrategy(entities) == MappingStrategy.TPC ?
+            return (entity.GetMappingStrategy(entities) == MappingStrategy.TPC ?
                                entity.GetAllProperties(entities) : entity.Attributes)
-                               .OfType<string,AttributeDefinitionBase,AttributeObjectDefinition>()
+                               .OfType<string, AttributeDefinitionBase, AttributeObjectDefinition>()
                                .OrderByDescending(c => c.Value.IsPrimaryKey)
                                .ThenByDescending(c => c.Value.IsPrimaryField)
                                .ThenBy(c => c.Value.LogicalName)
-                               .ToDictionary(k=>k.Key,v=>v.Value);
+                               .ToDictionary(k => k.Key, v => v.Value);
 
         }
         public static Dictionary<string, string[]> GetNewKeys(this MigrationEntityDefinition migrationEntity)
-        {    
+        {
             return migrationEntity.Target?.Keys?
-                .Where(kv=> !(migrationEntity.Source?.Keys?.ContainsKey(kv.Key) ??false))
-                .ToDictionary(k=>k.Key,v=>v.Value) ?? new Dictionary<string, string[]>();
+                .Where(kv => !(migrationEntity.Source?.Keys?.ContainsKey(kv.Key) ?? false))
+                .ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, string[]>();
         }
         public static MappingStrategyChangeEnum MappingStrategyChange(this MigrationEntityDefinition migrationEntity)
         {

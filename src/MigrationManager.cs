@@ -98,7 +98,7 @@ namespace EAVFramework
 
         public CodeGenerationOptions CreateOptions(Action<CodeGenerationOptions> configure)
         {
-            
+
             var o = new CodeGenerationOptions
             {
                 //  MigrationName="Initial",
@@ -113,7 +113,7 @@ namespace EAVFramework
                 EntityTypeBuilderType = typeof(EntityTypeBuilder),
                 EntityTypeBuilderToTable = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.ToTable), 0, new[] { typeof(EntityTypeBuilder), typeof(string), typeof(string) }), "EntityTypeBuilderToTable"),
 #if NET8_0_OR_GREATER
-                UseTpcMappingStrategy = Resolve(()=>typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.UseTpcMappingStrategy),0, new[] { typeof(EntityTypeBuilder) }), "UseTpcMappingStrategy"),
+                UseTpcMappingStrategy = Resolve(() => typeof(RelationalEntityTypeBuilderExtensions).GetMethod(nameof(RelationalEntityTypeBuilderExtensions.UseTpcMappingStrategy), 0, new[] { typeof(EntityTypeBuilder) }), "UseTpcMappingStrategy"),
 #endif
                 EntityTypeBuilderHasKey = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.HasKey), 0, new[] { typeof(string[]) }), "EntityTypeBuilderHasKey"),
                 EntityTypeBuilderPropertyMethod = Resolve(() => typeof(EntityTypeBuilder).GetMethod(nameof(EntityTypeBuilder.Property), 0, new[] { typeof(string) }), "EntityTypeBuilderPropertyMethod"),
@@ -153,8 +153,8 @@ namespace EAVFramework
                     new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/ })
                 ?? typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.CreateIndex),
                     new Type[] { typeof(string) /*name*/, typeof(string)/*table*/, typeof(string[]) /*columns*/, typeof(string)/*schema*/, typeof(bool) /*unique*/, typeof(string)/*filter*/, typeof(bool[]) /*descending*/ }), "MigrationBuilderCreateIndex"),
-                
-                
+
+
                 MigrationBuilderDropIndex = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropIndex)), "MigrationBuilderDropIndex"),
                 MigrationsBuilderAddColumn = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddColumn)), "MigrationsBuilderAddColumn"),
                 MigrationsBuilderAddForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.AddForeignKey), new Type[] { typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(string), typeof(ReferentialAction), typeof(ReferentialAction) }), "MigrationsBuilderAddForeignKey"),
@@ -162,7 +162,7 @@ namespace EAVFramework
                 MigrationsBuilderDropForeignKey = Resolve(() => typeof(MigrationBuilder).GetMethod(nameof(MigrationBuilder.DropForeignKey)), "MigrationsBuilderDropForeignKey"),
 
                 ReferentialActionType = typeof(ReferentialAction),
-                ReferentialActionNoAction = (int)ReferentialAction.NoAction,
+                ReferentialActionNoAction = (int) ReferentialAction.NoAction,
 
 
                 LambdaBase = Resolve(() => typeof(Expression).GetMethod(nameof(Expression.Lambda), 1, BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Expression), typeof(ParameterExpression[]) }, null), "LambdaBase"),
@@ -180,13 +180,13 @@ namespace EAVFramework
         public GeoSpatialOptions BuildNetTopologySuiteOptions()
         {
             var assembly = GetAssemblyByName("NetTopologySuite");
-            if(assembly == null)
+            if (assembly == null)
             {
                 var referencedPaths = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "NetTopologySuite.dll").FirstOrDefault();
                 if (!string.IsNullOrEmpty(referencedPaths))
                 {
 
-                    assembly=AppDomain.CurrentDomain.Load(AssemblyName.GetAssemblyName(referencedPaths));
+                    assembly = AppDomain.CurrentDomain.Load(AssemblyName.GetAssemblyName(referencedPaths));
                 }
 
                 //
@@ -244,11 +244,11 @@ namespace EAVFramework
 
         public ConcurrentDictionary<string, Lazy<ModelDefinition>> Models { get; } = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
         public IEdmModel Model => ModelDefinition.Model;
-        public ModelDefinition ModelDefinition => Models.FirstOrDefault(x=>x.Key.Contains("latest",StringComparison.OrdinalIgnoreCase)).Value?.Value ?? Models.Values.FirstOrDefault()?.Value;
+        public ModelDefinition ModelDefinition => Models.FirstOrDefault(x => x.Key.Contains("latest", StringComparison.OrdinalIgnoreCase)).Value?.Value ?? Models.Values.FirstOrDefault()?.Value;
         public ModelDefinition EnusureBuilded(string modelName, JToken manifest, DynamicContextOptions options)
         {
             var model = Models.GetOrAdd(modelName, _ => new Lazy<ModelDefinition>(() =>
-            { 
+            {
                 var m = CreateModel(modelName, manifest, options);
 
                 var builder = new ODataConventionModelBuilder();
@@ -331,19 +331,19 @@ namespace EAVFramework
                 //}
             }));
 
-           
+
             return model.Value;
 
         }
         private ConcurrentDictionary<string, Lazy<ModelDefinition>> _cache = new ConcurrentDictionary<string, Lazy<ModelDefinition>>();
 
-      
+
         public ModelDefinition CreateMigration(string migrationName, MigrationDefinition migration, DynamicContextOptions value)
         {
-             
+
             return CreateModel(migrationName, migration, value, true);
         }
-        
+
         /// <summary>
         /// Use this to loop over all manifests starting with beforeManifest being {}
         /// </summary>
@@ -354,7 +354,7 @@ namespace EAVFramework
         public ModelDefinition CreateMigration(string migrationName, JToken afterManifest, JToken beforeManifest, DynamicContextOptions options)
         {
             var afterEntities = GetEntities(afterManifest).Select(c => (c.Name, logicalName: c.Value.SelectToken("$.logicalName").ToString(), attributes: GetAttributes(c.Value))).ToArray();
-          //  var beforeEntities = GetEntities(beforeManifest).Select(c => (c.Name, logicalName: c.Value.SelectToken("$.logicalName").ToString(), attributes: GetAttributes(c.Value))).ToArray();
+            //  var beforeEntities = GetEntities(beforeManifest).Select(c => (c.Name, logicalName: c.Value.SelectToken("$.logicalName").ToString(), attributes: GetAttributes(c.Value))).ToArray();
 
             // var newEntities = afterEntities.Where(pair => !beforeEntities.Any(c => c.logicalName == pair.logicalName)).ToArray();
             //var updatedEntitiesByAddedAttributes = afterEntities.Where(pair => beforeEntities.FirstOrDefault(c => c.logicalName == pair.logicalName).attributes?.Any(attr=>pair.attributes)).ToArray();
@@ -390,7 +390,7 @@ namespace EAVFramework
                 {
                     var m = new ModelDefinition()
                     {
-                        Entities =  new Dictionary<string, EntityDefinition>(migration.Target.Entities.ToDictionary(k=>k.Key,v=>v.Value), StringComparer.OrdinalIgnoreCase)
+                        Entities = new Dictionary<string, EntityDefinition>(migration.Target.Entities.ToDictionary(k => k.Key, v => v.Value), StringComparer.OrdinalIgnoreCase)
                     };
 
 
@@ -412,11 +412,12 @@ namespace EAVFramework
 
                     //   return (migrationType.GetTypeInfo(), () => Activator.CreateInstance(migrationType, manifest, tables) as Migration);
                     m.Type = migrationType.GetTypeInfo();
-                    m.MigrationFactory = () => Activator.CreateInstance(migrationType,migration, tables) as Migration;
+                    m.MigrationFactory = () => Activator.CreateInstance(migrationType, migration, tables) as Migration;
 
                     return m;
 
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     dynamicCodeService.RemoveNamespace(this.options.Value.Namespace);
                     //  _modules.Remove(options.Namespace, out var _);
@@ -428,20 +429,20 @@ namespace EAVFramework
         }
 
 
-         
+
         private ModelDefinition CreateModel(string migrationName, JToken manifest, DynamicContextOptions options, bool fromMigration)
         {
-            var test= _cache.GetOrAdd(migrationName, (migrationName) => new Lazy<ModelDefinition>(() =>
+            var test = _cache.GetOrAdd(migrationName, (migrationName) => new Lazy<ModelDefinition>(() =>
             {
 
                 try
                 {
                     var m = new ModelDefinition()
                     {
-                        Entities = new Dictionary<string, EntityDefinition>( System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString())
-                        .Entities.ToDictionary(k=>k.Value.CollectionSchemaName, v=>v.Value),StringComparer.OrdinalIgnoreCase)
+                        Entities = new Dictionary<string, EntityDefinition>(System.Text.Json.JsonSerializer.Deserialize<ManifestDefinition>(manifest.ToString())
+                        .Entities.ToDictionary(k => k.Value.CollectionSchemaName, v => v.Value), StringComparer.OrdinalIgnoreCase)
                     };
-                    
+
                     //var asmb = dynamicCodeService.CreateAssemblyBuilder(options.Namespace);
                     var manfiestservice = new ManifestService(dynamicCodeService, new ManifestServiceOptions
                     {

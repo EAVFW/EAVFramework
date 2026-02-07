@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Newtonsoft.Json.Linq;
 
 namespace EAVFramework.Validation
@@ -25,7 +25,7 @@ namespace EAVFramework.Validation
 
         public ValidatorMetaData()
         {
-            Type = typeof(T);   
+            Type = typeof(T);
         }
 
         public override bool ValidationPassed(IServiceProvider serviceProvider, object input, JToken manifest, out ValidationError error)
@@ -34,7 +34,7 @@ namespace EAVFramework.Validation
             {
                 return handler.ValidationPassed((T) input, manifest, out error);
             }
-            
+
             throw new Exception($"Validation handler {Handler} could not be found");
         }
     }

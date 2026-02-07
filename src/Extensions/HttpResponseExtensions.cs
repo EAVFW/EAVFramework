@@ -1,4 +1,4 @@
-﻿using EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using EAVFramework.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,8 +21,8 @@ namespace EAVFramework.Extensions
         public static async Task WriteJsonAsync(this HttpResponse response, object o, string contentType = null, Formatting formatting = Formatting.None)
         {
             //var json = ObjectSerializer.ToString(o);
-            var serializerSettings= response.HttpContext.RequestServices.GetService<IOptions<EAVFrameworkOptions>>()?.Value.ODataOptions.JsonSerializerSettings;
-            serializerSettings.Formatting = formatting; 
+            var serializerSettings = response.HttpContext.RequestServices.GetService<IOptions<EAVFrameworkOptions>>()?.Value.ODataOptions.JsonSerializerSettings;
+            serializerSettings.Formatting = formatting;
 
             var json = JsonConvert.SerializeObject(o, serializerSettings);
 

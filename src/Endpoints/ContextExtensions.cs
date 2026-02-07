@@ -19,7 +19,7 @@ namespace EAVFramework.Endpoints
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Entity?.Entity?.GetHashCode()??-1, Operation.GetHashCode());
+            return HashCode.Combine(Entity?.Entity?.GetHashCode() ?? -1, Operation.GetHashCode());
         }
         public override bool Equals(object obj)
         {
@@ -28,7 +28,7 @@ namespace EAVFramework.Endpoints
                 return false;
             }
 
-            var objectToCompareWith = (TrackedPipelineItem)obj;
+            var objectToCompareWith = (TrackedPipelineItem) obj;
 
             return objectToCompareWith.GetHashCode() == this.GetHashCode();
 
@@ -41,16 +41,16 @@ namespace EAVFramework.Endpoints
     }
     public static class ContextExtensions
     {
-        private static async ValueTask<bool> EmptyPreValQueue<TContext>(IServiceProvider serviceProvider,  TContext dynamicContext, OperationContext<TContext> operationContext, IEnumerable<EntityPlugin> plugins, ClaimsPrincipal user, EntityPluginExecution stage, HashSet<TrackedPipelineItem> discovered_prevalitems, HashSet<TrackedPipelineItem> preoperation_items = null)
+        private static async ValueTask<bool> EmptyPreValQueue<TContext>(IServiceProvider serviceProvider, TContext dynamicContext, OperationContext<TContext> operationContext, IEnumerable<EntityPlugin> plugins, ClaimsPrincipal user, EntityPluginExecution stage, HashSet<TrackedPipelineItem> discovered_prevalitems, HashSet<TrackedPipelineItem> preoperation_items = null)
        where TContext : DynamicContext
         {
-           
+
 
             var items = preoperation_items?.ToArray() ?? dynamicContext.ChangeTracker.Entries()
-           .Where(e => e.State != EntityState.Unchanged)    
-           .Select(item=> new TrackedPipelineItem { Operation = GetOperation(item.State), Entity = item })
+           .Where(e => e.State != EntityState.Unchanged)
+           .Select(item => new TrackedPipelineItem { Operation = GetOperation(item.State), Entity = item })
            .ToArray();
-            
+
 
             var queue_for_preval = new Queue<TrackedPipelineItem>();
 
@@ -68,16 +68,16 @@ namespace EAVFramework.Endpoints
                 return false;
             }
 
-            while (queue_for_preval.Count >0)
+            while (queue_for_preval.Count > 0)
             {
                 var entity = queue_for_preval.Dequeue();
                 foreach (var plugin in plugins
 
-                    .Where(plugin =>     
-                      
-                        plugin.Mode == EntityPluginMode.Sync && 
-                        plugin.Operation == entity.Operation && 
-                        plugin.Execution == stage ))
+                    .Where(plugin =>
+
+                        plugin.Mode == EntityPluginMode.Sync &&
+                        plugin.Operation == entity.Operation &&
+                        plugin.Execution == stage))
                 {
                     if (await plugin.ShouldPluginBeExecued<TContext>(dynamicContext, entity))
                     {
@@ -118,14 +118,14 @@ namespace EAVFramework.Endpoints
 
         public static async ValueTask<OperationContext<TContext>> SaveChangesPipeline<TContext>(
            this TContext dynamicContext, IServiceProvider serviceProvider, ClaimsPrincipal user, IEnumerable<EntityPlugin> plugins,
-           IPluginScheduler<TContext> pluginScheduler, Func<OperationContext<TContext>,Task> onBeforeCommit = null)
+           IPluginScheduler<TContext> pluginScheduler, Func<OperationContext<TContext>, Task> onBeforeCommit = null)
             where TContext : DynamicContext
         {
             var strategy = dynamicContext.Database.CreateExecutionStrategy();
 
             var operation = await strategy.ExecuteAsync(async () =>
             {
-              //  using var scope = scopeFactory.CreateScope();
+                //  using var scope = scopeFactory.CreateScope();
 
                 var innerOperation = new OperationContext<TContext>
                 {
@@ -243,12 +243,13 @@ namespace EAVFramework.Endpoints
                                 await pluginScheduler.ScheduleAsync(plugin, user.FindFirstValue("sub"), entity.Entity.Entity);
                         }
                     }
-                }finally
+                }
+                finally
                 {
                     //when exceptions are thrown, the context is in an invalid state and should be cleared
                     innerOperation.Context.ChangeTracker.Clear();
                 }
-                 
+
 
                 return innerOperation;
             });

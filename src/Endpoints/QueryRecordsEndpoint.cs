@@ -1,4 +1,4 @@
-﻿using EAVFramework.Configuration;
+using EAVFramework.Configuration;
 using EAVFramework.Endpoints.Results;
 using EAVFramework.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +18,7 @@ using static EAVFramework.Constants;
 namespace EAVFramework.Endpoints
 {
 
-    
+
     public class QueryRecordsEndpoint<TContext> : IEndpointHandler<TContext>
         where TContext : DynamicContext
     {
@@ -42,7 +42,7 @@ namespace EAVFramework.Endpoints
             if (this.options.Value.ODataOptions.UseODataContextCountSerialization)
             {
                 var type = _context.Manager.ModelDefinition.EntityDTOs[routeValues[RouteParams.EntityCollectionSchemaNameRouteParam].ToString().Replace(" ", "")];
-                return new ODataEndpointResult(type,result);
+                return new ODataEndpointResult(type, result);
             }
 
 
