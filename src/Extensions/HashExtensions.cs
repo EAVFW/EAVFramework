@@ -93,8 +93,8 @@ namespace EAVFramework.Extensions
             {
                 byte[] inputBytes = System.Text.Encoding.Unicode.GetBytes(input);
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                StringBuilder sb = new System.Text.StringBuilder();
+                 
+                 StringBuilder sb = new System.Text.StringBuilder();
                 for (int i = 0; i < hashBytes.Length; i++)
                 {
                     sb.Append(hashBytes[i].ToString("x2"));

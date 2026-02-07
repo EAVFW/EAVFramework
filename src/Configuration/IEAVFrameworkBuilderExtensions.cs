@@ -13,7 +13,7 @@ namespace EAVFramework.Configuration
             var autoPlugins = typeof(T).Assembly.GetTypes().Where(type => type.GetCustomAttributes<PluginRegistrationAttribute>().Any())
                 .ToArray();
 
-            foreach (var plugin in autoPlugins.Where(t => !t.ContainsGenericParameters))
+            foreach (var plugin in autoPlugins.Where(t=>!t.ContainsGenericParameters))
             {
                 builder.AddPlugin(plugin);
             }
@@ -24,7 +24,7 @@ namespace EAVFramework.Configuration
         public static IEAVFrameworkBuilder WithDatabaseHealthCheck<T>(this IEAVFrameworkBuilder builder)
         {
             builder.Services.AddHealthChecks()
-              .AddCheck<MigrationHealthCheck<DynamicContext>>(typeof(T).Name + "MigrationCheck");
+              .AddCheck<MigrationHealthCheck<DynamicContext>>(typeof(T).Name+"MigrationCheck");
 
             return builder;
         }

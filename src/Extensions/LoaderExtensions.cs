@@ -52,7 +52,7 @@ namespace EAVFramework.Extensions
 
             return context.DB.LoadIfMissingAsync<TContext, TEntity, TProperty>(context.Input, selector);
         }
-        public static ValueTask<TProperty> LoadIfMissingAsync<TContext, TInputentity, TEntity, TProperty>(this PluginContext<TContext, TInputentity> context, TEntity entity, Expression<Func<TEntity, TProperty>> selector)
+        public static ValueTask<TProperty> LoadIfMissingAsync<TContext, TInputentity,TEntity, TProperty>(this PluginContext<TContext, TInputentity> context, TEntity entity, Expression<Func<TEntity, TProperty>> selector)
            where TContext : DynamicContext
            where TInputentity : DynamicEntity
            where TEntity : DynamicEntity

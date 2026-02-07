@@ -10,14 +10,14 @@ namespace EAVFramework.Authentication
     public class OnCallBackResult
     {
         public ClaimsPrincipal Principal { get; set; }
-
-
+        
+        
 
         public bool Success { get; set; }
 
         public string ErrorMessage { get; set; }
-        public string ErrorCode { get; set; }
-        public string ErrorSubCode { get; set; }
+        public string ErrorCode { get;  set; }
+        public string ErrorSubCode { get;  set; }
     }
     public class OnAuthenticateResult
     {
@@ -31,7 +31,7 @@ namespace EAVFramework.Authentication
         public string AuthenticationName { get; }
         public HttpMethod CallbackHttpMethod { get; }
         public bool AutoGenerateRoutes { get; }
-        bool UseTicketStore { get; }
+        bool UseTicketStore { get;  }
 
         Task<OnAuthenticateResult> OnAuthenticate(OnAuthenticateRequest authenticateRequest);
         Task<OnCallBackResult> OnCallback(OnCallbackRequest request);
@@ -41,5 +41,5 @@ namespace EAVFramework.Authentication
 
         public Task PopulateCallbackRequest(OnCallbackRequest request);
     }
-
+ 
 }

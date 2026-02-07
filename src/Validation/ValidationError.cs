@@ -13,12 +13,12 @@ namespace EAVFramework.Validation
     }
     public class ValidationError : CoreError
     {
-
-
+        
+       
     }
     public class AuthorizationError : CoreError
     {
 
-
+         
     }
 }

@@ -8,9 +8,9 @@ namespace EAVFramework.Endpoints
     {
         public TContext Context { get; set; }
         public List<CoreError> Errors { get; set; } = new List<CoreError>();
-        public string PreOperationChanges { get; set; } = string.Empty;
+        public string PreOperationChanges { get;  set; } = string.Empty;
 
-        public string PostOperationChanges { get; set; } = string.Empty;
+        public string PostOperationChanges { get;  set; } = string.Empty;
         //   public EntityEntry Entity { get; set; } 
     }
 }

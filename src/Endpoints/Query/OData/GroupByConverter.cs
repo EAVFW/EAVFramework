@@ -20,7 +20,7 @@ namespace EAVFramework.Endpoints.Query.OData
             this.odatatConverterFactory = odatatConverterFactory;
         }
 
-        public ConvertResult Convert(object data, QueryContext context)
+        public ConvertResult Convert(object data , QueryContext context)
         {
             var poco = Method.GetValue(data) as Dictionary<string, object>;
 

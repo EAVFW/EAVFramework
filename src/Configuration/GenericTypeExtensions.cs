@@ -9,15 +9,15 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class GenericTypeExtensions
     {
-        public static object GetDynamicService<TContext>(this IServiceProvider serviceProvider, Type t, params (Type, Type)[] contraintResults) where TContext : DynamicContext
+        public static object GetDynamicService<TContext>(this IServiceProvider serviceProvider,Type t, params (Type, Type)[] contraintResults) where TContext : DynamicContext
         {
             if (!t.IsGenericType)
             {
-                return serviceProvider.GetRequiredService(t);
+                return serviceProvider.GetRequiredService(t); 
             }
             var ctx = serviceProvider.GetRequiredService<TContext>();
 
-            var targetType = ResoveType<TContext>(ctx, t, contraintResults);
+            var targetType = ResoveType<TContext>(ctx,t,contraintResults);
 
             return ActivatorUtilities.CreateInstance(serviceProvider, targetType);
 
@@ -27,9 +27,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
         }
 
-        public static Type ResoveType<TContext>(this TContext ctx, Type t, params (Type, Type)[] contraintResults) where TContext : DynamicContext
+        public static Type ResoveType<TContext>( this TContext ctx, Type t, params (Type, Type)[] contraintResults) where TContext : DynamicContext
         {
-
+           
 
             var types = ctx.Manager.ModelDefinition.EntityDTOs.Values;
 
@@ -46,7 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (type.BaseType == null) return true;
             return !type.BaseType.GetInterfaces().Contains(interfaceType);
         }
-        private static Type ResolveGenericArgument<TContext>(Type t, TContext ctx, Type genericTypeArgument, params (Type, Type)[] contraintResults) where TContext : DynamicContext
+        private static Type ResolveGenericArgument<TContext>(Type t, TContext ctx, Type genericTypeArgument, params (Type,Type)[] contraintResults ) where TContext : DynamicContext
         {
             /**
              * genericTypeArguments is the TSomething of class Test<TSomething>
@@ -63,7 +63,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 return typeof(TContext);
             }
 
-
+         
             /**
              * If Constraint is IConvertible, 
              *  return the type of the property that has the EntityFieldAttribute with the AttributeKey that matches the ConstraintMappingAttribute
@@ -83,7 +83,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     if (otherConstraint != null)
                     {
                         var targetInterface = otherConstraint.GetGenericParameterConstraints().FirstOrDefault(c => c.IsInterface);
-
+                      
                         var position = Array.IndexOf(targetInterface.GenericTypeArguments, genericTypeArgument);
                         var targetName = targetInterface.GetGenericTypeDefinition().GetGenericArguments()[position].Name;
                         constraintMapping = targetInterface
@@ -145,7 +145,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     if (result.Length > 1)
                     {
-                        result = result.Where(r =>
+                        result = result.Where(r => 
                             //If constraints are provided, the item2 is the type that is expected.
                             //This case is for generic wildcard entity types
                             (!contraintResults.Any() || contraintResults.Any(c => c.Item2 == r)))
@@ -181,10 +181,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 return contraintResults[0].Item2;
 
 
-            return ResoveType(ctx, targetServiceType.IsGenericType ? targetServiceType.GetGenericTypeDefinition() : targetServiceType);
+            return ResoveType(ctx,targetServiceType.IsGenericType ? targetServiceType.GetGenericTypeDefinition() : targetServiceType);
         }
 
-        public static Type ResolveGenericArguments<TContext, TModel>(this Type t) where TContext : DynamicContext
+        public static Type ResolveGenericArguments<TContext,TModel>(this Type t) where TContext : DynamicContext
         {
             var ttt = t.GetGenericArguments().Select(ta =>
             {
@@ -194,7 +194,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     return typeof(TContext);
                 }
 
-                if (constraints.Any(tta => tta == typeof(IConvertible)))
+                if(constraints.Any(tta => tta == typeof(IConvertible)))
                 {
                     //enums
                     var constraintMapping = t.GetCustomAttributes<ConstraintMappingAttribute>().SingleOrDefault(c => c.ConstraintName == ta.Name)
@@ -202,7 +202,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
 
 
-                    var entirtyType = typeof(TModel).Assembly.GetTypes().SingleOrDefault(t =>
+                    var entirtyType = typeof(TModel).Assembly.GetTypes().SingleOrDefault(t => 
                     t.GetCustomAttribute<EntityDTOAttribute>() is EntityDTOAttribute &&
                     t.GetCustomAttribute<EntityAttribute>() is EntityAttribute attr && attr.EntityKey == constraintMapping.EntityKey);
 
@@ -229,7 +229,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             t.GetInterfaces().Any(c => c == @interface)).Single();
                 }
 
-                throw new InvalidOperationException($"Cant find constraint for {ta.Name} on {t.Name}");
+                throw new InvalidOperationException($"Cant find constraint for {ta.Name} on {t.Name}" );
 
             }).ToArray();
             return t.MakeGenericType(ttt);

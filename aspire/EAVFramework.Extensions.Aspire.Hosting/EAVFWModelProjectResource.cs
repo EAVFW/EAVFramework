@@ -7,7 +7,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 {
     public sealed class EAVFWModelProjectResource(string name) : Resource(name)
     {
-
+      
 
         public string GetModelPath()
         {

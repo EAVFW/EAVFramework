@@ -166,7 +166,7 @@ namespace EAVFramework
                 {
                     var converter = _factory.CreateConverter(item.GetType());
                     var result = converter.Convert(item, queryContext);
-
+                    
                     resultList.Add(result.Value);
                 }
 
@@ -174,7 +174,7 @@ namespace EAVFramework
             }
             var odatafeature = request.ODataFeature();
 
-
+            
 
             return new PageResult<object>(resultList, null, odatafeature.TotalCount);
 
@@ -220,7 +220,7 @@ namespace EAVFramework
             {
 
                 request.QueryString = request.QueryString.Add("$select", string.Join(",", type.GetProperties().Where(p => p.GetCustomAttribute<DataMemberAttribute>() != null && p.GetCustomAttribute<InversePropertyAttribute>() == null).Select(p => p.GetCustomAttribute<DataMemberAttribute>().Name)));
-                request.Query = new QueryCollection(QueryHelpers.ParseNullableQuery(request.QueryString.Value));
+                request.Query=new QueryCollection(QueryHelpers.ParseNullableQuery(request.QueryString.Value));
             }
             var odataContext = new ODataQueryContext(context.Manager.Model, type, new Microsoft.OData.UriParser.ODataPath());
             //  IODataFeature odataFeature = request.HttpContext.ODataFeature();
@@ -290,7 +290,7 @@ namespace EAVFramework
     {
         public string ModelCacheKey { get; set; } = Guid.NewGuid().ToString();
     }
-
+       
     public class DynamicModelContext : DynamicContext, IHasModelCacheKey
     {
         private readonly DynamicModelContextKey _dynamicModelContextKey;
@@ -318,7 +318,7 @@ namespace EAVFramework
 
         private const string MigrationDefaultName = "Initial";
 
-        //  public virtual string ModelCacheKey { get; set; } = Guid.NewGuid().ToString("N");
+      //  public virtual string ModelCacheKey { get; set; } = Guid.NewGuid().ToString("N");
 
         public IMigrationManager Manager => manager;
 
@@ -356,7 +356,7 @@ namespace EAVFramework
 
             var latestManifest = modelOptions.Value.Manifests.First();
 
-            manager.EnusureBuilded(LatestModelKey, latestManifest, this.modelOptions.Value);
+            manager.EnusureBuilded(LatestModelKey,  latestManifest, this.modelOptions.Value);
 
             if (modelOptions.Value.EnableDynamicMigrations)
             {
@@ -432,7 +432,7 @@ namespace EAVFramework
         {
 
             var manifest = modelOptions.Value.Manifests.First();
-            return manager.EnusureBuilded(LatestModelKey, manifest, this.modelOptions.Value);
+            return manager.EnusureBuilded(LatestModelKey,  manifest, this.modelOptions.Value);
         }
 
 
@@ -447,7 +447,7 @@ namespace EAVFramework
             {
                 man.Reset(this.modelOptions.Value);
             }
-
+         
         }
 
 
@@ -462,7 +462,7 @@ namespace EAVFramework
                 var latestManifest = modelOptions.Value.Manifests.First();
                 //   var version = latestManifest.SelectToken("$.version")?.ToString().Replace(".", "_") ?? MigrationDefaultName;
 
-                manager.EnusureBuilded(LatestModelKey, modelOptions.Value.Manifests.First(), this.modelOptions.Value);
+                manager.EnusureBuilded(LatestModelKey,modelOptions.Value.Manifests.First(), this.modelOptions.Value);
             }
 
             foreach (var en in manager.ModelDefinition.EntityDTOs)
@@ -662,7 +662,7 @@ namespace EAVFramework
         }
         public Type GetEntityType(string entityName)
         {
-            if (manager.ModelDefinition.EntityDTOs.ContainsKey(entityName))
+            if(manager.ModelDefinition.EntityDTOs.ContainsKey(entityName))
                 return manager.ModelDefinition.EntityDTOs[entityName];
             return null;
         }
@@ -671,7 +671,7 @@ namespace EAVFramework
             var type = manager.ModelDefinition.EntityDTOs[entityName];
 
 
-
+             
             var record = data.ToObject(type);
             logger.LogInformation("Updating {CLRType} from {rawData} to {typedData}", type.Name, data.ToString(), JsonConvert.SerializeObject(record));
 
