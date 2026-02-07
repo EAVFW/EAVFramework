@@ -9,6 +9,7 @@ using EAVFramework.Configuration;
 using EAVFW.Extensions.SecurityModel;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -742,30 +743,8 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             // Extract project name from type (e.g., Projects.SCL_Portal -> "SCL_Portal")
             var projectTypeName = typeof(TProject).Name;
 
-            // Get the configuration section for this project
+            // Get the configuration
             var configuration = builder.ApplicationBuilder.Configuration;
-
-            // First try hierarchical format (SCL_Portal:Key:SubKey) - case-insensitive
-            var projectSection = configuration.GetSection(projectTypeName);
-
-            if (projectSection.Exists())
-            {
-                // Forward each configuration value as an environment variable
-                foreach (var kvp in projectSection.AsEnumerable(makePathsRelative: true))
-                {
-                    // Skip the root key (empty key)
-                    if (string.IsNullOrEmpty(kvp.Key) || string.IsNullOrEmpty(kvp.Value))
-                    {
-                        continue;
-                    }
-
-                    // Convert configuration key to environment variable format
-                    // e.g., "CrmFeatureFlags:EnableCrmPolling" -> "CrmFeatureFlags__EnableCrmPolling"
-                    var envVarName = kvp.Key.Replace(":", "__", StringComparison.Ordinal);
-
-                    builder = builder.WithEnvironment(envVarName, kvp.Value);
-                }
-            }
 
             // Check for flat format with both original case and uppercase
             // (SCL_Portal__Key__SubKey or SCL_PORTAL__KEY__SUBKEY)
@@ -777,18 +756,41 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             foreach (var flatPrefix in flatPrefixes)
             {
-                foreach (var kvp in configuration.AsEnumerable())
+                // Iterate through all configuration keys
+                foreach (var section in configuration.GetChildren())
                 {
-                    if (kvp.Key != null && kvp.Key.StartsWith(flatPrefix, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kvp.Value))
-                    {
-                        // Strip the prefix and forward
-                        var envVarName = kvp.Key.Substring(flatPrefix.Length);
-                        builder = builder.WithEnvironment(envVarName, kvp.Value);
-                    }
+                    ProcessConfigurationSection(builder, section, flatPrefix);
                 }
             }
 
             return builder;
+        }
+
+        private static void ProcessConfigurationSection(
+            IResourceBuilder<ProjectResource> builder,
+            IConfigurationSection section,
+            string prefix)
+        {
+            var key = section.Path;
+
+            // Check if this key starts with our prefix
+            if (key != null && key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var value = section.Value;
+
+                if (!string.IsNullOrEmpty(value))
+                {
+                    // Strip the prefix and forward
+                    var envVarName = key.Substring(prefix.Length);
+                    builder.WithEnvironment(envVarName, value);
+                }
+            }
+
+            // Recursively process child sections
+            foreach (var child in section.GetChildren())
+            {
+                ProcessConfigurationSection(builder, child, prefix);
+            }
         }
 
     }
