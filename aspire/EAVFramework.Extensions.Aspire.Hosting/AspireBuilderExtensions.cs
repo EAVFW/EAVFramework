@@ -722,16 +722,21 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         /// <summary>
         /// Forwards configuration values prefixed with the project name as environment variables.
         /// <para>
-        /// Supports both hierarchical and flat configuration formats (case-insensitive):
+        /// Uses flat configuration format with double underscores as section delimiters.
+        /// Property names must match C# property names (PascalCase) for ASP.NET Core binding to work.
         /// </para>
         /// <para>
-        /// Hierarchical: "SCL_Portal:CrmFeatureFlags:EnableCrmPolling" = "true"
+        /// Format: "SCL_PORTAL__SectionName__PropertyName" = "value"
         /// </para>
         /// <para>
-        /// Flat: "SCL_PORTAL__CRM_FEATURE_FLAGS__ENABLE_CRM_POLLING" = "true"
+        /// Example: "SCL_PORTAL__CrmFeatureFlags__EnableCrmPolling" = "true"
         /// </para>
         /// <para>
-        /// Both will be forwarded to the service as environment variable "CRM_FEATURE_FLAGS__ENABLE_CRM_POLLING" = "true".
+        /// This will be forwarded to the service as: "CrmFeatureFlags__EnableCrmPolling" = "true"
+        /// </para>
+        /// <para>
+        /// Note: ASP.NET Core configuration is case-insensitive but does NOT remove underscores,
+        /// so "ENABLE_CRM_POLLING" will NOT match property "EnableCrmPolling".
         /// </para>
         /// </summary>
         /// <typeparam name="TProject">The project type (e.g., Projects.SCL_Portal).</typeparam>
