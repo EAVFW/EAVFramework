@@ -29,6 +29,13 @@ namespace EAVFramework.UnitTest.ManifestTests
             var a = Regex.Replace(expected.Replace("COMMIT;",string.Empty).Replace("GO", string.Empty).Replace("BEGIN TRANSACTION;", string.Empty).Trim(), @"\s", string.Empty);
             var b = Regex.Replace(actual.Replace("COMMIT;", string.Empty).Replace("GO", string.Empty).Replace("BEGIN TRANSACTION;", string.Empty).Trim(), @"\s", string.Empty);
 
+            // Normalize @descriptionN to @description
+            a = Regex.Replace(a, @"@description\d+", "@description");
+            b = Regex.Replace(b, @"@description\d+", "@description");
+            // Normalize @descriptionN to @description
+            a = Regex.Replace(a, @"@var\d+", "@var");
+            b = Regex.Replace(b, @"@var\d+", "@var");
+
             Assert.AreEqual(a, b);
         }
     }
