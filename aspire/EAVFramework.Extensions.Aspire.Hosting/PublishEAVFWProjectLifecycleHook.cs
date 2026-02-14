@@ -520,7 +520,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                 WorkingDirectory = eavBuildResource.Workingdirectory,
                                 Arguments = shellArgument,
                                 InheritEnv = true,
-                                EnvironmentVariables = { ["NODE_OPTIONS"] = "--max-old-space-size=4096" },
+                                EnvironmentVariables = { ["NODE_OPTIONS"] = "--max-old-space-size=2048" },
                                 OnOutputData = (data) => logger.LogInformation("[BUILD OUTPUT] {Data}", data),
                                 OnErrorData = (data) => logger.LogError("[BUILD ERROR] {Data}", data),
                                 OnStart = (pid) =>
