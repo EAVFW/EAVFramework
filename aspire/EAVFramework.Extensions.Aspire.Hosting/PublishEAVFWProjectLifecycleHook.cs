@@ -36,7 +36,18 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         public ProjectResource ProjectResource { get; set; }
     }
 
-    public class EavBuildResource : Resource
+    public class EavNpmInstallResource : Resource, IResourceWithWaitSupport
+    {
+        public EavNpmInstallResource(string name, string workingDirectory) : base(name)
+        {
+            WorkingDirectory = workingDirectory;
+        }
+
+        public string WorkingDirectory { get; }
+        public ProjectResource Project { get; set; }
+    }
+
+    public class EavBuildResource : Resource, IResourceWithWaitSupport
     {
         public EavBuildResource(string name, string command, string workingdirectory, params string[] arguments) : base(name)
         {
@@ -250,9 +261,15 @@ namespace EAVFramework.Extensions.Aspire.Hosting
         }
         public static string CreateMd5ForFolder(string path)
         {
+            if (!Directory.Exists(path))
+                return null;
+
             // assuming you want to include nested folders
             var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories)
                                  .OrderBy(p => p).ToList();
+
+            if (files.Count == 0)
+                return null;
 
             MD5 md5 = MD5.Create();
 
@@ -276,6 +293,41 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             return BitConverter.ToString(md5.Hash).Replace("-", "").ToLower();
         }
 
+
+        private static async Task<ProcessResult> RunShellCommand(string command, string workingDirectory, ILogger logger, string logPrefix)
+        {
+            string shellExecutable;
+            string shellArgument;
+
+            if (OperatingSystem.IsWindows())
+            {
+                shellExecutable = "cmd";
+                shellArgument = $"/c \"{command}\"";
+            }
+            else
+            {
+                shellExecutable = "/bin/bash";
+                shellArgument = $"-c \"{command}\"";
+            }
+
+            logger.LogInformation("[{LogPrefix}] Running: {Command} in {WorkingDir}", logPrefix, command, workingDirectory);
+
+            var (processTask, disposable) = ProcessUtil.Run(new ProcessSpec(shellExecutable)
+            {
+                WorkingDirectory = workingDirectory,
+                Arguments = shellArgument,
+                InheritEnv = true,
+                ThrowOnNonZeroReturnCode = false,
+                OnOutputData = (data) => logger.LogInformation("[{LogPrefix}] {Data}", logPrefix, data),
+                OnErrorData = (data) => logger.LogError("[{LogPrefix} ERROR] {Data}", logPrefix, data),
+                OnStart = (pid) => logger.LogInformation("[{LogPrefix}] Process started with PID {Pid}", logPrefix, pid),
+                OnStop = (exitcode) => logger.LogInformation("[{LogPrefix}] Process exited with code {ExitCode}", logPrefix, exitcode)
+            });
+
+            var result = await processTask;
+            await disposable.DisposeAsync();
+            return result;
+        }
 
         public async Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken = default)
         {
@@ -308,6 +360,99 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                     }
                 }
 
+                if (resource is EavNpmInstallResource npmInstallResource)
+                {
+                    _logger.LogInformation("Processing EavNpmInstallResource: {ResourceName}", npmInstallResource.Name);
+                    var logger = _resourceLoggerService.GetLogger(npmInstallResource);
+
+                    try
+                    {
+                        // Step 0: If npm link is configured, prepare the monorepo first
+                        var npmLinkAnnotation = npmInstallResource.Project
+                            .Annotations.OfType<EAVFWNpmLinkAnnotation>().FirstOrDefault();
+
+                        if (npmLinkAnnotation != null)
+                        {
+                            logger.LogInformation("npm link configured, preparing monorepo at {MonorepoRoot}", npmLinkAnnotation.MonorepoRoot);
+
+                            await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                                state => state with { State = state.State with { Text = "Installing monorepo deps", Style = KnownResourceStateStyles.Info } });
+
+                            var monorepoInstallResult = await RunShellCommand(
+                                "npm install --force --ignore-scripts", npmLinkAnnotation.MonorepoRoot, logger, "NPM LINK MONOREPO INSTALL");
+
+                            if (monorepoInstallResult.ExitCode != 0)
+                            {
+                                logger.LogWarning("[EAVFW NPM LINK] Monorepo npm install failed with exit code {ExitCode}, continuing anyway", monorepoInstallResult.ExitCode);
+                            }
+
+                            await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                                state => state with { State = state.State with { Text = "Registering package links", Style = KnownResourceStateStyles.Info } });
+
+                            var linkSourceResult = await RunShellCommand(
+                                "npm run link", npmLinkAnnotation.MonorepoRoot, logger, "NPM LINK SOURCE");
+
+                            if (linkSourceResult.ExitCode != 0)
+                            {
+                                logger.LogWarning("[EAVFW NPM LINK] npm run link in monorepo failed with exit code {ExitCode}", linkSourceResult.ExitCode);
+                            }
+                            else
+                            {
+                                logger.LogInformation("[EAVFW NPM LINK] Monorepo package links registered successfully");
+                            }
+                        }
+
+                        // Step 1: Run npm install in project working directory
+                        logger.LogInformation("Starting npm install in {WorkingDir}", npmInstallResource.WorkingDirectory);
+
+                        await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                            state => state with { State = state.State with { Text = "Installing", Style = KnownResourceStateStyles.Info } });
+
+                        var result = await RunShellCommand("npm install --force", npmInstallResource.WorkingDirectory, logger, "NPM INSTALL");
+
+                        if (result.ExitCode == 0)
+                        {
+                            // Step 2: If npm link is configured, consume the symlinks in the project
+                            if (npmLinkAnnotation != null)
+                            {
+                                logger.LogInformation("Setting up npm link from {MonorepoRoot}", npmLinkAnnotation.MonorepoRoot);
+
+                                await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                                    state => state with { State = state.State with { Text = "Linking packages", Style = KnownResourceStateStyles.Info } });
+
+                                string linkCommand = "npm link --force @eavfw/apps @eavfw/next @eavfw/expressions @eavfw/manifest @eavfw/hooks @eavfw/forms @eavfw/utils";
+                                var consumeResult = await RunShellCommand(linkCommand, npmInstallResource.WorkingDirectory, logger, "NPM LINK CONSUME");
+
+                                if (consumeResult.ExitCode == 0)
+                                    logger.LogInformation("[EAVFW NPM LINK READY] npm link completed successfully");
+                                else
+                                    logger.LogWarning("[EAVFW NPM LINK FAILED] npm link consume failed with exit code {ExitCode}", consumeResult.ExitCode);
+                            }
+
+                            logger.LogInformation("[EAVFW NPM INSTALL READY] npm install completed successfully for {ResourceName}", npmInstallResource.Name);
+                            await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                                state => state with {
+                                    ExitCode = 0,
+                                    State = state.State with { Text = KnownResourceStates.Finished, Style = KnownResourceStateStyles.Success }
+                                });
+                        }
+                        else
+                        {
+                            logger.LogError("[EAVFW NPM INSTALL FAILED] npm install failed with exit code {ExitCode} for {ResourceName}", result.ExitCode, npmInstallResource.Name);
+                            await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                                state => state with {
+                                    ExitCode = result.ExitCode,
+                                    State = state.State with { Text = KnownResourceStates.Exited, Style = KnownResourceStateStyles.Error }
+                                });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error during npm install for {ResourceName}: {Message}", npmInstallResource.Name, ex.Message);
+                        await _resourceNotificationService.PublishUpdateAsync(npmInstallResource,
+                            state => state with { State = state.State with { Text = "Install error", Style = KnownResourceStateStyles.Error } });
+                    }
+                }
 
                 if (resource is EavBuildResource eavBuildResource)
                 {
@@ -352,7 +497,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             // Platform-specific shell configuration
                             string shellExecutable;
                             string shellArgument;
-                            string buildCommand = $"npm install --force && {eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments);
+                            string buildCommand = $"{eavBuildResource.Command} " + string.Join(" ", eavBuildResource.Arguments);
 
                             if (OperatingSystem.IsWindows())
                             {
@@ -389,6 +534,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
                                     if (exitcode == 0)
                                     {
+                                        logger.LogInformation("[EAVFW BUILD READY] Build completed successfully for {ResourceName}", eavBuildResource.Name);
                                         logger.LogInformation("Build completed successfully. Saving hash to {HashFile}", hashFilePath);
                                         try
                                         {
@@ -408,6 +554,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     }
                                     else
                                     {
+                                        logger.LogError("[EAVFW BUILD FAILED] Build failed with exit code {ExitCode} for {ResourceName}", exitcode, eavBuildResource.Name);
                                         logger.LogError("Build failed with exit code {ExitCode}", exitcode);
                                     }
 
@@ -427,6 +574,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                         }
                         else
                         {
+                            logger.LogInformation("[EAVFW BUILD READY] Build skipped (unchanged) for {ResourceName}", eavBuildResource.Name);
                             logger.LogInformation("Source code unchanged (hash match). Skipping build.");
                             await _resourceNotificationService.PublishUpdateAsync(eavBuildResource,
                                     state => state with { State = state.State with { Text = KnownResourceStates.Finished, Style = KnownResourceStateStyles.Success } });
@@ -443,6 +591,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                 }
             }
 
+            _logger.LogInformation("[EAVFW BUILD HOOK READY] BuildEAVFWAppsLifecycleHook completed");
             _logger.LogInformation("BuildEAVFWAppsLifecycleHook: Completed BeforeStartAsync");
 
         }
@@ -544,7 +693,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     logger.LogInformation("Executing database creation command for {DatabaseName}", targetDatabaseResource.DatabaseName);
                                     await cmd.ExecuteNonQueryAsync();
                                     logger.LogInformation("Database {DatabaseName} created successfully", targetDatabaseResource.DatabaseName);
-
+                                    logger.LogInformation("[EAVFW DB CREATE READY] Database {DatabaseName} created successfully", targetDatabaseResource.DatabaseName);
 
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                         state => state with { State = new ResourceStateSnapshot($"{targetDatabaseResource.DatabaseName} was created", KnownResourceStateStyles.Info) });
@@ -611,6 +760,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     }
 
                                     migrationannotation.Success = true;
+                                    logger.LogInformation("[EAVFW MIGRATION READY] Migrations applied successfully to {DatabaseName}", targetDatabaseResource.DatabaseName);
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                       state => state with { State = new ResourceStateSnapshot($"migrations was created", KnownResourceStateStyles.Info) });
 
@@ -676,6 +826,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                     }
 
 
+                                    logger.LogInformation("[EAVFW SIGNIN READY] Signin link created for {ResourceName}", modelResource.Name);
                                     await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                         state => state with { State = new ResourceStateSnapshot("signin link created", KnownResourceStateStyles.Info) });
 
@@ -693,6 +844,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                                 logger.LogInformation("No CreateSigninTokenAnnotation found for {ResourceName}, skipping signin link creation", modelResource.Name);
                             }
 
+                            logger.LogInformation("[EAVFW MODEL READY] All operations completed successfully for {ResourceName}", modelResource.Name);
                             logger.LogInformation("Successfully completed all operations for {ResourceName}", modelResource.Name);
                             await _resourceNotificationService.PublishUpdateAsync(modelResource,
                                       state => state with { State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success) });
@@ -706,6 +858,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
                             {
                                 logger.LogError(ex, "Failed to process {ResourceName} after {RetryCount} attempts. Exception type: {ExceptionType}, Message: {Message}",
                                     modelResource.Name, retryCount, ex.GetType().Name, ex.Message);
+                                _aspirelogger.LogError("[EAVFW MODEL FAILED] Resource {ResourceName} failed after {RetryCount} attempts", modelResource.Name, retryCount);
                                 _aspirelogger.LogError(ex, "FINAL FAILURE: Resource {ResourceName} failed after {RetryCount} attempts", modelResource.Name, retryCount);
 
                                 await _resourceNotificationService.PublishUpdateAsync(modelResource,

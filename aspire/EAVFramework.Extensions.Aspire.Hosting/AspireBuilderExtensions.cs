@@ -6,6 +6,7 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Certificates;
 using EAVFramework.Configuration;
+using EAVFramework.Extensions.Aspire.Hosting.Database;
 using EAVFW.Extensions.SecurityModel;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Azure;
@@ -24,9 +25,31 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Aspire.Hosting.JavaScript;
+
+#pragma warning disable ASPIREINTERACTION001 // Interaction service is in preview
 
 namespace EAVFramework.Extensions.Aspire.Hosting
 {
+    /// <summary>
+    /// Annotation that stores a SQL Server database resource reference on a project resource,
+    /// allowing WithEAVModel to discover the database without requiring it as a parameter.
+    /// </summary>
+    public record SqlServerDatabaseAnnotation(
+        IResourceBuilder<SqlServerDatabaseResource> Database) : IResourceAnnotation;
+
+    /// <summary>
+    /// Annotation that enables hot-reload mode for an EAVFW app,
+    /// starting a Next.js dev server as a child resource in Aspire.
+    /// </summary>
+    public record EAVFWHotReloadAnnotation() : IResourceAnnotation;
+
+    /// <summary>
+    /// Annotation that configures npm link to use local @eavfw/* packages
+    /// from the EAVFW monorepo instead of registry-published versions.
+    /// </summary>
+    public record EAVFWNpmLinkAnnotation(string MonorepoRoot) : IResourceAnnotation;
+
     public sealed class CertificateResource(string name) : Resource(name), IResourceWithEnvironment
     {
         public string Value { get; set; }
@@ -432,6 +455,26 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
 
         /// <summary>
+        /// Configures npm link to use local @eavfw/* packages from the EAVFW monorepo
+        /// instead of registry-published versions. This enables testing framework changes
+        /// directly in scaffolded projects without publishing to npm first.
+        /// </summary>
+        /// <param name="builder">The project resource builder returned by <see cref="AddEAVFWApp{TProject}"/>.</param>
+        /// <param name="monorepoRoot">Path to the EAVFW monorepo root (relative to the AppHost project directory, or absolute).</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithNpmLink(
+            this IResourceBuilder<ProjectResource> builder, string monorepoRoot)
+        {
+            var metadata = builder.Resource.GetProjectMetadata();
+            var appHostDir = Path.GetDirectoryName(metadata.ProjectPath);
+            var resolvedPath = Path.GetFullPath(Path.Combine(appHostDir, monorepoRoot));
+
+            builder.WithAnnotation(new EAVFWNpmLinkAnnotation(resolvedPath),
+                ResourceAnnotationMutationBehavior.Replace);
+            return builder;
+        }
+
+        /// <summary>
         /// Adds a EAVFW Model Project resource to the application.
         /// </summary>
         /// <typeparam name="TProject">The model project that contains the manifest.g.json file</typeparam>
@@ -455,6 +498,7 @@ namespace EAVFramework.Extensions.Aspire.Hosting
              where TProject : IProjectMetadata, new()
         {
             builder.Services.TryAddLifecycleHook<BuildEAVFWAppsLifecycleHook>();
+            builder.Services.TryAddLifecycleHook<EAVFWStartupNotificationHook>();
             var project = builder.AddProject<TProject>(name, launchProfile)
                   .WithUrlForEndpoint("https", u => u.DisplayText = "EAV Dev Portal");
 
@@ -462,30 +506,99 @@ namespace EAVFramework.Extensions.Aspire.Hosting
 
             var metadata = project.Resource.GetProjectMetadata();
 
-            if (!string.IsNullOrEmpty(npmBuildCommand))
+            var srcPath = Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src");
+            if (!string.IsNullOrEmpty(npmBuildCommand) && Directory.Exists(srcPath))
             {
-                var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), "src"));
+                var hash = BuildEAVFWAppsLifecycleHook.CreateMd5ForFolder(srcPath);
                 var oldhash = File.Exists(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) ?
                     File.ReadAllText(Path.Combine(Path.GetDirectoryName(metadata.ProjectPath), ".next/buildhash.txt")) : null;
 
+                // Add npm install resource
+                var npmInstall = builder.AddResource(
+                    new EavNpmInstallResource(name + "-npm-install", workingDirectory) { Project = project.Resource })
+                    .WithInitialState(new CustomResourceSnapshot
+                    {
+                        ResourceType = "NPM Install",
+                        State = new ResourceStateSnapshot("Pending", KnownResourceStateStyles.Info),
+                        Properties = []
+                    });
+                npmInstall.WithParentRelationship(project);
 
-                var build = builder.AddResource(new EavBuildResource(name + "-eav", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
+                // Add build resource (depends on npm install)
+                var buildSkipped = hash == oldhash;
+                var build = builder.AddResource(
+                    new EavBuildResource(name + "-eav-build", "npm", workingDirectory, "run", npmBuildCommand) { Project = project.Resource })
                     .WithInitialState(new CustomResourceSnapshot
                     {
                         ResourceType = "EAV Build",
-                        State = new ResourceStateSnapshot(hash != oldhash ? "Building" : KnownResourceStates.Finished, KnownResourceStateStyles.Success),
+                        State = new ResourceStateSnapshot(buildSkipped ? KnownResourceStates.Finished : "Pending", buildSkipped ? KnownResourceStateStyles.Success : KnownResourceStateStyles.Info),
+                        ExitCode = buildSkipped ? 0 : null,
                         Properties = []
                     });
+                build.WithParentRelationship(project);
+                build.WaitForCompletion(npmInstall);
 
                 project.WithAnnotation(new EAVFWBuildAnnotation { ProjectResource = project.Resource });
 
-                build.WithParentRelationship(project);
                 project.WaitForCompletion(build);
             }
 
 
 
+            // Auto-enable hot-reload via configuration fallback
+            if (string.Equals(builder.Configuration["EAVFW_HOTRELOAD"], "true", StringComparison.OrdinalIgnoreCase))
+            {
+                project.WithHotReload();
+            }
+
             return project;
+        }
+
+        /// <summary>
+        /// Enables hot-reload mode for an EAVFW app by starting a Next.js dev server
+        /// as a child resource in the Aspire dashboard.
+        /// </summary>
+        /// <param name="builder">The project resource builder returned by <see cref="AddEAVFWApp{TProject}"/>.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithHotReload(
+            this IResourceBuilder<ProjectResource> builder)
+        {
+            // Idempotent — skip if already configured
+            if (builder.Resource.TryGetLastAnnotation<EAVFWHotReloadAnnotation>(out _))
+                return builder;
+
+            builder.WithAnnotation(new EAVFWHotReloadAnnotation(), ResourceAnnotationMutationBehavior.Replace);
+
+            var metadata = builder.Resource.GetProjectMetadata();
+            var portalDir = Path.GetDirectoryName(metadata.ProjectPath);
+            var appBuilder = builder.ApplicationBuilder;
+            var name = builder.Resource.Name;
+
+            var nextDev = appBuilder.AddJavaScriptApp(name + "-next-dev", portalDir, "dev")
+                .WithNpm(install: false)
+                .WithHttpEndpoint(env: "PORT")
+                .WithEnvironment("NODE_ENV", "development")
+                .WithEnvironment("BROWSER", "none")
+                .WithEnvironment(ctx =>
+                {
+                    var endpoint = builder.GetEndpoint("http");
+                    ctx.EnvironmentVariables["NEXT_PUBLIC_API_BASE_URL"] =
+                        ReferenceExpression.Create($"{endpoint}/api");
+                    ctx.EnvironmentVariables["NEXT_PUBLIC_BASE_URL"] =
+                        ReferenceExpression.Create($"{endpoint}/");
+                })
+                .WithParentRelationship(builder)
+                .WaitFor(builder)
+                .WithUrlForEndpoint("http", u => u.DisplayText = "EAV Dev Portal (Hot Reload)");
+
+            // Tell Portal to allow CORS from dev server
+            builder.WithEnvironment(ctx =>
+            {
+                var devEndpoint = nextDev.GetEndpoint("http");
+                ctx.EnvironmentVariables["EAVFW_CORS_ORIGINS"] = devEndpoint;
+            });
+
+            return builder;
         }
 
 
@@ -716,7 +829,91 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             return builder.WithMailServer(mailServer);
         }
 
+        /// <summary>
+        /// Adds a SQL Server instance with database, persistent data volume, and BACPAC restore support.
+        /// This is a convenience method that wraps all the SQL Server setup into one call, similar to <see cref="WithMailPit"/>.
+        /// The database reference is stored as an annotation so <see cref="WithEAVModel{TModel,TContext,TIdentity,TSignin}(IResourceBuilder{ProjectResource},string,string,Guid,string)"/>
+        /// can discover it automatically without passing it explicitly.
+        /// </summary>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="existingDb">An optional existing database resource. If null, a new SQL Server instance is created with sensible defaults.</param>
+        /// <param name="configureSqlServer">Optional callback to further configure the SQL Server resource (e.g., add DbGate, custom volumes).</param>
+        /// <param name="serverName">The name for the SQL Server resource. Defaults to "sqlserver".</param>
+        /// <param name="databaseName">The name for the database resource. Defaults to "sql-db".</param>
+        /// <param name="defaultPassword">The default SQL Server password. Defaults to a strong password.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithSqlServerDB(
+            this IResourceBuilder<ProjectResource> builder,
+            IResourceBuilder<SqlServerDatabaseResource> existingDb = null,
+            Action<IResourceBuilder<SqlServerServerResource>> configureSqlServer = null,
+            string serverName = "sqlserver",
+            string databaseName = "sql-db",
+            string defaultPassword = "Your_strong_password123!")
+        {
+            IResourceBuilder<SqlServerDatabaseResource> db;
 
+            if (existingDb != null)
+            {
+                db = existingDb;
+            }
+            else
+            {
+                var prefix = builder.Resource.Name;
+                var sqlPass = builder.ApplicationBuilder.AddParameter("sql-server-password", defaultPassword, secret: true);
+
+                var sqlServer = builder.ApplicationBuilder
+                    .AddSqlServer(serverName, sqlPass)
+                    .WithDataVolume($"{prefix}-sql-data")
+                    .WithLifetime(ContainerLifetime.Persistent)
+                    .WithRestoreBacpacCommand(defaultDatabaseName: databaseName);
+
+                // Allow consumers to add DbGate, custom configuration, etc.
+                configureSqlServer?.Invoke(sqlServer);
+
+                db = sqlServer.AddDatabase(databaseName);
+            }
+
+            // Store the database reference so WithEAVModel can discover it
+            builder.WithAnnotation(new SqlServerDatabaseAnnotation(db), ResourceAnnotationMutationBehavior.Replace);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Creates and configures an EAV model for the project resource, automatically discovering the SQL Server database
+        /// from a prior <see cref="WithSqlServerDB"/> call.
+        /// </summary>
+        /// <typeparam name="TModel">The model project that contains the manifest.g.json file.</typeparam>
+        /// <typeparam name="TContext">The database context type.</typeparam>
+        /// <typeparam name="TIdentity">The identity type for signin tokens.</typeparam>
+        /// <typeparam name="TSignin">The signin type for signin tokens.</typeparam>
+        /// <param name="builder">The project resource builder.</param>
+        /// <param name="modelName">The name for the model resource.</param>
+        /// <param name="initialEmail">The initial user email address.</param>
+        /// <param name="initialIdentity">The initial user identity GUID.</param>
+        /// <param name="initialUsername">The initial username.</param>
+        /// <returns>The project resource builder for chaining.</returns>
+        public static IResourceBuilder<ProjectResource> WithEAVModel<TModel, TContext, TIdentity, TSignin>(
+            this IResourceBuilder<ProjectResource> builder,
+            string modelName,
+            string initialEmail,
+            Guid initialIdentity,
+            string initialUsername)
+            where TModel : IProjectMetadata, new()
+            where TContext : DynamicContext
+            where TIdentity : DynamicEntity, IIdentity
+            where TSignin : DynamicEntity, ISigninRecord, new()
+        {
+            if (!builder.Resource.TryGetLastAnnotation<SqlServerDatabaseAnnotation>(out var dbAnnotation))
+            {
+                throw new InvalidOperationException(
+                    "No SQL Server database configured. Call WithSqlServerDB() before WithEAVModel(), " +
+                    "or use the overload that accepts an IResourceBuilder<SqlServerDatabaseResource>.");
+            }
+
+            return builder.WithEAVModel<TModel, TContext, TIdentity, TSignin>(
+                modelName, dbAnnotation.Database, initialEmail, initialIdentity, initialUsername);
+        }
 
 
         /// <summary>
@@ -798,6 +995,51 @@ namespace EAVFramework.Extensions.Aspire.Hosting
             }
         }
 
+    }
+
+    /// <summary>
+    /// Lifecycle hook that shows a startup notification in the Aspire dashboard
+    /// informing users that first-time startup may take several minutes.
+    /// </summary>
+    internal sealed class EAVFWStartupNotificationHook(
+        IServiceProvider serviceProvider,
+        ILogger<EAVFWStartupNotificationHook> logger) : IDistributedApplicationLifecycleHook
+    {
+        public Task BeforeStartAsync(DistributedApplicationModel appModel, CancellationToken cancellationToken)
+        {
+            // Fire-and-forget: notification is informational and must never block startup.
+            // PromptNotificationAsync can hang if the interaction service is not fully connected.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var interactionService = serviceProvider.GetRequiredService<IInteractionService>();
+
+                    if (interactionService.IsAvailable)
+                    {
+                        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                        cts.CancelAfter(TimeSpan.FromSeconds(5));
+
+                        await interactionService.PromptNotificationAsync(
+                            title: "EAVFW First-Time Setup",
+                            message: "First-time startup can take up to 5 minutes while SQL Server is pulled, " +
+                                     "npm packages are installed, and the application is built. " +
+                                     "Subsequent starts will be much faster.",
+                            options: new NotificationInteractionOptions
+                            {
+                                Intent = MessageIntent.Information
+                            });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Non-critical — don't let notification failure block startup
+                    logger.LogDebug(ex, "Could not show startup notification");
+                }
+            }, cancellationToken);
+
+            return Task.CompletedTask;
+        }
     }
 
 }
