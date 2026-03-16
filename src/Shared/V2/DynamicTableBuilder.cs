@@ -527,6 +527,24 @@ namespace EAVFramework.Shared.V2
                 throw new Exception($"Failed to create key for {table} | {name}", ex);
             }
         }
+
+        public void DropIndex(string table, string schema, string name)
+        {
+            try
+            {
+                UpMethodIL.Emit(OpCodes.Ldarg_1); //this first argument
+                UpMethodIL.Emit(OpCodes.Ldstr, name); //#1 Constant index name
+                UpMethodIL.Emit(OpCodes.Ldstr, table); //#2 Constant table name
+                UpMethodIL.Emit(OpCodes.Ldstr, schema); //#3 Constant schema
+
+                UpMethodIL.Emit(OpCodes.Callvirt, options.MigrationBuilderDropIndex);
+                UpMethodIL.Emit(OpCodes.Pop);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to drop index for {table} | {name}", ex);
+            }
+        }
     }
 
     [DebuggerDisplay("TableBuilder = {SchemaName}")]
@@ -1358,10 +1376,10 @@ namespace EAVFramework.Shared.V2
                     }
 
 
-                    var props = key.Value;
+                    var (props, unique) = key.Value;
                     var name = key.Key;
                     var colums = props.Select(p => Properties.Single(k => k.AttributeKey == p).SchemaName).ToArray();
-                    migrationBuilder.CreateIndex(CollectionSchemaName, Schema, name, true, colums);
+                    migrationBuilder.CreateIndex(CollectionSchemaName, Schema, name, unique, colums);
 
                 }
 
@@ -1700,7 +1718,7 @@ namespace EAVFramework.Shared.V2
         }
 
 
-        public Dictionary<string, string[]> Keys { get; } = new Dictionary<string, string[]>();
+        public Dictionary<string, (string[] Columns, bool Unique)> Keys { get; } = new Dictionary<string, (string[] Columns, bool Unique)>();
         public MappingStrategy? MappingStrategy { get; private set; }
 
         public DynamicTableBuilder SetMappingStrategry(MappingStrategy mappingStrategy)
@@ -1709,9 +1727,9 @@ namespace EAVFramework.Shared.V2
             return this;
         }
 
-        internal void AddKeys(string name, string[] props)
+        internal void AddKeys(string name, string[] props, bool unique = true)
         {
-            this.Keys.Add(name, props);
+            this.Keys.Add(name, (props, unique));
         }
 
         internal DynamicTableBuilder External(bool v, TypeInfo remoteType)

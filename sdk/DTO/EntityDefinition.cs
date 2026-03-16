@@ -1,10 +1,99 @@
 using EAVFW.Extensions.Manifest.SDK.DTO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace EAVFW.Extensions.Manifest.SDK
 {
+    [System.Text.Json.Serialization.JsonConverter(typeof(KeyDefinitionSystemTextJsonConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(KeyDefinitionNewtonsoftConverter))]
+    public class KeyDefinition
+    {
+        [JsonPropertyName("columns")]
+        [JsonProperty("columns")]
+        public string[] Columns { get; set; }
+
+        [JsonPropertyName("unique")]
+        [JsonProperty("unique")]
+        public bool Unique { get; set; } = true;
+    }
+
+    /// <summary>
+    /// System.Text.Json converter: handles both array format ["Col1"] and object format { "columns": ["Col1"], "unique": false }
+    /// </summary>
+    public class KeyDefinitionSystemTextJsonConverter : System.Text.Json.Serialization.JsonConverter<KeyDefinition>
+    {
+        public override KeyDefinition Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+        {
+            if (reader.TokenType == System.Text.Json.JsonTokenType.StartArray)
+            {
+                var columns = System.Text.Json.JsonSerializer.Deserialize<string[]>(ref reader, options);
+                return new KeyDefinition { Columns = columns, Unique = true };
+            }
+            else if (reader.TokenType == System.Text.Json.JsonTokenType.StartObject)
+            {
+                string[] columns = null;
+                bool unique = true;
+                while (reader.Read())
+                {
+                    if (reader.TokenType == System.Text.Json.JsonTokenType.EndObject)
+                        break;
+                    if (reader.TokenType == System.Text.Json.JsonTokenType.PropertyName)
+                    {
+                        var prop = reader.GetString();
+                        reader.Read();
+                        if (string.Equals(prop, "columns", StringComparison.OrdinalIgnoreCase))
+                            columns = System.Text.Json.JsonSerializer.Deserialize<string[]>(ref reader, options);
+                        else if (string.Equals(prop, "unique", StringComparison.OrdinalIgnoreCase))
+                            unique = reader.GetBoolean();
+                    }
+                }
+                return new KeyDefinition { Columns = columns, Unique = unique };
+            }
+            return new KeyDefinition();
+        }
+
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, KeyDefinition value, System.Text.Json.JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("columns");
+            System.Text.Json.JsonSerializer.Serialize(writer, value.Columns, options);
+            writer.WriteBoolean("unique", value.Unique);
+            writer.WriteEndObject();
+        }
+    }
+
+    /// <summary>
+    /// Newtonsoft converter: handles both array format ["Col1"] and object format { "columns": ["Col1"], "unique": false }
+    /// </summary>
+    public class KeyDefinitionNewtonsoftConverter : Newtonsoft.Json.JsonConverter<KeyDefinition>
+    {
+        public override KeyDefinition ReadJson(Newtonsoft.Json.JsonReader reader, Type objectType, KeyDefinition existingValue, bool hasExistingValue, Newtonsoft.Json.JsonSerializer serializer)
+        {
+            var token = JToken.Load(reader);
+            if (token is JArray array)
+            {
+                return new KeyDefinition { Columns = array.ToObject<string[]>(), Unique = true };
+            }
+            else if (token is JObject obj)
+            {
+                return new KeyDefinition
+                {
+                    Columns = obj["columns"]?.ToObject<string[]>(),
+                    Unique = obj["unique"]?.ToObject<bool>() ?? true
+                };
+            }
+            return new KeyDefinition();
+        }
+
+        public override void WriteJson(Newtonsoft.Json.JsonWriter writer, KeyDefinition value, Newtonsoft.Json.JsonSerializer serializer)
+        {
+            serializer.Serialize(writer, value);
+        }
+    }
+
     public class EntityDefinition
     {
         [JsonProperty("TPT")]
@@ -41,7 +130,7 @@ namespace EAVFW.Extensions.Manifest.SDK
 
         [JsonPropertyName("keys")]
         [JsonProperty("keys")]
-        public Dictionary<string, string[]> Keys { get; set; }
+        public Dictionary<string, KeyDefinition> Keys { get; set; }
 
 
         /// <summary>

@@ -386,9 +386,17 @@ namespace EAVFramework.Shared.V2
                     {
                         foreach (var key in keys.OfType<JProperty>())
                         {
-                            var props = key.Value.ToObject<string[]>();
-
-                            table.AddKeys(key.Name, props);
+                            if (key.Value is JArray)
+                            {
+                                var props = key.Value.ToObject<string[]>();
+                                table.AddKeys(key.Name, props);
+                            }
+                            else if (key.Value is JObject keyObj)
+                            {
+                                var props = keyObj["columns"]?.ToObject<string[]>();
+                                var unique = keyObj["unique"]?.ToObject<bool>() ?? true;
+                                table.AddKeys(key.Name, props, unique);
+                            }
                         }
                     }
 
@@ -1307,15 +1315,32 @@ namespace EAVFramework.Shared.V2
 
 
                     // var fields = entity.GetAllProperties(migration.Entities).Values.OfType<AttributeObjectDefinition>().ToArray();
+                    foreach (var key in entityMigration.GetRemovedKeys())
+                    {
+                        var name = key.Key;
+                        migrationBuilder.DropIndex(entity.CollectionSchemaName, entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo", name);
+                    }
+
+                    foreach (var key in entityMigration.GetChangedKeys())
+                    {
+                        var keyDef = key.Value;
+                        var name = key.Key;
+                        var entitySchema = entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo";
+                        var colums = keyDef.Columns.Select(p => entity.GetField(p, migration.Entities).SchemaName).ToArray();
+
+                        migrationBuilder.DropIndex(entity.CollectionSchemaName, entitySchema, name);
+                        migrationBuilder.CreateIndex(entity.CollectionSchemaName, entitySchema, name, keyDef.Unique, colums);
+                    }
+
                     foreach (var key in entityMigration.GetNewKeys())
                     {
 
-                        var props = key.Value;
+                        var keyDef = key.Value;
                         var name = key.Key;
 
-                        var colums = props.Select(p => entity.GetField(p, migration.Entities).SchemaName).ToArray();
+                        var colums = keyDef.Columns.Select(p => entity.GetField(p, migration.Entities).SchemaName).ToArray();
                         migrationBuilder.CreateIndex(entity.CollectionSchemaName, entity.Schema ?? dynamicCodeService.Options.Schema ?? "dbo",
-                            name, true, colums);
+                            name, keyDef.Unique, colums);
 
                     }
 
@@ -1677,11 +1702,28 @@ namespace EAVFramework.Shared.V2
                                .ToDictionary(k => k.Key, v => v.Value);
 
         }
-        public static Dictionary<string, string[]> GetNewKeys(this MigrationEntityDefinition migrationEntity)
+        public static Dictionary<string, KeyDefinition> GetNewKeys(this MigrationEntityDefinition migrationEntity)
         {
             return migrationEntity.Target?.Keys?
                 .Where(kv => !(migrationEntity.Source?.Keys?.ContainsKey(kv.Key) ?? false))
-                .ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, string[]>();
+                .ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, KeyDefinition>();
+        }
+        public static Dictionary<string, KeyDefinition> GetRemovedKeys(this MigrationEntityDefinition migrationEntity)
+        {
+            return migrationEntity.Source?.Keys?
+                .Where(kv => !(migrationEntity.Target?.Keys?.ContainsKey(kv.Key) ?? false))
+                .ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, KeyDefinition>();
+        }
+        public static Dictionary<string, KeyDefinition> GetChangedKeys(this MigrationEntityDefinition migrationEntity)
+        {
+            if (migrationEntity.Source?.Keys == null || migrationEntity.Target?.Keys == null)
+                return new Dictionary<string, KeyDefinition>();
+
+            return migrationEntity.Target.Keys
+                .Where(kv => migrationEntity.Source.Keys.TryGetValue(kv.Key, out var sourceKey) &&
+                    (sourceKey.Unique != kv.Value.Unique ||
+                     !Enumerable.SequenceEqual(sourceKey.Columns ?? Array.Empty<string>(), kv.Value.Columns ?? Array.Empty<string>())))
+                .ToDictionary(k => k.Key, v => v.Value);
         }
         public static MappingStrategyChangeEnum MappingStrategyChange(this MigrationEntityDefinition migrationEntity)
         {

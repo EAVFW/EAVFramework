@@ -505,6 +505,166 @@ namespace EAVFramework.UnitTest.ManifestTests
       
       
 
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_RemoveKey.sql", "Specs")]
+        public async Task CarsAndTrucksModel_RemoveKey()
+        {
+            // v1.0.0: Car entity with a unique key on AccountingCode
+            var manifestA = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifestA, "Car", "AccountingCode", new
+            {
+                schemaName = "AccountingCode",
+                logicalName = "accountingcode",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+                },
+            });
+
+            manifestA["entities"]["Car"]["keys"] = JToken.FromObject(new
+            {
+                IX_AccountingCode = new[] { "AccountingCode" }
+            });
+
+            // v1.0.1: Same entity but key removed
+            var manifestB = JToken.FromObject(new
+            {
+                version = "1.0.1",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifestB, "Car", "AccountingCode", new
+            {
+                schemaName = "AccountingCode",
+                logicalName = "accountingcode",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+                },
+            });
+
+            // No keys in manifestB — the key has been removed
+
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_RemoveKey.sql");
+
+            MigrationAssert.AreEqual(expectedSQL, sql);
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_NonUniqueKey.sql", "Specs")]
+        public async Task CarsAndTrucksModel_NonUniqueKey()
+        {
+            // Car entity with a non-unique key using object format
+            var manifest = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifest, "Car", "AccountingCode", new
+            {
+                schemaName = "AccountingCode",
+                logicalName = "accountingcode",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+                },
+            });
+
+            manifest["entities"]["Car"]["keys"] = JToken.FromObject(new Dictionary<string, object>
+            {
+                ["IX_AccountingCode"] = new { columns = new[] { "AccountingCode" }, unique = false }
+            });
+
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifest);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_NonUniqueKey.sql");
+
+            MigrationAssert.AreEqual(expectedSQL, sql);
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"ManifestTests/Specs/CarsAndTrucksModel_ChangeKeyUniqueness.sql", "Specs")]
+        public async Task CarsAndTrucksModel_ChangeKeyUniqueness()
+        {
+            // v1.0.0: Car entity with a unique key
+            var manifestA = JToken.FromObject(new
+            {
+                version = "1.0.0",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifestA, "Car", "AccountingCode", new
+            {
+                schemaName = "AccountingCode",
+                logicalName = "accountingcode",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+                },
+            });
+
+            manifestA["entities"]["Car"]["keys"] = JToken.FromObject(new
+            {
+                IX_AccountingCode = new[] { "AccountingCode" }
+            });
+
+            // v1.0.1: Same key but changed to non-unique
+            var manifestB = JToken.FromObject(new
+            {
+                version = "1.0.1",
+                entities = new
+                {
+                    Car = CreateCustomEntity("Car", "Cars"),
+                }
+            });
+
+            AppendAttribute(manifestB, "Car", "AccountingCode", new
+            {
+                schemaName = "AccountingCode",
+                logicalName = "accountingcode",
+                type = new
+                {
+                    type = "Text",
+                    maxLength = 100
+                },
+            });
+
+            manifestB["entities"]["Car"]["keys"] = JToken.FromObject(new Dictionary<string, object>
+            {
+                ["IX_AccountingCode"] = new { columns = new[] { "AccountingCode" }, unique = false }
+            });
+
+            var (sql, _) = RunDBWithSchema("manifest_migrations", manifestB, manifestA);
+
+            string expectedSQL = System.IO.File.ReadAllText(@"Specs/CarsAndTrucksModel_ChangeKeyUniqueness.sql");
+
+            MigrationAssert.AreEqual(expectedSQL, sql);
+        }
+
        // [TestMethod(]
         public async Task MutualReferenceTest()
         {
